@@ -342,7 +342,11 @@ async function testApi() {
 function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag'); }
 function onDragLeave() { document.getElementById('dropZone').classList.remove('drag'); }
 function onDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('drag'); readFiles(e.dataTransfer.files); }
-function handleFiles(e) { readFiles(e.target.files); e.target.value = ''; }
+function handleFiles(e) {
+  const files = e.target.files;
+  if (files && files.length > 0) readFiles(files);
+  setTimeout(() => { e.target.value = ''; }, 100);
+}
 
 function readFiles(files) {
   let pending = files.length;
@@ -350,15 +354,36 @@ function readFiles(files) {
   Array.from(files).forEach(f => {
     const reader = new FileReader();
     reader.onload = ev => {
-      parseCSV(ev.target.result, f.name);
+      try {
+        const bytes = new Uint8Array(ev.target.result);
+        let text;
+        // Try Shift-JIS first, fallback to other encodings
+        const encodings = ['shift-jis', 'windows-1252', 'utf-8'];
+        for (const enc of encodings) {
+          try {
+            const decoded = new TextDecoder(enc).decode(bytes);
+            // Check if decoded text contains expected Japanese header
+            if (decoded.includes('商品管理番号') || decoded.includes('日付') || decoded.includes('実績額')) {
+              text = decoded;
+              break;
+            }
+            if (!text) text = decoded;
+          } catch(e) {}
+        }
+        if (text) parseCSV(text, f.name);
+      } catch(e) {
+        console.error('File read error:', e);
+      }
       pending--;
       if (pending === 0) afterLoad();
     };
-    reader.readAsText(f, 'Shift_JIS');
+    reader.readAsArrayBuffer(f);
   });
 }
 
 function parseCSV(text, fname) {
+  // Normalize line endings (Windows CRLF -> LF)
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const lines = text.split('\n');
   let hi = -1;
   for (let i = 0; i < lines.length; i++) {
