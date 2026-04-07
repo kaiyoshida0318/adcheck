@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ADcheck — 楽天RPP 日別使用金額</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -185,7 +186,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn primary" onclick="document.getElementById('addFileInput').click()">+ CSV追加</button>
-    <input type="file" id="addFileInput" class="file-input" accept=".csv" multiple onchange="handleFiles(event)">
+    <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
   </div>
 </header>
 
@@ -204,7 +205,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       <div class="drop-zone-text">ここにCSVファイルをドロップ</div>
       <div class="drop-zone-hint">またはクリックしてファイルを選択</div>
     </div>
-    <input type="file" id="fileInput" class="file-input" accept=".csv" multiple onchange="handleFiles(event)">
+    <input type="file" id="fileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
     <div class="upload-note">
       対応形式：楽天RMS「検索連動型広告（RPP）」→「パフォーマンスレポート」→「全商品レポートダウンロード」<br>
       ファイル形式：CSV（CP932 / Shift-JIS）
@@ -349,32 +350,41 @@ function handleFiles(e) {
 }
 
 function readFiles(files) {
-  let pending = files.length;
-  if (!pending) return;
-  Array.from(files).forEach(f => {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const bytes = new Uint8Array(ev.target.result);
-        let text = '';
-        // Try UTF-8 first (no BOM check needed - modern browsers handle it)
-        const utf8 = new TextDecoder('utf-8').decode(bytes);
-        if (utf8.includes('商品管理番号') || utf8.includes('コントロールカラム') || utf8.includes('実績額')) {
-          text = utf8;
-        } else {
-          // Fallback to Shift-JIS for legacy files from RMS
-          const sjis = new TextDecoder('shift-jis').decode(bytes);
-          text = sjis;
+  if (!files || files.length === 0) return;
+  (async () => {
+    const csvTexts = [];
+    for (const f of Array.from(files)) {
+      if (f.name.toLowerCase().endsWith('.zip')) {
+        const buf = await f.arrayBuffer();
+        const zip = await JSZip.loadAsync(buf);
+        for (const [name, entry] of Object.entries(zip.files)) {
+          if (name.toLowerCase().endsWith('.csv') && !entry.dir) {
+            const csvBuf = await entry.async('arraybuffer');
+            const bytes = new Uint8Array(csvBuf);
+            let text = new TextDecoder('utf-8').decode(bytes);
+            if (!text.includes('商品管理番号') && !text.includes('コントロールカラム')) {
+              text = new TextDecoder('shift-jis').decode(bytes);
+            }
+            csvTexts.push({ text, name });
+          }
         }
-        if (text) parseCSV(text, f.name);
-      } catch(e) {
-        console.error('[ADcheck] File read error:', e);
+      } else if (f.name.toLowerCase().endsWith('.csv')) {
+        const buf = await f.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let text = new TextDecoder('utf-8').decode(bytes);
+        if (!text.includes('商品管理番号') && !text.includes('コントロールカラム')) {
+          text = new TextDecoder('shift-jis').decode(bytes);
+        }
+        csvTexts.push({ text, name: f.name });
       }
-      pending--;
-      if (pending === 0) afterLoad();
-    };
-    reader.readAsArrayBuffer(f);
-  });
+    }
+    if (csvTexts.length === 0) {
+      alert('CSVファイルが見つかりませんでした。ZIPまたはCSVファイルを選択してください。');
+      return;
+    }
+    csvTexts.forEach(({ text, name }) => parseCSV(text, name));
+    afterLoad();
+  })();
 }
 
 function parseCSV(text, fname) {
