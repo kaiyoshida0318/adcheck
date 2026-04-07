@@ -44,21 +44,19 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 /* ── Layout ── */
 .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
 
-/* ── Upload ── */
-#uploadScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 52px); padding: 40px 24px; }
-.upload-card { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); padding: 40px; max-width: 560px; width: 100%; text-align: center; box-shadow: var(--shadow); }
-.upload-icon { width: 56px; height: 56px; background: var(--red-light); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
-.upload-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
-.upload-card p { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
-.drop-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 28px 20px; cursor: pointer; transition: all 0.15s; margin-bottom: 16px; }
-.drop-zone:hover, .drop-zone.drag { border-color: var(--red); background: var(--red-light); }
-.drop-zone-text { font-size: 13px; color: var(--text2); margin-top: 8px; }
-.drop-zone-hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+/* ── Upload (hidden, only accessible via header button) ── */
+#uploadScreen { display: none; }
 .file-input { display: none; }
-.upload-note { font-size: 11px; color: var(--text3); line-height: 1.6; }
+/* ── Empty state ── */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; }
+.empty-icon { width: 64px; height: 64px; background: var(--red-light); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+.empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.empty-state p { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 20px; }
+.empty-upload-btn { font-size: 13px; padding: 10px 20px; border-radius: var(--radius-sm); border: none; background: var(--red); color: #fff; cursor: pointer; font-family: inherit; font-weight: 500; transition: all 0.15s; }
+.empty-upload-btn:hover { background: var(--red-dark); }
 
 /* ── Main ── */
-#mainScreen { display: none; }
+#mainScreen { display: block; }
 
 /* ── Summary ── */
 .summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
@@ -185,37 +183,27 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="header-right">
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
-    <button class="header-btn primary" onclick="document.getElementById('addFileInput').click()">+ CSV追加</button>
+    <button class="header-btn primary" onclick="document.getElementById('addFileInput').click()">+ レポート追加</button>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
   </div>
 </header>
 
-<!-- Upload Screen -->
-<div id="uploadScreen">
-  <div class="upload-card">
-    <div class="upload-icon">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    </div>
-    <h2>RPPレポートをアップロード</h2>
-    <p>楽天RMSからダウンロードした全商品レポートCSVを読み込んでください。<br>複数日のファイルを一度に選択できます。</p>
-    <div class="drop-zone" id="dropZone"
-      onclick="document.getElementById('fileInput').click()"
-      ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      <div class="drop-zone-text">ここにCSVファイルをドロップ</div>
-      <div class="drop-zone-hint">またはクリックしてファイルを選択</div>
-    </div>
-    <input type="file" id="fileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
-    <div class="upload-note">
-      対応形式：楽天RMS「検索連動型広告（RPP）」→「パフォーマンスレポート」→「全商品レポートダウンロード」<br>
-      ファイル形式：CSV（CP932 / Shift-JIS）
-    </div>
-  </div>
-</div>
+<!-- fileInput（非表示、右上ボタンから起動） -->
+<input type="file" id="fileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
 
-<!-- Main Screen -->
+<!-- Main Screen（常時表示） -->
 <div id="mainScreen">
   <div class="container">
+    <div id="emptyState" class="empty-state">
+      <div class="empty-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <h3>データがまだありません</h3>
+      <p>楽天RMSからダウンロードしたRPPレポート（ZIP / CSV）を<br>右上の「+ レポート追加」ボタンで読み込んでください。</p>
+      <button class="empty-upload-btn" onclick="document.getElementById('addFileInput').click()">+ レポートを追加する</button>
+      <p style="margin-top:12px;font-size:11px;color:var(--text3)">対応形式：楽天RMS →「検索連動型広告（RPP）」→「パフォーマンスレポート」→「全商品レポートダウンロード」</p>
+    </div>
+    <div id="dataArea" style="display:none">
     <div class="summary-bar" id="summaryBar"></div>
     <div class="chips" id="chips"></div>
     <div class="table-card">
@@ -248,6 +236,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       <div id="itemList"></div>
       <div class="pagination" id="pagination"></div>
     </div>
+    </div><!-- /dataArea -->
   </div>
 </div>
 
@@ -422,12 +411,13 @@ function parseCSV(text, fname) {
 }
 
 function afterLoad() {
-  document.getElementById('uploadScreen').style.display = 'none';
-  document.getElementById('mainScreen').style.display = 'block';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('dataArea').style.display = 'block';
   populateMonthSel();
   const appId = localStorage.getItem('rakuten_app_id');
+  const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
-  if (appId && shopCode) fetchAllProductInfo();
+  if (appId && accessKey && shopCode) fetchAllProductInfo();
   renderAll();
 }
 
@@ -682,8 +672,9 @@ function removeDate(d) {
 function clearAll() {
   Object.keys(DB).forEach(k => delete DB[k]);
   expandedSet.clear();
-  document.getElementById('uploadScreen').style.display = 'flex';
-  document.getElementById('mainScreen').style.display = 'none';
+  productCache = {};
+  document.getElementById('emptyState').style.display = 'flex';
+  document.getElementById('dataArea').style.display = 'none';
 }
 
 function exportCSV() {
