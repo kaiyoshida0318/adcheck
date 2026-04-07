@@ -244,7 +244,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
     <h3>⚙ 設定</h3>
-    <p>楽天Developers（webservice.rakuten.co.jp）で取得したアプリIDを入力してください。商品名・商品画像の自動取得に使用します。このIDはあなたのブラウザにのみ保存され、外部に送信されることはありません。</p>
+    <p>楽天アプリID・アクセスキーを入力すると商品画像が自動取得されます。GitHub PATを入力するとデータがGitHubに保存され、どのPCからも同じデータが閲覧できます。</p>
     <div class="modal-field">
       <label class="modal-label">アプリケーションID（Application ID）</label>
       <input type="text" class="modal-input" id="appIdInput" placeholder="例：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
@@ -259,6 +259,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       <label class="modal-label">店舗コード（shopCode）</label>
       <input type="text" class="modal-input" id="shopCodeInput" placeholder="例：yukaiya">
       <div class="modal-hint">楽天市場の店舗URLに含まれる英数字のコードです。<br>例：item.rakuten.co.jp/<strong>yukaiya</strong>/xxxxxxxx/</div>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">GitHub PAT（データ共有用・任意）</label>
+      <input type="password" class="modal-input" id="githubPatInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+      <div class="modal-hint">入力すると全PCでデータを共有できます。GitHubのSettings → Developer settings → Personal access tokens で発行（repo権限）。</div>
     </div>
     <div id="modalStatus" class="modal-status"></div>
     <div class="modal-actions">
@@ -278,23 +283,94 @@ let currentPage = 1;
 const PAGE = 25;
 const DOW = ['日','月','火','水','木','金','土'];
 
+
+// ── GitHub データ永続化 ──
+const GH_OWNER = 'kaiyoshida0318';
+const GH_REPO = 'adcheck';
+const GH_FILE = 'data/rpp_data.json';
+
+async function saveToGitHub() {
+  const pat = localStorage.getItem('github_pat');
+  if (!pat) return;
+  try {
+    const headers = {
+      'Authorization': `token ${pat}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    };
+    // 現在のファイルのSHAを取得
+    let sha = null;
+    const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, { headers });
+    if (getRes.ok) {
+      const getJson = await getRes.json();
+      sha = getJson.sha;
+    }
+    // データをJSON化してBase64エンコード
+    const payload = { DB, productCache };
+    const jsonStr = JSON.stringify(payload, null, 2);
+    const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+    // PUTで保存
+    const body = {
+      message: `RPPデータ更新 ${new Date().toLocaleString('ja-JP')}`,
+      content: base64,
+      ...(sha ? { sha } : {})
+    };
+    const putRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body)
+    });
+    if (!putRes.ok) {
+      const err = await putRes.json();
+      console.error('[ADcheck] GitHub save error:', err);
+    } else {
+      console.log('[ADcheck] GitHub保存成功');
+    }
+  } catch(e) {
+    console.error('[ADcheck] GitHub save exception:', e);
+  }
+}
+
+async function loadFromGitHub() {
+  try {
+    // PATなしでも公開リポジトリならraw URLで読める
+    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_FILE}`;
+    const res = await fetch(url + '?t=' + Date.now());
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (data && data.DB && Object.keys(data.DB).length > 0) {
+      Object.assign(DB, data.DB);
+      if (data.productCache) Object.assign(productCache, data.productCache);
+      return true;
+    }
+    return false;
+  } catch(e) {
+    console.error('[ADcheck] GitHub load error:', e);
+    return false;
+  }
+}
+
 // ── Settings ──
 function loadSettings() {
   const id = localStorage.getItem('rakuten_app_id') || '';
   const ak = localStorage.getItem('rakuten_access_key') || '';
   const sc = localStorage.getItem('rakuten_shop_code') || '';
+  const pat = localStorage.getItem('github_pat') || '';
   document.getElementById('appIdInput').value = id;
   document.getElementById('accessKeyInput').value = ak;
   document.getElementById('shopCodeInput').value = sc;
+  document.getElementById('githubPatInput').value = pat;
   updateApiStatus(id, ak);
 }
 function saveSettings() {
   const id = document.getElementById('appIdInput').value.trim();
   const ak = document.getElementById('accessKeyInput').value.trim();
   const sc = document.getElementById('shopCodeInput').value.trim();
+  const pat = document.getElementById('githubPatInput').value.trim();
   localStorage.setItem('rakuten_app_id', id);
   localStorage.setItem('rakuten_access_key', ak);
   localStorage.setItem('rakuten_shop_code', sc);
+  localStorage.setItem('github_pat', pat);
   updateApiStatus(id, ak);
   showModalStatus('設定を保存しました', 'ok');
   setTimeout(closeSettings, 1000);
@@ -693,7 +769,7 @@ function exportCSV() {
 }
 
 // ── Init ──
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   const id = localStorage.getItem('rakuten_app_id') || '';
   const ak = localStorage.getItem('rakuten_access_key') || '';
   updateApiStatus(id, ak);
@@ -701,23 +777,16 @@ window.addEventListener('DOMContentLoaded', () => {
     if (e.target === document.getElementById('settingsModal')) closeSettings();
   });
   // ページ全体でドラッグ&ドロップを受け取る
-  document.body.addEventListener('dragover', e => {
-    e.preventDefault();
-    const dz = document.getElementById('dropZone');
-    if (dz) dz.classList.add('drag');
-  });
-  document.body.addEventListener('dragleave', e => {
-    if (!e.relatedTarget || e.relatedTarget === document.documentElement) {
-      const dz = document.getElementById('dropZone');
-      if (dz) dz.classList.remove('drag');
-    }
-  });
+  document.body.addEventListener('dragover', e => e.preventDefault());
   document.body.addEventListener('drop', e => {
     e.preventDefault();
-    const dz = document.getElementById('dropZone');
-    if (dz) dz.classList.remove('drag');
     if (e.dataTransfer.files.length > 0) readFiles(e.dataTransfer.files);
   });
+  // GitHubからデータを読み込む（全PCで共有）
+  const loaded = await loadFromGitHub();
+  if (loaded) {
+    afterLoad(true);
+  }
 });
 </script>
 </body>
