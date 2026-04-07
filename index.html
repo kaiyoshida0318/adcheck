@@ -256,9 +256,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <h3>⚙ 設定</h3>
     <p>楽天Developers（webservice.rakuten.co.jp）で取得したアプリIDを入力してください。商品名・商品画像の自動取得に使用します。このIDはあなたのブラウザにのみ保存され、外部に送信されることはありません。</p>
     <div class="modal-field">
-      <label class="modal-label">楽天アプリID（Application ID）</label>
-      <input type="text" class="modal-input" id="appIdInput" placeholder="例：1234567890123456789">
-      <div class="modal-hint">数字のみの長い文字列です。楽天Developers のマイアプリ一覧で確認できます。</div>
+      <label class="modal-label">アプリケーションID（Application ID）</label>
+      <input type="text" class="modal-input" id="appIdInput" placeholder="例：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+      <div class="modal-hint">楽天Developers のアプリ一覧 →「アプリケーションID」欄の値です。</div>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">アクセスキー（Access Key）</label>
+      <input type="text" class="modal-input" id="accessKeyInput" placeholder="例：pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+      <div class="modal-hint">アプリ一覧の「アクセスキー」欄の目のアイコンをクリックすると表示されます。</div>
     </div>
     <div class="modal-field">
       <label class="modal-label">店舗コード（shopCode）</label>
@@ -286,24 +291,28 @@ const DOW = ['日','月','火','水','木','金','土'];
 // ── Settings ──
 function loadSettings() {
   const id = localStorage.getItem('rakuten_app_id') || '';
+  const ak = localStorage.getItem('rakuten_access_key') || '';
   const sc = localStorage.getItem('rakuten_shop_code') || '';
   document.getElementById('appIdInput').value = id;
+  document.getElementById('accessKeyInput').value = ak;
   document.getElementById('shopCodeInput').value = sc;
-  updateApiStatus(id);
+  updateApiStatus(id, ak);
 }
 function saveSettings() {
   const id = document.getElementById('appIdInput').value.trim();
+  const ak = document.getElementById('accessKeyInput').value.trim();
   const sc = document.getElementById('shopCodeInput').value.trim();
   localStorage.setItem('rakuten_app_id', id);
+  localStorage.setItem('rakuten_access_key', ak);
   localStorage.setItem('rakuten_shop_code', sc);
-  updateApiStatus(id);
+  updateApiStatus(id, ak);
   showModalStatus('設定を保存しました', 'ok');
   setTimeout(closeSettings, 1000);
-  if (id && sc) fetchAllProductInfo();
+  if (id && ak && sc) fetchAllProductInfo();
 }
-function updateApiStatus(id) {
+function updateApiStatus(id, ak) {
   const el = document.getElementById('apiStatus');
-  if (id) { el.textContent = 'アプリID設定済み'; el.className = 'api-status set'; }
+  if (id && ak) { el.textContent = 'アプリID設定済み'; el.className = 'api-status set'; }
   else { el.textContent = 'アプリID未設定'; el.className = 'api-status unset'; }
 }
 function openSettings() { loadSettings(); document.getElementById('settingsModal').classList.add('open'); }
@@ -314,17 +323,19 @@ function showModalStatus(msg, type) {
 }
 async function testApi() {
   const id = document.getElementById('appIdInput').value.trim();
+  const ak = document.getElementById('accessKeyInput').value.trim();
   const sc = document.getElementById('shopCodeInput').value.trim();
-  if (!id) { showModalStatus('アプリIDを入力してください', 'err'); return; }
+  if (!id) { showModalStatus('アプリケーションIDを入力してください', 'err'); return; }
+  if (!ak) { showModalStatus('アクセスキーを入力してください', 'err'); return; }
   if (!sc) { showModalStatus('店舗コードを入力してください', 'err'); return; }
   showModalStatus('接続テスト中...', 'ok');
   try {
-    const url = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706?applicationId=${id}&shopCode=${sc}&hits=1&format=json`;
-    const res = await fetch(url);
+    const url = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601?applicationId=${id}&accessKey=${ak}&shopCode=${sc}&hits=1&format=json`;
+    const res = await fetch(url, { headers: { 'Origin': 'https://kaiyoshida0318.github.io' } });
     const data = await res.json();
     if (data.error) showModalStatus(`エラー：${data.error_description}`, 'err');
     else showModalStatus(`接続成功！${data.count || 0}件の商品が見つかりました`, 'ok');
-  } catch(e) { showModalStatus('接続に失敗しました。アプリIDと店舗コードを確認してください', 'err'); }
+  } catch(e) { showModalStatus('接続に失敗しました。IDとキーを確認してください', 'err'); }
 }
 
 // ── File Handling ──
@@ -392,22 +403,23 @@ function afterLoad() {
 // ── Rakuten API ──
 async function fetchAllProductInfo() {
   const appId = localStorage.getItem('rakuten_app_id');
+  const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
-  if (!appId || !shopCode) return;
+  if (!appId || !accessKey || !shopCode) return;
   const ids = Object.keys(DB);
   const batchSize = 5;
   for (let i = 0; i < ids.length; i += batchSize) {
     const batch = ids.slice(i, i + batchSize);
-    await Promise.all(batch.map(id => fetchProductInfo(id, appId, shopCode)));
+    await Promise.all(batch.map(id => fetchProductInfo(id, appId, accessKey, shopCode)));
     renderPage();
   }
 }
 
-async function fetchProductInfo(itemId, appId, shopCode) {
+async function fetchProductInfo(itemId, appId, accessKey, shopCode) {
   if (productCache[itemId]) return;
   try {
-    const url = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706?applicationId=${appId}&shopCode=${shopCode}&keyword=${itemId}&hits=5&format=json&elements=itemName,mediumImageUrls,itemCode`;
-    const res = await fetch(url);
+    const url = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601?applicationId=${appId}&accessKey=${accessKey}&shopCode=${shopCode}&keyword=${itemId}&hits=5&format=json&elements=itemName,mediumImageUrls,itemCode`;
+    const res = await fetch(url, { headers: { 'Origin': 'https://kaiyoshida0318.github.io' } });
     const data = await res.json();
     if (data.Items && data.Items.length > 0) {
       const matched = data.Items.find(i => {
@@ -660,7 +672,9 @@ function exportCSV() {
 
 // ── Init ──
 window.addEventListener('DOMContentLoaded', () => {
-  loadSettings();
+  const id = localStorage.getItem('rakuten_app_id') || '';
+  const ak = localStorage.getItem('rakuten_access_key') || '';
+  updateApiStatus(id, ak);
   document.getElementById('settingsModal').addEventListener('click', e => {
     if (e.target === document.getElementById('settingsModal')) closeSettings();
   });
