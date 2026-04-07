@@ -506,9 +506,10 @@ async function fetchAllProductInfo() {
   const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
   if (!appId || !accessKey || !shopCode) return;
-  // shopCode一括取得方式: 30件/ページ × 最大10ページ = 300件まで対応
   const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
   const headers = { 'Origin': 'https://kaiyoshida0318.github.io' };
+
+  // Step1: shopCode一括取得（公開中商品を高速取得）
   let page = 1;
   let hasMore = true;
   while (hasMore) {
@@ -533,14 +534,29 @@ async function fetchAllProductInfo() {
       renderPage();
       hasMore = items.length === 30;
       page++;
-      if (hasMore) await new Promise(r => setTimeout(r, 300)); // 0.3秒ディレイ
+      if (hasMore) await new Promise(r => setTimeout(r, 300));
     } catch(e) { break; }
   }
-  renderPage();
-}
 
-async function fetchProductInfo(itemId, appId, accessKey, shopCode) {
-  // 個別フェッチは使わない（一括取得に統一）
+  // Step2: 漏れた商品をitemCode個別検索でフォールバック（廃番・非公開商品対応）
+  const missing = Object.keys(DB).filter(id => !productCache[id]);
+  for (const itemId of missing) {
+    try {
+      const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${itemId}&hits=1&format=json&elements=itemName,mediumImageUrls,itemCode`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) { await new Promise(r => setTimeout(r, 500)); continue; }
+      const data = await res.json();
+      const item = data.Items?.[0]?.Item;
+      productCache[itemId] = {
+        name: item?.itemName || '',
+        img: item?.mediumImageUrls?.[0]?.imageUrl || null,
+        shopCode: itemId,
+      };
+      renderPage();
+      await new Promise(r => setTimeout(r, 300));
+    } catch(e) { continue; }
+  }
+  renderPage();
 }
 
 // ── Data Helpers ──
