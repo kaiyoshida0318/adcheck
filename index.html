@@ -699,6 +699,24 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('settingsModal').addEventListener('click', e => {
     if (e.target === document.getElementById('settingsModal')) closeSettings();
   });
+  // ページ全体でドラッグ&ドロップを受け取る
+  document.body.addEventListener('dragover', e => {
+    e.preventDefault();
+    const dz = document.getElementById('dropZone');
+    if (dz) dz.classList.add('drag');
+  });
+  document.body.addEventListener('dragleave', e => {
+    if (!e.relatedTarget || e.relatedTarget === document.documentElement) {
+      const dz = document.getElementById('dropZone');
+      if (dz) dz.classList.remove('drag');
+    }
+  });
+  document.body.addEventListener('drop', e => {
+    e.preventDefault();
+    const dz = document.getElementById('dropZone');
+    if (dz) dz.classList.remove('drag');
+    if (e.dataTransfer.files.length > 0) readFiles(e.dataTransfer.files);
+  });
 });
 </script>
 </body>
