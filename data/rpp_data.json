@@ -1,1 +1,1654 @@
-{}
+{
+  "DB": {
+    "565955": {
+      "id": "565955",
+      "url": "https://item.rakuten.co.jp/yukaiya/565955/",
+      "days": {
+        "2026-04-01": {
+          "spend": 870,
+          "clicks": 43,
+          "cpc": 21,
+          "ctr": 0.33,
+          "bid": 20,
+          "roas720": 896.55,
+          "sales720": 7800,
+          "orders720": 11,
+          "roas12": 896.55
+        }
+      }
+    },
+    "10000527": {
+      "id": "10000527",
+      "url": "https://item.rakuten.co.jp/yukaiya/10000527/",
+      "days": {
+        "2026-04-01": {
+          "spend": 208,
+          "clicks": 7,
+          "cpc": 30,
+          "ctr": 0.16,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10000588": {
+      "id": "10000588",
+      "url": "https://item.rakuten.co.jp/yukaiya/10000588/",
+      "days": {
+        "2026-04-01": {
+          "spend": 280,
+          "clicks": 18,
+          "cpc": 16,
+          "ctr": 0.02,
+          "bid": 20,
+          "roas720": 1057.14,
+          "sales720": 2960,
+          "orders720": 2,
+          "roas12": 0
+        }
+      }
+    },
+    "10001057": {
+      "id": "10001057",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001057/",
+      "days": {
+        "2026-04-01": {
+          "spend": 2344,
+          "clicks": 129,
+          "cpc": 19,
+          "ctr": 0.06,
+          "bid": 20,
+          "roas720": 105.8,
+          "sales720": 2480,
+          "orders720": 2,
+          "roas12": 105.8
+        }
+      }
+    },
+    "10001083": {
+      "id": "10001083",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001083/",
+      "days": {
+        "2026-04-01": {
+          "spend": 90,
+          "clicks": 5,
+          "cpc": 18,
+          "ctr": 0.18,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001095": {
+      "id": "10001095",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001095/",
+      "days": {
+        "2026-04-01": {
+          "spend": 190,
+          "clicks": 10,
+          "cpc": 19,
+          "ctr": 0.04,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001096": {
+      "id": "10001096",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001096/",
+      "days": {
+        "2026-04-01": {
+          "spend": 560,
+          "clicks": 16,
+          "cpc": 35,
+          "ctr": 0.06,
+          "bid": 20,
+          "roas720": 707.14,
+          "sales720": 3960,
+          "orders720": 2,
+          "roas12": 707.14
+        }
+      }
+    },
+    "10001098": {
+      "id": "10001098",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001098/",
+      "days": {
+        "2026-04-01": {
+          "spend": 2301,
+          "clicks": 161,
+          "cpc": 15,
+          "ctr": 0.07,
+          "bid": 20,
+          "roas720": 321.59,
+          "sales720": 7400,
+          "orders720": 6,
+          "roas12": 140.8
+        }
+      }
+    },
+    "10001118": {
+      "id": "10001118",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001118/",
+      "days": {
+        "2026-04-01": {
+          "spend": 640,
+          "clicks": 24,
+          "cpc": 27,
+          "ctr": 0.12,
+          "bid": 20,
+          "roas720": 462.5,
+          "sales720": 2960,
+          "orders720": 2,
+          "roas12": 462.5
+        }
+      }
+    },
+    "10001120": {
+      "id": "10001120",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001120/",
+      "days": {
+        "2026-04-01": {
+          "spend": 430,
+          "clicks": 16,
+          "cpc": 27,
+          "ctr": 0.06,
+          "bid": 20,
+          "roas720": 986.04,
+          "sales720": 4240,
+          "orders720": 3,
+          "roas12": 986.04
+        }
+      }
+    },
+    "10001130": {
+      "id": "10001130",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001130/",
+      "days": {
+        "2026-04-01": {
+          "spend": 320,
+          "clicks": 16,
+          "cpc": 20,
+          "ctr": 2.29,
+          "bid": 20,
+          "roas720": 937.5,
+          "sales720": 3000,
+          "orders720": 3,
+          "roas12": 937.5
+        }
+      }
+    },
+    "10001131": {
+      "id": "10001131",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001131/",
+      "days": {
+        "2026-04-01": {
+          "spend": 180,
+          "clicks": 9,
+          "cpc": 20,
+          "ctr": 1.52,
+          "bid": 20,
+          "roas720": 822.22,
+          "sales720": 1480,
+          "orders720": 1,
+          "roas12": 0
+        }
+      }
+    },
+    "10001134": {
+      "id": "10001134",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001134/",
+      "days": {
+        "2026-04-01": {
+          "spend": 140,
+          "clicks": 5,
+          "cpc": 28,
+          "ctr": 0.45,
+          "bid": 20,
+          "roas720": 714.28,
+          "sales720": 1000,
+          "orders720": 1,
+          "roas12": 714.28
+        }
+      }
+    },
+    "10001135": {
+      "id": "10001135",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001135/",
+      "days": {
+        "2026-04-01": {
+          "spend": 4050,
+          "clicks": 164,
+          "cpc": 25,
+          "ctr": 0.22,
+          "bid": 20,
+          "roas720": 752.83,
+          "sales720": 30490,
+          "orders720": 23,
+          "roas12": 421.23
+        }
+      }
+    },
+    "10001137": {
+      "id": "10001137",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001137/",
+      "days": {
+        "2026-04-01": {
+          "spend": 280,
+          "clicks": 14,
+          "cpc": 20,
+          "ctr": 0.14,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001142": {
+      "id": "10001142",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001142/",
+      "days": {
+        "2026-04-01": {
+          "spend": 120,
+          "clicks": 6,
+          "cpc": 20,
+          "ctr": 7.22,
+          "bid": 20,
+          "roas720": 1300,
+          "sales720": 1560,
+          "orders720": 1,
+          "roas12": 0
+        }
+      }
+    },
+    "10001143": {
+      "id": "10001143",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001143/",
+      "days": {
+        "2026-04-01": {
+          "spend": 173,
+          "clicks": 9,
+          "cpc": 20,
+          "ctr": 0.05,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001146": {
+      "id": "10001146",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001146/",
+      "days": {
+        "2026-04-01": {
+          "spend": 534,
+          "clicks": 29,
+          "cpc": 19,
+          "ctr": 0.05,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001149": {
+      "id": "10001149",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001149/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1738,
+          "clicks": 55,
+          "cpc": 32,
+          "ctr": 0.21,
+          "bid": 20,
+          "roas720": 90.9,
+          "sales720": 1580,
+          "orders720": 1,
+          "roas12": 90.9
+        }
+      }
+    },
+    "10001150": {
+      "id": "10001150",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001150/",
+      "days": {
+        "2026-04-01": {
+          "spend": 160,
+          "clicks": 15,
+          "cpc": 11,
+          "ctr": 0.28,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001151": {
+      "id": "10001151",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001151/",
+      "days": {
+        "2026-04-01": {
+          "spend": 213,
+          "clicks": 10,
+          "cpc": 22,
+          "ctr": 0.19,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001152": {
+      "id": "10001152",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001152/",
+      "days": {
+        "2026-04-01": {
+          "spend": 620,
+          "clicks": 30,
+          "cpc": 21,
+          "ctr": 0.17,
+          "bid": 20,
+          "roas720": 987.09,
+          "sales720": 6120,
+          "orders720": 4,
+          "roas12": 780.64
+        }
+      }
+    },
+    "10001155": {
+      "id": "10001155",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001155/",
+      "days": {
+        "2026-04-01": {
+          "spend": 362,
+          "clicks": 14,
+          "cpc": 26,
+          "ctr": 0.23,
+          "bid": 20,
+          "roas720": 215.46,
+          "sales720": 780,
+          "orders720": 1,
+          "roas12": 215.46
+        }
+      }
+    },
+    "10001158": {
+      "id": "10001158",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001158/",
+      "days": {
+        "2026-04-01": {
+          "spend": 2200,
+          "clicks": 65,
+          "cpc": 34,
+          "ctr": 0.11,
+          "bid": 20,
+          "roas720": 215.45,
+          "sales720": 4740,
+          "orders720": 3,
+          "roas12": 215.45
+        }
+      }
+    },
+    "10001163": {
+      "id": "10001163",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001163/",
+      "days": {
+        "2026-04-01": {
+          "spend": 236,
+          "clicks": 12,
+          "cpc": 20,
+          "ctr": 0.09,
+          "bid": 20,
+          "roas720": 542.37,
+          "sales720": 1280,
+          "orders720": 1,
+          "roas12": 542.37
+        }
+      }
+    },
+    "10001164": {
+      "id": "10001164",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001164/",
+      "days": {
+        "2026-04-01": {
+          "spend": 2019,
+          "clicks": 73,
+          "cpc": 28,
+          "ctr": 0.09,
+          "bid": 20,
+          "roas720": 72.31,
+          "sales720": 1460,
+          "orders720": 2,
+          "roas12": 38.63
+        }
+      }
+    },
+    "10001167": {
+      "id": "10001167",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001167/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1626,
+          "clicks": 69,
+          "cpc": 24,
+          "ctr": 0.24,
+          "bid": 20,
+          "roas720": 321.03,
+          "sales720": 5220,
+          "orders720": 4,
+          "roas12": 321.03
+        }
+      }
+    },
+    "10001168": {
+      "id": "10001168",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001168/",
+      "days": {
+        "2026-04-01": {
+          "spend": 540,
+          "clicks": 27,
+          "cpc": 20,
+          "ctr": 0.25,
+          "bid": 20,
+          "roas720": 277.77,
+          "sales720": 1500,
+          "orders720": 1,
+          "roas12": 277.77
+        }
+      }
+    },
+    "10001169": {
+      "id": "10001169",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001169/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1762,
+          "clicks": 78,
+          "cpc": 23,
+          "ctr": 0.17,
+          "bid": 20,
+          "roas720": 627.69,
+          "sales720": 11060,
+          "orders720": 10,
+          "roas12": 469.92
+        }
+      }
+    },
+    "10001172": {
+      "id": "10001172",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001172/",
+      "days": {
+        "2026-04-01": {
+          "spend": 680,
+          "clicks": 24,
+          "cpc": 29,
+          "ctr": 0.03,
+          "bid": 20,
+          "roas720": 188.23,
+          "sales720": 1280,
+          "orders720": 1,
+          "roas12": 188.23
+        }
+      }
+    },
+    "10001179": {
+      "id": "10001179",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001179/",
+      "days": {
+        "2026-04-01": {
+          "spend": 675,
+          "clicks": 25,
+          "cpc": 27,
+          "ctr": 0.17,
+          "bid": 20,
+          "roas720": 148.14,
+          "sales720": 1000,
+          "orders720": 1,
+          "roas12": 0
+        }
+      }
+    },
+    "10001180": {
+      "id": "10001180",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001180/",
+      "days": {
+        "2026-04-01": {
+          "spend": 620,
+          "clicks": 25,
+          "cpc": 25,
+          "ctr": 0.03,
+          "bid": 20,
+          "roas720": 287.09,
+          "sales720": 1780,
+          "orders720": 1,
+          "roas12": 287.09
+        }
+      }
+    },
+    "10001181": {
+      "id": "10001181",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001181/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1149,
+          "clicks": 48,
+          "cpc": 24,
+          "ctr": 0.08,
+          "bid": 20,
+          "roas720": 111.4,
+          "sales720": 1280,
+          "orders720": 1,
+          "roas12": 111.4
+        }
+      }
+    },
+    "10001187": {
+      "id": "10001187",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001187/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1002,
+          "clicks": 40,
+          "cpc": 26,
+          "ctr": 0.3,
+          "bid": 20,
+          "roas720": 471.05,
+          "sales720": 4720,
+          "orders720": 4,
+          "roas12": 471.05
+        }
+      }
+    },
+    "10001189": {
+      "id": "10001189",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001189/",
+      "days": {
+        "2026-04-01": {
+          "spend": 840,
+          "clicks": 26,
+          "cpc": 33,
+          "ctr": 0.22,
+          "bid": 20,
+          "roas720": 490.47,
+          "sales720": 4120,
+          "orders720": 4,
+          "roas12": 490.47
+        }
+      }
+    },
+    "10001204": {
+      "id": "10001204",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001204/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1112,
+          "clicks": 40,
+          "cpc": 28,
+          "ctr": 0.09,
+          "bid": 20,
+          "roas720": 345.32,
+          "sales720": 3840,
+          "orders720": 3,
+          "roas12": 0
+        }
+      }
+    },
+    "10001207": {
+      "id": "10001207",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001207/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1360,
+          "clicks": 47,
+          "cpc": 29,
+          "ctr": 1.49,
+          "bid": 20,
+          "roas720": 79.41,
+          "sales720": 1080,
+          "orders720": 1,
+          "roas12": 79.41
+        }
+      }
+    },
+    "10001208": {
+      "id": "10001208",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001208/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1116,
+          "clicks": 39,
+          "cpc": 29,
+          "ctr": 0.18,
+          "bid": 20,
+          "roas720": 618.27,
+          "sales720": 6900,
+          "orders720": 5,
+          "roas12": 618.27
+        }
+      }
+    },
+    "10001209": {
+      "id": "10001209",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001209/",
+      "days": {
+        "2026-04-01": {
+          "spend": 172,
+          "clicks": 14,
+          "cpc": 13,
+          "ctr": 0.08,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001210": {
+      "id": "10001210",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001210/",
+      "days": {
+        "2026-04-01": {
+          "spend": 650,
+          "clicks": 26,
+          "cpc": 25,
+          "ctr": 0.26,
+          "bid": 20,
+          "roas720": 384.61,
+          "sales720": 2500,
+          "orders720": 2,
+          "roas12": 384.61
+        }
+      }
+    },
+    "10001213": {
+      "id": "10001213",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001213/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1093,
+          "clicks": 35,
+          "cpc": 32,
+          "ctr": 0.3,
+          "bid": 20,
+          "roas720": 794.14,
+          "sales720": 8680,
+          "orders720": 8,
+          "roas12": 651.41
+        }
+      }
+    },
+    "10001214": {
+      "id": "10001214",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001214/",
+      "days": {
+        "2026-04-01": {
+          "spend": 10,
+          "clicks": 1,
+          "cpc": 10,
+          "ctr": 0.03,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001215": {
+      "id": "10001215",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001215/",
+      "days": {
+        "2026-04-01": {
+          "spend": 849,
+          "clicks": 41,
+          "cpc": 21,
+          "ctr": 0.08,
+          "bid": 20,
+          "roas720": 235.57,
+          "sales720": 2000,
+          "orders720": 1,
+          "roas12": 235.57
+        }
+      }
+    },
+    "10001217": {
+      "id": "10001217",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001217/",
+      "days": {
+        "2026-04-01": {
+          "spend": 2980,
+          "clicks": 98,
+          "cpc": 31,
+          "ctr": 0.05,
+          "bid": 20,
+          "roas720": 294.63,
+          "sales720": 8780,
+          "orders720": 6,
+          "roas12": 294.63
+        }
+      }
+    },
+    "10001220": {
+      "id": "10001220",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001220/",
+      "days": {
+        "2026-04-01": {
+          "spend": 200,
+          "clicks": 7,
+          "cpc": 29,
+          "ctr": 0.06,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001221": {
+      "id": "10001221",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001221/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1400,
+          "clicks": 64,
+          "cpc": 22,
+          "ctr": 0.12,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001222": {
+      "id": "10001222",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001222/",
+      "days": {
+        "2026-04-01": {
+          "spend": 710,
+          "clicks": 23,
+          "cpc": 31,
+          "ctr": 0.11,
+          "bid": 20,
+          "roas720": 704.22,
+          "sales720": 5000,
+          "orders720": 5,
+          "roas12": 563.38
+        }
+      }
+    },
+    "10001223": {
+      "id": "10001223",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001223/",
+      "days": {
+        "2026-04-01": {
+          "spend": 730,
+          "clicks": 30,
+          "cpc": 25,
+          "ctr": 0.2,
+          "bid": 20,
+          "roas720": 509.58,
+          "sales720": 3720,
+          "orders720": 5,
+          "roas12": 509.58
+        }
+      }
+    },
+    "10001226": {
+      "id": "10001226",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001226/",
+      "days": {
+        "2026-04-01": {
+          "spend": 550,
+          "clicks": 34,
+          "cpc": 17,
+          "ctr": 0.07,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001227": {
+      "id": "10001227",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001227/",
+      "days": {
+        "2026-04-01": {
+          "spend": 90,
+          "clicks": 5,
+          "cpc": 18,
+          "ctr": 0.07,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001236": {
+      "id": "10001236",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001236/",
+      "days": {
+        "2026-04-01": {
+          "spend": 2150,
+          "clicks": 72,
+          "cpc": 30,
+          "ctr": 0.37,
+          "bid": 20,
+          "roas720": 499.53,
+          "sales720": 10740,
+          "orders720": 8,
+          "roas12": 430.69
+        }
+      }
+    },
+    "10001237": {
+      "id": "10001237",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001237/",
+      "days": {
+        "2026-04-01": {
+          "spend": 570,
+          "clicks": 16,
+          "cpc": 36,
+          "ctr": 5.77,
+          "bid": 20,
+          "roas720": 526.31,
+          "sales720": 3000,
+          "orders720": 3,
+          "roas12": 350.87
+        }
+      }
+    },
+    "10001240": {
+      "id": "10001240",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001240/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1078,
+          "clicks": 58,
+          "cpc": 19,
+          "ctr": 0.07,
+          "bid": 20,
+          "roas720": 96.47,
+          "sales720": 1040,
+          "orders720": 1,
+          "roas12": 96.47
+        }
+      }
+    },
+    "10001243": {
+      "id": "10001243",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001243/",
+      "days": {
+        "2026-04-01": {
+          "spend": 75,
+          "clicks": 4,
+          "cpc": 19,
+          "ctr": 0,
+          "bid": 20,
+          "roas720": 2400,
+          "sales720": 1800,
+          "orders720": 1,
+          "roas12": 2400
+        }
+      }
+    },
+    "10001251": {
+      "id": "10001251",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001251/",
+      "days": {
+        "2026-04-01": {
+          "spend": 2725,
+          "clicks": 55,
+          "cpc": 50,
+          "ctr": 0.19,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001252": {
+      "id": "10001252",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001252/",
+      "days": {
+        "2026-04-01": {
+          "spend": 830,
+          "clicks": 29,
+          "cpc": 29,
+          "ctr": 0.04,
+          "bid": 20,
+          "roas720": 465.06,
+          "sales720": 3860,
+          "orders720": 3,
+          "roas12": 298.79
+        }
+      }
+    },
+    "10001254": {
+      "id": "10001254",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001254/",
+      "days": {
+        "2026-04-01": {
+          "spend": 590,
+          "clicks": 33,
+          "cpc": 18,
+          "ctr": 0.14,
+          "bid": 20,
+          "roas720": 169.49,
+          "sales720": 1000,
+          "orders720": 1,
+          "roas12": 169.49
+        }
+      }
+    },
+    "10001255": {
+      "id": "10001255",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001255/",
+      "days": {
+        "2026-04-01": {
+          "spend": 3298,
+          "clicks": 147,
+          "cpc": 23,
+          "ctr": 0.17,
+          "bid": 20,
+          "roas720": 787.75,
+          "sales720": 25980,
+          "orders720": 20,
+          "roas12": 593.69
+        }
+      }
+    },
+    "10001256": {
+      "id": "10001256",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001256/",
+      "days": {
+        "2026-04-01": {
+          "spend": 560,
+          "clicks": 25,
+          "cpc": 23,
+          "ctr": 0.21,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001265": {
+      "id": "10001265",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001265/",
+      "days": {
+        "2026-04-01": {
+          "spend": 397,
+          "clicks": 17,
+          "cpc": 24,
+          "ctr": 0.11,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001266": {
+      "id": "10001266",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001266/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1482,
+          "clicks": 47,
+          "cpc": 32,
+          "ctr": 0.1,
+          "bid": 20,
+          "roas720": 774.62,
+          "sales720": 11480,
+          "orders720": 8,
+          "roas12": 587.04
+        }
+      }
+    },
+    "10001267": {
+      "id": "10001267",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001267/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1304,
+          "clicks": 63,
+          "cpc": 21,
+          "ctr": 0.1,
+          "bid": 20,
+          "roas720": 964.72,
+          "sales720": 12580,
+          "orders720": 2,
+          "roas12": 59.81
+        }
+      }
+    },
+    "10001270": {
+      "id": "10001270",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001270/",
+      "days": {
+        "2026-04-01": {
+          "spend": 290,
+          "clicks": 10,
+          "cpc": 29,
+          "ctr": 0.06,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001271": {
+      "id": "10001271",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001271/",
+      "days": {
+        "2026-04-01": {
+          "spend": 80,
+          "clicks": 4,
+          "cpc": 20,
+          "ctr": 0.07,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001274": {
+      "id": "10001274",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001274/",
+      "days": {
+        "2026-04-01": {
+          "spend": 600,
+          "clicks": 33,
+          "cpc": 19,
+          "ctr": 0.22,
+          "bid": 20,
+          "roas720": 180,
+          "sales720": 1080,
+          "orders720": 1,
+          "roas12": 180
+        }
+      }
+    },
+    "10001278": {
+      "id": "10001278",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001278/",
+      "days": {
+        "2026-04-01": {
+          "spend": 85,
+          "clicks": 3,
+          "cpc": 29,
+          "ctr": 0.05,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001279": {
+      "id": "10001279",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001279/",
+      "days": {
+        "2026-04-01": {
+          "spend": 466,
+          "clicks": 25,
+          "cpc": 19,
+          "ctr": 0.15,
+          "bid": 20,
+          "roas720": 317.59,
+          "sales720": 1480,
+          "orders720": 1,
+          "roas12": 317.59
+        }
+      }
+    },
+    "10001280": {
+      "id": "10001280",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001280/",
+      "days": {
+        "2026-04-01": {
+          "spend": 2000,
+          "clicks": 84,
+          "cpc": 24,
+          "ctr": 0.06,
+          "bid": 20,
+          "roas720": 642,
+          "sales720": 12840,
+          "orders720": 4,
+          "roas12": 642
+        }
+      }
+    },
+    "10001286": {
+      "id": "10001286",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001286/",
+      "days": {
+        "2026-04-01": {
+          "spend": 446,
+          "clicks": 17,
+          "cpc": 27,
+          "ctr": 0.11,
+          "bid": 20,
+          "roas720": 286.99,
+          "sales720": 1280,
+          "orders720": 1,
+          "roas12": 286.99
+        }
+      }
+    },
+    "10001287": {
+      "id": "10001287",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001287/",
+      "days": {
+        "2026-04-01": {
+          "spend": 340,
+          "clicks": 14,
+          "cpc": 25,
+          "ctr": 0.17,
+          "bid": 20,
+          "roas720": 3388.23,
+          "sales720": 11520,
+          "orders720": 2,
+          "roas12": 3388.23
+        }
+      }
+    },
+    "10001288": {
+      "id": "10001288",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001288/",
+      "days": {
+        "2026-04-01": {
+          "spend": 150,
+          "clicks": 9,
+          "cpc": 17,
+          "ctr": 0.08,
+          "bid": 20,
+          "roas720": 1653.33,
+          "sales720": 2480,
+          "orders720": 1,
+          "roas12": 1653.33
+        }
+      }
+    },
+    "10001289": {
+      "id": "10001289",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001289/",
+      "days": {
+        "2026-04-01": {
+          "spend": 500,
+          "clicks": 14,
+          "cpc": 36,
+          "ctr": 0.2,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001290": {
+      "id": "10001290",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001290/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1040,
+          "clicks": 43,
+          "cpc": 25,
+          "ctr": 0.13,
+          "bid": 20,
+          "roas720": 380.76,
+          "sales720": 3960,
+          "orders720": 2,
+          "roas12": 380.76
+        }
+      }
+    },
+    "10001291": {
+      "id": "10001291",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001291/",
+      "days": {
+        "2026-04-01": {
+          "spend": 660,
+          "clicks": 23,
+          "cpc": 29,
+          "ctr": 0.05,
+          "bid": 20,
+          "roas720": 825.75,
+          "sales720": 5450,
+          "orders720": 3,
+          "roas12": 825.75
+        }
+      }
+    },
+    "10001292": {
+      "id": "10001292",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001292/",
+      "days": {
+        "2026-04-01": {
+          "spend": 1350,
+          "clicks": 50,
+          "cpc": 27,
+          "ctr": 0.24,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001293": {
+      "id": "10001293",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001293/",
+      "days": {
+        "2026-04-01": {
+          "spend": 290,
+          "clicks": 9,
+          "cpc": 33,
+          "ctr": 0.09,
+          "bid": 20,
+          "roas720": 882.75,
+          "sales720": 2560,
+          "orders720": 2,
+          "roas12": 882.75
+        }
+      }
+    },
+    "10001294": {
+      "id": "10001294",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001294/",
+      "days": {
+        "2026-04-01": {
+          "spend": 130,
+          "clicks": 6,
+          "cpc": 22,
+          "ctr": 0.04,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001296": {
+      "id": "10001296",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001296/",
+      "days": {
+        "2026-04-01": {
+          "spend": 500,
+          "clicks": 14,
+          "cpc": 36,
+          "ctr": 5.98,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001299": {
+      "id": "10001299",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001299/",
+      "days": {
+        "2026-04-01": {
+          "spend": 40,
+          "clicks": 2,
+          "cpc": 20,
+          "ctr": 10,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001302": {
+      "id": "10001302",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001302/",
+      "days": {
+        "2026-04-01": {
+          "spend": 90,
+          "clicks": 8,
+          "cpc": 12,
+          "ctr": 0.11,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001303": {
+      "id": "10001303",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001303/",
+      "days": {
+        "2026-04-01": {
+          "spend": 500,
+          "clicks": 22,
+          "cpc": 23,
+          "ctr": 0.11,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001304": {
+      "id": "10001304",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001304/",
+      "days": {
+        "2026-04-01": {
+          "spend": 290,
+          "clicks": 10,
+          "cpc": 29,
+          "ctr": 0.1,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001305": {
+      "id": "10001305",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001305/",
+      "days": {
+        "2026-04-01": {
+          "spend": 962,
+          "clicks": 31,
+          "cpc": 32,
+          "ctr": 0.26,
+          "bid": 20,
+          "roas720": 103.95,
+          "sales720": 1000,
+          "orders720": 1,
+          "roas12": 103.95
+        }
+      }
+    },
+    "10001307": {
+      "id": "10001307",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001307/",
+      "days": {
+        "2026-04-01": {
+          "spend": 210,
+          "clicks": 20,
+          "cpc": 11,
+          "ctr": 0.24,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001308": {
+      "id": "10001308",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001308/",
+      "days": {
+        "2026-04-01": {
+          "spend": 550,
+          "clicks": 17,
+          "cpc": 33,
+          "ctr": 8.62,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001309": {
+      "id": "10001309",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001309/",
+      "days": {
+        "2026-04-01": {
+          "spend": 160,
+          "clicks": 16,
+          "cpc": 10,
+          "ctr": 0.04,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001310": {
+      "id": "10001310",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001310/",
+      "days": {
+        "2026-04-01": {
+          "spend": 90,
+          "clicks": 3,
+          "cpc": 30,
+          "ctr": 0.04,
+          "bid": 20,
+          "roas720": 2288.88,
+          "sales720": 2060,
+          "orders720": 2,
+          "roas12": 2288.88
+        }
+      }
+    },
+    "10001311": {
+      "id": "10001311",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001311/",
+      "days": {
+        "2026-04-01": {
+          "spend": 90,
+          "clicks": 6,
+          "cpc": 15,
+          "ctr": 0.03,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001312": {
+      "id": "10001312",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001312/",
+      "days": {
+        "2026-04-01": {
+          "spend": 820,
+          "clicks": 38,
+          "cpc": 22,
+          "ctr": 0.05,
+          "bid": 20,
+          "roas720": 797.56,
+          "sales720": 6540,
+          "orders720": 9,
+          "roas12": 536.58
+        }
+      }
+    },
+    "10001313": {
+      "id": "10001313",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001313/",
+      "days": {
+        "2026-04-01": {
+          "spend": 40,
+          "clicks": 1,
+          "cpc": 40,
+          "ctr": 0,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001322": {
+      "id": "10001322",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001322/",
+      "days": {
+        "2026-04-01": {
+          "spend": 170,
+          "clicks": 12,
+          "cpc": 15,
+          "ctr": 0.15,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001323": {
+      "id": "10001323",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001323/",
+      "days": {
+        "2026-04-01": {
+          "spend": 372,
+          "clicks": 19,
+          "cpc": 20,
+          "ctr": 0.09,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001324": {
+      "id": "10001324",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001324/",
+      "days": {
+        "2026-04-01": {
+          "spend": 200,
+          "clicks": 6,
+          "cpc": 34,
+          "ctr": 0.35,
+          "bid": 20,
+          "roas720": 390,
+          "sales720": 780,
+          "orders720": 1,
+          "roas12": 390
+        }
+      }
+    },
+    "10001325": {
+      "id": "10001325",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001325/",
+      "days": {
+        "2026-04-01": {
+          "spend": 40,
+          "clicks": 1,
+          "cpc": 40,
+          "ctr": 2,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    },
+    "10001326": {
+      "id": "10001326",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001326/",
+      "days": {
+        "2026-04-01": {
+          "spend": 500,
+          "clicks": 20,
+          "cpc": 25,
+          "ctr": 0.25,
+          "bid": 20,
+          "roas720": 156,
+          "sales720": 780,
+          "orders720": 1,
+          "roas12": 156
+        }
+      }
+    },
+    "10001327": {
+      "id": "10001327",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001327/",
+      "days": {
+        "2026-04-01": {
+          "spend": 220,
+          "clicks": 15,
+          "cpc": 15,
+          "ctr": 0.03,
+          "bid": 20,
+          "roas720": 354.54,
+          "sales720": 780,
+          "orders720": 1,
+          "roas12": 354.54
+        }
+      }
+    },
+    "10001328": {
+      "id": "10001328",
+      "url": "https://item.rakuten.co.jp/yukaiya/10001328/",
+      "days": {
+        "2026-04-01": {
+          "spend": 20,
+          "clicks": 1,
+          "cpc": 20,
+          "ctr": 0.01,
+          "bid": 20,
+          "roas720": 0,
+          "sales720": 0,
+          "orders720": 0,
+          "roas12": 0
+        }
+      }
+    }
+  },
+  "productCache": {}
+}
