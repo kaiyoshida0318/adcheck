@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ADcheck — 楽天RPP 日別使用金額</title>
+<title>ADcheck â æ¥½å¤©RPP æ¥å¥ä½¿ç¨éé¡</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -29,7 +29,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Noto Sans JP', sans-serif; font-size: 13px; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/* ── Header ── */
+/* ââ Header ââ */
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
 .header-left { display: flex; align-items: center; gap: 10px; }
 .logo { width: 30px; height: 30px; background: var(--red); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: -0.5px; flex-shrink: 0; }
@@ -41,13 +41,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .header-btn.primary { background: var(--red); color: #fff; border-color: var(--red); }
 .header-btn.primary:hover { background: var(--red-dark); }
 
-/* ── Layout ── */
+/* ââ Layout ââ */
 .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
 
-/* ── Upload (hidden, only accessible via header button) ── */
+/* ââ Upload (hidden, only accessible via header button) ââ */
 #uploadScreen { display: none; }
 .file-input { display: none; }
-/* ── Empty state ── */
+/* ââ Empty state ââ */
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; }
 .empty-icon { width: 64px; height: 64px; background: var(--red-light); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
 .empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
@@ -55,10 +55,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .empty-upload-btn { font-size: 13px; padding: 10px 20px; border-radius: var(--radius-sm); border: none; background: var(--red); color: #fff; cursor: pointer; font-family: inherit; font-weight: 500; transition: all 0.15s; }
 .empty-upload-btn:hover { background: var(--red-dark); }
 
-/* ── Main ── */
+/* ââ Main ââ */
 #mainScreen { display: block; }
 
-/* ── Summary ── */
+/* ââ Summary ââ */
 .summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .scard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
 .scard-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
@@ -66,14 +66,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .scard-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
 .scard-accent { border-top: 2px solid var(--red); }
 
-/* ── Chips ── */
+/* ââ Chips ââ */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .chip { display: flex; align-items: center; gap: 5px; font-size: 11px; padding: 4px 10px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); }
 .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
 .chip-rm { cursor: pointer; color: var(--text3); margin-left: 2px; font-size: 13px; line-height: 1; }
 .chip-rm:hover { color: var(--danger); }
 
-/* ── Table ── */
+/* ââ Table ââ */
 .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
 .table-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .toolbar-search { font-size: 13px; padding: 6px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); color: var(--text); outline: none; width: 200px; font-family: inherit; transition: all 0.15s; }
@@ -114,7 +114,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .toggle-icon { width: 18px; height: 18px; border: 1px solid var(--border2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); transition: transform 0.15s; }
 .toggle-icon.open { transform: rotate(90deg); color: var(--red); border-color: var(--red); }
 
-/* ── Daily Panel ── */
+/* ââ Daily Panel ââ */
 .daily-panel { display: none; border-top: 1px solid var(--border); background: #fafaf9; }
 .daily-panel.open { display: block; }
 .daily-inner { padding: 14px 16px; }
@@ -138,7 +138,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .prod-link { font-size: 10px; color: #1a73e8; margin-top: 8px; word-break: break-all; }
 .prod-link a { color: #1a73e8; }
 
-/* ── Settings Modal ── */
+/* ââ Settings Modal ââ */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
 .modal-overlay.open { display: flex; }
 .modal { background: var(--surface); border-radius: 14px; padding: 28px; max-width: 480px; width: 100%; margin: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
@@ -158,7 +158,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .modal-status.ok { background: #f0fdf4; color: var(--green); display: block; }
 .modal-status.err { background: #fef2f2; color: var(--danger); display: block; }
 
-/* ── Misc ── */
+/* ââ Misc ââ */
 .empty { padding: 3rem; text-align: center; color: var(--text3); font-size: 13px; }
 .pagination { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3); }
 .page-btns { display: flex; gap: 3px; }
@@ -177,31 +177,31 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="logo">AD</div>
     <div>
       <div class="app-name">ADcheck</div>
-      <div class="app-sub">楽天RPP 商品別 日別使用金額</div>
+      <div class="app-sub">æ¥½å¤©RPP ååå¥ æ¥å¥ä½¿ç¨éé¡</div>
     </div>
   </div>
   <div class="header-right">
-    <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
-    <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
-    <button class="header-btn primary" onclick="document.getElementById('addFileInput').click()">+ レポート追加</button>
+    <span id="apiStatus" class="api-status unset" onclick="openSettings()">ã¢ããªIDæªè¨­å®</span>
+    <button class="header-btn" onclick="openSettings()">â è¨­å®</button>
+    <button class="header-btn primary" onclick="document.getElementById('addFileInput').click()">+ ã¬ãã¼ãè¿½å </button>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
   </div>
 </header>
 
-<!-- fileInput（非表示、右上ボタンから起動） -->
+<!-- fileInputï¼éè¡¨ç¤ºãå³ä¸ãã¿ã³ããèµ·åï¼ -->
 <input type="file" id="fileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
 
-<!-- Main Screen（常時表示） -->
+<!-- Main Screenï¼å¸¸æè¡¨ç¤ºï¼ -->
 <div id="mainScreen">
   <div class="container">
     <div id="emptyState" class="empty-state">
       <div class="empty-icon">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       </div>
-      <h3>データがまだありません</h3>
-      <p>楽天RMSからダウンロードしたRPPレポート（ZIP / CSV）を<br>右上の「+ レポート追加」ボタンで読み込んでください。</p>
-      <button class="empty-upload-btn" onclick="document.getElementById('addFileInput').click()">+ レポートを追加する</button>
-      <p style="margin-top:12px;font-size:11px;color:var(--text3)">対応形式：楽天RMS →「検索連動型広告（RPP）」→「パフォーマンスレポート」→「全商品レポートダウンロード」</p>
+      <h3>ãã¼ã¿ãã¾ã ããã¾ãã</h3>
+      <p>æ¥½å¤©RMSãããã¦ã³ã­ã¼ãããRPPã¬ãã¼ãï¼ZIP / CSVï¼ã<br>å³ä¸ã®ã+ ã¬ãã¼ãè¿½å ããã¿ã³ã§èª­ã¿è¾¼ãã§ãã ããã</p>
+      <button class="empty-upload-btn" onclick="document.getElementById('addFileInput').click()">+ ã¬ãã¼ããè¿½å ãã</button>
+      <p style="margin-top:12px;font-size:11px;color:var(--text3)">å¯¾å¿å½¢å¼ï¼æ¥½å¤©RMS âãæ¤ç´¢é£åååºåï¼RPPï¼ãâãããã©ã¼ãã³ã¹ã¬ãã¼ããâãå¨ååã¬ãã¼ããã¦ã³ã­ã¼ãã</p>
     </div>
     <div id="dataArea" style="display:none">
     <div class="summary-bar" id="summaryBar"></div>
@@ -209,28 +209,28 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="table-card">
       <div class="table-toolbar">
         <select class="toolbar-month" id="monthSel" onchange="renderAll()"></select>
-        <input type="text" class="toolbar-search" id="searchBox" placeholder="商品管理番号で検索..." oninput="renderTable()">
+        <input type="text" class="toolbar-search" id="searchBox" placeholder="ååç®¡ççªå·ã§æ¤ç´¢..." oninput="renderTable()">
         <select class="toolbar-select" id="sortSel" onchange="renderTable()">
-          <option value="spend-desc">使用金額合計 多い順</option>
-          <option value="spend-asc">使用金額合計 少ない順</option>
-          <option value="roas-desc">ROAS平均 高い順</option>
-          <option value="roas-asc">ROAS平均 低い順</option>
-          <option value="clicks-desc">クリック数 多い順</option>
+          <option value="spend-desc">ä½¿ç¨éé¡åè¨ å¤ãé </option>
+          <option value="spend-asc">ä½¿ç¨éé¡åè¨ å°ãªãé </option>
+          <option value="roas-desc">ROASå¹³å é«ãé </option>
+          <option value="roas-asc">ROASå¹³å ä½ãé </option>
+          <option value="clicks-desc">ã¯ãªãã¯æ° å¤ãé </option>
         </select>
         <div class="toolbar-right">
-          <button class="tbtn" onclick="expandAll()">全展開</button>
-          <button class="tbtn" onclick="collapseAll()">全折りたたみ</button>
-          <button class="tbtn" onclick="exportCSV()">CSV出力</button>
-          <button class="tbtn" onclick="clearAll()">クリア</button>
+          <button class="tbtn" onclick="expandAll()">å¨å±é</button>
+          <button class="tbtn" onclick="collapseAll()">å¨æãããã¿</button>
+          <button class="tbtn" onclick="exportCSV()">CSVåºå</button>
+          <button class="tbtn" onclick="clearAll()">ã¯ãªã¢</button>
         </div>
       </div>
       <div class="col-header">
         <div class="ch"></div>
-        <div class="ch">商品</div>
-        <div class="ch r">使用金額合計</div>
-        <div class="ch r">クリック数</div>
-        <div class="ch r">ROAS平均(720h)</div>
-        <div class="ch r">売上合計(720h)</div>
+        <div class="ch">åå</div>
+        <div class="ch r">ä½¿ç¨éé¡åè¨</div>
+        <div class="ch r">ã¯ãªãã¯æ°</div>
+        <div class="ch r">ROASå¹³å(720h)</div>
+        <div class="ch r">å£²ä¸åè¨(720h)</div>
         <div class="ch"></div>
       </div>
       <div id="itemList"></div>
@@ -243,48 +243,48 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <!-- Settings Modal -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
-    <h3>⚙ 設定</h3>
-    <p>楽天アプリID・アクセスキーを入力すると商品画像が自動取得されます。GitHub PATを入力するとデータがGitHubに保存され、どのPCからも同じデータが閲覧できます。</p>
+    <h3>â è¨­å®</h3>
+    <p>æ¥½å¤©ã¢ããªIDã»ã¢ã¯ã»ã¹ã­ã¼ãå¥åããã¨ååç»åãèªååå¾ããã¾ããGitHub PATãå¥åããã¨ãã¼ã¿ãGitHubã«ä¿å­ãããã©ã®PCãããåããã¼ã¿ãé²è¦§ã§ãã¾ãã</p>
     <div class="modal-field">
-      <label class="modal-label">アプリケーションID（Application ID）</label>
-      <input type="text" class="modal-input" id="appIdInput" placeholder="例：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
-      <div class="modal-hint">楽天Developers のアプリ一覧 →「アプリケーションID」欄の値です。</div>
+      <label class="modal-label">ã¢ããªã±ã¼ã·ã§ã³IDï¼Application IDï¼</label>
+      <input type="text" class="modal-input" id="appIdInput" placeholder="ä¾ï¼xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+      <div class="modal-hint">æ¥½å¤©Developers ã®ã¢ããªä¸è¦§ âãã¢ããªã±ã¼ã·ã§ã³IDãæ¬ã®å¤ã§ãã</div>
     </div>
     <div class="modal-field">
-      <label class="modal-label">アクセスキー（Access Key）</label>
-      <input type="text" class="modal-input" id="accessKeyInput" placeholder="例：pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-      <div class="modal-hint">アプリ一覧の「アクセスキー」欄の目のアイコンをクリックすると表示されます。</div>
+      <label class="modal-label">ã¢ã¯ã»ã¹ã­ã¼ï¼Access Keyï¼</label>
+      <input type="text" class="modal-input" id="accessKeyInput" placeholder="ä¾ï¼pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+      <div class="modal-hint">ã¢ããªä¸è¦§ã®ãã¢ã¯ã»ã¹ã­ã¼ãæ¬ã®ç®ã®ã¢ã¤ã³ã³ãã¯ãªãã¯ããã¨è¡¨ç¤ºããã¾ãã</div>
     </div>
     <div class="modal-field">
-      <label class="modal-label">店舗コード（shopCode）</label>
-      <input type="text" class="modal-input" id="shopCodeInput" placeholder="例：yukaiya">
-      <div class="modal-hint">楽天市場の店舗URLに含まれる英数字のコードです。<br>例：item.rakuten.co.jp/<strong>yukaiya</strong>/xxxxxxxx/</div>
+      <label class="modal-label">åºèã³ã¼ãï¼shopCodeï¼</label>
+      <input type="text" class="modal-input" id="shopCodeInput" placeholder="ä¾ï¼yukaiya">
+      <div class="modal-hint">æ¥½å¤©å¸å ´ã®åºèURLã«å«ã¾ããè±æ°å­ã®ã³ã¼ãã§ãã<br>ä¾ï¼item.rakuten.co.jp/<strong>yukaiya</strong>/xxxxxxxx/</div>
     </div>
     <div class="modal-field">
-      <label class="modal-label">GitHub PAT（データ共有用・任意）</label>
+      <label class="modal-label">GitHub PATï¼ãã¼ã¿å±æç¨ã»ä»»æï¼</label>
       <input type="password" class="modal-input" id="githubPatInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-      <div class="modal-hint">入力すると全PCでデータを共有できます。GitHubのSettings → Developer settings → Personal access tokens で発行（repo権限）。</div>
+      <div class="modal-hint">å¥åããã¨å¨PCã§ãã¼ã¿ãå±æã§ãã¾ããGitHubã®Settings â Developer settings â Personal access tokens ã§çºè¡ï¼repoæ¨©éï¼ã</div>
     </div>
     <div id="modalStatus" class="modal-status"></div>
     <div class="modal-actions">
-      <button class="modal-btn" onclick="closeSettings()">キャンセル</button>
-      <button class="modal-btn" onclick="testApi()">接続テスト</button>
-      <button class="modal-btn save" onclick="saveSettings()">保存</button>
+      <button class="modal-btn" onclick="closeSettings()">ã­ã£ã³ã»ã«</button>
+      <button class="modal-btn" onclick="testApi()">æ¥ç¶ãã¹ã</button>
+      <button class="modal-btn save" onclick="saveSettings()">ä¿å­</button>
     </div>
   </div>
 </div>
 
 <script>
-// ── State ──
+// ââ State ââ
 const DB = {};
 let expandedSet = new Set();
 let productCache = {};
 let currentPage = 1;
 const PAGE = 25;
-const DOW = ['日','月','火','水','木','金','土'];
+const DOW = ['æ¥','æ','ç«','æ°´','æ¨','é','å'];
 
 
-// ── GitHub データ永続化 ──
+// ââ GitHub ãã¼ã¿æ°¸ç¶å ââ
 const GH_OWNER = 'kaiyoshida0318';
 const GH_REPO = 'adcheck';
 const GH_FILE = 'data/rpp_data.json';
@@ -298,20 +298,20 @@ async function saveToGitHub() {
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json'
     };
-    // 現在のファイルのSHAを取得
+    // ç¾å¨ã®ãã¡ã¤ã«ã®SHAãåå¾
     let sha = null;
     const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, { headers });
     if (getRes.ok) {
       const getJson = await getRes.json();
       sha = getJson.sha;
     }
-    // データをJSON化してBase64エンコード
+    // ãã¼ã¿ãJSONåãã¦Base64ã¨ã³ã³ã¼ã
     const payload = { DB, productCache };
     const jsonStr = JSON.stringify(payload, null, 2);
     const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
-    // PUTで保存
+    // PUTã§ä¿å­
     const body = {
-      message: `RPPデータ更新 ${new Date().toLocaleString('ja-JP')}`,
+      message: `RPPãã¼ã¿æ´æ° ${new Date().toLocaleString('ja-JP')}`,
       content: base64,
       ...(sha ? { sha } : {})
     };
@@ -324,7 +324,7 @@ async function saveToGitHub() {
       const err = await putRes.json();
       console.error('[ADcheck] GitHub save error:', err);
     } else {
-      console.log('[ADcheck] GitHub保存成功');
+      console.log('[ADcheck] GitHubä¿å­æå');
     }
   } catch(e) {
     console.error('[ADcheck] GitHub save exception:', e);
@@ -333,7 +333,7 @@ async function saveToGitHub() {
 
 async function loadFromGitHub() {
   try {
-    // PATなしでも公開リポジトリならraw URLで読める
+    // PATãªãã§ãå¬éãªãã¸ããªãªãraw URLã§èª­ãã
     const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_FILE}`;
     const res = await fetch(url + '?t=' + Date.now());
     if (!res.ok) return false;
@@ -350,7 +350,7 @@ async function loadFromGitHub() {
   }
 }
 
-// ── Settings ──
+// ââ Settings ââ
 function loadSettings() {
   const id = localStorage.getItem('rakuten_app_id') || '';
   const ak = localStorage.getItem('rakuten_access_key') || '';
@@ -372,14 +372,14 @@ function saveSettings() {
   localStorage.setItem('rakuten_shop_code', sc);
   localStorage.setItem('github_pat', pat);
   updateApiStatus(id, ak);
-  showModalStatus('設定を保存しました', 'ok');
+  showModalStatus('è¨­å®ãä¿å­ãã¾ãã', 'ok');
   setTimeout(closeSettings, 1000);
   if (id && ak && sc) fetchAllProductInfo();
 }
 function updateApiStatus(id, ak) {
   const el = document.getElementById('apiStatus');
-  if (id && ak) { el.textContent = 'アプリID設定済み'; el.className = 'api-status set'; }
-  else { el.textContent = 'アプリID未設定'; el.className = 'api-status unset'; }
+  if (id && ak) { el.textContent = 'ã¢ããªIDè¨­å®æ¸ã¿'; el.className = 'api-status set'; }
+  else { el.textContent = 'ã¢ããªIDæªè¨­å®'; el.className = 'api-status unset'; }
 }
 function openSettings() { loadSettings(); document.getElementById('settingsModal').classList.add('open'); }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); document.getElementById('modalStatus').className = 'modal-status'; }
@@ -391,20 +391,20 @@ async function testApi() {
   const id = document.getElementById('appIdInput').value.trim();
   const ak = document.getElementById('accessKeyInput').value.trim();
   const sc = document.getElementById('shopCodeInput').value.trim();
-  if (!id) { showModalStatus('アプリケーションIDを入力してください', 'err'); return; }
-  if (!ak) { showModalStatus('アクセスキーを入力してください', 'err'); return; }
-  if (!sc) { showModalStatus('店舗コードを入力してください', 'err'); return; }
-  showModalStatus('接続テスト中...', 'ok');
+  if (!id) { showModalStatus('ã¢ããªã±ã¼ã·ã§ã³IDãå¥åãã¦ãã ãã', 'err'); return; }
+  if (!ak) { showModalStatus('ã¢ã¯ã»ã¹ã­ã¼ãå¥åãã¦ãã ãã', 'err'); return; }
+  if (!sc) { showModalStatus('åºèã³ã¼ããå¥åãã¦ãã ãã', 'err'); return; }
+  showModalStatus('æ¥ç¶ãã¹ãä¸­...', 'ok');
   try {
     const url = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601?applicationId=${id}&accessKey=${ak}&shopCode=${sc}&hits=1&format=json`;
     const res = await fetch(url, { headers: { 'Origin': 'https://kaiyoshida0318.github.io' } });
     const data = await res.json();
-    if (data.error) showModalStatus(`エラー：${data.error_description}`, 'err');
-    else showModalStatus(`接続成功！${data.count || 0}件の商品が見つかりました`, 'ok');
-  } catch(e) { showModalStatus('接続に失敗しました。IDとキーを確認してください', 'err'); }
+    if (data.error) showModalStatus(`ã¨ã©ã¼ï¼${data.error_description}`, 'err');
+    else showModalStatus(`æ¥ç¶æåï¼${data.count || 0}ä»¶ã®ååãè¦ã¤ããã¾ãã`, 'ok');
+  } catch(e) { showModalStatus('æ¥ç¶ã«å¤±æãã¾ãããIDã¨ã­ã¼ãç¢ºèªãã¦ãã ãã', 'err'); }
 }
 
-// ── File Handling ──
+// ââ File Handling ââ
 function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag'); }
 function onDragLeave() { document.getElementById('dropZone').classList.remove('drag'); }
 function onDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('drag'); readFiles(e.dataTransfer.files); }
@@ -427,7 +427,7 @@ function readFiles(files) {
             const csvBuf = await entry.async('arraybuffer');
             const bytes = new Uint8Array(csvBuf);
             let text = new TextDecoder('utf-8').decode(bytes);
-            if (!text.includes('商品管理番号') && !text.includes('コントロールカラム')) {
+            if (!text.includes('ååç®¡ççªå·') && !text.includes('ã³ã³ãã­ã¼ã«ã«ã©ã ')) {
               text = new TextDecoder('shift-jis').decode(bytes);
             }
             csvTexts.push({ text, name });
@@ -437,14 +437,14 @@ function readFiles(files) {
         const buf = await f.arrayBuffer();
         const bytes = new Uint8Array(buf);
         let text = new TextDecoder('utf-8').decode(bytes);
-        if (!text.includes('商品管理番号') && !text.includes('コントロールカラム')) {
+        if (!text.includes('ååç®¡ççªå·') && !text.includes('ã³ã³ãã­ã¼ã«ã«ã©ã ')) {
           text = new TextDecoder('shift-jis').decode(bytes);
         }
         csvTexts.push({ text, name: f.name });
       }
     }
     if (csvTexts.length === 0) {
-      alert('CSVファイルが見つかりませんでした。ZIPまたはCSVファイルを選択してください。');
+      alert('CSVãã¡ã¤ã«ãè¦ã¤ããã¾ããã§ãããZIPã¾ãã¯CSVãã¡ã¤ã«ãé¸æãã¦ãã ããã');
       return;
     }
     csvTexts.forEach(({ text, name }) => parseCSV(text, name));
@@ -458,7 +458,7 @@ function parseCSV(text, fname) {
   const lines = text.split('\n');
   let hi = -1;
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes('コントロールカラム') && lines[i].includes('日付')) { hi = i; break; }
+    if (lines[i].includes('ã³ã³ãã­ã¼ã«ã«ã©ã ') && lines[i].includes('æ¥ä»')) { hi = i; break; }
   }
   if (hi < 0) return;
   const headers = lines[hi].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
@@ -467,37 +467,38 @@ function parseCSV(text, fname) {
     const vals = lines[i].split(',');
     if (vals.length < 5) continue;
     const get = h => (vals[idx(h)] || '').trim().replace(/^"|"$/g, '');
-    const itemId = get('商品管理番号');
+    const itemId = get('ååç®¡ççªå·');
     if (!itemId) continue;
-    const dateRaw = get('日付');
-    const dk = dateRaw.replace(/(\d{4})年(\d{2})月(\d{2})日.*/,'$1-$2-$3');
-    if (!DB[itemId]) DB[itemId] = { id: itemId, url: get('商品ページURL'), days: {} };
+    const dateRaw = get('æ¥ä»');
+    const dk = dateRaw.replace(/(\d{4})å¹´(\d{2})æ(\d{2})æ¥.*/,'$1-$2-$3');
+    if (!DB[itemId]) DB[itemId] = { id: itemId, url: get('ååãã¼ã¸URL'), days: {} };
     DB[itemId].days[dk] = {
-      spend: +get('実績額(合計)') || 0,
-      clicks: +get('クリック数(合計)') || 0,
-      cpc: +get('CPC実績(合計)') || 0,
+      spend: +get('å®ç¸¾é¡(åè¨)') || 0,
+      clicks: +get('ã¯ãªãã¯æ°(åè¨)') || 0,
+      cpc: +get('CPCå®ç¸¾(åè¨)') || 0,
       ctr: +get('CTR(%)') || 0,
-      bid: +get('入札単価') || 0,
-      roas720: +get('ROAS(合計720時間)(%)') || 0,
-      sales720: +get('売上金額(合計720時間)') || 0,
-      orders720: +get('売上件数(合計720時間)') || 0,
-      roas12: +get('ROAS(合計12時間)(%)') || 0,
+      bid: +get('å¥æ­åä¾¡') || 0,
+      roas720: +get('ROAS(åè¨720æé)(%)') || 0,
+      sales720: +get('å£²ä¸éé¡(åè¨720æé)') || 0,
+      orders720: +get('å£²ä¸ä»¶æ°(åè¨720æé)') || 0,
+      roas12: +get('ROAS(åè¨12æé)(%)') || 0,
     };
   }
 }
 
-function afterLoad() {
+function afterLoad(fromGitHub = false) {
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('dataArea').style.display = 'block';
   populateMonthSel();
+  if (!fromGitHub) saveToGitHub();
   const appId = localStorage.getItem('rakuten_app_id');
   const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
-  if (appId && accessKey && shopCode) fetchAllProductInfo();
+  if (appId && accessKey && shopCode && !fromGitHub) fetchAllProductInfo();
   renderAll();
 }
 
-// ── Rakuten API ──
+// ââ Rakuten API ââ
 async function fetchAllProductInfo() {
   const appId = localStorage.getItem('rakuten_app_id');
   const accessKey = localStorage.getItem('rakuten_access_key');
@@ -532,7 +533,7 @@ async function fetchProductInfo(itemId, appId, accessKey, shopCode) {
   } catch(e) {}
 }
 
-// ── Data Helpers ──
+// ââ Data Helpers ââ
 function getAllDates() {
   const s = new Set();
   Object.values(DB).forEach(p => Object.keys(p.days).forEach(d => s.add(d)));
@@ -557,13 +558,13 @@ function getStats(p, ym) {
 function populateMonthSel() {
   const sel = document.getElementById('monthSel');
   const months = getMonths();
-  sel.innerHTML = months.map(m => `<option value="${m}">${m.replace('-','年')}月</option>`).join('');
+  sel.innerHTML = months.map(m => `<option value="${m}">${m.replace('-','å¹´')}æ</option>`).join('');
   sel.value = months[months.length-1];
 }
 
-// ── Render ──
+// ââ Render ââ
 function fmt(n) { return Math.round(n).toLocaleString('ja-JP'); }
-function fmtY(n) { return '¥' + fmt(n); }
+function fmtY(n) { return 'Â¥' + fmt(n); }
 function rc(r) { if(r>=500) return 'rg'; if(r>=300) return 'rw'; if(r>0) return 'rb'; return 'rn'; }
 function barColor(r) { if(r>=500) return '#1D9E75'; if(r>=300) return '#BA7517'; if(r>0) return '#A32D2D'; return '#ddd'; }
 function heatColor(v, max) {
@@ -580,7 +581,7 @@ function renderAll() {
 
 function renderChips() {
   document.getElementById('chips').innerHTML = getAllDates().map(d =>
-    `<div class="chip"><div class="chip-dot"></div><span>${d}</span><span class="chip-rm" onclick="removeDate('${d}')">×</span></div>`
+    `<div class="chip"><div class="chip-dot"></div><span>${d}</span><span class="chip-rm" onclick="removeDate('${d}')">Ã</span></div>`
   ).join('');
 }
 
@@ -595,10 +596,10 @@ function renderSummary(ym) {
   const avgRoas = totalSpend > 0 ? Math.round(totalSales/totalSpend*100) : 0;
   const avgCpc = totalClicks > 0 ? Math.round(totalSpend/totalClicks) : 0;
   document.getElementById('summaryBar').innerHTML = `
-    <div class="scard scard-accent"><div class="scard-label">月間使用金額合計</div><div class="scard-val">${fmtY(totalSpend)}</div><div class="scard-sub">${getDatesForMonth(ym).length}日間のデータ</div></div>
-    <div class="scard"><div class="scard-label">稼働商品数</div><div class="scard-val">${active}</div><div class="scard-sub">全${products.length}商品中</div></div>
-    <div class="scard"><div class="scard-label">クリック数合計</div><div class="scard-val">${fmt(totalClicks)}</div><div class="scard-sub">平均CPC ¥${fmt(avgCpc)}</div></div>
-    <div class="scard"><div class="scard-label">ROAS(720h)平均</div><div class="scard-val">${fmt(avgRoas)}%</div><div class="scard-sub">売上合計 ${fmtY(totalSales)}</div></div>
+    <div class="scard scard-accent"><div class="scard-label">æéä½¿ç¨éé¡åè¨</div><div class="scard-val">${fmtY(totalSpend)}</div><div class="scard-sub">${getDatesForMonth(ym).length}æ¥éã®ãã¼ã¿</div></div>
+    <div class="scard"><div class="scard-label">ç¨¼åååæ°</div><div class="scard-val">${active}</div><div class="scard-sub">å¨${products.length}ååä¸­</div></div>
+    <div class="scard"><div class="scard-label">ã¯ãªãã¯æ°åè¨</div><div class="scard-val">${fmt(totalClicks)}</div><div class="scard-sub">å¹³åCPC Â¥${fmt(avgCpc)}</div></div>
+    <div class="scard"><div class="scard-label">ROAS(720h)å¹³å</div><div class="scard-val">${fmt(avgRoas)}%</div><div class="scard-sub">å£²ä¸åè¨ ${fmtY(totalSales)}</div></div>
   `;
 }
 
@@ -630,13 +631,13 @@ function renderPage() {
   const maxSpend = Math.max(...data.map(d => d.spend), 1);
   document.getElementById('itemList').innerHTML = slice.length
     ? slice.map(p => renderRow(p, maxSpend, ym)).join('')
-    : '<div class="empty">該当する商品がありません</div>';
+    : '<div class="empty">è©²å½ããååãããã¾ãã</div>';
   let btns = '';
   for (let i=1; i<=pages; i++) {
-    if (pages>7 && i>2 && i<pages-1 && Math.abs(i-currentPage)>1) { if(i===3||i===pages-2) btns+='<span style="padding:3px 4px;color:#999">…</span>'; continue; }
+    if (pages>7 && i>2 && i<pages-1 && Math.abs(i-currentPage)>1) { if(i===3||i===pages-2) btns+='<span style="padding:3px 4px;color:#999">â¦</span>'; continue; }
     btns += `<button class="pbtn${i===currentPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
   }
-  document.getElementById('pagination').innerHTML = `<span>${total}件中 ${total?Math.min((currentPage-1)*PAGE+1,total):0}〜${Math.min(currentPage*PAGE,total)}件</span><div class="page-btns">${btns}</div>`;
+  document.getElementById('pagination').innerHTML = `<span>${total}ä»¶ä¸­ ${total?Math.min((currentPage-1)*PAGE+1,total):0}ã${Math.min(currentPage*PAGE,total)}ä»¶</span><div class="page-btns">${btns}</div>`;
 }
 
 function renderRow(p, maxSpend, ym) {
@@ -646,15 +647,15 @@ function renderRow(p, maxSpend, ym) {
   const cached = productCache[p.id];
   const name = cached ? cached.name : p.id;
   const imgEl = cached && cached.img
-    ? `<img src="${cached.img}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'">`
-    : `<div class="prod-thumb">画像</div>`;
+    ? `<img src="${cached.img}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>ç»å</div>'">`
+    : `<div class="prod-thumb">ç»å</div>`;
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}" onclick="toggleRow('${p.id}','${ym}')">
       <div class="cell-img">${imgEl}</div>
       <div class="cell-name">
-        <div class="prod-name" title="${name}">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}</div>
+        <div class="prod-name" title="${name}">${name !== p.id ? name.substring(0,40)+(name.length>40?'â¦':'') : p.id}</div>
         <div class="prod-id">${p.id}</div>
       </div>
       <div class="cell r mono">
@@ -663,11 +664,11 @@ function renderRow(p, maxSpend, ym) {
       </div>
       <div class="cell r mono">${fmt(p.clicks)}</div>
       <div class="roas-cell">
-        <div class="roas-val ${rc(p.avgRoas)}">${p.avgRoas>0?fmt(p.avgRoas)+'%':'—'}</div>
+        <div class="roas-val ${rc(p.avgRoas)}">${p.avgRoas>0?fmt(p.avgRoas)+'%':'â'}</div>
         ${p.avgRoas>0?`<div class="mini-bar"><div class="mini-fill" style="width:${roasPct}%;background:${barColor(p.avgRoas)}"></div></div>`:''}
       </div>
-      <div class="cell r mono">${p.sales720>0?fmtY(p.sales720):'—'}</div>
-      <div class="toggle-cell"><div class="toggle-icon${isExp?' open':''}">▶</div></div>
+      <div class="cell r mono">${p.sales720>0?fmtY(p.sales720):'â'}</div>
+      <div class="toggle-cell"><div class="toggle-icon${isExp?' open':''}">â¶</div></div>
     </div>
     <div class="daily-panel${isExp?' open':''}" id="dp-${p.id}">
       ${isExp ? renderCalendar(DB[p.id], ym) : ''}
@@ -682,7 +683,7 @@ function renderCalendar(p, ym) {
   const dayKeys = Object.keys(p.days).filter(d => d.startsWith(ym));
   const maxSpend = Math.max(...dayKeys.map(d => p.days[d].spend), 1);
   const latestDay = p.days[dayKeys.sort().pop()] || {};
-  const avgCtr = dayKeys.length ? (dayKeys.reduce((s,d) => s+p.days[d].ctr, 0)/dayKeys.length).toFixed(2) : '—';
+  const avgCtr = dayKeys.length ? (dayKeys.reduce((s,d) => s+p.days[d].ctr, 0)/dayKeys.length).toFixed(2) : 'â';
   const totalOrders = dayKeys.reduce((s,d) => s+p.days[d].orders720, 0);
   const cells = [];
   for (let i=0; i<firstDow; i++) cells.push(`<div class="cal-cell empty-slot"></div>`);
@@ -694,27 +695,27 @@ function renderCalendar(p, ym) {
       cells.push(`<div class="cal-cell has">
         <div class="cal-date">${day}</div>
         <div class="cal-spend">${fmt(d.spend)}</div>
-        <div class="cal-roas ${rc(d.roas720)}">${d.roas720>0?fmt(d.roas720)+'%':'—'}</div>
+        <div class="cal-roas ${rc(d.roas720)}">${d.roas720>0?fmt(d.roas720)+'%':'â'}</div>
         <div class="cal-bar" style="background:${heat}"></div>
       </div>`);
     } else {
-      cells.push(`<div class="cal-cell"><div class="cal-date" style="color:#ccc">${day}</div><div class="cal-empty">—</div></div>`);
+      cells.push(`<div class="cal-cell"><div class="cal-date" style="color:#ccc">${day}</div><div class="cal-empty">â</div></div>`);
     }
   }
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   return `<div class="daily-inner">
     <div class="detail-meta">
-      <div class="meta-item"><div class="meta-label">入札単価</div><div class="meta-val">¥${fmt(latestDay.bid||0)}</div></div>
-      <div class="meta-item"><div class="meta-label">平均CTR</div><div class="meta-val">${avgCtr}%</div></div>
-      <div class="meta-item"><div class="meta-label">売上件数(720h)</div><div class="meta-val">${fmt(totalOrders)}件</div></div>
-      <div class="meta-item"><div class="meta-label">データ取得日数</div><div class="meta-val">${dayKeys.length}日</div></div>
+      <div class="meta-item"><div class="meta-label">å¥æ­åä¾¡</div><div class="meta-val">Â¥${fmt(latestDay.bid||0)}</div></div>
+      <div class="meta-item"><div class="meta-label">å¹³åCTR</div><div class="meta-val">${avgCtr}%</div></div>
+      <div class="meta-item"><div class="meta-label">å£²ä¸ä»¶æ°(720h)</div><div class="meta-val">${fmt(totalOrders)}ä»¶</div></div>
+      <div class="meta-item"><div class="meta-label">ãã¼ã¿åå¾æ¥æ°</div><div class="meta-val">${dayKeys.length}æ¥</div></div>
     </div>
     <div class="cal-legend">
       <span><span class="cal-legend-dot" style="background:var(--green)"></span>ROAS 500%+</span>
-      <span><span class="cal-legend-dot" style="background:var(--amber)"></span>300〜499%</span>
-      <span><span class="cal-legend-dot" style="background:var(--danger)"></span>〜299%</span>
-      <span style="margin-left:8px;color:#bbb">セルの色：使用金額の多さ（濃いほど多い）</span>
+      <span><span class="cal-legend-dot" style="background:var(--amber)"></span>300ã499%</span>
+      <span><span class="cal-legend-dot" style="background:var(--danger)"></span>ã299%</span>
+      <span style="margin-left:8px;color:#bbb">ã»ã«ã®è²ï¼ä½¿ç¨éé¡ã®å¤ãï¼æ¿ãã»ã©å¤ãï¼</span>
     </div>
     <div class="cal-grid-header">${DOW.map(d=>`<div class="cal-day-label">${d}</div>`).join('')}</div>
     <div class="cal-grid">${cells.join('')}</div>
@@ -757,7 +758,7 @@ function exportCSV() {
   const ym = getSelectedMonth();
   const data = getSorted(ym);
   const dates = getDatesForMonth(ym);
-  const header = ['商品管理番号','商品名','商品URL','使用金額合計','クリック数合計','ROAS平均(720h)%','売上合計(720h)', ...dates].join(',');
+  const header = ['ååç®¡ççªå·','ååå','ååURL','ä½¿ç¨éé¡åè¨','ã¯ãªãã¯æ°åè¨','ROASå¹³å(720h)%','å£²ä¸åè¨(720h)', ...dates].join(',');
   const rows = data.map(p => {
     const cached = productCache[p.id];
     const name = cached ? `"${cached.name.replace(/"/g,'""')}"` : p.id;
@@ -768,7 +769,7 @@ function exportCSV() {
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`adcheck_rpp_${ym}.csv`; a.click();
 }
 
-// ── Init ──
+// ââ Init ââ
 window.addEventListener('DOMContentLoaded', async () => {
   const id = localStorage.getItem('rakuten_app_id') || '';
   const ak = localStorage.getItem('rakuten_access_key') || '';
@@ -776,13 +777,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('settingsModal').addEventListener('click', e => {
     if (e.target === document.getElementById('settingsModal')) closeSettings();
   });
-  // ページ全体でドラッグ&ドロップを受け取る
+  // ãã¼ã¸å¨ä½ã§ãã©ãã°&ãã­ãããåãåã
   document.body.addEventListener('dragover', e => e.preventDefault());
   document.body.addEventListener('drop', e => {
     e.preventDefault();
     if (e.dataTransfer.files.length > 0) readFiles(e.dataTransfer.files);
   });
-  // GitHubからデータを読み込む（全PCで共有）
+  // GitHubãããã¼ã¿ãèª­ã¿è¾¼ãï¼å¨PCã§å±æï¼
   const loaded = await loadFromGitHub();
   if (loaded) {
     afterLoad(true);
