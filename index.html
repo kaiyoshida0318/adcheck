@@ -356,23 +356,19 @@ function readFiles(files) {
     reader.onload = ev => {
       try {
         const bytes = new Uint8Array(ev.target.result);
-        let text;
-        // Try Shift-JIS first, fallback to other encodings
-        const encodings = ['shift-jis', 'windows-1252', 'utf-8'];
-        for (const enc of encodings) {
-          try {
-            const decoded = new TextDecoder(enc).decode(bytes);
-            // Check if decoded text contains expected Japanese header
-            if (decoded.includes('商品管理番号') || decoded.includes('日付') || decoded.includes('実績額')) {
-              text = decoded;
-              break;
-            }
-            if (!text) text = decoded;
-          } catch(e) {}
+        let text = '';
+        // Try UTF-8 first (no BOM check needed - modern browsers handle it)
+        const utf8 = new TextDecoder('utf-8').decode(bytes);
+        if (utf8.includes('商品管理番号') || utf8.includes('コントロールカラム') || utf8.includes('実績額')) {
+          text = utf8;
+        } else {
+          // Fallback to Shift-JIS for legacy files from RMS
+          const sjis = new TextDecoder('shift-jis').decode(bytes);
+          text = sjis;
         }
         if (text) parseCSV(text, f.name);
       } catch(e) {
-        console.error('File read error:', e);
+        console.error('[ADcheck] File read error:', e);
       }
       pending--;
       if (pending === 0) afterLoad();
