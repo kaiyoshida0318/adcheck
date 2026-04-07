@@ -496,7 +496,7 @@ function afterLoad(fromGitHub = false) {
   const appId = localStorage.getItem('rakuten_app_id');
   const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
-  if (appId && accessKey && shopCode && !fromGitHub) fetchAllProductInfo();
+  if (appId && accessKey && shopCode) fetchAllProductInfo(); // GitHubからでも常にフェッチ
   renderAll();
 }
 
@@ -506,32 +506,41 @@ async function fetchAllProductInfo() {
   const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
   if (!appId || !accessKey || !shopCode) return;
-  const ids = Object.keys(DB);
-  const batchSize = 5;
-  for (let i = 0; i < ids.length; i += batchSize) {
-    const batch = ids.slice(i, i + batchSize);
-    await Promise.all(batch.map(id => fetchProductInfo(id, appId, accessKey, shopCode)));
-    renderPage();
+  // shopCode一括取得方式: 30件/ページ × 最大10ページ = 300件まで対応
+  const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
+  const headers = { 'Origin': 'https://kaiyoshida0318.github.io' };
+  let page = 1;
+  let hasMore = true;
+  while (hasMore) {
+    try {
+      const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&shopCode=${shopCode}&hits=30&page=${page}&format=json&elements=itemName,mediumImageUrls,itemCode`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) break;
+      const data = await res.json();
+      const items = data.Items || [];
+      if (items.length === 0) break;
+      items.forEach(({Item: item}) => {
+        if (!item) return;
+        const code = item.itemCode?.split(':')[1];
+        if (code && DB[code] && !productCache[code]) {
+          productCache[code] = {
+            name: item.itemName || '',
+            img: item.mediumImageUrls?.[0]?.imageUrl || null,
+            shopCode: code,
+          };
+        }
+      });
+      renderPage();
+      hasMore = items.length === 30;
+      page++;
+      if (hasMore) await new Promise(r => setTimeout(r, 300)); // 0.3秒ディレイ
+    } catch(e) { break; }
   }
+  renderPage();
 }
 
 async function fetchProductInfo(itemId, appId, accessKey, shopCode) {
-  if (productCache[itemId]) return;
-  try {
-    // itemCode形式（shopCode:itemId）で完全一致検索
-    const url = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${itemId}&hits=1&format=json&elements=itemName,mediumImageUrls,itemCode`;
-    const res = await fetch(url, { headers: { 'Origin': 'https://kaiyoshida0318.github.io' } });
-    const data = await res.json();
-    if (data.Items && data.Items.length > 0) {
-      const matched = data.Items[0];
-      const item = matched.Item;
-      productCache[itemId] = {
-        name: item.itemName || '',
-        img: item.mediumImageUrls && item.mediumImageUrls.length > 0 ? item.mediumImageUrls[0].imageUrl : null,
-        shopCode: item.itemCode ? item.itemCode.split(':')[1] : null,
-      };
-    }
-  } catch(e) {}
+  // 個別フェッチは使わない（一括取得に統一）
 }
 
 // ── Data Helpers ──
