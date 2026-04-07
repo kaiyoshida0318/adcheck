@@ -516,18 +516,17 @@ async function fetchAllProductInfo() {
 async function fetchProductInfo(itemId, appId, accessKey, shopCode) {
   if (productCache[itemId]) return;
   try {
-    const url = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601?applicationId=${appId}&accessKey=${accessKey}&shopCode=${shopCode}&keyword=${itemId}&hits=5&format=json&elements=itemName,mediumImageUrls,itemCode`;
+    // itemCode形式（shopCode:itemId）で完全一致検索
+    const url = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${itemId}&hits=1&format=json&elements=itemName,mediumImageUrls,itemCode`;
     const res = await fetch(url, { headers: { 'Origin': 'https://kaiyoshida0318.github.io' } });
     const data = await res.json();
     if (data.Items && data.Items.length > 0) {
-      const matched = data.Items.find(i => {
-        const code = i.Item.itemCode || '';
-        return code.includes(String(itemId));
-      }) || data.Items[0];
+      const matched = data.Items[0];
       const item = matched.Item;
       productCache[itemId] = {
         name: item.itemName || '',
         img: item.mediumImageUrls && item.mediumImageUrls.length > 0 ? item.mediumImageUrls[0].imageUrl : null,
+        shopCode: item.itemCode ? item.itemCode.split(':')[1] : null,
       };
     }
   } catch(e) {}
@@ -646,6 +645,7 @@ function renderRow(p, maxSpend, ym) {
   const roasPct = Math.min(100, Math.round(p.avgRoas/10));
   const cached = productCache[p.id];
   const name = cached ? cached.name : p.id;
+  const shopCode = cached?.shopCode || null;
   const imgEl = cached && cached.img
     ? `<img src="${cached.img}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'">`
     : `<div class="prod-thumb">画像</div>`;
@@ -656,7 +656,7 @@ function renderRow(p, maxSpend, ym) {
       <div class="cell-img">${imgEl}</div>
       <div class="cell-name">
         <div class="prod-name" title="${name}">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}</div>
-        <div class="prod-id">${p.id}</div>
+        <div class="prod-id">${shopCode && shopCode !== p.id ? shopCode + ' / ' : ''}${p.id}</div>
       </div>
       <div class="cell r mono">
         ${fmtY(p.spend)}
