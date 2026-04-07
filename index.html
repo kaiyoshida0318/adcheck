@@ -486,14 +486,15 @@ function parseCSV(text, fname) {
   }
 }
 
-function afterLoad() {
+function afterLoad(fromGitHub = false) {
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('dataArea').style.display = 'block';
   populateMonthSel();
+  if (!fromGitHub) saveToGitHub();
   const appId = localStorage.getItem('rakuten_app_id');
   const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
-  if (appId && accessKey && shopCode) fetchAllProductInfo();
+  if (appId && accessKey && shopCode && !fromGitHub) fetchAllProductInfo();
   renderAll();
 }
 
