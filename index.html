@@ -32,7 +32,7 @@ body { font-family: 'Noto Sans JP', sans-serif; font-size: 13px; background: var
 /* ── Header ── */
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
 .header-left { display: flex; align-items: center; gap: 10px; }
-.logo { width: 30px; height: 30px; background: var(--red); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: -0.5px; flex-shrink: 0; }
+.logo { flex-shrink: 0; line-height: 0; width: auto; }
 .app-name { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
 .app-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
 .header-right { display: flex; align-items: center; gap: 8px; }
@@ -175,10 +175,21 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <header>
   <div class="header-left">
-    <div class="logo">AD</div>
-    <div>
-      <div class="app-name">ADcheck</div>
-      <div class="app-sub">楽天RPP 商品別 日別使用金額</div>
+    <div class="logo">
+      <svg width="160" height="36" viewBox="0 0 160 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="160" height="36" rx="8" fill="#BF0000"/>
+        <!-- 棒グラフ4本（低→高） -->
+        <rect x="7"  y="25" width="7" height="6"  rx="1.5" fill="white" opacity="0.38"/>
+        <rect x="17" y="20" width="7" height="11" rx="1.5" fill="white" opacity="0.58"/>
+        <rect x="27" y="15" width="7" height="16" rx="1.5" fill="white" opacity="0.78"/>
+        <rect x="37" y="9"  width="7" height="22" rx="1.5" fill="white" opacity="1"/>
+        <!-- 縦区切り線 -->
+        <rect x="52" y="7" width="1" height="22" rx="0.5" fill="white" opacity="0.25"/>
+        <!-- ADcheck テキスト -->
+        <text y="25" font-family="'DM Mono', 'Noto Sans JP', monospace" font-weight="700" fill="white">
+          <tspan x="60" font-size="12" opacity="0.8" letter-spacing="0.5">AD</tspan><tspan font-size="15" letter-spacing="-0.3">check</tspan>
+        </text>
+      </svg>
     </div>
   </div>
   <div class="header-right">
