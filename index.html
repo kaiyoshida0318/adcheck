@@ -169,6 +169,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .api-status { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 500; }
 .api-status.set { background: #f0fdf4; color: var(--green); }
 .api-status.unset { background: var(--red-light); color: var(--red); cursor: pointer; }
+
+/* ── Edit Button ── */
+.edit-btn { opacity: 0; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; border: 1px solid var(--border2); border-radius: 4px; background: var(--surface); color: var(--text3); font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.15s; z-index: 1; padding: 0; }
+.cell-name { position: relative; }
+.cell-name:hover .edit-btn { opacity: 1; }
+.edit-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--red); }
+.manual-badge { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); margin-left: 4px; vertical-align: middle; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -287,6 +294,31 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   </div>
 </div>
 
+<!-- 商品編集モーダル -->
+<div class="modal-overlay" id="editItemModal">
+  <div class="modal" style="max-width:520px">
+    <h3>✏️ 商品情報を編集</h3>
+    <p id="editItemId" style="font-size:11px;color:var(--text3);margin-bottom:16px;font-family:'DM Mono',monospace"></p>
+    <div class="modal-field">
+      <label class="modal-label">商品名</label>
+      <input type="text" class="modal-input" id="editNameInput" placeholder="商品名を入力">
+      <div class="modal-hint">一度入力するとAPIによる自動上書きをしません。空欄にするとAPI取得に戻ります。</div>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">画像URL または 楽天商品ページURL</label>
+      <input type="text" class="modal-input" id="editImgInput" placeholder="https://item.rakuten.co.jp/yukaiya/10001288/ または画像URL直接">
+      <div class="modal-hint">楽天商品ページのURLを入れると画像を自動取得します。空欄にするとAPI取得に戻ります。</div>
+    </div>
+    <div id="editImgPreview" style="margin:8px 0;min-height:44px"></div>
+    <div id="editModalStatus" class="modal-status"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeEditModal()">キャンセル</button>
+      <button class="modal-btn" onclick="fetchImgFromUrl()">画像を取得</button>
+      <button class="modal-btn save" onclick="saveEditItem()">保存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── State ──
 const DB = {};
@@ -306,6 +338,101 @@ function saveProductCache() {
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(productCache)); } catch(e) {}
 }
 loadProductCache(); // 起動時即座に読み込み
+
+// ── 商品編集モーダル ──
+let _editItemId = null;
+let _resolvedImgUrl = null;
+
+function openEditModal(itemId) {
+  _editItemId = itemId;
+  _resolvedImgUrl = null;
+  const cached = productCache[itemId] || {};
+  document.getElementById('editItemId').textContent = '商品ID: ' + itemId;
+  document.getElementById('editNameInput').value = cached.manualName || cached.name || '';
+  document.getElementById('editImgInput').value = cached.manualImg || '';
+  document.getElementById('editModalStatus').className = 'modal-status';
+  // 画像プレビュー
+  const preview = document.getElementById('editImgPreview');
+  const previewSrc = cached.manualImg || cached.img || null;
+  preview.innerHTML = previewSrc
+    ? `<img src="${previewSrc}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">`
+    : '<span style="font-size:11px;color:var(--text3)">画像なし</span>';
+  document.getElementById('editItemModal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('editItemModal').classList.remove('open');
+  _editItemId = null;
+  _resolvedImgUrl = null;
+}
+
+async function fetchImgFromUrl() {
+  const input = document.getElementById('editImgInput').value.trim();
+  if (!input) return;
+  const status = document.getElementById('editModalStatus');
+
+  // 直接画像URLの場合はそのまま使う
+  if (input.match(/\.(jpg|jpeg|png|gif|webp)/i) || input.includes('thumbnail.image.rakuten') || input.includes('shop.r10s.jp')) {
+    _resolvedImgUrl = input;
+    document.getElementById('editImgPreview').innerHTML = `<img src="${input}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">`;
+    status.textContent = '画像URLを設定しました'; status.className = 'modal-status ok';
+    return;
+  }
+
+  // 楽天商品ページURLから商品コードを抽出してAPIで取得
+  const itemCodeMatch = input.match(/rakuten\.co\.jp\/[^\/]+\/([^\/\?]+)/);
+  if (!itemCodeMatch) { status.textContent = 'URLの形式が正しくありません'; status.className = 'modal-status err'; return; }
+
+  const shopCode = localStorage.getItem('rakuten_shop_code');
+  const appId = localStorage.getItem('rakuten_app_id');
+  const accessKey = localStorage.getItem('rakuten_access_key');
+  const targetCode = itemCodeMatch[1];
+  status.textContent = '取得中...'; status.className = 'modal-status ok';
+
+  try {
+    const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
+    const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${targetCode}&hits=1&format=json&elements=itemName,mediumImageUrls`;
+    const res = await fetch(url, { headers: { 'Origin': 'https://kaiyoshida0318.github.io' } });
+    const data = await res.json();
+    const item = data.Items?.[0]?.Item;
+    if (item?.mediumImageUrls?.[0]?.imageUrl) {
+      _resolvedImgUrl = item.mediumImageUrls[0].imageUrl;
+      document.getElementById('editImgPreview').innerHTML = `<img src="${_resolvedImgUrl}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">`;
+      status.textContent = '画像を取得しました'; status.className = 'modal-status ok';
+    } else {
+      // APIで取れない場合は入力値をそのまま画像URLとして試す
+      _resolvedImgUrl = input;
+      document.getElementById('editImgPreview').innerHTML = `<img src="${input}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--border)" onerror="this.style.display='none'">`;
+      status.textContent = 'APIで画像取得できず。URLを直接設定します'; status.className = 'modal-status ok';
+    }
+  } catch(e) {
+    status.textContent = '取得失敗: ' + e.message; status.className = 'modal-status err';
+  }
+}
+
+function saveEditItem() {
+  if (!_editItemId) return;
+  const nameVal = document.getElementById('editNameInput').value.trim();
+  const imgVal = document.getElementById('editImgInput').value.trim();
+  const resolvedImg = _resolvedImgUrl || (imgVal.match(/\.(jpg|jpeg|png|gif|webp)/i) || imgVal.includes('thumbnail') || imgVal.includes('r10s') ? imgVal : null);
+
+  if (!productCache[_editItemId]) productCache[_editItemId] = { name: '', img: null, shopCode: _editItemId };
+
+  // 手動入力があればmanualフラグをセット、空欄なら削除してAPI取得に戻す
+  if (nameVal) productCache[_editItemId].manualName = nameVal;
+  else delete productCache[_editItemId].manualName;
+
+  if (resolvedImg) productCache[_editItemId].manualImg = resolvedImg;
+  else if (!imgVal) delete productCache[_editItemId].manualImg;
+
+  saveProductCache();
+  saveToGitHub();  // 全PC共通化のためGitHubにも保存
+  renderPage();    // 画面を即更新
+  document.getElementById('editModalStatus').textContent = '保存しました';
+  document.getElementById('editModalStatus').className = 'modal-status ok';
+  setTimeout(closeEditModal, 800);
+}
+
 const PAGE = 25;
 const DOW = ['日','月','火','水','木','金','土'];
 
@@ -530,22 +657,24 @@ function afterLoad(fromGitHub = false) {
 // ── Rakuten API ──
 // ── 画像だけDOMに差し込む（テーブル全体を再構築しない）──
 function applyImageToDOM(itemId, imgUrl, itemName) {
-  // 画像セル
+  const cached = productCache[itemId];
+  // 手動編集済みの場合はAPIによる上書きをしない
   const imgCell = document.getElementById(`img-cell-${itemId}`);
   if (imgCell && !imgCell.dataset.loaded) {
+    const finalUrl = cached?.manualImg || imgUrl;
     imgCell.dataset.loaded = '1';
-    if (imgUrl) {
+    if (finalUrl) {
       const img = document.createElement('img');
-      img.src = imgUrl;
+      img.src = finalUrl;
       img.style.cssText = 'width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)';
       img.onerror = () => { img.outerHTML = '<div class="prod-thumb">画像</div>'; };
       imgCell.innerHTML = '';
       imgCell.appendChild(img);
     }
   }
-  // 商品名セル
+  // 商品名：manualNameがあれば上書きしない
   const nameEl = document.getElementById(`prod-name-${itemId}`);
-  if (nameEl && nameEl.dataset.raw === itemId && itemName) {
+  if (nameEl && nameEl.dataset.raw === itemId && itemName && !cached?.manualName) {
     nameEl.textContent = itemName.substring(0, 40) + (itemName.length > 40 ? '…' : '');
     nameEl.title = itemName;
     nameEl.dataset.raw = '';
@@ -594,11 +723,12 @@ async function fetchAllProductInfo() {
 
   // Step2: 漏れた商品をitemCode個別検索でフォールバック（廃番・非公開商品対応）
   const missing = Object.keys(DB).filter(id => !productCache[id]);
+  const retryList = [];
   for (const itemId of missing) {
     try {
       const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${itemId}&hits=1&format=json&elements=itemName,mediumImageUrls,itemCode`;
       const res = await fetch(url, { headers });
-      if (!res.ok) { await new Promise(r => setTimeout(r, 500)); continue; }
+      if (!res.ok) { retryList.push(itemId); await new Promise(r => setTimeout(r, 500)); continue; }
       const data = await res.json();
       const item = data.Items?.[0]?.Item;
       productCache[itemId] = {
@@ -608,7 +738,28 @@ async function fetchAllProductInfo() {
       };
       applyImageToDOM(itemId, productCache[itemId].img, productCache[itemId].name);
       await new Promise(r => setTimeout(r, 300));
-    } catch(e) { continue; }
+    } catch(e) { retryList.push(itemId); continue; }
+  }
+  // 失敗した商品を1秒待ってリトライ
+  if (retryList.length > 0) {
+    await new Promise(r => setTimeout(r, 1000));
+    for (const itemId of retryList) {
+      if (productCache[itemId]) continue;
+      try {
+        const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${itemId}&hits=1&format=json&elements=itemName,mediumImageUrls,itemCode`;
+        const res = await fetch(url, { headers });
+        if (!res.ok) continue;
+        const data = await res.json();
+        const item = data.Items?.[0]?.Item;
+        productCache[itemId] = {
+          name: item?.itemName || '',
+          img: item?.mediumImageUrls?.[0]?.imageUrl || null,
+          shopCode: itemId,
+        };
+        applyImageToDOM(itemId, productCache[itemId].img, productCache[itemId].name);
+        await new Promise(r => setTimeout(r, 500));
+      } catch(e) { continue; }
+    }
   }
   saveProductCache(); // フェッチ完了後にlocalStorageへ保存
   _fetchInProgress = false;
@@ -726,12 +877,14 @@ function renderRow(p, maxSpend, ym) {
   const spendPct = Math.round(p.spend/maxSpend*100);
   const roasPct = Math.min(100, Math.round(p.avgRoas/10));
   const cached = productCache[p.id];
-  const name = cached?.name || p.id;
+  const name = cached?.manualName || cached?.name || p.id;
   const itemShopCode = cached?.shopCode || null;
-  // 画像：cacheにあれば即表示、なければプレースホルダー（idで後から差し込み可能）
-  const imgLoaded = !!(cached?.img);
+  const isManual = !!(cached?.manualName || cached?.manualImg);
+  // 画像：manualImg優先、次にimg、なければプレースホルダー
+  const imgSrc = cached?.manualImg || cached?.img || null;
+  const imgLoaded = !!imgSrc;
   const imgEl = imgLoaded
-    ? `<div id="img-cell-${p.id}" data-loaded="1"><img src="${cached.img}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'"></div>`
+    ? `<div id="img-cell-${p.id}" data-loaded="1"><img src="${imgSrc}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'"></div>`
     : `<div id="img-cell-${p.id}" class="prod-thumb">画像</div>`;
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
@@ -739,8 +892,9 @@ function renderRow(p, maxSpend, ym) {
     <div class="item-basic${isExp?' expanded':''}" onclick="toggleRow('${p.id}','${ym}')">
       <div class="cell-img">${imgEl}</div>
       <div class="cell-name">
-        <div class="prod-name" id="prod-name-${p.id}" title="${name}" data-raw="${cached ? '' : p.id}">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}</div>
+        <div class="prod-name" id="prod-name-${p.id}" title="${name}" data-raw="${cached ? '' : p.id}">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}${isManual?'<span class="manual-badge" title="手動編集済み"></span>':''}</div>
         <div class="prod-id">${itemShopCode && itemShopCode !== p.id ? itemShopCode + ' / ' : ''}${p.id}</div>
+        <button class="edit-btn" onclick="event.stopPropagation();openEditModal('${p.id}')" title="編集">✏</button>
       </div>
       <div class="cell r mono">
         ${fmtY(p.spend)}
@@ -861,6 +1015,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateApiStatus(id, ak);
   document.getElementById('settingsModal').addEventListener('click', e => {
     if (e.target === document.getElementById('settingsModal')) closeSettings();
+  });
+  document.getElementById('editItemModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('editItemModal')) closeEditModal();
   });
   // ページ全体でドラッグ&ドロップを受け取る
   document.body.addEventListener('dragover', e => e.preventDefault());
