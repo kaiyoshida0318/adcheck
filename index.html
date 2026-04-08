@@ -293,6 +293,19 @@ const DB = {};
 let expandedSet = new Set();
 let productCache = {};
 let currentPage = 1;
+
+// productCacheのlocalStorage永続化
+const CACHE_KEY = 'adcheck_product_cache';
+function loadProductCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (raw) Object.assign(productCache, JSON.parse(raw));
+  } catch(e) {}
+}
+function saveProductCache() {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(productCache)); } catch(e) {}
+}
+loadProductCache(); // 起動時即座に読み込み
 const PAGE = 25;
 const DOW = ['日','月','火','水','木','金','土'];
 
@@ -512,11 +525,38 @@ function afterLoad(fromGitHub = false) {
 }
 
 // ── Rakuten API ──
+// ── 画像だけDOMに差し込む（テーブル全体を再構築しない）──
+function applyImageToDOM(itemId, imgUrl, itemName) {
+  // 画像セル
+  const imgCell = document.getElementById(`img-cell-${itemId}`);
+  if (imgCell && !imgCell.dataset.loaded) {
+    imgCell.dataset.loaded = '1';
+    if (imgUrl) {
+      const img = document.createElement('img');
+      img.src = imgUrl;
+      img.style.cssText = 'width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)';
+      img.onerror = () => { img.outerHTML = '<div class="prod-thumb">画像</div>'; };
+      imgCell.innerHTML = '';
+      imgCell.appendChild(img);
+    }
+  }
+  // 商品名セル
+  const nameEl = document.getElementById(`prod-name-${itemId}`);
+  if (nameEl && nameEl.dataset.raw === itemId && itemName) {
+    nameEl.textContent = itemName.substring(0, 40) + (itemName.length > 40 ? '…' : '');
+    nameEl.title = itemName;
+    nameEl.dataset.raw = '';
+  }
+}
+
+let _fetchInProgress = false;
 async function fetchAllProductInfo() {
+  if (_fetchInProgress) return;
+  _fetchInProgress = true;
   const appId = localStorage.getItem('rakuten_app_id');
   const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
-  if (!appId || !accessKey || !shopCode) return;
+  if (!appId || !accessKey || !shopCode) { _fetchInProgress = false; return; }
   const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
   const headers = { 'Origin': 'https://kaiyoshida0318.github.io' };
 
@@ -540,9 +580,9 @@ async function fetchAllProductInfo() {
             img: item.mediumImageUrls?.[0]?.imageUrl || null,
             shopCode: code,
           };
+          applyImageToDOM(code, productCache[code].img, productCache[code].name);
         }
       });
-      renderPage();
       hasMore = items.length === 30;
       page++;
       if (hasMore) await new Promise(r => setTimeout(r, 300));
@@ -563,11 +603,12 @@ async function fetchAllProductInfo() {
         img: item?.mediumImageUrls?.[0]?.imageUrl || null,
         shopCode: itemId,
       };
-      renderPage();
+      applyImageToDOM(itemId, productCache[itemId].img, productCache[itemId].name);
       await new Promise(r => setTimeout(r, 300));
     } catch(e) { continue; }
   }
-  renderPage();
+  saveProductCache(); // フェッチ完了後にlocalStorageへ保存
+  _fetchInProgress = false;
 }
 
 // ── Data Helpers ──
@@ -682,18 +723,20 @@ function renderRow(p, maxSpend, ym) {
   const spendPct = Math.round(p.spend/maxSpend*100);
   const roasPct = Math.min(100, Math.round(p.avgRoas/10));
   const cached = productCache[p.id];
-  const name = cached ? cached.name : p.id;
+  const name = cached?.name || p.id;
   const itemShopCode = cached?.shopCode || null;
-  const imgEl = cached && cached.img
-    ? `<img src="${cached.img}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'">`
-    : `<div class="prod-thumb">画像</div>`;
+  // 画像：cacheにあれば即表示、なければプレースホルダー（idで後から差し込み可能）
+  const imgLoaded = !!(cached?.img);
+  const imgEl = imgLoaded
+    ? `<div id="img-cell-${p.id}" data-loaded="1"><img src="${cached.img}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'"></div>`
+    : `<div id="img-cell-${p.id}" class="prod-thumb">画像</div>`;
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}" onclick="toggleRow('${p.id}','${ym}')">
       <div class="cell-img">${imgEl}</div>
       <div class="cell-name">
-        <div class="prod-name" title="${name}">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}</div>
+        <div class="prod-name" id="prod-name-${p.id}" title="${name}" data-raw="${cached ? '' : p.id}">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}</div>
         <div class="prod-id">${itemShopCode && itemShopCode !== p.id ? itemShopCode + ' / ' : ''}${p.id}</div>
       </div>
       <div class="cell r mono">
@@ -788,6 +831,7 @@ function clearAll() {
   Object.keys(DB).forEach(k => delete DB[k]);
   expandedSet.clear();
   productCache = {};
+  try { localStorage.removeItem(CACHE_KEY); } catch(e) {}
   document.getElementById('emptyState').style.display = 'flex';
   document.getElementById('dataArea').style.display = 'none';
 }
