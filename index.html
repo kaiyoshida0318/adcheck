@@ -366,7 +366,10 @@ async function loadFromGitHub() {
     const data = await res.json();
     if (data && data.DB && Object.keys(data.DB).length > 0) {
       Object.assign(DB, data.DB);
-      if (data.productCache) Object.assign(productCache, data.productCache);
+      if (data.productCache) {
+        Object.assign(productCache, data.productCache);
+        saveProductCache(); // 他のPCでもlocalStorageに書き戻して次回即表示
+      }
       return true;
     }
     return false;
