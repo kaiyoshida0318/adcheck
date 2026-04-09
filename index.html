@@ -262,7 +262,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.5</span>
+    <span class="build-date">v1.6</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -744,8 +744,18 @@ async function loadFromGitHub() {
         try { localStorage.setItem(CAL_EVENTS_KEY, JSON.stringify(calEvents)); } catch(e) {}
       }
       if (data.nichinichiRows && data.nichinichiRows.length > 0) {
-        nichinichiRows = data.nichinichiRows;
-        _renderTable('monthly', nichinichiRows);
+        // isPeriodで振り分け（旧データ互換：全部日別の場合もdailyRowsへ）
+        const allRows = data.nichinichiRows;
+        const monthlyPart = allRows.filter(r => r.isPeriod === true);
+        const dailyPart   = allRows.filter(r => r.isPeriod !== true);
+        if (monthlyPart.length > 0) {
+          nichinichiRows = monthlyPart;
+          _renderTable('monthly', nichinichiRows);
+        }
+        if (dailyPart.length > 0) {
+          dailyRows = dailyPart;
+          _renderTable('daily', dailyRows);
+        }
       }
       if (data.dailyRows && data.dailyRows.length > 0) {
         dailyRows = data.dailyRows;
@@ -1346,9 +1356,47 @@ function _renderTable(mode, rows) {
 // 後方互換（古い呼び出しに対応）
 function _renderMonthlyTable(rows) { _renderTable('monthly', rows); }
 
+// 日別rowsを月単位で集計して月別rowを生成
+function _aggregateDailyToMonthly(dRows) {
+  const byMonth = {};
+  dRows.forEach(r => {
+    // codeが8桁(20260331)→年月は最初6桁(202603)
+    const ym = r.code.slice(0, 6); // "202603"
+    const ymLabel = ym.slice(0,4) + '年' + ym.slice(4,6) + '月'; // "2026年03月"
+    if (!byMonth[ym]) byMonth[ym] = { code: ym, label: ymLabel, isPeriod: true,
+      spend:0, cl:0, sales:0, orders:0,
+      spendKw:0, clKw:0, salesKw:0, ordersKw:0 };
+    const m = byMonth[ym];
+    m.spend    += r.spend    || 0;
+    m.cl       += r.cl       || 0;
+    m.sales    += r.sales    || 0;
+    m.orders   += r.orders   || 0;
+    m.spendKw  += r.spendKw  || 0;
+    m.clKw     += r.clKw     || 0;
+    m.salesKw  += r.salesKw  || 0;
+    m.ordersKw += r.ordersKw || 0;
+  });
+  // 集計値から派生値を再計算
+  return Object.values(byMonth).map(m => {
+    const spend20  = m.spend  - m.spendKw;
+    const cl20     = m.cl     - m.clKw;
+    const sales20  = m.sales  - m.salesKw;
+    const orders20 = m.orders - m.ordersKw;
+    return { ...m, spend20, cl20, sales20, orders20,
+      cpc:    m.cl     > 0 ? Math.round(m.spend    / m.cl)             : 0,
+      cpa:    m.orders > 0 ? Math.round(m.spend    / m.orders)         : 0,
+      cvr:    m.cl     > 0 ? Math.round(m.orders   / m.cl * 10000) / 100 : 0,
+      roas:   m.spend  > 0 ? Math.round(m.sales    / m.spend * 10000) / 100 : 0,
+      cpc20:  cl20     > 0 ? Math.round(spend20    / cl20)             : 0,
+      cpa20:  orders20 > 0 ? Math.round(spend20    / orders20)         : 0,
+      cvr20:  cl20     > 0 ? Math.round(orders20   / cl20 * 10000) / 100 : 0,
+      roas20: spend20  > 0 ? Math.round(sales20    / spend20 * 10000) / 100 : 0,
+    };
+  }).sort((a, b) => b.code.localeCompare(a.code));
+}
+
 async function monthlyRun() {
   if (_nichinichiFiles.length === 0) {
-    // 保存済みデータがあれば表示
     if (nichinichiRows.length > 0) _renderTable('monthly', nichinichiRows);
     if (dailyRows.length > 0) _renderTable('daily', dailyRows);
     return;
@@ -1365,20 +1413,23 @@ async function monthlyRun() {
     if (!row) continue;
     if (row.isPeriod) newMonthly.push(row); else newDaily.push(row);
   }
-  // 月別マージ
-  const mByCode = {};
-  nichinichiRows.forEach(r => { mByCode[r.code] = r; });
-  newMonthly.forEach(r => { mByCode[r.code] = r; });
-  nichinichiRows = Object.values(mByCode).sort((a, b) => b.code.localeCompare(a.code));
   // 日別マージ
   const dByCode = {};
   dailyRows.forEach(r => { dByCode[r.code] = r; });
   newDaily.forEach(r => { dByCode[r.code] = r; });
   dailyRows = Object.values(dByCode).sort((a, b) => b.code.localeCompare(a.code));
+  // 月別：期間ファイルがあればそちら優先、日別データからも自動集計してマージ
+  const mByCode = {};
+  nichinichiRows.forEach(r => { mByCode[r.code] = r; });
+  newMonthly.forEach(r => { mByCode[r.code] = r; });
+  // 日別データから月単位で集計して追加（期間ファイルがない月を補完）
+  _aggregateDailyToMonthly(dailyRows).forEach(r => {
+    if (!mByCode[r.code]) mByCode[r.code] = r; // 期間ファイルがある月は上書きしない
+  });
+  nichinichiRows = Object.values(mByCode).sort((a, b) => b.code.localeCompare(a.code));
   _renderTable('monthly', nichinichiRows);
   _renderTable('daily', dailyRows);
   saveToGitHub();
-  // 追加されたデータに応じてタブを自動切替
   if (newMonthly.length > 0) switchTab('monthly');
   else if (newDaily.length > 0) switchTab('daily');
 }
