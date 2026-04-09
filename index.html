@@ -1031,29 +1031,34 @@ function _nichFileType(name) {
 }
 
 async function _readNichText(file) {
+  // 楽天CSVはShift-JIS。まずShift-JISで試み、失敗時はUTF-8
+  function _decode(bytes) {
+    try {
+      const t = new TextDecoder('shift-jis').decode(bytes);
+      // 読めた文字列に日本語が含まれているか確認
+      if (t.includes('日付') || t.includes('コントロールカラム') || t.includes('実績額') || t.includes('集計')) return t;
+    } catch(e) {}
+    // BOM付きUTF-8も試す
+    try {
+      const t = new TextDecoder('utf-8').decode(bytes);
+      if (t.includes('日付') || t.includes('コントロールカラム') || t.includes('実績額')) return t;
+      return t; // とりあえず返す
+    } catch(e) {}
+    return new TextDecoder('shift-jis').decode(bytes);
+  }
   if (file.name.toLowerCase().endsWith('.zip')) {
     const buf = await file.arrayBuffer();
     const zip = await JSZip.loadAsync(buf);
     for (const [name, entry] of Object.entries(zip.files)) {
       if (name.toLowerCase().endsWith('.csv') && !entry.dir) {
         const csvBuf = await entry.async('arraybuffer');
-        const bytes = new Uint8Array(csvBuf);
-        let text = new TextDecoder('utf-8').decode(bytes);
-        if (!text.includes('コントロールカラム') && !text.includes('日付')) {
-          text = new TextDecoder('shift-jis').decode(bytes);
-        }
-        return text;
+        return _decode(new Uint8Array(csvBuf));
       }
     }
     return null;
   } else {
     const buf = await file.arrayBuffer();
-    const bytes = new Uint8Array(buf);
-    let text = new TextDecoder('utf-8').decode(bytes);
-    if (!text.includes('日付') && !text.includes('CTR')) {
-      text = new TextDecoder('shift-jis').decode(bytes);
-    }
-    return text;
+    return _decode(new Uint8Array(buf));
   }
 }
 
