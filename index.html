@@ -110,11 +110,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .rw { color: var(--amber); }
 .rb { color: var(--danger); }
 /* 日別・月別データ 5段階色分け */
-.c-g1 { color: #0a7c42; font-weight: 700; }
-.c-g2 { color: #1a9e5c; font-weight: 600; }
-.c-bk { color: #1a1a1a; font-weight: 400; }
-.c-o  { color: #BA7517; font-weight: 600; }
-.c-r  { color: #A32D2D; font-weight: 700; }
+.c-g1 { color: #1565C0; font-weight: 700; }  /* 最良：青 */
+.c-g2 { color: #2E7D32; font-weight: 600; }  /* 良い：緑 */
+.c-bk { color: #1a1a1a; font-weight: 400; }  /* 普通：黒 */
+.c-o  { color: #BA7517; font-weight: 600; }  /* 悪い：オレンジ */
+.c-r  { color: #A32D2D; font-weight: 700; }  /* 最悪：赤 */
 .rn { color: var(--text3); }
 .mini-bar { height: 3px; border-radius: 2px; background: var(--border); margin-top: 3px; overflow: hidden; }
 .mini-fill { height: 100%; border-radius: 2px; }
@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.14</span>
+    <span class="build-date">v1.15</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
