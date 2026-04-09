@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.20</span>
+    <span class="build-date">v1.21</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -844,6 +844,36 @@ function readFiles(files) {
       }
 
       // rpp_item_reports または不明ファイル → 商品別データとして処理
+      // rpp_item_reportsはitemDailyDataにも追記
+      if (fname.includes('rpp_item_reports_') && fname.endsWith('.zip')) {
+        const buf = await f.arrayBuffer();
+        const zip = await JSZip.loadAsync(buf);
+        for (const [name, entry] of Object.entries(zip.files)) {
+          if (name.toLowerCase().endsWith('.csv') && !entry.dir) {
+            const csvBuf = await entry.async('arraybuffer');
+            const bytes = new Uint8Array(csvBuf);
+            const text = new TextDecoder('shift-jis').decode(bytes);
+            _parseItemDaily(text, 'item');
+            csvTexts.push({ text, name });
+          }
+        }
+        continue;
+      }
+      if (fname.includes('rpp_keyword_reports_') && fname.endsWith('.zip')) {
+        const buf = await f.arrayBuffer();
+        const zip = await JSZip.loadAsync(buf);
+        for (const [name, entry] of Object.entries(zip.files)) {
+          if (name.toLowerCase().endsWith('.csv') && !entry.dir) {
+            const csvBuf = await entry.async('arraybuffer');
+            const bytes = new Uint8Array(csvBuf);
+            const text = new TextDecoder('shift-jis').decode(bytes);
+            _parseItemDaily(text, 'kw');
+          }
+        }
+        hasMonthlyFile = true;
+        _nichinichiFiles.push(f);
+        continue;
+      }
       if (fname.endsWith('.zip')) {
         const buf = await f.arrayBuffer();
         const zip = await JSZip.loadAsync(buf);
