@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.41</span>
+    <span class="build-date">v1.42</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -838,15 +838,6 @@ function readFiles(files) {
       // rpp_reports / rpp_keyword_reports は日別・月別データ用
       // ただしkwはitemDailyDataにも追記してから処理
       if (type === 'kw') {
-        // KWデータを読み込む前に既存KWをリセット（古いデータの上書き）
-        Object.keys(itemDailyData).forEach(code => {
-          Object.keys(itemDailyData[code]).forEach(date => {
-            itemDailyData[code][date].spendKw  = 0;
-            itemDailyData[code][date].salesKw  = 0;
-            itemDailyData[code][date].ordersKw = 0;
-            itemDailyData[code][date].clKw     = 0;
-          });
-        });
         const buf = await f.arrayBuffer();
         const zip = await JSZip.loadAsync(buf);
         for (const [name, entry] of Object.entries(zip.files)) {
@@ -854,6 +845,18 @@ function readFiles(files) {
             const csvBuf = await entry.async('arraybuffer');
             const bytes = new Uint8Array(csvBuf);
             const text = new TextDecoder('shift-jis').decode(bytes);
+            // この日付のKWデータをリセット（再読み込み対応）
+            const dateInfo = _extractDateInfo(text);
+            if (dateInfo) {
+              Object.keys(itemDailyData).forEach(code => {
+                if (itemDailyData[code][dateInfo.start]) {
+                  itemDailyData[code][dateInfo.start].spendKw = 0;
+                  itemDailyData[code][dateInfo.start].salesKw = 0;
+                  itemDailyData[code][dateInfo.start].ordersKw = 0;
+                  itemDailyData[code][dateInfo.start].clKw = 0;
+                }
+              });
+            }
             _parseItemDaily(text, 'kw');
           }
         }
@@ -871,15 +874,6 @@ function readFiles(files) {
 
       // rpp_item_reports → 商品別データ + itemDailyData両方に追記
       if (fname.includes('rpp_item_reports_') && fname.endsWith('.zip')) {
-        // item読み込み前に■データをリセット（再読み込み時に正確な値にする）
-        Object.keys(itemDailyData).forEach(code => {
-          Object.keys(itemDailyData[code]).forEach(date => {
-            itemDailyData[code][date].spend  = 0;
-            itemDailyData[code][date].sales  = 0;
-            itemDailyData[code][date].orders = 0;
-            itemDailyData[code][date].cl     = 0;
-          });
-        });
         const buf = await f.arrayBuffer();
         const zip = await JSZip.loadAsync(buf);
         for (const [name, entry] of Object.entries(zip.files)) {
@@ -887,6 +881,18 @@ function readFiles(files) {
             const csvBuf = await entry.async('arraybuffer');
             const bytes = new Uint8Array(csvBuf);
             const text = new TextDecoder('shift-jis').decode(bytes);
+            // このファイルの日付を取得して該当日のitemデータをリセット（再読み込み対応）
+            const dateInfo = _extractDateInfo(text);
+            if (dateInfo) {
+              Object.keys(itemDailyData).forEach(code => {
+                if (itemDailyData[code][dateInfo.start]) {
+                  itemDailyData[code][dateInfo.start].spend = 0;
+                  itemDailyData[code][dateInfo.start].sales = 0;
+                  itemDailyData[code][dateInfo.start].orders = 0;
+                  itemDailyData[code][dateInfo.start].cl = 0;
+                }
+              });
+            }
             _parseItemDaily(text, 'item');
             csvTexts.push({ text, name });
           }
