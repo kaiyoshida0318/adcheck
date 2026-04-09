@@ -262,7 +262,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.3</span>
+    <span class="build-date">v1.4</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -347,21 +347,23 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
         <!-- テーブルヘッダー -->
         <div id="monthly-col-header" style="display:none">
-          <div class="col-header" style="grid-template-columns: 110px 80px 100px 70px 100px 80px 60px 80px 80px 2px 100px 80px 100px 80px">
+          <div class="col-header" style="grid-template-columns: 100px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px">
             <div class="ch">日付</div>
-            <div class="ch r">CL数■</div>
             <div class="ch r">実績額■</div>
-            <div class="ch r">CPC■</div>
-            <div class="ch r">売上金額■</div>
-            <div class="ch r">売上件数■</div>
-            <div class="ch r">CVR■</div>
-            <div class="ch r">ROAS■</div>
-            <div class="ch r">獲得単価■</div>
-            <div class="ch" style="border-left:2px solid var(--border2);padding:0"></div>
             <div class="ch r">実績額-KW</div>
-            <div class="ch r">CL数-KW</div>
+            <div class="ch r">実績額-20</div>
+            <div class="ch r">売上金額■</div>
             <div class="ch r">売上金額-KW</div>
-            <div class="ch r">売上件数-KW</div>
+            <div class="ch r">売上金額-20</div>
+            <div class="ch r">獲得単価■</div>
+            <div class="ch r">獲得単価-KW</div>
+            <div class="ch r">獲得単価-20</div>
+            <div class="ch r">CVR■</div>
+            <div class="ch r">CVR-KW</div>
+            <div class="ch r">CVR-20</div>
+            <div class="ch r">ROAS■</div>
+            <div class="ch r">ROAS-KW</div>
+            <div class="ch r">ROAS-20</div>
           </div>
         </div>
 
@@ -1227,14 +1229,26 @@ function _processOneEntry(key, g) {
   const rpp = _aggregateRpp(rppRows);
   const kw  = _aggregateKw(kwRows);
   if (!rpp) return null;
+
+  // -20の計算（最低出稿分 = ■ - KW）
+  const spend20  = (rpp.spend  || 0) - (kw.spendKw  || 0);
+  const cl20     = (rpp.cl     || 0) - (kw.clKw     || 0);
+  const sales20  = (rpp.sales  || 0) - (kw.salesKw  || 0);
+  const orders20 = (rpp.orders || 0) - (kw.ordersKw || 0);
+  const cpc20    = cl20     > 0 ? Math.round(spend20  / cl20)             : 0;
+  const cpa20    = orders20 > 0 ? Math.round(spend20  / orders20)         : 0;
+  const cvr20    = cl20     > 0 ? Math.round(orders20 / cl20 * 10000) / 100 : 0;
+  const roas20   = spend20  > 0 ? Math.round(sales20  / spend20 * 10000) / 100 : 0;
+  const d20 = { spend20, cl20, sales20, orders20, cpc20, cpa20, cvr20, roas20 };
+
   if (g.isPeriod) {
-    const ym = key.slice(0,7); // 2026-04
+    const ym = key.slice(0,7);
     const label = ym.replace('-', '年') + '月';
-    return { isPeriod: true, code: ym, label, ...rpp, ...kw };
+    return { isPeriod: true, code: ym, label, ...rpp, ...kw, ...d20 };
   } else {
     const code = key.replace(/-/g, '');
     const label = key.replace(/-/g, '/');
-    return { isPeriod: false, code, label, ...rpp, ...kw };
+    return { isPeriod: false, code, label, ...rpp, ...kw, ...d20 };
   }
 }
 
@@ -1278,27 +1292,35 @@ function _renderMonthlyTable(rows) {
   if (colHeader) colHeader.style.display = 'block';
 
   // グリッドカラムのテンプレート（ヘッダーと合わせる）
-  const GRID = '110px 80px 100px 70px 100px 80px 60px 80px 80px 2px 100px 80px 100px 80px';
+  const GRID = '100px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px';
+
+  // CVR/ROASの色付けヘルパー（KW・20用）
+  const _roasKW  = r => r.spendKw  > 0 ? Math.round(r.salesKw  / r.spendKw  * 10000) / 100 : 0;
+  const _fmtCvr  = v => v > 0 ? v + '%' : '—';
+  const _fmtRoas = (v, cls) => v > 0 ? `<div class="roas-val ${_roasCls(v)}">${v}%</div>` : '<div class="roas-val rn">—</div>';
 
   let html = '';
   for (const r of rows) {
-    const roasCls = _roasCls(r.roas);
+    // KWのROAS計算（表示用）
+    const roasKw = r.spendKw > 0 ? Math.round(r.salesKw / r.spendKw * 10000) / 100 : 0;
     html += `<div class="item-row">
       <div style="display:grid;grid-template-columns:${GRID};align-items:center;min-height:44px;cursor:default" class="item-basic">
         <div class="cell" style="font-weight:600">${r.label}</div>
-        <div class="cell r mono">${_fmtN(r.cl)}</div>
         <div class="cell r mono">${fmtY(r.spend)}</div>
-        <div class="cell r mono">${fmtY(r.cpc)}</div>
-        <div class="cell r mono">${fmtY(r.sales)}</div>
-        <div class="cell r mono">${_fmtN(r.orders)}</div>
-        <div class="cell r mono">${r.cvr}%</div>
-        <div class="roas-cell"><div class="roas-val ${roasCls}">${r.roas}%</div></div>
-        <div class="cell r mono">${fmtY(r.cpa)}</div>
-        <div style="border-left:2px solid var(--border2)"></div>
         <div class="cell r mono">${fmtY(r.spendKw)}</div>
-        <div class="cell r mono">${_fmtN(r.clKw)}</div>
+        <div class="cell r mono">${fmtY(r.spend20)}</div>
+        <div class="cell r mono">${fmtY(r.sales)}</div>
         <div class="cell r mono">${fmtY(r.salesKw)}</div>
-        <div class="cell r mono">${_fmtN(r.ordersKw)}</div>
+        <div class="cell r mono">${fmtY(r.sales20)}</div>
+        <div class="cell r mono">${fmtY(r.cpa)}</div>
+        <div class="cell r mono">${r.spendKw > 0 && r.ordersKw > 0 ? fmtY(Math.round(r.spendKw / r.ordersKw)) : '—'}</div>
+        <div class="cell r mono">${r.spend20 > 0 && r.orders20 > 0 ? fmtY(r.cpa20) : '—'}</div>
+        <div class="cell r mono">${r.cvr > 0 ? r.cvr + '%' : '—'}</div>
+        <div class="cell r mono">${r.clKw > 0 && r.ordersKw > 0 ? (Math.round(r.ordersKw / r.clKw * 10000) / 100) + '%' : '—'}</div>
+        <div class="cell r mono">${r.cvr20 > 0 ? r.cvr20 + '%' : '—'}</div>
+        <div class="roas-cell">${_fmtRoas(r.roas)}</div>
+        <div class="roas-cell">${_fmtRoas(roasKw)}</div>
+        <div class="roas-cell">${_fmtRoas(r.roas20)}</div>
       </div>
     </div>`;
   }
