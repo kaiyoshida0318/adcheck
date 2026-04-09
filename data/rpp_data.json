@@ -9321,5 +9321,13 @@
       "img": "https://thumbnail.image.rakuten.co.jp/@0_mall/yukaiya/cabinet/ep/ep-anker-25-01-b-01.jpg?_ex=128x128",
       "shopCode": "10001328"
     }
-  }
+  },
+  "calEvents": [
+    {
+      "start": "2026-04-05",
+      "end": "2026-04-10",
+      "label": "マラソン",
+      "color": "#ff9800"
+    }
+  ]
 }
