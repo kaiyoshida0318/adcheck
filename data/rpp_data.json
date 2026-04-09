@@ -34897,7 +34897,14 @@
       "shopCode": "10001328"
     }
   },
-  "calEvents": [],
+  "calEvents": [
+    {
+      "start": "2026-04-02",
+      "end": "2026-04-09",
+      "label": "SS",
+      "color": "#2196f3"
+    }
+  ],
   "nichinichiRows": [
     {
       "code": "202604",
