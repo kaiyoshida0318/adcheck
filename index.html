@@ -262,7 +262,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.10</span>
+    <span class="build-date">v1.11</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -340,16 +340,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <span id="monthly-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
           </div>
         </div>
-        <div id="monthly-col-header" style="display:none">
-          <div class="col-header" style="grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 0.85fr 0.85fr 0.85fr 1fr 1fr 1fr">
-            <div class="ch">月</div>
-            <div class="ch r" style="background:#e8f0fe">実績額■</div><div class="ch r" style="background:#dce8fd">実績額-KW</div><div class="ch r" style="background:#d0e0fc">実績額-20</div>
-            <div class="ch r" style="background:#e6f4ea">売上金額■</div><div class="ch r" style="background:#daf0e0">売上金額-KW</div><div class="ch r" style="background:#ceead4">売上金額-20</div>
-            <div class="ch r" style="background:#f3e8fd">獲得単価■</div><div class="ch r" style="background:#ecdffb">獲得単価-KW</div><div class="ch r" style="background:#e4d5f9">獲得単価-20</div>
-            <div class="ch r" style="background:#fef3e2">CVR■</div><div class="ch r" style="background:#fdecd4">CVR-KW</div><div class="ch r" style="background:#fce4c6">CVR-20</div>
-            <div class="ch r" style="background:#fce8e6">ROAS■</div><div class="ch r" style="background:#faddda">ROAS-KW</div><div class="ch r" style="background:#f8d2ce">ROAS-20</div>
-          </div>
-        </div>
+        <div id="monthly-col-header" style="display:none"></div>
         <div id="monthly-table-wrap">
           <div class="empty-state" style="padding:60px 24px">
             <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg></div>
@@ -373,16 +364,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <span id="daily-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
           </div>
         </div>
-        <div id="daily-col-header" style="display:none">
-          <div class="col-header" style="grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 0.85fr 0.85fr 0.85fr 1fr 1fr 1fr">
-            <div class="ch">日付</div>
-            <div class="ch r" style="background:#e8f0fe">実績額■</div><div class="ch r" style="background:#dce8fd">実績額-KW</div><div class="ch r" style="background:#d0e0fc">実績額-20</div>
-            <div class="ch r" style="background:#e6f4ea">売上金額■</div><div class="ch r" style="background:#daf0e0">売上金額-KW</div><div class="ch r" style="background:#ceead4">売上金額-20</div>
-            <div class="ch r" style="background:#f3e8fd">獲得単価■</div><div class="ch r" style="background:#ecdffb">獲得単価-KW</div><div class="ch r" style="background:#e4d5f9">獲得単価-20</div>
-            <div class="ch r" style="background:#fef3e2">CVR■</div><div class="ch r" style="background:#fdecd4">CVR-KW</div><div class="ch r" style="background:#fce4c6">CVR-20</div>
-            <div class="ch r" style="background:#fce8e6">ROAS■</div><div class="ch r" style="background:#faddda">ROAS-KW</div><div class="ch r" style="background:#f8d2ce">ROAS-20</div>
-          </div>
-        </div>
+        <div id="daily-col-header" style="display:none"></div>
         <div id="daily-table-wrap">
           <div class="empty-state" style="padding:60px 24px">
             <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg></div>
@@ -1320,63 +1302,70 @@ function _renderTable(mode, rows) {
   }
   if (colHeader) colHeader.style.display = 'block';
 
-  const GRID = '1.6fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 0.85fr 0.85fr 0.85fr 1fr 1fr 1fr';
 
   // ── 動的パーセンタイル閾値計算（上位33%=緑、下位33%=赤） ──
   function _pct(arr, p) { const s=[...arr].sort((a,b)=>a-b); return s[Math.floor(s.length*p/100)]||0; }
   const _getVals = (key) => rows.filter(r => r[key] > 0).map(r => r[key]);
   const th = {
-    spendG:  _pct(_getVals('spend'),  67), spendR:  _pct(_getVals('spend'),  33), // 高い=緑（活発）
-    salesG:  _pct(_getVals('sales'),  67), salesR:  _pct(_getVals('sales'),  33), // 高い=緑
-    cpaG:    _pct(_getVals('cpa'),    33), cpaR:    _pct(_getVals('cpa'),    67), // 低い=緑（コスパ良）
-    cvrG:    _pct(_getVals('cvr'),    67), cvrR:    _pct(_getVals('cvr'),    33), // 高い=緑
+    spendG: _pct(_getVals('spend'), 67), spendR: _pct(_getVals('spend'), 33),
+    salesG: _pct(_getVals('sales'), 67), salesR: _pct(_getVals('sales'), 33),
+    cpaG:   _pct(_getVals('cpa'),   33), cpaR:   _pct(_getVals('cpa'),   67),
+    cvrG:   _pct(_getVals('cvr'),   67), cvrR:   _pct(_getVals('cvr'),   33),
   };
-
-  // 色クラスを返す（文字色のみ：背景色グループカラーは維持）
   function _cc(val, gThresh, rThresh, higherIsBetter=true) {
     if (!val || val === 0) return '';
     return higherIsBetter
-      ? (val >= gThresh ? ' rg' : val <= rThresh ? ' rb' : ' rw')
-      : (val <= gThresh ? ' rg' : val >= rThresh ? ' rb' : ' rw');
+      ? (val >= gThresh ? 'rg' : val <= rThresh ? 'rb' : 'rw')
+      : (val <= gThresh ? 'rg' : val >= rThresh ? 'rb' : 'rw');
   }
-
-  // 値+色クラス付きセルを返すヘルパー
   function _cv(val, formatted, cls) {
     return cls ? `<span class="${cls}" style="font-weight:600">${formatted}</span>` : formatted;
   }
+  const _fmtRoasCell = v => v > 0 ? `<span class="roas-val ${_roasCls(v)}">${v}%</span>` : '<span class="roas-val rn">—</span>';
 
-  const _fmtRoas = v => v > 0 ? `<div class="roas-val ${_roasCls(v)}">${v}%</div>` : '<div class="roas-val rn">—</div>';
+  // ── tableタグで統一（ヘッダーと行が自動的に列幅を共有） ──
+  const BG = ['#f4f8ff','#edf4ff','#e6f0ff','#f4fbf5','#edf8ef','#e6f5e9','#faf4ff','#f5eeff','#f0e8ff','#fffaf3','#fff5e8','#fff0dd','#fff5f4','#ffeeed','#ffe8e6'];
+  const HBG = ['#e8f0fe','#dce8fd','#d0e0fc','#e6f4ea','#daf0e0','#ceead4','#f3e8fd','#ecdffb','#e4d5f9','#fef3e2','#fdecd4','#fce4c6','#fce8e6','#faddda','#f8d2ce'];
+  const dateLabel = mode === 'monthly' ? '月' : '日付';
+  const HEADS = ['実績額■','実績額-KW','実績額-20','売上金額■','売上金額-KW','売上金額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','ROAS■','ROAS-KW','ROAS-20'];
 
-  let html = '';
+  let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:auto">
+    <thead><tr style="background:var(--surface2)">
+      <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);white-space:nowrap">${dateLabel}</th>
+      ${HEADS.map((h,i) => `<th style="padding:8px 6px;text-align:right;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid var(--border);white-space:nowrap;background:${HBG[i]}">${h}</th>`).join('')}
+    </tr></thead><tbody>`;
+
   for (const r of rows) {
-    const roasKw  = r.spendKw > 0 ? Math.round(r.salesKw / r.spendKw * 10000) / 100 : 0;
-    const cpaKwV  = r.spendKw > 0 && r.ordersKw > 0 ? Math.round(r.spendKw / r.ordersKw) : 0;
-    const cvrKwV  = r.clKw > 0 && r.ordersKw > 0 ? Math.round(r.ordersKw / r.clKw * 10000) / 100 : 0;
-    const cpa20V  = r.cpa20 || 0;
-    const cvr20V  = r.cvr20 || 0;
-
-    // KW・20は■と同じ基準で色付け
-    html += `<div class="item-row">
-      <div style="display:grid;grid-template-columns:${GRID};align-items:center;min-height:44px;cursor:default;font-size:11px" class="item-basic">
-        <div class="cell" style="font-weight:600">${r.label}</div>
-        <div class="cell r mono" style="background:#f4f8ff">${_cv(r.spend,   fmtY(r.spend),   _cc(r.spend,  th.spendG, th.spendR))}</div>
-        <div class="cell r mono" style="background:#edf4ff">${_cv(r.spendKw, fmtY(r.spendKw), _cc(r.spendKw,th.spendG, th.spendR))}</div>
-        <div class="cell r mono" style="background:#e6f0ff">${_cv(r.spend20, fmtY(r.spend20), _cc(r.spend20,th.spendG, th.spendR))}</div>
-        <div class="cell r mono" style="background:#f4fbf5">${_cv(r.sales,   fmtY(r.sales),   _cc(r.sales,  th.salesG, th.salesR))}</div>
-        <div class="cell r mono" style="background:#edf8ef">${_cv(r.salesKw, fmtY(r.salesKw), _cc(r.salesKw,th.salesG, th.salesR))}</div>
-        <div class="cell r mono" style="background:#e6f5e9">${_cv(r.sales20, fmtY(r.sales20), _cc(r.sales20,th.salesG, th.salesR))}</div>
-        <div class="cell r mono" style="background:#faf4ff">${_cv(r.cpa,     r.cpa>0?fmtY(r.cpa):'—',   _cc(r.cpa,  th.cpaG, th.cpaR, false))}</div>
-        <div class="cell r mono" style="background:#f5eeff">${_cv(cpaKwV,   cpaKwV>0?fmtY(cpaKwV):'—', _cc(cpaKwV, th.cpaG, th.cpaR, false))}</div>
-        <div class="cell r mono" style="background:#f0e8ff">${_cv(cpa20V,   cpa20V>0?fmtY(cpa20V):'—', _cc(cpa20V, th.cpaG, th.cpaR, false))}</div>
-        <div class="cell r mono" style="background:#fffaf3">${_cv(r.cvr,     r.cvr>0?r.cvr+'%':'—',     _cc(r.cvr,  th.cvrG, th.cvrR))}</div>
-        <div class="cell r mono" style="background:#fff5e8">${_cv(cvrKwV,   cvrKwV>0?cvrKwV+'%':'—',   _cc(cvrKwV, th.cvrG, th.cvrR))}</div>
-        <div class="cell r mono" style="background:#fff0dd">${_cv(cvr20V,   cvr20V>0?cvr20V+'%':'—',   _cc(cvr20V, th.cvrG, th.cvrR))}</div>
-        <div class="roas-cell" style="background:#fff5f4">${_fmtRoas(r.roas)}</div>
-        <div class="roas-cell" style="background:#ffeeed">${_fmtRoas(roasKw)}</div>
-        <div class="roas-cell" style="background:#ffe8e6">${_fmtRoas(r.roas20)}</div>
-      </div>
-    </div>`;
+    const roasKw = r.spendKw > 0 ? Math.round(r.salesKw / r.spendKw * 10000) / 100 : 0;
+    const cpaKwV = r.spendKw > 0 && r.ordersKw > 0 ? Math.round(r.spendKw / r.ordersKw) : 0;
+    const cvrKwV = r.clKw > 0 && r.ordersKw > 0 ? Math.round(r.ordersKw / r.clKw * 10000) / 100 : 0;
+    const cpa20V = r.cpa20 || 0;
+    const cvr20V = r.cvr20 || 0;
+    const cells = [
+      _cv(r.spend,   fmtY(r.spend),             _cc(r.spend,   th.spendG, th.spendR)),
+      _cv(r.spendKw, fmtY(r.spendKw),            _cc(r.spendKw, th.spendG, th.spendR)),
+      _cv(r.spend20, fmtY(r.spend20),            _cc(r.spend20, th.spendG, th.spendR)),
+      _cv(r.sales,   fmtY(r.sales),              _cc(r.sales,   th.salesG, th.salesR)),
+      _cv(r.salesKw, fmtY(r.salesKw),            _cc(r.salesKw, th.salesG, th.salesR)),
+      _cv(r.sales20, fmtY(r.sales20),            _cc(r.sales20, th.salesG, th.salesR)),
+      _cv(r.cpa,     r.cpa>0?fmtY(r.cpa):'—',   _cc(r.cpa,     th.cpaG, th.cpaR, false)),
+      _cv(cpaKwV,   cpaKwV>0?fmtY(cpaKwV):'—',  _cc(cpaKwV,    th.cpaG, th.cpaR, false)),
+      _cv(cpa20V,   cpa20V>0?fmtY(cpa20V):'—',  _cc(cpa20V,    th.cpaG, th.cpaR, false)),
+      _cv(r.cvr,     r.cvr>0?r.cvr+'%':'—',      _cc(r.cvr,     th.cvrG, th.cvrR)),
+      _cv(cvrKwV,   cvrKwV>0?cvrKwV+'%':'—',    _cc(cvrKwV,    th.cvrG, th.cvrR)),
+      _cv(cvr20V,   cvr20V>0?cvr20V+'%':'—',    _cc(cvr20V,    th.cvrG, th.cvrR)),
+      _fmtRoasCell(r.roas),
+      _fmtRoasCell(roasKw),
+      _fmtRoasCell(r.roas20),
+    ];
+    html += `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:7px 6px;font-weight:600;white-space:nowrap;font-size:11px">${r.label}</td>
+      ${cells.map((c,i) => `<td style="padding:7px 6px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;background:${BG[i]}">${c}</td>`).join('')}
+    </tr>`;
   }
+  html += '</tbody></table></div>';
+
+  if (colHeader) colHeader.style.display = 'none'; // table内にヘッダーあるので不要
   if (tableWrap) tableWrap.innerHTML = html;
   if (runStatus) runStatus.textContent = `${rows.length}件`;
 }
