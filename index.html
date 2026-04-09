@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.13</span>
+    <span class="build-date">v1.14</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -284,7 +284,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <!-- タブバー -->
 <nav class="tab-bar">
-  <button class="tab-btn active" id="tab-btn-products" onclick="switchTab('products')">商品別</button>
+  <button class="tab-btn active" id="tab-btn-products" onclick="switchTab('products')">商品別データ</button>
   <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">月別データ</button>
   <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">日別データ</button>
   <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">グラフ</button>
@@ -1062,9 +1062,11 @@ function _renderMonthlyBadges() {
 }
 
 function _nichFileType(name) {
-  if (name.includes('keyword')) return 'kw';
-  if (name.includes('rpp')) return 'rpp';
-  return 'unknown';
+  const n = name.toLowerCase();
+  // 楽天RPPレポートファイル名で厳密に判定
+  if (n.includes('rpp_keyword_reports_')) return 'kw';   // KW別 → 日別・月別データ
+  if (n.includes('rpp_reports_'))         return 'rpp';  // 全体集計 → 日別・月別データ
+  return 'unknown'; // それ以外（商品別レポート等）
 }
 
 async function _readNichText(file) {
