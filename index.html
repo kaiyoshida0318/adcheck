@@ -262,7 +262,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.7</span>
+    <span class="build-date">v1.8</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -343,11 +343,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div id="monthly-col-header" style="display:none;overflow-x:auto;-webkit-overflow-scrolling:touch">
           <div class="col-header" style="min-width:1460px;grid-template-columns: 110px 96px 96px 96px 96px 96px 96px 96px 96px 96px 80px 80px 80px 92px 92px 92px">
             <div class="ch">月</div>
-            <div class="ch r">実績額■</div><div class="ch r">実績額-KW</div><div class="ch r">実績額-20</div>
-            <div class="ch r">売上金額■</div><div class="ch r">売上金額-KW</div><div class="ch r">売上金額-20</div>
-            <div class="ch r">獲得単価■</div><div class="ch r">獲得単価-KW</div><div class="ch r">獲得単価-20</div>
-            <div class="ch r">CVR■</div><div class="ch r">CVR-KW</div><div class="ch r">CVR-20</div>
-            <div class="ch r">ROAS■</div><div class="ch r">ROAS-KW</div><div class="ch r">ROAS-20</div>
+            <div class="ch r" style="background:#e8f0fe">実績額■</div><div class="ch r" style="background:#dce8fd">実績額-KW</div><div class="ch r" style="background:#d0e0fc">実績額-20</div>
+            <div class="ch r" style="background:#e6f4ea">売上金額■</div><div class="ch r" style="background:#daf0e0">売上金額-KW</div><div class="ch r" style="background:#ceead4">売上金額-20</div>
+            <div class="ch r" style="background:#f3e8fd">獲得単価■</div><div class="ch r" style="background:#ecdffb">獲得単価-KW</div><div class="ch r" style="background:#e4d5f9">獲得単価-20</div>
+            <div class="ch r" style="background:#fef3e2">CVR■</div><div class="ch r" style="background:#fdecd4">CVR-KW</div><div class="ch r" style="background:#fce4c6">CVR-20</div>
+            <div class="ch r" style="background:#fce8e6">ROAS■</div><div class="ch r" style="background:#faddda">ROAS-KW</div><div class="ch r" style="background:#f8d2ce">ROAS-20</div>
           </div>
         </div>
         <div id="monthly-table-wrap">
@@ -376,11 +376,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div id="daily-col-header" style="display:none;overflow-x:auto;-webkit-overflow-scrolling:touch">
           <div class="col-header" style="min-width:1460px;grid-template-columns: 110px 96px 96px 96px 96px 96px 96px 96px 96px 96px 80px 80px 80px 92px 92px 92px">
             <div class="ch">日付</div>
-            <div class="ch r">実績額■</div><div class="ch r">実績額-KW</div><div class="ch r">実績額-20</div>
-            <div class="ch r">売上金額■</div><div class="ch r">売上金額-KW</div><div class="ch r">売上金額-20</div>
-            <div class="ch r">獲得単価■</div><div class="ch r">獲得単価-KW</div><div class="ch r">獲得単価-20</div>
-            <div class="ch r">CVR■</div><div class="ch r">CVR-KW</div><div class="ch r">CVR-20</div>
-            <div class="ch r">ROAS■</div><div class="ch r">ROAS-KW</div><div class="ch r">ROAS-20</div>
+            <div class="ch r" style="background:#e8f0fe">実績額■</div><div class="ch r" style="background:#dce8fd">実績額-KW</div><div class="ch r" style="background:#d0e0fc">実績額-20</div>
+            <div class="ch r" style="background:#e6f4ea">売上金額■</div><div class="ch r" style="background:#daf0e0">売上金額-KW</div><div class="ch r" style="background:#ceead4">売上金額-20</div>
+            <div class="ch r" style="background:#f3e8fd">獲得単価■</div><div class="ch r" style="background:#ecdffb">獲得単価-KW</div><div class="ch r" style="background:#e4d5f9">獲得単価-20</div>
+            <div class="ch r" style="background:#fef3e2">CVR■</div><div class="ch r" style="background:#fdecd4">CVR-KW</div><div class="ch r" style="background:#fce4c6">CVR-20</div>
+            <div class="ch r" style="background:#fce8e6">ROAS■</div><div class="ch r" style="background:#faddda">ROAS-KW</div><div class="ch r" style="background:#f8d2ce">ROAS-20</div>
           </div>
         </div>
         <div id="daily-table-wrap">
@@ -1331,21 +1331,21 @@ function _renderTable(mode, rows) {
     html += `<div class="item-row">
       <div style="display:grid;grid-template-columns:${GRID};align-items:center;min-height:44px;cursor:default;min-width:1460px" class="item-basic">
         <div class="cell" style="font-weight:600">${r.label}</div>
-        <div class="cell r mono">${fmtY(r.spend)}</div>
-        <div class="cell r mono">${fmtY(r.spendKw)}</div>
-        <div class="cell r mono">${fmtY(r.spend20)}</div>
-        <div class="cell r mono">${fmtY(r.sales)}</div>
-        <div class="cell r mono">${fmtY(r.salesKw)}</div>
-        <div class="cell r mono">${fmtY(r.sales20)}</div>
-        <div class="cell r mono">${r.cpa > 0 ? fmtY(r.cpa) : '—'}</div>
-        <div class="cell r mono">${cpaKw}</div>
-        <div class="cell r mono">${r.cpa20 > 0 ? fmtY(r.cpa20) : '—'}</div>
-        <div class="cell r mono">${r.cvr > 0 ? r.cvr + '%' : '—'}</div>
-        <div class="cell r mono">${cvrKw}</div>
-        <div class="cell r mono">${r.cvr20 > 0 ? r.cvr20 + '%' : '—'}</div>
-        <div class="roas-cell">${_fmtRoas(r.roas)}</div>
-        <div class="roas-cell">${_fmtRoas(roasKw)}</div>
-        <div class="roas-cell">${_fmtRoas(r.roas20)}</div>
+        <div class="cell r mono" style="background:#f4f8ff">${fmtY(r.spend)}</div>
+        <div class="cell r mono" style="background:#edf4ff">${fmtY(r.spendKw)}</div>
+        <div class="cell r mono" style="background:#e6f0ff">${fmtY(r.spend20)}</div>
+        <div class="cell r mono" style="background:#f4fbf5">${fmtY(r.sales)}</div>
+        <div class="cell r mono" style="background:#edf8ef">${fmtY(r.salesKw)}</div>
+        <div class="cell r mono" style="background:#e6f5e9">${fmtY(r.sales20)}</div>
+        <div class="cell r mono" style="background:#faf4ff">${r.cpa > 0 ? fmtY(r.cpa) : '—'}</div>
+        <div class="cell r mono" style="background:#f5eeff">${cpaKw}</div>
+        <div class="cell r mono" style="background:#f0e8ff">${r.cpa20 > 0 ? fmtY(r.cpa20) : '—'}</div>
+        <div class="cell r mono" style="background:#fffaf3">${r.cvr > 0 ? r.cvr + '%' : '—'}</div>
+        <div class="cell r mono" style="background:#fff5e8">${cvrKw}</div>
+        <div class="cell r mono" style="background:#fff0dd">${r.cvr20 > 0 ? r.cvr20 + '%' : '—'}</div>
+        <div class="roas-cell" style="background:#fff5f4">${_fmtRoas(r.roas)}</div>
+        <div class="roas-cell" style="background:#ffeeed">${_fmtRoas(roasKw)}</div>
+        <div class="roas-cell" style="background:#ffe8e6">${_fmtRoas(r.roas20)}</div>
       </div>
     </div>`;
   }
