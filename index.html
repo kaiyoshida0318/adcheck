@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.27</span>
+    <span class="build-date">v1.30</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -871,6 +871,15 @@ function readFiles(files) {
 
       // rpp_item_reports → 商品別データ + itemDailyData両方に追記
       if (fname.includes('rpp_item_reports_') && fname.endsWith('.zip')) {
+        // item読み込み前に■データをリセット（再読み込み時に正確な値にする）
+        Object.keys(itemDailyData).forEach(code => {
+          Object.keys(itemDailyData[code]).forEach(date => {
+            itemDailyData[code][date].spend  = 0;
+            itemDailyData[code][date].sales  = 0;
+            itemDailyData[code][date].orders = 0;
+            itemDailyData[code][date].cl     = 0;
+          });
+        });
         const buf = await f.arrayBuffer();
         const zip = await JSZip.loadAsync(buf);
         for (const [name, entry] of Object.entries(zip.files)) {
@@ -878,8 +887,8 @@ function readFiles(files) {
             const csvBuf = await entry.async('arraybuffer');
             const bytes = new Uint8Array(csvBuf);
             const text = new TextDecoder('shift-jis').decode(bytes);
-            _parseItemDaily(text, 'item'); // itemDailyDataに蓄積
-            csvTexts.push({ text, name }); // 商品別データにも渡す
+            _parseItemDaily(text, 'item');
+            csvTexts.push({ text, name });
           }
         }
         continue;
@@ -1977,31 +1986,40 @@ function renderCalendar(p, ym) {
       if (idd) {
         const spendKw = idd.spendKw || 0;
         const salesKw = idd.salesKw || 0;
+        const salesFull = idd.sales || 0;
         const spend20 = (idd.spend||0) - spendKw;
-        const sales20 = (idd.sales||0) - salesKw;
+        const sales20 = salesFull - salesKw;
+        const roasFull= (idd.spend||0)>0 ? Math.round(salesFull/(idd.spend||1)*10000)/100 : 0;
         const roasKw  = spendKw > 0 ? Math.round(salesKw /spendKw *10000)/100 : 0;
         const roas20v = spend20 > 0 ? Math.round(sales20 /spend20 *10000)/100 : 0;
-        iddHtml = `<div style="margin-top:3px;font-size:9px;line-height:1.6;border-top:1px solid var(--border);padding-top:2px">
-          <div style="display:flex;justify-content:space-between;gap:2px">
-            <span style="color:#888;font-weight:600;min-width:10px">全</span>
-            <span style="font-family:'DM Mono',monospace;flex:1;text-align:right">${fmt(idd.spend||0)}</span>
-            <span style="color:${rc2(d.roas720)};font-weight:700;min-width:32px;text-align:right">${d.roas720>0?d.roas720+'%':'—'}</span>
+        // ヘッダー行
+        iddHtml = `<div style="margin-top:2px;font-size:11px;line-height:1.6">
+          <div style="display:grid;grid-template-columns:14px 1fr 1fr 40px;gap:1px;color:#bbb;font-size:9px;font-weight:700;margin-bottom:2px;border-bottom:1px solid var(--border);padding-bottom:1px">
+            <span></span><span style="text-align:right">実績</span><span style="text-align:right">売上</span><span style="text-align:right">ROAS</span>
           </div>
-          ${spendKw>0?`<div style="display:flex;justify-content:space-between;gap:2px">
-            <span style="color:#1565C0;font-weight:600;min-width:10px">K</span>
-            <span style="font-family:'DM Mono',monospace;flex:1;text-align:right">${fmt(spendKw)}</span>
-            <span style="color:${rc2(roasKw)};font-weight:700;min-width:32px;text-align:right">${roasKw>0?roasKw+'%':'—'}</span>
+          <div style="display:grid;grid-template-columns:14px 1fr 1fr 40px;gap:1px">
+            <span style="color:#888;font-weight:700">全</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(idd.spend||0)}</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(salesFull)}</span>
+            <span style="color:${rc2(roasFull)};font-weight:700;text-align:right">${roasFull>0?roasFull+'%':'—'}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;gap:2px">
-            <span style="color:#999;font-weight:600;min-width:10px">20</span>
-            <span style="font-family:'DM Mono',monospace;flex:1;text-align:right">${fmt(spend20)}</span>
-            <span style="color:${rc2(roas20v)};font-weight:700;min-width:32px;text-align:right">${roas20v>0?roas20v+'%':'—'}</span>
+          ${spendKw>0?`<div style="display:grid;grid-template-columns:14px 1fr 1fr 40px;gap:1px">
+            <span style="color:#1565C0;font-weight:700">K</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(spendKw)}</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(salesKw)}</span>
+            <span style="color:${rc2(roasKw)};font-weight:700;text-align:right">${roasKw>0?roasKw+'%':'—'}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:14px 1fr 1fr 40px;gap:1px">
+            <span style="color:#999;font-weight:700">20</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(spend20)}</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(sales20)}</span>
+            <span style="color:${rc2(roas20v)};font-weight:700;text-align:right">${roas20v>0?roas20v+'%':'—'}</span>
           </div>`:''}
         </div>`;
       }
       cells.push(`<div class="cal-cell has" style="${evStyle}">
         <div class="cal-date">${day}</div>
-        <div class="cal-spend">${fmt(d.spend)}</div>
+        ${idd ? '' : `<div class="cal-spend">${fmt(d.spend)}</div>`}
         ${idd ? iddHtml : `<div class="cal-roas ${rc(d.roas720)}">${d.roas720>0?fmt(d.roas720)+'%':'—'}</div>`}
         <div class="cal-bar" style="background:${heat}"></div>
         ${evColor ? `<div class="cal-event-bar" style="background:${evColor}"></div>` : ''}
