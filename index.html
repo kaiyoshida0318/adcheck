@@ -262,7 +262,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.4</span>
+    <span class="build-date">v1.5</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -279,7 +279,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <!-- タブバー -->
 <nav class="tab-bar">
   <button class="tab-btn active" id="tab-btn-products" onclick="switchTab('products')">商品別</button>
-  <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">日別・月別データ</button>
+  <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">月別データ</button>
+  <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">日別データ</button>
   <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">グラフ</button>
 </nav>
 
@@ -327,16 +328,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
 
-  <!-- ── 日別・月別データタブ ── -->
+  <!-- ── 月別データタブ ── -->
   <div class="tab-panel" id="tab-monthly">
     <div class="container" style="max-width:1400px">
-
-      <!-- サマリーバー -->
       <div class="summary-bar" id="monthly-summary-bar" style="display:none"></div>
-
-      <!-- テーブルカード -->
-      <div class="table-card" id="monthly-table-card">
-        <!-- ツールバー -->
+      <div class="table-card">
         <div class="table-toolbar">
           <div style="font-size:12px;color:var(--text3)">右上「＋レポート追加」から rpp_reports・rpp_keyword_reports を追加</div>
           <div class="toolbar-right">
@@ -344,41 +340,57 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <span id="monthly-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
           </div>
         </div>
-
-        <!-- テーブルヘッダー -->
         <div id="monthly-col-header" style="display:none">
           <div class="col-header" style="grid-template-columns: 100px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px">
-            <div class="ch">日付</div>
-            <div class="ch r">実績額■</div>
-            <div class="ch r">実績額-KW</div>
-            <div class="ch r">実績額-20</div>
-            <div class="ch r">売上金額■</div>
-            <div class="ch r">売上金額-KW</div>
-            <div class="ch r">売上金額-20</div>
-            <div class="ch r">獲得単価■</div>
-            <div class="ch r">獲得単価-KW</div>
-            <div class="ch r">獲得単価-20</div>
-            <div class="ch r">CVR■</div>
-            <div class="ch r">CVR-KW</div>
-            <div class="ch r">CVR-20</div>
-            <div class="ch r">ROAS■</div>
-            <div class="ch r">ROAS-KW</div>
-            <div class="ch r">ROAS-20</div>
+            <div class="ch">月</div>
+            <div class="ch r">実績額■</div><div class="ch r">実績額-KW</div><div class="ch r">実績額-20</div>
+            <div class="ch r">売上金額■</div><div class="ch r">売上金額-KW</div><div class="ch r">売上金額-20</div>
+            <div class="ch r">獲得単価■</div><div class="ch r">獲得単価-KW</div><div class="ch r">獲得単価-20</div>
+            <div class="ch r">CVR■</div><div class="ch r">CVR-KW</div><div class="ch r">CVR-20</div>
+            <div class="ch r">ROAS■</div><div class="ch r">ROAS-KW</div><div class="ch r">ROAS-20</div>
           </div>
         </div>
-
-        <!-- データ行 -->
         <div id="monthly-table-wrap">
           <div class="empty-state" style="padding:60px 24px">
-            <div class="empty-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg>
-            </div>
-            <h3>日別・月別データ</h3>
+            <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg></div>
+            <h3>月別データ</h3>
             <p>右上「＋ レポート追加」から<br>rpp_reports（CSV）と rpp_keyword_reports（ZIP）を追加してください</p>
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
+  <!-- ── 日別データタブ ── -->
+  <div class="tab-panel" id="tab-daily">
+    <div class="container" style="max-width:1400px">
+      <div class="summary-bar" id="daily-summary-bar" style="display:none"></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div style="font-size:12px;color:var(--text3)">右上「＋レポート追加」から rpp_reports・rpp_keyword_reports を追加</div>
+          <div class="toolbar-right">
+            <button class="tbtn" onclick="dailyClear()">クリア</button>
+            <span id="daily-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
+          </div>
+        </div>
+        <div id="daily-col-header" style="display:none">
+          <div class="col-header" style="grid-template-columns: 100px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px">
+            <div class="ch">日付</div>
+            <div class="ch r">実績額■</div><div class="ch r">実績額-KW</div><div class="ch r">実績額-20</div>
+            <div class="ch r">売上金額■</div><div class="ch r">売上金額-KW</div><div class="ch r">売上金額-20</div>
+            <div class="ch r">獲得単価■</div><div class="ch r">獲得単価-KW</div><div class="ch r">獲得単価-20</div>
+            <div class="ch r">CVR■</div><div class="ch r">CVR-KW</div><div class="ch r">CVR-20</div>
+            <div class="ch r">ROAS■</div><div class="ch r">ROAS-KW</div><div class="ch r">ROAS-20</div>
+          </div>
+        </div>
+        <div id="daily-table-wrap">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg></div>
+            <h3>日別データ</h3>
+            <p>右上「＋ レポート追加」から<br>rpp_reports（CSV）と rpp_keyword_reports（ZIP）を追加してください</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -689,7 +701,7 @@ async function saveToGitHub() {
       sha = getJson.sha;
     }
     // データをJSON化してBase64エンコード
-    const payload = { DB, productCache, calEvents, nichinichiRows };
+    const payload = { DB, productCache, calEvents, nichinichiRows, dailyRows };
     const jsonStr = JSON.stringify(payload, null, 2);
     const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
     // PUTで保存
@@ -733,7 +745,11 @@ async function loadFromGitHub() {
       }
       if (data.nichinichiRows && data.nichinichiRows.length > 0) {
         nichinichiRows = data.nichinichiRows;
-        _renderMonthlyTable(nichinichiRows);
+        _renderTable('monthly', nichinichiRows);
+      }
+      if (data.dailyRows && data.dailyRows.length > 0) {
+        dailyRows = data.dailyRows;
+        _renderTable('daily', dailyRows);
       }
       return true;
     }
@@ -854,9 +870,7 @@ function readFiles(files) {
 
     // 月別データファイルが追加された場合は自動で表示を更新
     if (hasMonthlyFile) {
-      monthlyRun();
-      // 月別タブに自動切り替え
-      switchTab('monthly');
+      monthlyRun(); // 月別・日別データを処理して自動タブ切替
     }
 
     if (csvTexts.length === 0) {
@@ -1027,7 +1041,8 @@ async function fetchAllProductInfo() {
 
 // ── 月別データ ──
 var _nichinichiFiles = [];
-var nichinichiRows = []; // 日別・月別データの処理済み行（GitHub保存対象）
+var nichinichiRows = []; // 月別データ行（isPeriod: true）
+var dailyRows = [];     // 日別データ行（isPeriod: false）
 
 
 
@@ -1035,10 +1050,14 @@ var nichinichiRows = []; // 日別・月別データの処理済み行（GitHub�
 function monthlyClear() {
   _nichinichiFiles = [];
   nichinichiRows = [];
-  _renderMonthlyTable([]); // 空の状態に戻す
+  dailyRows = [];
+  _renderTable('monthly', []);
+  _renderTable('daily', []);
   document.getElementById('monthly-run-status').textContent = '';
+  document.getElementById('daily-run-status').textContent = '';
   saveToGitHub();
 }
+function dailyClear() { monthlyClear(); }
 
 function _renderMonthlyBadges() {
   // バッジ表示なし（ファイルはレポート追加から読み込み、表示はテーブルのみ）
@@ -1255,26 +1274,28 @@ function _processOneEntry(key, g) {
 function _fmtN(n) { return n != null ? Number(n).toLocaleString('ja-JP') : '—'; }
 function _roasCls(r) { return r >= 500 ? 'monthly-roas-g' : r >= 300 ? 'monthly-roas-w' : 'monthly-roas-b'; }
 
-function _renderMonthlyTable(rows) {
-  // コラムヘッダーを表示
-  const colHeader = document.getElementById('monthly-col-header');
-  const summaryBar = document.getElementById('monthly-summary-bar');
+function _renderTable(mode, rows) {
+  // mode: 'monthly' or 'daily'
+  const prefix = mode; // 'monthly' or 'daily'
+  const colHeader = document.getElementById(`${prefix}-col-header`);
+  const summaryBar = document.getElementById(`${prefix}-summary-bar`);
+  const tableWrap = document.getElementById(`${prefix}-table-wrap`);
+  const runStatus = document.getElementById(`${prefix}-run-status`);
+  const title = mode === 'monthly' ? '月別データ' : '日別データ';
 
   if (rows.length === 0) {
     if (colHeader) colHeader.style.display = 'none';
     if (summaryBar) summaryBar.style.display = 'none';
-    document.getElementById('monthly-table-wrap').innerHTML = `
+    if (tableWrap) tableWrap.innerHTML = `
       <div class="empty-state" style="padding:60px 24px">
-        <div class="empty-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg>
-        </div>
-        <h3>日別・月別データ</h3>
+        <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg></div>
+        <h3>${title}</h3>
         <p>右上「＋ レポート追加」から<br>rpp_reports（CSV）と rpp_keyword_reports（ZIP）を追加してください</p>
       </div>`;
     return;
   }
 
-  // サマリーカードを更新
+  // サマリーカード
   const totalSpend = rows.reduce((s, r) => s + (r.spend || 0), 0);
   const totalCl    = rows.reduce((s, r) => s + (r.cl || 0), 0);
   const totalSales = rows.reduce((s, r) => s + (r.sales || 0), 0);
@@ -1282,27 +1303,21 @@ function _renderMonthlyTable(rows) {
   if (summaryBar) {
     summaryBar.style.display = 'grid';
     summaryBar.innerHTML = `
-      <div class="scard scard-accent"><div class="scard-label">累計実績額■</div><div class="scard-val">${fmtY(totalSpend)}</div><div class="scard-sub">${rows.length}件のデータ</div></div>
+      <div class="scard scard-accent"><div class="scard-label">累計実績額■</div><div class="scard-val">${fmtY(totalSpend)}</div><div class="scard-sub">${rows.length}件</div></div>
       <div class="scard"><div class="scard-label">累計クリック数■</div><div class="scard-val">${fmt(totalCl)}</div></div>
       <div class="scard"><div class="scard-label">累計売上金額■</div><div class="scard-val">${fmtY(totalSales)}</div></div>
       <div class="scard"><div class="scard-label">平均ROAS■</div><div class="scard-val ${rc(avgRoas)}">${avgRoas}%</div></div>`;
   }
-
-  // コラムヘッダー表示
   if (colHeader) colHeader.style.display = 'block';
 
-  // グリッドカラムのテンプレート（ヘッダーと合わせる）
   const GRID = '100px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px';
-
-  // CVR/ROASの色付けヘルパー（KW・20用）
-  const _roasKW  = r => r.spendKw  > 0 ? Math.round(r.salesKw  / r.spendKw  * 10000) / 100 : 0;
-  const _fmtCvr  = v => v > 0 ? v + '%' : '—';
-  const _fmtRoas = (v, cls) => v > 0 ? `<div class="roas-val ${_roasCls(v)}">${v}%</div>` : '<div class="roas-val rn">—</div>';
+  const _fmtRoas = v => v > 0 ? `<div class="roas-val ${_roasCls(v)}">${v}%</div>` : '<div class="roas-val rn">—</div>';
 
   let html = '';
   for (const r of rows) {
-    // KWのROAS計算（表示用）
     const roasKw = r.spendKw > 0 ? Math.round(r.salesKw / r.spendKw * 10000) / 100 : 0;
+    const cpaKw  = r.spendKw > 0 && r.ordersKw > 0 ? fmtY(Math.round(r.spendKw / r.ordersKw)) : '—';
+    const cvrKw  = r.clKw > 0 && r.ordersKw > 0 ? (Math.round(r.ordersKw / r.clKw * 10000) / 100) + '%' : '—';
     html += `<div class="item-row">
       <div style="display:grid;grid-template-columns:${GRID};align-items:center;min-height:44px;cursor:default" class="item-basic">
         <div class="cell" style="font-weight:600">${r.label}</div>
@@ -1312,11 +1327,11 @@ function _renderMonthlyTable(rows) {
         <div class="cell r mono">${fmtY(r.sales)}</div>
         <div class="cell r mono">${fmtY(r.salesKw)}</div>
         <div class="cell r mono">${fmtY(r.sales20)}</div>
-        <div class="cell r mono">${fmtY(r.cpa)}</div>
-        <div class="cell r mono">${r.spendKw > 0 && r.ordersKw > 0 ? fmtY(Math.round(r.spendKw / r.ordersKw)) : '—'}</div>
-        <div class="cell r mono">${r.spend20 > 0 && r.orders20 > 0 ? fmtY(r.cpa20) : '—'}</div>
+        <div class="cell r mono">${r.cpa > 0 ? fmtY(r.cpa) : '—'}</div>
+        <div class="cell r mono">${cpaKw}</div>
+        <div class="cell r mono">${r.cpa20 > 0 ? fmtY(r.cpa20) : '—'}</div>
         <div class="cell r mono">${r.cvr > 0 ? r.cvr + '%' : '—'}</div>
-        <div class="cell r mono">${r.clKw > 0 && r.ordersKw > 0 ? (Math.round(r.ordersKw / r.clKw * 10000) / 100) + '%' : '—'}</div>
+        <div class="cell r mono">${cvrKw}</div>
         <div class="cell r mono">${r.cvr20 > 0 ? r.cvr20 + '%' : '—'}</div>
         <div class="roas-cell">${_fmtRoas(r.roas)}</div>
         <div class="roas-cell">${_fmtRoas(roasKw)}</div>
@@ -1324,35 +1339,48 @@ function _renderMonthlyTable(rows) {
       </div>
     </div>`;
   }
-  document.getElementById('monthly-table-wrap').innerHTML = html;
-  document.getElementById('monthly-run-status').textContent = `${rows.length}件`;
+  if (tableWrap) tableWrap.innerHTML = html;
+  if (runStatus) runStatus.textContent = `${rows.length}件`;
 }
+
+// 後方互換（古い呼び出しに対応）
+function _renderMonthlyTable(rows) { _renderTable('monthly', rows); }
 
 async function monthlyRun() {
   if (_nichinichiFiles.length === 0) {
-    // ファイルがなくても保存済みデータがあれば表示
-    if (nichinichiRows.length > 0) { _renderMonthlyTable(nichinichiRows); return; }
-    document.getElementById('monthly-run-status').textContent = 'レポート追加からファイルを追加してください';
+    // 保存済みデータがあれば表示
+    if (nichinichiRows.length > 0) _renderTable('monthly', nichinichiRows);
+    if (dailyRows.length > 0) _renderTable('daily', dailyRows);
     return;
   }
   document.getElementById('monthly-run-status').textContent = '処理中...';
+  document.getElementById('daily-run-status').textContent = '処理中...';
   const grouped = await _classifyAllFiles();
-  const keys = Object.keys(grouped).sort().reverse(); // 降順
-  const newRows = [];
+  const keys = Object.keys(grouped).sort().reverse();
+  const newMonthly = [], newDaily = [];
   for (const key of keys) {
     const g = grouped[key];
     if (!g.rpp || !g.kw) continue;
     const row = _processOneEntry(key, g);
-    if (row) newRows.push(row);
+    if (!row) continue;
+    if (row.isPeriod) newMonthly.push(row); else newDaily.push(row);
   }
-  // 既存データとマージ（同じcodeは新しいものを優先）
-  const existingByCode = {};
-  nichinichiRows.forEach(r => { existingByCode[r.code] = r; });
-  newRows.forEach(r => { existingByCode[r.code] = r; });
-  nichinichiRows = Object.values(existingByCode).sort((a, b) => b.code.localeCompare(a.code));
-  _renderMonthlyTable(nichinichiRows);
-  document.getElementById('monthly-run-status').textContent = `${nichinichiRows.length}件`;
-  saveToGitHub(); // GitHubに保存
+  // 月別マージ
+  const mByCode = {};
+  nichinichiRows.forEach(r => { mByCode[r.code] = r; });
+  newMonthly.forEach(r => { mByCode[r.code] = r; });
+  nichinichiRows = Object.values(mByCode).sort((a, b) => b.code.localeCompare(a.code));
+  // 日別マージ
+  const dByCode = {};
+  dailyRows.forEach(r => { dByCode[r.code] = r; });
+  newDaily.forEach(r => { dByCode[r.code] = r; });
+  dailyRows = Object.values(dByCode).sort((a, b) => b.code.localeCompare(a.code));
+  _renderTable('monthly', nichinichiRows);
+  _renderTable('daily', dailyRows);
+  saveToGitHub();
+  // 追加されたデータに応じてタブを自動切替
+  if (newMonthly.length > 0) switchTab('monthly');
+  else if (newDaily.length > 0) switchTab('daily');
 }
 
 
