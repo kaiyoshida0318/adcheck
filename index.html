@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.30</span>
+    <span class="build-date">v1.32</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1993,26 +1993,27 @@ function renderCalendar(p, ym) {
         const roasKw  = spendKw > 0 ? Math.round(salesKw /spendKw *10000)/100 : 0;
         const roas20v = spend20 > 0 ? Math.round(sales20 /spend20 *10000)/100 : 0;
         // ヘッダー行
-        iddHtml = `<div style="margin-top:2px;font-size:11px;line-height:1.6">
-          <div style="display:grid;grid-template-columns:14px 1fr 1fr 40px;gap:1px;color:#bbb;font-size:9px;font-weight:700;margin-bottom:2px;border-bottom:1px solid var(--border);padding-bottom:1px">
+        const G = '12px 1fr 1fr 36px'; // ラベル / 実績 / 売上 / ROAS
+        iddHtml = `<div style="margin-top:2px;line-height:1.55">
+          <div style="display:grid;grid-template-columns:${G};color:#bbb;font-size:9px;font-weight:700;margin-bottom:2px;padding-bottom:2px;border-bottom:1px solid var(--border)">
             <span></span><span style="text-align:right">実績</span><span style="text-align:right">売上</span><span style="text-align:right">ROAS</span>
           </div>
-          <div style="display:grid;grid-template-columns:14px 1fr 1fr 40px;gap:1px">
-            <span style="color:#888;font-weight:700">全</span>
-            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(idd.spend||0)}</span>
-            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(salesFull)}</span>
+          <div style="display:grid;grid-template-columns:${G};font-size:10px">
+            <span style="color:#888;font-weight:700;font-size:10px">全</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right">${fmt(idd.spend||0)}</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right">${fmt(salesFull)}</span>
             <span style="color:${rc2(roasFull)};font-weight:700;text-align:right">${roasFull>0?roasFull+'%':'—'}</span>
           </div>
-          ${spendKw>0?`<div style="display:grid;grid-template-columns:14px 1fr 1fr 40px;gap:1px">
-            <span style="color:#1565C0;font-weight:700">K</span>
-            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(spendKw)}</span>
-            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(salesKw)}</span>
+          ${spendKw>0?`<div style="display:grid;grid-template-columns:${G};font-size:10px">
+            <span style="color:#1565C0;font-weight:700;font-size:10px">K</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right">${fmt(spendKw)}</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right">${fmt(salesKw)}</span>
             <span style="color:${rc2(roasKw)};font-weight:700;text-align:right">${roasKw>0?roasKw+'%':'—'}</span>
           </div>
-          <div style="display:grid;grid-template-columns:14px 1fr 1fr 40px;gap:1px">
-            <span style="color:#999;font-weight:700">20</span>
-            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(spend20)}</span>
-            <span style="font-family:'DM Mono',monospace;text-align:right;font-size:11px">${fmt(sales20)}</span>
+          <div style="display:grid;grid-template-columns:${G};font-size:10px">
+            <span style="color:#999;font-weight:700;font-size:10px">20</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right">${fmt(spend20)}</span>
+            <span style="font-family:'DM Mono',monospace;text-align:right">${fmt(sales20)}</span>
             <span style="color:${rc2(roas20v)};font-weight:700;text-align:right">${roas20v>0?roas20v+'%':'—'}</span>
           </div>`:''}
         </div>`;
