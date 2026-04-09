@@ -187,6 +187,27 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tab-coming-soon h3 { font-size: 18px; font-weight: 700; color: var(--text); }
 .tab-coming-soon p { font-size: 13px; color: var(--text3); line-height: 1.6; }
 
+/* ── Monthly Data ── */
+.monthly-drop { border: 2.5px dashed #6366f1; border-radius: 16px; padding: 32px 24px; text-align: center; background: var(--surface); margin-bottom: 16px; cursor: pointer; transition: all 0.15s; }
+.monthly-drop:hover, .monthly-drop.dragover { background: #eef2ff; border-color: #4f46e5; }
+.monthly-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-family: 'DM Mono', monospace; }
+.monthly-badge.rpp { background: #fef2f2; color: var(--red); border: 1px solid rgba(191,0,0,0.2); }
+.monthly-badge.kw  { background: #eef2ff; color: #4f46e5; border: 1px solid rgba(99,102,241,0.2); }
+.monthly-badge.unknown { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.monthly-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.monthly-table th { background: var(--surface2); padding: 8px 10px; text-align: right; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; border-bottom: 1px solid var(--border); }
+.monthly-table th:first-child { text-align: left; }
+.monthly-table td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); font-family: 'DM Mono', monospace; color: var(--text); }
+.monthly-table td:first-child { text-align: left; font-family: inherit; font-weight: 500; color: var(--text); }
+.monthly-table tr:last-child td { border-bottom: none; }
+.monthly-table tr:hover td { background: #fafaf9; }
+.monthly-table .sep { border-left: 2px solid var(--border2); }
+.monthly-roas-g { color: var(--green); font-weight: 700; }
+.monthly-roas-w { color: var(--amber); font-weight: 700; }
+.monthly-roas-b { color: var(--danger); font-weight: 700; }
+.check-row { display: grid; grid-template-columns: 180px 60px 60px 80px 1fr; gap: 8px; align-items: center; padding: 6px 10px; font-size: 12px; border-radius: 6px; margin-bottom: 3px; }
+.check-row:hover { background: var(--surface2); }
+
 /* ── Danger Button ── */
 .header-btn.danger-btn { color: var(--danger); border-color: rgba(163,45,45,0.3); }
 .header-btn.danger-btn:hover { background: #fff0f0; border-color: var(--danger); }
@@ -309,10 +330,33 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
   <!-- ── 月別データタブ ── -->
   <div class="tab-panel" id="tab-monthly">
-    <div class="tab-coming-soon">
-      <div class="icon">📊</div>
-      <h3>月別データ</h3>
-      <p>月ごとの使用金額・クリック数・ROASの推移を<br>一覧で確認できる機能を準備中です。</p>
+    <div class="container" style="max-width:1200px">
+
+      <!-- ドロップゾーン -->
+      <div id="monthly-drop" class="monthly-drop"
+        ondragover="monthlyDragOver(event)" ondragleave="monthlyDragLeave(event)" ondrop="monthlyDrop(event)"
+        onclick="document.getElementById('monthlyFileInput').click()">
+        <div style="font-size:28px;margin-bottom:8px">📂</div>
+        <div style="font-weight:700;font-size:14px;color:#6366f1;margin-bottom:4px">rpp_reports と rpp_keyword_reports をまとめてドロップ</div>
+        <div style="font-size:12px;color:var(--text3)">CSV・ZIP 複数ファイル同時OK　クリックして選択も可</div>
+        <div id="monthly-file-badges" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px"></div>
+      </div>
+      <input type="file" id="monthlyFileInput" style="display:none" accept=".csv,.zip" multiple onchange="monthlyFileSelect(event)">
+
+      <!-- ボタン行 -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
+        <button class="modal-btn" style="background:#6366f1;color:#fff;border-color:#6366f1" onclick="monthlyCheck()">✓ チェック</button>
+        <button class="modal-btn" onclick="monthlyClear()">クリア</button>
+        <button class="modal-btn save" onclick="monthlyRun()">► 実行</button>
+        <div id="monthly-run-status" style="font-size:12px;color:var(--text2)"></div>
+      </div>
+
+      <!-- チェック結果 -->
+      <div id="monthly-check-result" style="margin-bottom:16px"></div>
+
+      <!-- データテーブル -->
+      <div id="monthly-table-wrap"></div>
+
     </div>
   </div>
 
@@ -932,6 +976,282 @@ async function fetchAllProductInfo() {
   saveProductCache(); // フェッチ完了後にlocalStorageへ保存
   _fetchInProgress = false;
 }
+
+// ── 月別データ ──
+var _nichinichiFiles = [];
+
+function monthlyDragOver(e) { e.preventDefault(); document.getElementById('monthly-drop').classList.add('dragover'); }
+function monthlyDragLeave(e) { document.getElementById('monthly-drop').classList.remove('dragover'); }
+function monthlyDrop(e) {
+  e.preventDefault();
+  document.getElementById('monthly-drop').classList.remove('dragover');
+  const files = Array.from(e.dataTransfer.files);
+  files.forEach(f => _nichinichiFiles.push(f));
+  _renderMonthlyBadges();
+}
+function monthlyFileSelect(e) {
+  Array.from(e.target.files).forEach(f => _nichinichiFiles.push(f));
+  e.target.value = '';
+  _renderMonthlyBadges();
+}
+function monthlyClear() {
+  _nichinichiFiles = [];
+  _renderMonthlyBadges();
+  document.getElementById('monthly-check-result').innerHTML = '';
+  document.getElementById('monthly-table-wrap').innerHTML = '';
+  document.getElementById('monthly-run-status').textContent = '';
+}
+
+function _renderMonthlyBadges() {
+  const el = document.getElementById('monthly-file-badges');
+  el.innerHTML = _nichinichiFiles.map((f, i) => {
+    const type = _nichFileType(f.name);
+    const cls = type === 'rpp' ? 'rpp' : type === 'kw' ? 'kw' : 'unknown';
+    const label = type === 'rpp' ? '■全体' : type === 'kw' ? 'KW別' : '?';
+    return `<span class="monthly-badge ${cls}">${label} ${f.name.slice(0,28)}${f.name.length>28?'…':''} <span onclick="event.stopPropagation();_nichinichiFiles.splice(${i},1);_renderMonthlyBadges()" style="cursor:pointer;margin-left:2px;opacity:0.6">×</span></span>`;
+  }).join('');
+}
+
+function _nichFileType(name) {
+  if (name.includes('keyword')) return 'kw';
+  if (name.includes('rpp')) return 'rpp';
+  return 'unknown';
+}
+
+async function _readNichText(file) {
+  if (file.name.toLowerCase().endsWith('.zip')) {
+    const buf = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    for (const [name, entry] of Object.entries(zip.files)) {
+      if (name.toLowerCase().endsWith('.csv') && !entry.dir) {
+        const csvBuf = await entry.async('arraybuffer');
+        const bytes = new Uint8Array(csvBuf);
+        let text = new TextDecoder('utf-8').decode(bytes);
+        if (!text.includes('コントロールカラム') && !text.includes('日付')) {
+          text = new TextDecoder('shift-jis').decode(bytes);
+        }
+        return text;
+      }
+    }
+    return null;
+  } else {
+    const buf = await file.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let text = new TextDecoder('utf-8').decode(bytes);
+    if (!text.includes('日付') && !text.includes('CTR')) {
+      text = new TextDecoder('shift-jis').decode(bytes);
+    }
+    return text;
+  }
+}
+
+function _extractDateInfo(text) {
+  const lines = text.split(/\r?\n/);
+  for (let i = 0; i < Math.min(20, lines.length); i++) {
+    const l = lines[i];
+    const m = l.match(/(20\d\d-[01]\d-[0-3]\d)\s*-\s*(20\d\d-[01]\d-[0-3]\d)/);
+    if (m) return { start: m[1], end: m[2], isPeriod: m[1] !== m[2] };
+    const m2 = l.match(/(20\d\d)年([01]\d)月([0-3]\d)日〜(20\d\d)年([01]\d)月([0-3]\d)日/);
+    if (m2) {
+      const s = m2[1]+'-'+m2[2]+'-'+m2[3], e = m2[4]+'-'+m2[5]+'-'+m2[6];
+      return { start: s, end: e, isPeriod: s !== e };
+    }
+    const m3 = l.match(/(20\d\d)年([01]\d)月([0-3]\d)日(?!〜)/);
+    if (m3) { const s = m3[1]+'-'+m3[2]+'-'+m3[3]; return { start: s, end: s, isPeriod: false }; }
+  }
+  return null;
+}
+
+async function _classifyAllFiles() {
+  const grouped = {};
+  for (const f of _nichinichiFiles) {
+    const text = await _readNichText(f);
+    if (!text) continue;
+    const info = _extractDateInfo(text);
+    if (!info) continue;
+    const key = info.start;
+    if (!grouped[key]) grouped[key] = { rpp: null, kw: null, isPeriod: info.isPeriod, end: info.end };
+    const type = _nichFileType(f.name);
+    if (type === 'rpp') grouped[key].rpp = { file: f, text };
+    if (type === 'kw')  grouped[key].kw  = { file: f, text };
+  }
+  return grouped;
+}
+
+async function monthlyCheck() {
+  if (_nichinichiFiles.length === 0) { document.getElementById('monthly-check-result').innerHTML = '<p style="color:var(--text3);font-size:12px">ファイルをドロップしてください</p>'; return; }
+  document.getElementById('monthly-run-status').textContent = 'チェック中...';
+  const grouped = await _classifyAllFiles();
+  const keys = Object.keys(grouped).sort();
+  let html = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+    <div class="check-row" style="background:var(--surface2);font-weight:700;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px">
+      <div>日付</div><div style="text-align:center">RPP</div><div style="text-align:center">KW</div><div>タイプ</div><div>状態</div>
+    </div>`;
+  let hasWarn = false;
+  for (const k of keys) {
+    const g = grouped[k];
+    const label = g.isPeriod ? `${k}〜${g.end}` : k;
+    const type = g.isPeriod ? '期間' : '日別';
+    const rppOk = !!g.rpp, kwOk = !!g.kw;
+    const both = rppOk && kwOk;
+    if (!both) hasWarn = true;
+    html += `<div class="check-row">
+      <div style="font-family:'DM Mono',monospace">${label}</div>
+      <div style="text-align:center">${rppOk ? '✅' : '❌'}</div>
+      <div style="text-align:center">${kwOk ? '✅' : '❌'}</div>
+      <div style="color:var(--text3)">${type}</div>
+      <div>${both ? '<span style="color:var(--green)">✅ 両方あり</span>' : '<span style="color:var(--amber)">⚠️ 片方のみ</span>'}</div>
+    </div>`;
+  }
+  if (keys.length === 0) html += '<div style="padding:16px;color:var(--text3);font-size:12px">認識できるファイルがありません</div>';
+  html += '</div>';
+  if (hasWarn) html += '<p style="font-size:11px;color:var(--amber);margin-top:8px">⚠️ 揃っていない日付があります（両方揃っている日のみ処理されます）</p>';
+  document.getElementById('monthly-check-result').innerHTML = html;
+  document.getElementById('monthly-run-status').textContent = `${keys.length}件検出`;
+}
+
+function _parseRppRows(text) {
+  const lines = text.split(/\r?\n/);
+  let hi = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes('日付') && lines[i].includes('CTR')) { hi = i; break; }
+  }
+  if (hi < 0) return [];
+  const headers = lines[hi].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const idx = h => headers.indexOf(h);
+  const rows = [];
+  for (let i = hi + 1; i < lines.length; i++) {
+    const vals = lines[i].split(',');
+    if (vals.length < 5) continue;
+    const get = h => (vals[idx(h)] || '').trim().replace(/^"|"$/g, '');
+    const cl = +get('クリック数(合計)') || 0;
+    const spend = +get('実績額(合計)') || 0;
+    const sales = +get('売上金額(合計720時間)') || 0;
+    const orders = +get('売上件数(合計720時間)') || 0;
+    const cpc = +get('CPC実績(合計)') || 0;
+    const cvr = +get('CVR(合計720時間)(%)') || 0;
+    const roas = +get('ROAS(合計720時間)(%)') || 0;
+    const cpa = +get('注文獲得単価(合計720時間)') || 0;
+    rows.push({ cl, spend, sales, orders, cpc, cvr, roas, cpa });
+  }
+  return rows;
+}
+
+function _parseKwRows(text) {
+  const lines = text.split(/\r?\n/);
+  let hi = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes('コントロールカラム') && lines[i].includes('日付')) { hi = i; break; }
+  }
+  if (hi < 0) return [];
+  const headers = lines[hi].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const idx = h => headers.indexOf(h);
+  const rows = [];
+  for (let i = hi + 1; i < lines.length; i++) {
+    const vals = lines[i].split(',');
+    if (vals.length < 5) continue;
+    const get = h => (vals[idx(h)] || '').trim().replace(/^"|"$/g, '');
+    rows.push({
+      spendKw: +get('実績額(合計)') || 0,
+      clKw:    +get('クリック数(合計)') || 0,
+      salesKw: +get('売上金額(合計720時間)') || 0,
+      ordersKw:+get('売上件数(合計720時間)') || 0,
+    });
+  }
+  return rows;
+}
+
+function _aggregateRpp(rows) {
+  if (rows.length === 0) return null;
+  const cl = rows.reduce((s,r) => s+r.cl, 0);
+  const spend = rows.reduce((s,r) => s+r.spend, 0);
+  const sales = rows.reduce((s,r) => s+r.sales, 0);
+  const orders = rows.reduce((s,r) => s+r.orders, 0);
+  const cpc = rows.length === 1 ? rows[0].cpc : (cl > 0 ? Math.round(spend/cl) : 0);
+  const cvr = rows.length === 1 ? rows[0].cvr : (cl > 0 ? Math.round(orders/cl*10000)/100 : 0);
+  const roas = rows.length === 1 ? rows[0].roas : (spend > 0 ? Math.round(sales/spend*10000)/100 : 0);
+  const cpa = rows.length === 1 ? rows[0].cpa : (orders > 0 ? Math.round(spend/orders) : 0);
+  return { cl, spend, sales, orders, cpc, cvr, roas, cpa };
+}
+
+function _aggregateKw(rows) {
+  return {
+    spendKw:  rows.reduce((s,r) => s+r.spendKw, 0),
+    clKw:     rows.reduce((s,r) => s+r.clKw, 0),
+    salesKw:  rows.reduce((s,r) => s+r.salesKw, 0),
+    ordersKw: rows.reduce((s,r) => s+r.ordersKw, 0),
+  };
+}
+
+function _processOneEntry(key, g) {
+  const rppRows = _parseRppRows(g.rpp.text);
+  const kwRows  = _parseKwRows(g.kw.text);
+  const rpp = _aggregateRpp(rppRows);
+  const kw  = _aggregateKw(kwRows);
+  if (!rpp) return null;
+  if (g.isPeriod) {
+    const ym = key.slice(0,7); // 2026-04
+    const label = ym.replace('-', '年') + '月';
+    return { isPeriod: true, code: ym, label, ...rpp, ...kw };
+  } else {
+    const code = key.replace(/-/g, '');
+    const label = key.replace(/-/g, '/');
+    return { isPeriod: false, code, label, ...rpp, ...kw };
+  }
+}
+
+function _fmtN(n) { return n != null ? Number(n).toLocaleString('ja-JP') : '—'; }
+function _roasCls(r) { return r >= 500 ? 'monthly-roas-g' : r >= 300 ? 'monthly-roas-w' : 'monthly-roas-b'; }
+
+function _renderMonthlyTable(rows) {
+  if (rows.length === 0) { document.getElementById('monthly-table-wrap').innerHTML = '<p style="color:var(--text3);font-size:12px;padding:16px">データがありません</p>'; return; }
+  const isPeriod = rows[0].isPeriod;
+  const dateLabel = isPeriod ? '月' : '日付';
+  let html = `<div style="overflow-x:auto"><table class="monthly-table">
+    <thead><tr>
+      <th>${dateLabel}</th>
+      <th>CL数■</th><th>実績額■</th><th>CPC■</th>
+      <th>売上金額■</th><th>売上件数■</th><th>CVR■</th><th>ROAS■</th><th>獲得単価■</th>
+      <th class="sep">実績額-KW</th><th>CL数-KW</th><th>売上金額-KW</th><th>売上件数-KW</th>
+    </tr></thead><tbody>`;
+  for (const r of rows) {
+    html += `<tr>
+      <td>${r.label}</td>
+      <td>${_fmtN(r.cl)}</td>
+      <td>¥${_fmtN(r.spend)}</td>
+      <td>¥${_fmtN(r.cpc)}</td>
+      <td>¥${_fmtN(r.sales)}</td>
+      <td>${_fmtN(r.orders)}</td>
+      <td>${r.cvr}%</td>
+      <td class="${_roasCls(r.roas)}">${r.roas}%</td>
+      <td>¥${_fmtN(r.cpa)}</td>
+      <td class="sep">¥${_fmtN(r.spendKw)}</td>
+      <td>${_fmtN(r.clKw)}</td>
+      <td>¥${_fmtN(r.salesKw)}</td>
+      <td>${_fmtN(r.ordersKw)}</td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  document.getElementById('monthly-table-wrap').innerHTML = html;
+}
+
+async function monthlyRun() {
+  if (_nichinichiFiles.length === 0) { document.getElementById('monthly-run-status').textContent = 'ファイルをドロップしてください'; return; }
+  document.getElementById('monthly-run-status').textContent = '処理中...';
+  document.getElementById('monthly-table-wrap').innerHTML = '';
+  const grouped = await _classifyAllFiles();
+  const keys = Object.keys(grouped).sort().reverse(); // 降順
+  const rows = [];
+  for (const key of keys) {
+    const g = grouped[key];
+    if (!g.rpp || !g.kw) continue; // 両方揃っているもののみ
+    const row = _processOneEntry(key, g);
+    if (row) rows.push(row);
+  }
+  _renderMonthlyTable(rows);
+  document.getElementById('monthly-run-status').textContent = `${rows.length}件処理完了`;
+}
+
 
 // ── タブ切り替え ──
 let _currentTab = 'products';
