@@ -67,11 +67,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .scard-accent { border-top: 2px solid var(--red); }
 
 /* ── Chips ── */
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-.chip { display: flex; align-items: center; gap: 5px; font-size: 11px; padding: 4px 10px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); }
-.chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
-.chip-rm { cursor: pointer; color: var(--text3); margin-left: 2px; font-size: 13px; line-height: 1; }
-.chip-rm:hover { color: var(--danger); }
+
 
 /* ── Table ── */
 .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
@@ -262,7 +258,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
     <div id="dataArea" style="display:none">
     <div class="summary-bar" id="summaryBar"></div>
-    <div class="chips" id="chips"></div>
     <div class="table-card">
       <div class="table-toolbar">
         <select class="toolbar-month" id="monthSel" onchange="renderAll()"></select>
@@ -1071,15 +1066,8 @@ function heatColor(v, max) {
 
 function renderAll() {
   const ym = getSelectedMonth();
-  renderChips();
   renderSummary(ym);
   renderTable();
-}
-
-function renderChips() {
-  document.getElementById('chips').innerHTML = getAllDates().map(d =>
-    `<div class="chip"><div class="chip-dot"></div><span>${d}</span><span class="chip-rm" onclick="removeDate('${d}')">×</span></div>`
-  ).join('');
 }
 
 function renderSummary(ym) {
