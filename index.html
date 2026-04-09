@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.38</span>
+    <span class="build-date">v1.40</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1999,27 +1999,27 @@ function renderCalendar(p, ym) {
           <colgroup><col style="width:12px"><col><col><col style="width:34px"></colgroup>
           <thead><tr style="border-bottom:1px solid var(--border)">
             <th style="padding:0 1px"></th>
-            <th style="padding:0 1px;text-align:right;font-size:8px;color:#bbb;font-weight:600">実績</th>
-            <th style="padding:0 1px;text-align:right;font-size:8px;color:#bbb;font-weight:600">売上</th>
+            <th style="padding:0 1px;text-align:left;font-size:8px;color:#bbb;font-weight:600">実績</th>
+            <th style="padding:0 1px;text-align:left;font-size:8px;color:#bbb;font-weight:600">売上</th>
             <th style="padding:0 1px;text-align:right;font-size:8px;color:#bbb;font-weight:600">ROAS</th>
           </tr></thead>
           <tbody>
             <tr>
               <td style="padding:1px 1px;font-weight:700;color:#888">全</td>
-              <td style="padding:1px 1px;text-align:right;${M}">${fmt(idd.spend||0)}</td>
-              <td style="padding:1px 1px;text-align:right;${M}">${fmt(salesFull)}</td>
+              <td style="padding:1px 1px;text-align:left;${M}">${fmt(idd.spend||0)}</td>
+              <td style="padding:1px 1px;text-align:left;${M}">${fmt(salesFull)}</td>
               <td style="padding:1px 1px;text-align:right;font-weight:700;color:${rc2(roasFull)}">${roasFull>0?Math.round(roasFull)+'%':'—'}</td>
             </tr>
             ${spendKw>0?`<tr>
               <td style="padding:1px 1px;font-weight:700;color:#1565C0">K</td>
-              <td style="padding:1px 1px;text-align:right;${M}">${fmt(spendKw)}</td>
-              <td style="padding:1px 1px;text-align:right;${M}">${fmt(salesKw)}</td>
+              <td style="padding:1px 1px;text-align:left;${M}">${fmt(spendKw)}</td>
+              <td style="padding:1px 1px;text-align:left;${M}">${fmt(salesKw)}</td>
               <td style="padding:1px 1px;text-align:right;font-weight:700;color:${rc2(roasKw)}">${roasKw>0?Math.round(roasKw)+'%':'—'}</td>
             </tr>
             <tr>
               <td style="padding:1px 1px;font-weight:700;color:#999">20</td>
-              <td style="padding:1px 1px;text-align:right;${M}">${fmt(spend20)}</td>
-              <td style="padding:1px 1px;text-align:right;${M}">${fmt(sales20)}</td>
+              <td style="padding:1px 1px;text-align:left;${M}">${fmt(spend20)}</td>
+              <td style="padding:1px 1px;text-align:left;${M}">${fmt(sales20)}</td>
               <td style="padding:1px 1px;text-align:right;font-weight:700;color:${rc2(roas20v)}">${roas20v>0?Math.round(roas20v)+'%':'—'}</td>
             </tr>`:''}
           </tbody>
