@@ -262,7 +262,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.6</span>
+    <span class="build-date">v1.7</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -340,8 +340,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <span id="monthly-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
           </div>
         </div>
-        <div id="monthly-col-header" style="display:none">
-          <div class="col-header" style="grid-template-columns: 100px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px">
+        <div id="monthly-col-header" style="display:none;overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <div class="col-header" style="min-width:1460px;grid-template-columns: 110px 96px 96px 96px 96px 96px 96px 96px 96px 96px 80px 80px 80px 92px 92px 92px">
             <div class="ch">月</div>
             <div class="ch r">実績額■</div><div class="ch r">実績額-KW</div><div class="ch r">実績額-20</div>
             <div class="ch r">売上金額■</div><div class="ch r">売上金額-KW</div><div class="ch r">売上金額-20</div>
@@ -373,8 +373,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <span id="daily-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
           </div>
         </div>
-        <div id="daily-col-header" style="display:none">
-          <div class="col-header" style="grid-template-columns: 100px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px">
+        <div id="daily-col-header" style="display:none;overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <div class="col-header" style="min-width:1460px;grid-template-columns: 110px 96px 96px 96px 96px 96px 96px 96px 96px 96px 80px 80px 80px 92px 92px 92px">
             <div class="ch">日付</div>
             <div class="ch r">実績額■</div><div class="ch r">実績額-KW</div><div class="ch r">実績額-20</div>
             <div class="ch r">売上金額■</div><div class="ch r">売上金額-KW</div><div class="ch r">売上金額-20</div>
@@ -1320,7 +1320,7 @@ function _renderTable(mode, rows) {
   }
   if (colHeader) colHeader.style.display = 'block';
 
-  const GRID = '100px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px 86px';
+  const GRID = '110px 96px 96px 96px 96px 96px 96px 96px 96px 96px 80px 80px 80px 92px 92px 92px';
   const _fmtRoas = v => v > 0 ? `<div class="roas-val ${_roasCls(v)}">${v}%</div>` : '<div class="roas-val rn">—</div>';
 
   let html = '';
@@ -1329,7 +1329,7 @@ function _renderTable(mode, rows) {
     const cpaKw  = r.spendKw > 0 && r.ordersKw > 0 ? fmtY(Math.round(r.spendKw / r.ordersKw)) : '—';
     const cvrKw  = r.clKw > 0 && r.ordersKw > 0 ? (Math.round(r.ordersKw / r.clKw * 10000) / 100) + '%' : '—';
     html += `<div class="item-row">
-      <div style="display:grid;grid-template-columns:${GRID};align-items:center;min-height:44px;cursor:default" class="item-basic">
+      <div style="display:grid;grid-template-columns:${GRID};align-items:center;min-height:44px;cursor:default;min-width:1460px" class="item-basic">
         <div class="cell" style="font-weight:600">${r.label}</div>
         <div class="cell r mono">${fmtY(r.spend)}</div>
         <div class="cell r mono">${fmtY(r.spendKw)}</div>
@@ -1349,7 +1349,7 @@ function _renderTable(mode, rows) {
       </div>
     </div>`;
   }
-  if (tableWrap) tableWrap.innerHTML = html;
+  if (tableWrap) tableWrap.innerHTML = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">${html}</div>`;
   if (runStatus) runStatus.textContent = `${rows.length}件`;
 }
 
