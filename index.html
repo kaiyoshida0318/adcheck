@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.22</span>
+    <span class="build-date">v1.23</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -853,8 +853,8 @@ function readFiles(files) {
             const csvBuf = await entry.async('arraybuffer');
             const bytes = new Uint8Array(csvBuf);
             const text = new TextDecoder('shift-jis').decode(bytes);
-            _parseItemDaily(text, 'item');
-            csvTexts.push({ text, name });
+            _parseItemDaily(text, 'item'); // itemDailyDataに蓄積
+            csvTexts.push({ text, name }); // 商品別データにも渡す
           }
         }
         continue;
@@ -906,10 +906,13 @@ function readFiles(files) {
 
     if (csvTexts.length === 0) {
       if (!hasMonthlyFile) alert('CSVファイルが見つかりませんでした。ZIPまたはCSVファイルを選択してください。');
+      // item/kwのみの場合でもsaveToGitHubを呼んでitemDailyDataを保存
+      if (Object.keys(itemDailyData).length > 0) saveToGitHub();
+      if (_nichinichiFiles.length > 0) monthlyRun();
       return;
     }
     csvTexts.forEach(({ text, name }) => parseCSV(text, name));
-    afterLoad();
+    afterLoad(); // afterLoad内でsaveToGitHubが呼ばれitemDailyDataも保存される
     // 商品別データ更新時も日別・月別データのキャッシュファイルがあれば再描画
     if (_nichinichiFiles.length > 0) monthlyRun();
   })();
