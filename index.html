@@ -179,6 +179,31 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 /* ── Drop Zone ── */
 #dropZoneArea.drag-over { border-color: var(--red); background: var(--red-light); }
 
+/* ── Danger Button ── */
+.header-btn.danger-btn { color: var(--danger); border-color: rgba(163,45,45,0.3); }
+.header-btn.danger-btn:hover { background: #fff0f0; border-color: var(--danger); }
+
+/* ── Calendar Event ── */
+.cal-event-bar { height: 4px; border-radius: 2px; margin-top: 2px; width: 100%; }
+.cal-cell.has-event { outline: 2px solid; outline-offset: -2px; border-radius: 6px; }
+.cal-event-label { font-size: 8px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+
+/* ── Calendar Settings Page ── */
+#calendarSettingsPage { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 300; overflow-y: auto; }
+.cal-settings-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+.cal-settings-body { max-width: 700px; margin: 0 auto; padding: 28px 24px; }
+.event-list-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; }
+.event-color-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.event-list-label { font-size: 13px; font-weight: 500; flex: 1; }
+.event-list-dates { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.event-del-btn { font-size: 11px; padding: 3px 8px; border: 1px solid var(--border2); border-radius: 4px; background: var(--surface); color: var(--text3); cursor: pointer; }
+.event-del-btn:hover { color: var(--danger); border-color: var(--danger); }
+.add-event-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-top: 20px; }
+.add-event-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-group label { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 5px; }
+.form-group input[type=text], .form-group input[type=date] { width: 100%; padding: 8px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; background: var(--surface2); color: var(--text); outline: none; }
+.form-group input:focus { border-color: var(--red); background: var(--surface); }
+
 /* ── Edit Button ── */
 .edit-btn { opacity: 0; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; border: 1px solid var(--border2); border-radius: 4px; background: var(--surface); color: var(--text3); font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.15s; z-index: 1; padding: 0; }
 .cell-name { position: relative; }
@@ -213,6 +238,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
+    <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
+    <button class="header-btn danger-btn" onclick="confirmClearAll()">🗑 データ削除</button>
     <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
   </div>
@@ -245,7 +272,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <button class="tbtn" onclick="expandAll()">全展開</button>
           <button class="tbtn" onclick="collapseAll()">全折りたたみ</button>
           <button class="tbtn" onclick="exportCSV()">CSV出力</button>
-          <button class="tbtn" onclick="clearAll()">クリア</button>
         </div>
       </div>
       <div class="col-header">
@@ -261,6 +287,68 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       <div class="pagination" id="pagination"></div>
     </div>
     </div><!-- /dataArea -->
+  </div>
+</div>
+
+<!-- カレンダー設定ページ -->
+<div id="calendarSettingsPage">
+  <div class="cal-settings-header">
+    <div style="font-weight:700;font-size:15px">📅 カレンダー設定</div>
+    <button class="header-btn" onclick="closeCalendarSettings()">← 戻る</button>
+  </div>
+  <div class="cal-settings-body">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px">セールや特別期間を登録すると、全商品のカレンダーでその期間のセルに色とラベルが表示されます。</p>
+
+    <h4 style="font-size:13px;font-weight:700;margin-bottom:10px">登録済みイベント</h4>
+    <div id="eventList"><div style="font-size:12px;color:var(--text3);padding:12px 0">まだ登録されていません</div></div>
+
+    <div class="add-event-form">
+      <h4 style="font-size:13px;font-weight:700;margin-bottom:14px">＋ イベントを追加</h4>
+      <div class="add-event-row">
+        <div class="form-group">
+          <label>開始日</label>
+          <input type="date" id="evStartDate">
+        </div>
+        <div class="form-group">
+          <label>終了日</label>
+          <input type="date" id="evEndDate">
+        </div>
+      </div>
+      <div class="add-event-row">
+        <div class="form-group">
+          <label>ラベル（例：楽天スーパーセール）</label>
+          <input type="text" id="evLabel" placeholder="イベント名">
+        </div>
+        <div class="form-group">
+          <label>色</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="evColorPicker">
+            <span class="ev-color-opt" data-color="#e91e63" style="width:24px;height:24px;border-radius:50%;background:#e91e63;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
+            <span class="ev-color-opt" data-color="#ff5722" style="width:24px;height:24px;border-radius:50%;background:#ff5722;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
+            <span class="ev-color-opt" data-color="#ff9800" style="width:24px;height:24px;border-radius:50%;background:#ff9800;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
+            <span class="ev-color-opt" data-color="#4caf50" style="width:24px;height:24px;border-radius:50%;background:#4caf50;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
+            <span class="ev-color-opt" data-color="#2196f3" style="width:24px;height:24px;border-radius:50%;background:#2196f3;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
+            <span class="ev-color-opt" data-color="#9c27b0" style="width:24px;height:24px;border-radius:50%;background:#9c27b0;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
+            <span class="ev-color-opt" data-color="#00bcd4" style="width:24px;height:24px;border-radius:50%;background:#00bcd4;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
+          </div>
+          <input type="hidden" id="evColor" value="#e91e63">
+        </div>
+      </div>
+      <div id="evFormStatus" style="font-size:11px;color:var(--danger);margin-bottom:8px;min-height:16px"></div>
+      <button class="modal-btn save" onclick="addCalendarEvent()" style="width:100%;justify-content:center">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- データ削除確認モーダル -->
+<div class="modal-overlay" id="confirmClearModal">
+  <div class="modal" style="max-width:400px;text-align:center">
+    <div style="font-size:40px;margin-bottom:12px">🗑</div>
+    <h3 style="margin-bottom:8px">データを削除しますか？</h3>
+    <p>読み込んだRPPデータがすべて消えます。<br>この操作は取り消せません。</p>
+    <div class="modal-actions" style="justify-content:center;margin-top:20px;gap:12px">
+      <button class="modal-btn" onclick="closeConfirmClear()" style="min-width:100px">キャンセル</button>
+      <button class="modal-btn save" onclick="doDeleteAll()" style="min-width:100px;background:var(--danger);border-color:var(--danger)">削除する</button>
+    </div>
   </div>
 </div>
 
@@ -498,7 +586,7 @@ async function saveToGitHub() {
       sha = getJson.sha;
     }
     // データをJSON化してBase64エンコード
-    const payload = { DB, productCache };
+    const payload = { DB, productCache, calEvents };
     const jsonStr = JSON.stringify(payload, null, 2);
     const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
     // PUTで保存
@@ -535,6 +623,10 @@ async function loadFromGitHub() {
       if (data.productCache) {
         Object.assign(productCache, data.productCache);
         saveProductCache(); // 他のPCでもlocalStorageに書き戻して次回即表示
+      }
+      if (data.calEvents) {
+        calEvents = data.calEvents;
+        try { localStorage.setItem(CAL_EVENTS_KEY, JSON.stringify(calEvents)); } catch(e) {}
       }
       return true;
     }
@@ -804,6 +896,98 @@ async function fetchAllProductInfo() {
   _fetchInProgress = false;
 }
 
+// ── カレンダーイベント ──
+const CAL_EVENTS_KEY = 'adcheck_cal_events';
+let calEvents = [];
+
+function loadCalEvents() {
+  try {
+    const raw = localStorage.getItem(CAL_EVENTS_KEY);
+    if (raw) calEvents = JSON.parse(raw);
+  } catch(e) { calEvents = []; }
+}
+function saveCalEvents() {
+  try { localStorage.setItem(CAL_EVENTS_KEY, JSON.stringify(calEvents)); } catch(e) {}
+  saveToGitHub(); // 全PC共有
+}
+loadCalEvents();
+
+// 指定日付にかかるイベントを返す
+function getEventsForDate(dateStr) {
+  return calEvents.filter(ev => dateStr >= ev.start && dateStr <= ev.end);
+}
+
+function openCalendarSettings() {
+  renderEventList();
+  document.getElementById('calendarSettingsPage').style.display = 'block';
+}
+function closeCalendarSettings() {
+  document.getElementById('calendarSettingsPage').style.display = 'none';
+  renderPage(); // カレンダーを再描画
+}
+
+function renderEventList() {
+  const el = document.getElementById('eventList');
+  if (calEvents.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">まだ登録されていません</div>';
+    return;
+  }
+  el.innerHTML = calEvents.map((ev, i) => `
+    <div class="event-list-item">
+      <div class="event-color-dot" style="background:${ev.color}"></div>
+      <div class="event-list-label">${ev.label}</div>
+      <div class="event-list-dates">${ev.start} 〜 ${ev.end}</div>
+      <button class="event-del-btn" onclick="deleteCalEvent(${i})">削除</button>
+    </div>
+  `).join('');
+}
+
+function selectEvColor(el) {
+  document.querySelectorAll('.ev-color-opt').forEach(e => e.style.border = '2px solid transparent');
+  el.style.border = '2px solid var(--text)';
+  document.getElementById('evColor').value = el.dataset.color;
+}
+
+function addCalendarEvent() {
+  const start = document.getElementById('evStartDate').value;
+  const end = document.getElementById('evEndDate').value;
+  const label = document.getElementById('evLabel').value.trim();
+  const color = document.getElementById('evColor').value;
+  const status = document.getElementById('evFormStatus');
+
+  if (!start) { status.textContent = '開始日を入力してください'; return; }
+  if (!end)   { status.textContent = '終了日を入力してください'; return; }
+  if (end < start) { status.textContent = '終了日は開始日以降にしてください'; return; }
+  if (!label) { status.textContent = 'ラベルを入力してください'; return; }
+
+  calEvents.push({ start, end, label, color });
+  saveCalEvents();
+  // フォームをリセット
+  document.getElementById('evStartDate').value = '';
+  document.getElementById('evEndDate').value = '';
+  document.getElementById('evLabel').value = '';
+  status.textContent = '';
+  renderEventList();
+}
+
+function deleteCalEvent(i) {
+  calEvents.splice(i, 1);
+  saveCalEvents();
+  renderEventList();
+}
+
+// ── データ削除確認 ──
+function confirmClearAll() {
+  document.getElementById('confirmClearModal').classList.add('open');
+}
+function closeConfirmClear() {
+  document.getElementById('confirmClearModal').classList.remove('open');
+}
+function doDeleteAll() {
+  closeConfirmClear();
+  clearAll();
+}
+
 // ── ドロップゾーンモーダル ──
 function openDropZone() {
   document.getElementById('dropZoneStatus').textContent = '';
@@ -1027,16 +1211,26 @@ function renderCalendar(p, ym) {
   for (let day=1; day<=daysInMonth; day++) {
     const dk = `${ym}-${String(day).padStart(2,'0')}`;
     const d = p.days[dk];
+    const evs = getEventsForDate(dk);
+    const evColor = evs.length > 0 ? evs[0].color : null;
+    const evLabel = evs.length > 0 ? evs[0].label : null;
+    const evStyle = evColor ? `outline:2px solid ${evColor};outline-offset:-2px;` : '';
     if (d && d.spend > 0) {
       const heat = heatColor(d.spend, maxSpend);
-      cells.push(`<div class="cal-cell has">
+      cells.push(`<div class="cal-cell has" style="${evStyle}">
         <div class="cal-date">${day}</div>
         <div class="cal-spend">${fmt(d.spend)}</div>
         <div class="cal-roas ${rc(d.roas720)}">${d.roas720>0?fmt(d.roas720)+'%':'—'}</div>
         <div class="cal-bar" style="background:${heat}"></div>
+        ${evColor ? `<div class="cal-event-bar" style="background:${evColor}"></div>` : ''}
+        ${evLabel ? `<div class="cal-event-label" style="color:${evColor}">${evLabel}</div>` : ''}
       </div>`);
     } else {
-      cells.push(`<div class="cal-cell"><div class="cal-date" style="color:#ccc">${day}</div><div class="cal-empty">—</div></div>`);
+      cells.push(`<div class="cal-cell" style="${evStyle}">
+        <div class="cal-date" style="color:#ccc">${day}</div>
+        <div class="cal-empty">—</div>
+        ${evLabel ? `<div class="cal-event-label" style="color:${evColor}">${evLabel}</div>` : ''}
+      </div>`);
     }
   }
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
@@ -1123,6 +1317,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
   document.getElementById('dropZoneModal').addEventListener('click', e => {
     if (e.target === document.getElementById('dropZoneModal')) closeDropZone();
+  });
+  document.getElementById('confirmClearModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('confirmClearModal')) closeConfirmClear();
   });
   // ページ全体でドラッグ&ドロップを受け取る
   document.body.addEventListener('dragover', e => e.preventDefault());
