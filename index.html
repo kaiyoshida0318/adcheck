@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.17</span>
+    <span class="build-date">v1.18</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1070,12 +1070,7 @@ function _renderMonthlyBadges() {
 // ── 商品別日次データのパース ──
 function _parseItemDaily(text, mode) {
   // mode: 'item'=rpp_item_reports, 'kw'=rpp_keyword_reports
-  const lines = text.replace(/
-/g, '
-').replace(/
-/g, '
-').split('
-');
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
   let hi = -1;
   for (let i = 0; i < Math.min(15, lines.length); i++) {
     if (lines[i].includes('商品管理番号') && lines[i].includes('日付')) { hi = i; break; }
