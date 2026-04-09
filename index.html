@@ -175,6 +175,18 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 /* ── Drop Zone ── */
 #dropZoneArea.drag-over { border-color: var(--red); background: var(--red-light); }
 
+/* ── Tab Navigation ── */
+.tab-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; top: 52px; z-index: 99; }
+.tab-btn { font-size: 13px; font-weight: 500; padding: 12px 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.tab-coming-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; gap: 12px; }
+.tab-coming-soon .icon { font-size: 48px; }
+.tab-coming-soon h3 { font-size: 18px; font-weight: 700; color: var(--text); }
+.tab-coming-soon p { font-size: 13px; color: var(--text3); line-height: 1.6; }
+
 /* ── Danger Button ── */
 .header-btn.danger-btn { color: var(--danger); border-color: rgba(163,45,45,0.3); }
 .header-btn.danger-btn:hover { background: #fff0f0; border-color: var(--danger); }
@@ -244,45 +256,75 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <!-- fileInput（非表示、右上ボタンから起動） -->
 <input type="file" id="fileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
 
-<!-- Main Screen（常時表示） -->
+<!-- タブバー -->
+<nav class="tab-bar">
+  <button class="tab-btn active" id="tab-btn-products" onclick="switchTab('products')">商品別</button>
+  <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">月別データ</button>
+  <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">グラフ</button>
+</nav>
+
+<!-- Main Screen -->
 <div id="mainScreen">
-  <div class="container">
-    <div id="emptyState" class="empty-state">
-      <div class="empty-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      </div>
-      <h3>データがまだありません</h3>
-      <p>楽天RMSからダウンロードしたRPPレポート（ZIP / CSV）を<br>右上の「+ レポート追加」ボタンで読み込んでください。</p>
-      <button class="empty-upload-btn" onclick="document.getElementById('addFileInput').click()">+ レポートを追加する</button>
-      <p style="margin-top:12px;font-size:11px;color:var(--text3)">対応形式：楽天RMS →「検索連動型広告（RPP）」→「パフォーマンスレポート」→「全商品レポートダウンロード」</p>
-    </div>
-    <div id="dataArea" style="display:none">
-    <div class="summary-bar" id="summaryBar"></div>
-    <div class="table-card">
-      <div class="table-toolbar">
-        <select class="toolbar-month" id="monthSel" onchange="renderAll()"></select>
-        <input type="text" class="toolbar-search" id="searchBox" placeholder="商品管理番号で検索..." oninput="renderTable()">
-        <select class="toolbar-select" id="sortSel" onchange="renderTable()" style="display:none"></select>
-        <div class="toolbar-right">
-          <button class="tbtn" onclick="expandAll()">全展開</button>
-          <button class="tbtn" onclick="collapseAll()">全折りたたみ</button>
-          <button class="tbtn" onclick="exportCSV()">CSV出力</button>
+
+  <!-- ── 商品別タブ ── -->
+  <div class="tab-panel active" id="tab-products">
+    <div class="container">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </div>
+        <h3>データがまだありません</h3>
+        <p>楽天RMSからダウンロードしたRPPレポート（ZIP / CSV）を<br>右上の「+ レポート追加」ボタンで読み込んでください。</p>
+        <button class="empty-upload-btn" onclick="document.getElementById('addFileInput').click()">+ レポートを追加する</button>
+        <p style="margin-top:12px;font-size:11px;color:var(--text3)">対応形式：楽天RMS →「検索連動型広告（RPP）」→「パフォーマンスレポート」→「全商品レポートダウンロード」</p>
       </div>
-      <div class="col-header">
-        <div class="ch"></div>
-        <div class="ch" onclick="sortBy('name')">商品</div>
-        <div class="ch r" id="ch-spend" onclick="sortBy('spend')">使用金額合計</div>
-        <div class="ch r" id="ch-clicks" onclick="sortBy('clicks')">クリック数</div>
-        <div class="ch r" id="ch-roas" onclick="sortBy('roas')">ROAS平均(720h)</div>
-        <div class="ch r" id="ch-sales" onclick="sortBy('sales')">売上合計(720h)</div>
-        <div class="ch"></div>
-      </div>
-      <div id="itemList"></div>
-      <div class="pagination" id="pagination"></div>
+      <div id="dataArea" style="display:none">
+        <div class="summary-bar" id="summaryBar"></div>
+        <div class="table-card">
+          <div class="table-toolbar">
+            <select class="toolbar-month" id="monthSel" onchange="renderAll()"></select>
+            <input type="text" class="toolbar-search" id="searchBox" placeholder="商品名・管理番号で検索..." oninput="renderTable()">
+            <select class="toolbar-select" id="sortSel" onchange="renderTable()" style="display:none"></select>
+            <div class="toolbar-right">
+              <button class="tbtn" onclick="expandAll()">全展開</button>
+              <button class="tbtn" onclick="collapseAll()">全折りたたみ</button>
+              <button class="tbtn" onclick="exportCSV()">CSV出力</button>
+            </div>
+          </div>
+          <div class="col-header">
+            <div class="ch"></div>
+            <div class="ch" onclick="sortBy('name')">商品</div>
+            <div class="ch r" id="ch-spend" onclick="sortBy('spend')">使用金額合計</div>
+            <div class="ch r" id="ch-clicks" onclick="sortBy('clicks')">クリック数</div>
+            <div class="ch r" id="ch-roas" onclick="sortBy('roas')">ROAS平均(720h)</div>
+            <div class="ch r" id="ch-sales" onclick="sortBy('sales')">売上合計(720h)</div>
+            <div class="ch"></div>
+          </div>
+          <div id="itemList"></div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div><!-- /dataArea -->
     </div>
-    </div><!-- /dataArea -->
   </div>
+
+  <!-- ── 月別データタブ ── -->
+  <div class="tab-panel" id="tab-monthly">
+    <div class="tab-coming-soon">
+      <div class="icon">📊</div>
+      <h3>月別データ</h3>
+      <p>月ごとの使用金額・クリック数・ROASの推移を<br>一覧で確認できる機能を準備中です。</p>
+    </div>
+  </div>
+
+  <!-- ── グラフタブ ── -->
+  <div class="tab-panel" id="tab-graph">
+    <div class="tab-coming-soon">
+      <div class="icon">📈</div>
+      <h3>グラフ</h3>
+      <p>RPPデータをビジュアルで確認できる<br>グラフ機能を準備中です。</p>
+    </div>
+  </div>
+
 </div>
 
 <!-- カレンダー設定ページ -->
@@ -889,6 +931,19 @@ async function fetchAllProductInfo() {
   }
   saveProductCache(); // フェッチ完了後にlocalStorageへ保存
   _fetchInProgress = false;
+}
+
+// ── タブ切り替え ──
+let _currentTab = 'products';
+
+function switchTab(tab) {
+  _currentTab = tab;
+  // ボタンのactive切り替え
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-btn-' + tab)?.classList.add('active');
+  // パネルのactive切り替え
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab)?.classList.add('active');
 }
 
 // ── カレンダーイベント ──
