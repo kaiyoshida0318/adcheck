@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.18</span>
+    <span class="build-date">v1.19</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1120,36 +1120,57 @@ function _renderItemDailyTable(itemCode) {
   if (!data || Object.keys(data).length === 0) return '';
 
   const dates = Object.keys(data).sort().reverse();
-  const HBG  = ['#e8f0fe','#e8f0fe','#e6f4ea','#e6f4ea','#fce8e6','#fce8e6'];
-  const COLS  = ['実績額■','ROAS■','実績額-KW','ROAS-KW','実績額-20','ROAS-20'];
+  const roasCls = v => v >= 500 ? 'c-g1' : v >= 300 ? 'c-g2' : v > 0 ? 'c-o' : 'c-bk';
 
-  let html = `<div style="overflow-x:auto;margin-top:8px">
-    <table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:auto">
-      <thead><tr style="background:var(--surface2)">
-        <th style="padding:5px 8px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;border-bottom:1px solid var(--border)">日付</th>
-        ${COLS.map((h,i) => `<th style="padding:5px 8px;text-align:right;font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;border-bottom:1px solid var(--border);background:${HBG[i]}">${h}</th>`).join('')}
-      </tr></thead><tbody>`;
+  // グループ定義：[ラベル, 背景色（薄）, 背景色（濃）]
+  const GRP = [
+    { key:'item', label:'■ 全体',  bg1:'#e8f0fe', bg2:'#dce8fd' },
+    { key:'kw',   label:'KW',      bg1:'#e6f4ea', bg2:'#d4edda' },
+    { key:'20',   label:'-20',     bg1:'#fce8e6', bg2:'#f8d5d1' },
+  ];
+
+  // ヘッダー：日付 | ■全体（金額/ROAS） | KW（金額/ROAS） | -20（金額/ROAS）
+  let html = `<table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed">
+    <colgroup>
+      <col style="width:88px">
+      <col style="width:calc((100% - 88px)/6)"><col style="width:calc((100% - 88px)/6)">
+      <col style="width:calc((100% - 88px)/6)"><col style="width:calc((100% - 88px)/6)">
+      <col style="width:calc((100% - 88px)/6)"><col style="width:calc((100% - 88px)/6)">
+    </colgroup>
+    <thead>
+      <tr>
+        <th style="padding:5px 6px;border-bottom:1px solid var(--border)" rowspan="2"></th>
+        ${GRP.map(g => `<th colspan="2" style="padding:5px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border2);border-left:1px solid var(--border2);background:${g.bg1};letter-spacing:0.3px">${g.label}</th>`).join('')}
+      </tr>
+      <tr>
+        ${GRP.map(g => `
+          <th style="padding:4px 6px;text-align:right;font-size:9px;font-weight:700;color:var(--text3);border-left:1px solid var(--border2);background:${g.bg1}">実績額</th>
+          <th style="padding:4px 6px;text-align:right;font-size:9px;font-weight:700;color:var(--text3);background:${g.bg2}">ROAS</th>
+        `).join('')}
+      </tr>
+    </thead>
+    <tbody>`;
 
   for (const date of dates) {
     const d = data[date];
-    const roas   = d.spend  > 0 ? Math.round(d.sales  / d.spend  * 10000) / 100 : 0;
-    const roasKw = d.spendKw > 0 ? Math.round(d.salesKw / d.spendKw * 10000) / 100 : 0;
-    const spend20 = d.spend - d.spendKw;
-    const sales20 = d.sales - d.salesKw;
-    const roas20  = spend20 > 0 ? Math.round(sales20 / spend20 * 10000) / 100 : 0;
-    const label = date.replace(/-/g, '/');
-    const roasCls = v => v >= 500 ? 'c-g1' : v >= 300 ? 'c-g2' : v > 0 ? 'c-o' : 'c-bk';
+    const roas    = d.spend   > 0 ? Math.round(d.sales   / d.spend   * 10000) / 100 : 0;
+    const roasKw  = d.spendKw > 0 ? Math.round(d.salesKw / d.spendKw * 10000) / 100 : 0;
+    const spend20 = (d.spend  || 0) - (d.spendKw  || 0);
+    const sales20 = (d.sales  || 0) - (d.salesKw  || 0);
+    const roas20  = spend20   > 0 ? Math.round(sales20  / spend20   * 10000) / 100 : 0;
+    const label   = date.replace(/-/g, '/');
+
     html += `<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:5px 8px;font-weight:600;white-space:nowrap">${label}</td>
-      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#e8f0fe">${d.spend > 0 ? fmtY(d.spend) : '—'}</td>
-      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#e8f0fe"><span class="${roasCls(roas)}">${roas > 0 ? roas + '%' : '—'}</span></td>
-      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#e6f4ea">${d.spendKw > 0 ? fmtY(d.spendKw) : '—'}</td>
-      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#e6f4ea"><span class="${roasCls(roasKw)}">${roasKw > 0 ? roasKw + '%' : '—'}</span></td>
-      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#fce8e6">${spend20 > 0 ? fmtY(spend20) : '—'}</td>
-      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#fce8e6"><span class="${roasCls(roas20)}">${roas20 > 0 ? roas20 + '%' : '—'}</span></td>
+      <td style="padding:7px 6px;font-weight:600;font-size:11px;white-space:nowrap">${label}</td>
+      <td style="padding:7px 6px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;border-left:1px solid var(--border2);background:${GRP[0].bg1}">${d.spend > 0 ? fmtY(d.spend) : '<span style="color:#bbb">—</span>'}</td>
+      <td style="padding:7px 6px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;background:${GRP[0].bg2}"><span class="${roasCls(roas)}">${roas > 0 ? roas+'%' : '<span style="color:#bbb">—</span>'}</span></td>
+      <td style="padding:7px 6px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;border-left:1px solid var(--border2);background:${GRP[1].bg1}">${d.spendKw > 0 ? fmtY(d.spendKw) : '<span style="color:#bbb">—</span>'}</td>
+      <td style="padding:7px 6px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;background:${GRP[1].bg2}"><span class="${roasCls(roasKw)}">${roasKw > 0 ? roasKw+'%' : '<span style="color:#bbb">—</span>'}</span></td>
+      <td style="padding:7px 6px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;border-left:1px solid var(--border2);background:${GRP[2].bg1}">${spend20 > 0 ? fmtY(spend20) : '<span style="color:#bbb">—</span>'}</td>
+      <td style="padding:7px 6px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;background:${GRP[2].bg2}"><span class="${roasCls(roas20)}">${roas20 > 0 ? roas20+'%' : '<span style="color:#bbb">—</span>'}</span></td>
     </tr>`;
   }
-  html += '</tbody></table></div>';
+  html += '</tbody></table>';
   return html;
 }
 
