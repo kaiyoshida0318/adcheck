@@ -109,6 +109,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .rg { color: var(--green); }
 .rw { color: var(--amber); }
 .rb { color: var(--danger); }
+/* 日別・月別データ 5段階色分け */
+.c-g1 { color: #0a7c42; font-weight: 700; }
+.c-g2 { color: #1a9e5c; font-weight: 600; }
+.c-bk { color: #1a1a1a; font-weight: 400; }
+.c-o  { color: #BA7517; font-weight: 600; }
+.c-r  { color: #A32D2D; font-weight: 700; }
 .rn { color: var(--text3); }
 .mini-bar { height: 3px; border-radius: 2px; background: var(--border); margin-top: 3px; overflow: hidden; }
 .mini-fill { height: 100%; border-radius: 2px; }
@@ -262,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.11</span>
+    <span class="build-date">v1.13</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1303,25 +1309,46 @@ function _renderTable(mode, rows) {
   if (colHeader) colHeader.style.display = 'block';
 
 
-  // ── 動的パーセンタイル閾値計算（上位33%=緑、下位33%=赤） ──
-  function _pct(arr, p) { const s=[...arr].sort((a,b)=>a-b); return s[Math.floor(s.length*p/100)]||0; }
-  const _getVals = (key) => rows.filter(r => r[key] > 0).map(r => r[key]);
-  const th = {
-    spendG: _pct(_getVals('spend'), 67), spendR: _pct(_getVals('spend'), 33),
-    salesG: _pct(_getVals('sales'), 67), salesR: _pct(_getVals('sales'), 33),
-    cpaG:   _pct(_getVals('cpa'),   33), cpaR:   _pct(_getVals('cpa'),   67),
-    cvrG:   _pct(_getVals('cvr'),   67), cvrR:   _pct(_getVals('cvr'),   33),
-  };
-  function _cc(val, gThresh, rThresh, higherIsBetter=true) {
-    if (!val || val === 0) return '';
-    return higherIsBetter
-      ? (val >= gThresh ? 'rg' : val <= rThresh ? 'rb' : 'rw')
-      : (val <= gThresh ? 'rg' : val >= rThresh ? 'rb' : 'rw');
+  // ── 5段階色分け（上位5件=濃緑、次5件=薄緑、中間=黒、下位5件=オレンジ、最下位5件=赤） ──
+  // ランク取得（上位=良い or 下位=良い の両方対応）
+  function _rank5(val, allVals, higherIsBetter) {
+    if (!val || val === 0 || allVals.length === 0) return 'bk';
+    const sorted = allVals.slice().sort((a, b) => higherIsBetter ? b - a : a - b);
+    const idx = sorted.indexOf(val);
+    if (idx < 0) return 'bk';
+    const n = sorted.length;
+    if (idx < Math.ceil(n * 5 / 31))   return 'g1';
+    if (idx < Math.ceil(n * 10 / 31))  return 'g2';
+    if (idx <= Math.floor(n * 21 / 31)) return 'bk';
+    if (idx < Math.ceil(n * 26 / 31))  return 'o';
+    return 'r';
   }
-  function _cv(val, formatted, cls) {
-    return cls ? `<span class="${cls}" style="font-weight:600">${formatted}</span>` : formatted;
+  function _cv(val, formatted, rank) {
+    return `<span class="c-${rank || 'bk'}">${formatted}</span>`;
   }
-  const _fmtRoasCell = v => v > 0 ? `<span class="roas-val ${_roasCls(v)}">${v}%</span>` : '<span class="roas-val rn">—</span>';
+  function _fmtRoasCell(v, rankVal, vArr) {
+    if (!v || v === 0) return '<span class="c-bk">—</span>';
+    const rank = _rank5(rankVal || v, vArr || vRoas, true);
+    return `<span class="c-${rank}">${v}%</span>`;
+  }
+
+
+  // 各指標の値リスト（ランク計算用）
+  const vSpend  = rows.filter(r=>r.spend>0).map(r=>r.spend);
+  const vSales  = rows.filter(r=>r.sales>0).map(r=>r.sales);
+  const vCpa    = rows.filter(r=>r.cpa>0).map(r=>r.cpa);
+  const vCvr    = rows.filter(r=>r.cvr>0).map(r=>r.cvr);
+  const vRoas   = rows.filter(r=>r.roas>0).map(r=>r.roas);
+  const vSpendKw= rows.filter(r=>r.spendKw>0).map(r=>r.spendKw);
+  const vSalesKw= rows.filter(r=>r.salesKw>0).map(r=>r.salesKw);
+  const vCpaKw  = rows.filter(r=>r.spendKw>0&&r.ordersKw>0).map(r=>Math.round(r.spendKw/r.ordersKw));
+  const vCvrKw  = rows.filter(r=>r.clKw>0&&r.ordersKw>0).map(r=>Math.round(r.ordersKw/r.clKw*10000)/100);
+  const vRoasKw = rows.filter(r=>r.spendKw>0).map(r=>Math.round(r.salesKw/r.spendKw*10000)/100);
+  const vSpend20= rows.filter(r=>r.spend20>0).map(r=>r.spend20);
+  const vSales20= rows.filter(r=>r.sales20>0).map(r=>r.sales20);
+  const vCpa20  = rows.filter(r=>r.cpa20>0).map(r=>r.cpa20);
+  const vCvr20  = rows.filter(r=>r.cvr20>0).map(r=>r.cvr20);
+  const vRoas20 = rows.filter(r=>r.roas20>0).map(r=>r.roas20);
 
   // ── tableタグで統一（ヘッダーと行が自動的に列幅を共有） ──
   const BG = ['#f4f8ff','#edf4ff','#e6f0ff','#f4fbf5','#edf8ef','#e6f5e9','#faf4ff','#f5eeff','#f0e8ff','#fffaf3','#fff5e8','#fff0dd','#fff5f4','#ffeeed','#ffe8e6'];
@@ -1341,22 +1368,25 @@ function _renderTable(mode, rows) {
     const cvrKwV = r.clKw > 0 && r.ordersKw > 0 ? Math.round(r.ordersKw / r.clKw * 10000) / 100 : 0;
     const cpa20V = r.cpa20 || 0;
     const cvr20V = r.cvr20 || 0;
+    const cpaKw_r  = r.spendKw > 0 && r.ordersKw > 0 ? Math.round(r.spendKw / r.ordersKw) : 0;
+    const roasKw_r = r.spendKw > 0 ? Math.round(r.salesKw / r.spendKw * 10000) / 100 : 0;
+
     const cells = [
-      _cv(r.spend,   fmtY(r.spend),             _cc(r.spend,   th.spendG, th.spendR)),
-      _cv(r.spendKw, fmtY(r.spendKw),            _cc(r.spendKw, th.spendG, th.spendR)),
-      _cv(r.spend20, fmtY(r.spend20),            _cc(r.spend20, th.spendG, th.spendR)),
-      _cv(r.sales,   fmtY(r.sales),              _cc(r.sales,   th.salesG, th.salesR)),
-      _cv(r.salesKw, fmtY(r.salesKw),            _cc(r.salesKw, th.salesG, th.salesR)),
-      _cv(r.sales20, fmtY(r.sales20),            _cc(r.sales20, th.salesG, th.salesR)),
-      _cv(r.cpa,     r.cpa>0?fmtY(r.cpa):'—',   _cc(r.cpa,     th.cpaG, th.cpaR, false)),
-      _cv(cpaKwV,   cpaKwV>0?fmtY(cpaKwV):'—',  _cc(cpaKwV,    th.cpaG, th.cpaR, false)),
-      _cv(cpa20V,   cpa20V>0?fmtY(cpa20V):'—',  _cc(cpa20V,    th.cpaG, th.cpaR, false)),
-      _cv(r.cvr,     r.cvr>0?r.cvr+'%':'—',      _cc(r.cvr,     th.cvrG, th.cvrR)),
-      _cv(cvrKwV,   cvrKwV>0?cvrKwV+'%':'—',    _cc(cvrKwV,    th.cvrG, th.cvrR)),
-      _cv(cvr20V,   cvr20V>0?cvr20V+'%':'—',    _cc(cvr20V,    th.cvrG, th.cvrR)),
-      _fmtRoasCell(r.roas),
-      _fmtRoasCell(roasKw),
-      _fmtRoasCell(r.roas20),
+      _cv(r.spend,   fmtY(r.spend),                _rank5(r.spend,   vSpend,   false)), // 実績額：低い=良い
+      _cv(r.spendKw, fmtY(r.spendKw),              _rank5(r.spendKw, vSpendKw, false)),
+      _cv(r.spend20, fmtY(r.spend20),              _rank5(r.spend20, vSpend20, false)),
+      _cv(r.sales,   fmtY(r.sales),                _rank5(r.sales,   vSales,   true)),  // 売上：高い=良い
+      _cv(r.salesKw, fmtY(r.salesKw),              _rank5(r.salesKw, vSalesKw, true)),
+      _cv(r.sales20, fmtY(r.sales20),              _rank5(r.sales20, vSales20, true)),
+      _cv(r.cpa,     r.cpa>0?fmtY(r.cpa):'—',     _rank5(r.cpa,     vCpa,     false)), // 獲得単価：低い=良い
+      _cv(cpaKw_r,   cpaKw_r>0?fmtY(cpaKw_r):'—', _rank5(cpaKw_r,   vCpaKw,   false)),
+      _cv(cpa20V,    cpa20V>0?fmtY(cpa20V):'—',   _rank5(cpa20V,    vCpa20,   false)),
+      _cv(r.cvr,     r.cvr>0?r.cvr+'%':'—',        _rank5(r.cvr,     vCvr,     true)),  // CVR：高い=良い
+      _cv(cvrKwV,    cvrKwV>0?cvrKwV+'%':'—',      _rank5(cvrKwV,    vCvrKw,   true)),
+      _cv(cvr20V,    cvr20V>0?cvr20V+'%':'—',      _rank5(cvr20V,    vCvr20,   true)),
+      _fmtRoasCell(r.roas,    r.roas,    vRoas),
+      _fmtRoasCell(roasKw_r, roasKw_r,  vRoasKw),
+      _fmtRoasCell(r.roas20, r.roas20,  vRoas20),
     ];
     html += `<tr style="border-bottom:1px solid var(--border)">
       <td style="padding:7px 6px;font-weight:600;white-space:nowrap;font-size:11px">${r.label}</td>
