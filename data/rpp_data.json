@@ -34900,6 +34900,33 @@
   "calEvents": [],
   "nichinichiRows": [
     {
+      "code": "202603",
+      "label": "2026年03月",
+      "isPeriod": true,
+      "spend": 2966322,
+      "cl": 151932,
+      "sales": 11394838,
+      "orders": 7910,
+      "spendKw": 1508363,
+      "clKw": 34873,
+      "salesKw": 6927702,
+      "ordersKw": 4661,
+      "spend20": 1457959,
+      "cl20": 117059,
+      "sales20": 4467136,
+      "orders20": 3249,
+      "cpc": 20,
+      "cpa": 375,
+      "cvr": 5.21,
+      "roas": 384.14,
+      "cpc20": 12,
+      "cpa20": 449,
+      "cvr20": 2.78,
+      "roas20": 306.4
+    }
+  ],
+  "dailyRows": [
+    {
       "isPeriod": false,
       "code": "20260331",
       "label": "2026/03/31",
