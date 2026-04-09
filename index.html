@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.16</span>
+    <span class="build-date">v1.17</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -689,7 +689,7 @@ async function saveToGitHub() {
       sha = getJson.sha;
     }
     // データをJSON化してBase64エンコード
-    const payload = { DB, productCache, calEvents, nichinichiRows, dailyRows };
+    const payload = { DB, productCache, calEvents, nichinichiRows, dailyRows, itemDailyData };
     const jsonStr = JSON.stringify(payload, null, 2);
     const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
     // PUTで保存
@@ -730,6 +730,9 @@ async function loadFromGitHub() {
       if (data.calEvents) {
         calEvents = data.calEvents;
         try { localStorage.setItem(CAL_EVENTS_KEY, JSON.stringify(calEvents)); } catch(e) {}
+      }
+      if (data.itemDailyData && Object.keys(data.itemDailyData).length > 0) {
+        itemDailyData = data.itemDailyData;
       }
       if (data.nichinichiRows && data.nichinichiRows.length > 0) {
         // isPeriodで振り分け（旧データ互換：全部日別の場合もdailyRowsへ）
@@ -1042,6 +1045,7 @@ async function fetchAllProductInfo() {
 // ── 月別データ ──
 var _nichinichiFiles = [];
 var nichinichiRows = []; // 月別データ行（isPeriod: true）
+var itemDailyData = {}; // 商品別日次データ { 管理番号: { 日付: { spend,sales,roas, spendKw,salesKw,roasKw, spend20,sales20,roas20 } } }
 var dailyRows = [];     // 日別データ行（isPeriod: false）
 
 
@@ -1061,6 +1065,97 @@ function dailyClear() { monthlyClear(); }
 
 function _renderMonthlyBadges() {
   // バッジ表示なし（ファイルはレポート追加から読み込み、表示はテーブルのみ）
+}
+
+// ── 商品別日次データのパース ──
+function _parseItemDaily(text, mode) {
+  // mode: 'item'=rpp_item_reports, 'kw'=rpp_keyword_reports
+  const lines = text.replace(/
+/g, '
+').replace(/
+/g, '
+').split('
+');
+  let hi = -1;
+  for (let i = 0; i < Math.min(15, lines.length); i++) {
+    if (lines[i].includes('商品管理番号') && lines[i].includes('日付')) { hi = i; break; }
+    if (lines[i].includes('コントロールカラム') && lines[i].includes('日付')) { hi = i; break; }
+  }
+  if (hi < 0) return;
+  const headers = lines[hi].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const col = h => headers.indexOf(h);
+
+  for (let i = hi + 1; i < lines.length; i++) {
+    const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    if (vals.length < 5) continue;
+    const itemCode = vals[col('商品管理番号')];
+    if (!itemCode) continue;
+    const dateRaw = vals[col('日付')] || '';
+    // 日付を YYYY-MM-DD に正規化
+    const dm = dateRaw.match(/(20\d\d)年(\d\d)月(\d\d)日/);
+    if (!dm) continue;
+    const dateKey = `${dm[1]}-${dm[2]}-${dm[3]}`;
+
+    const spend  = parseFloat(vals[col('実績額(合計)')]) || 0;
+    const sales  = parseFloat(vals[col('売上金額(合計720時間)')]) || 0;
+    const orders = parseFloat(vals[col('売上件数(合計720時間)')]) || 0;
+    const cl     = parseFloat(vals[col('クリック数(合計)')]) || 0;
+
+    if (!itemDailyData[itemCode]) itemDailyData[itemCode] = {};
+    if (!itemDailyData[itemCode][dateKey]) {
+      itemDailyData[itemCode][dateKey] = {
+        spend:0, sales:0, orders:0, cl:0,
+        spendKw:0, salesKw:0, ordersKw:0, clKw:0
+      };
+    }
+    const d = itemDailyData[itemCode][dateKey];
+    if (mode === 'item') {
+      d.spend  += spend;  d.sales  += sales;
+      d.orders += orders; d.cl     += cl;
+    } else if (mode === 'kw') {
+      d.spendKw  += spend;  d.salesKw  += sales;
+      d.ordersKw += orders; d.clKw     += cl;
+    }
+  }
+}
+
+// 商品コードの日次テーブルHTMLを生成
+function _renderItemDailyTable(itemCode) {
+  const data = itemDailyData[itemCode];
+  if (!data || Object.keys(data).length === 0) return '';
+
+  const dates = Object.keys(data).sort().reverse();
+  const HBG  = ['#e8f0fe','#e8f0fe','#e6f4ea','#e6f4ea','#fce8e6','#fce8e6'];
+  const COLS  = ['実績額■','ROAS■','実績額-KW','ROAS-KW','実績額-20','ROAS-20'];
+
+  let html = `<div style="overflow-x:auto;margin-top:8px">
+    <table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:auto">
+      <thead><tr style="background:var(--surface2)">
+        <th style="padding:5px 8px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;border-bottom:1px solid var(--border)">日付</th>
+        ${COLS.map((h,i) => `<th style="padding:5px 8px;text-align:right;font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;border-bottom:1px solid var(--border);background:${HBG[i]}">${h}</th>`).join('')}
+      </tr></thead><tbody>`;
+
+  for (const date of dates) {
+    const d = data[date];
+    const roas   = d.spend  > 0 ? Math.round(d.sales  / d.spend  * 10000) / 100 : 0;
+    const roasKw = d.spendKw > 0 ? Math.round(d.salesKw / d.spendKw * 10000) / 100 : 0;
+    const spend20 = d.spend - d.spendKw;
+    const sales20 = d.sales - d.salesKw;
+    const roas20  = spend20 > 0 ? Math.round(sales20 / spend20 * 10000) / 100 : 0;
+    const label = date.replace(/-/g, '/');
+    const roasCls = v => v >= 500 ? 'c-g1' : v >= 300 ? 'c-g2' : v > 0 ? 'c-o' : 'c-bk';
+    html += `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:600;white-space:nowrap">${label}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#e8f0fe">${d.spend > 0 ? fmtY(d.spend) : '—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#e8f0fe"><span class="${roasCls(roas)}">${roas > 0 ? roas + '%' : '—'}</span></td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#e6f4ea">${d.spendKw > 0 ? fmtY(d.spendKw) : '—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#e6f4ea"><span class="${roasCls(roasKw)}">${roasKw > 0 ? roasKw + '%' : '—'}</span></td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#fce8e6">${spend20 > 0 ? fmtY(spend20) : '—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:#fce8e6"><span class="${roasCls(roas20)}">${roas20 > 0 ? roas20 + '%' : '—'}</span></td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  return html;
 }
 
 function _nichFileType(name) {
@@ -1831,6 +1926,9 @@ function renderCalendar(p, ym) {
   }
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
+  // 商品別日次テーブル（itemDailyDataがあれば表示）
+  const dailyTable = _renderItemDailyTable(p.id);
+
   return `<div class="daily-inner">
     <div class="detail-meta">
       <div class="meta-item"><div class="meta-label">入札単価</div><div class="meta-val">¥${fmt(latestDay.bid||0)}</div></div>
@@ -1838,6 +1936,10 @@ function renderCalendar(p, ym) {
       <div class="meta-item"><div class="meta-label">売上件数(720h)</div><div class="meta-val">${fmt(totalOrders)}件</div></div>
       <div class="meta-item"><div class="meta-label">データ取得日数</div><div class="meta-val">${dayKeys.length}日</div></div>
     </div>
+    ${dailyTable ? `<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">日別実績（全体■ / KW / -20）</div>
+      ${dailyTable}
+    </div>` : ''}
     <div class="cal-legend">
       <span><span class="cal-legend-dot" style="background:var(--green)"></span>ROAS 500%+</span>
       <span><span class="cal-legend-dot" style="background:var(--amber)"></span>300〜499%</span>
