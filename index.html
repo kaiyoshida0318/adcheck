@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.21</span>
+    <span class="build-date">v1.22</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1954,10 +1954,39 @@ function renderCalendar(p, ym) {
     const evStyle = evColor ? `outline:2px solid ${evColor};outline-offset:-2px;` : '';
     if (d && d.spend > 0) {
       const heat = heatColor(d.spend, maxSpend);
+      // itemDailyDataから全/K/20を取得
+      const idd = (itemDailyData[p.id] || {})[dk] || null;
+      const rc2 = v => v>=500?'var(--green)':v>=300?'var(--amber)':v>0?'var(--danger)':'#bbb';
+      let iddHtml = '';
+      if (idd) {
+        const spendKw = idd.spendKw || 0;
+        const salesKw = idd.salesKw || 0;
+        const spend20 = (idd.spend||0) - spendKw;
+        const sales20 = (idd.sales||0) - salesKw;
+        const roasKw  = spendKw > 0 ? Math.round(salesKw /spendKw *10000)/100 : 0;
+        const roas20v = spend20 > 0 ? Math.round(sales20 /spend20 *10000)/100 : 0;
+        iddHtml = `<div style="margin-top:3px;font-size:9px;line-height:1.6;border-top:1px solid var(--border);padding-top:2px">
+          <div style="display:flex;justify-content:space-between;gap:2px">
+            <span style="color:#888;font-weight:600;min-width:10px">全</span>
+            <span style="font-family:'DM Mono',monospace;flex:1;text-align:right">${fmt(idd.spend||0)}</span>
+            <span style="color:${rc2(d.roas720)};font-weight:700;min-width:32px;text-align:right">${d.roas720>0?d.roas720+'%':'—'}</span>
+          </div>
+          ${spendKw>0?`<div style="display:flex;justify-content:space-between;gap:2px">
+            <span style="color:#1565C0;font-weight:600;min-width:10px">K</span>
+            <span style="font-family:'DM Mono',monospace;flex:1;text-align:right">${fmt(spendKw)}</span>
+            <span style="color:${rc2(roasKw)};font-weight:700;min-width:32px;text-align:right">${roasKw>0?roasKw+'%':'—'}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:2px">
+            <span style="color:#999;font-weight:600;min-width:10px">20</span>
+            <span style="font-family:'DM Mono',monospace;flex:1;text-align:right">${fmt(spend20)}</span>
+            <span style="color:${rc2(roas20v)};font-weight:700;min-width:32px;text-align:right">${roas20v>0?roas20v+'%':'—'}</span>
+          </div>`:''}
+        </div>`;
+      }
       cells.push(`<div class="cal-cell has" style="${evStyle}">
         <div class="cal-date">${day}</div>
         <div class="cal-spend">${fmt(d.spend)}</div>
-        <div class="cal-roas ${rc(d.roas720)}">${d.roas720>0?fmt(d.roas720)+'%':'—'}</div>
+        ${idd ? iddHtml : `<div class="cal-roas ${rc(d.roas720)}">${d.roas720>0?fmt(d.roas720)+'%':'—'}</div>`}
         <div class="cal-bar" style="background:${heat}"></div>
         ${evColor ? `<div class="cal-event-bar" style="background:${evColor}"></div>` : ''}
         ${evLabel ? `<div class="cal-event-label" style="color:${evColor}">${evLabel}</div>` : ''}
@@ -1972,9 +2001,6 @@ function renderCalendar(p, ym) {
   }
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
-  // 商品別日次テーブル（itemDailyDataがあれば表示）
-  const dailyTable = _renderItemDailyTable(p.id);
-
   return `<div class="daily-inner">
     <div class="detail-meta">
       <div class="meta-item"><div class="meta-label">入札単価</div><div class="meta-val">¥${fmt(latestDay.bid||0)}</div></div>
@@ -1982,10 +2008,6 @@ function renderCalendar(p, ym) {
       <div class="meta-item"><div class="meta-label">売上件数(720h)</div><div class="meta-val">${fmt(totalOrders)}件</div></div>
       <div class="meta-item"><div class="meta-label">データ取得日数</div><div class="meta-val">${dayKeys.length}日</div></div>
     </div>
-    ${dailyTable ? `<div style="margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">日別実績（全体■ / KW / -20）</div>
-      ${dailyTable}
-    </div>` : ''}
     <div class="cal-legend">
       <span><span class="cal-legend-dot" style="background:var(--green)"></span>ROAS 500%+</span>
       <span><span class="cal-legend-dot" style="background:var(--amber)"></span>300〜499%</span>
