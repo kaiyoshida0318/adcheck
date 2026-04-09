@@ -334,14 +334,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
       <!-- ドロップゾーン -->
       <div id="monthly-drop" class="monthly-drop"
-        ondragover="monthlyDragOver(event)" ondragleave="monthlyDragLeave(event)" ondrop="monthlyDrop(event)"
-        onclick="document.getElementById('monthlyFileInput').click()">
+        ondragover="monthlyDragOver(event)" ondragleave="monthlyDragLeave(event)" ondrop="monthlyDrop(event)">
         <div style="font-size:28px;margin-bottom:8px">📂</div>
         <div style="font-weight:700;font-size:14px;color:#6366f1;margin-bottom:4px">rpp_reports と rpp_keyword_reports をまとめてドロップ</div>
-        <div style="font-size:12px;color:var(--text3)">CSV・ZIP 複数ファイル同時OK　クリックして選択も可</div>
+        <div style="font-size:12px;color:var(--text3)">CSV・ZIP 複数ファイル同時OK</div>
+        <button onclick="event.stopPropagation();document.getElementById('monthlyFileInput').click()" style="margin-top:10px;padding:6px 16px;border:1px solid #6366f1;border-radius:6px;background:#eef2ff;color:#4f46e5;font-size:12px;cursor:pointer;font-family:inherit">📁 ファイルを選択</button>
         <div id="monthly-file-badges" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px"></div>
       </div>
-      <input type="file" id="monthlyFileInput" style="display:none" accept=".csv,.zip" multiple onchange="monthlyFileSelect(event)">
+      <input type="file" id="monthlyFileInput" style="display:none" accept=".csv,.zip" multiple>
 
       <!-- ボタン行 -->
       <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
@@ -980,19 +980,26 @@ async function fetchAllProductInfo() {
 // ── 月別データ ──
 var _nichinichiFiles = [];
 
-function monthlyDragOver(e) { e.preventDefault(); document.getElementById('monthly-drop').classList.add('dragover'); }
-function monthlyDragLeave(e) { document.getElementById('monthly-drop').classList.remove('dragover'); }
+function monthlyDragOver(e) { e.preventDefault(); e.stopPropagation(); document.getElementById('monthly-drop').classList.add('dragover'); }
+function monthlyDragLeave(e) { e.stopPropagation(); document.getElementById('monthly-drop').classList.remove('dragover'); }
 function monthlyDrop(e) {
   e.preventDefault();
+  e.stopPropagation();
   document.getElementById('monthly-drop').classList.remove('dragover');
   const files = Array.from(e.dataTransfer.files);
   files.forEach(f => _nichinichiFiles.push(f));
   _renderMonthlyBadges();
 }
-function monthlyFileSelect(e) {
-  Array.from(e.target.files).forEach(f => _nichinichiFiles.push(f));
-  e.target.value = '';
-  _renderMonthlyBadges();
+function _monthlySetupInput() {
+  const inp = document.getElementById('monthlyFileInput');
+  if (inp && !inp._listenerAdded) {
+    inp.addEventListener('change', function() {
+      Array.from(this.files).forEach(f => _nichinichiFiles.push(f));
+      this.value = '';
+      _renderMonthlyBadges();
+    });
+    inp._listenerAdded = true;
+  }
 }
 function monthlyClear() {
   _nichinichiFiles = [];
@@ -1684,6 +1691,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('confirmClearModal').addEventListener('click', e => {
     if (e.target === document.getElementById('confirmClearModal')) closeConfirmClear();
   });
+  _monthlySetupInput();
   // ページ全体でドラッグ&ドロップを受け取る
   document.body.addEventListener('dragover', e => e.preventDefault());
   document.body.addEventListener('drop', e => {
