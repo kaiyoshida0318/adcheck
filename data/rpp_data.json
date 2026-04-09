@@ -35705,10 +35705,10 @@
   "itemDailyData": {
     "565955": {
       "2026-04-01": {
-        "spend": 3480,
-        "sales": 31200,
-        "orders": 44,
-        "cl": 172,
+        "spend": 4350,
+        "sales": 39000,
+        "orders": 55,
+        "cl": 215,
         "spendKw": 160,
         "salesKw": 1360,
         "ordersKw": 2,
@@ -35717,10 +35717,10 @@
     },
     "10000527": {
       "2026-04-01": {
-        "spend": 832,
+        "spend": 1040,
         "sales": 0,
         "orders": 0,
-        "cl": 28,
+        "cl": 35,
         "spendKw": 168,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35729,10 +35729,10 @@
     },
     "10000588": {
       "2026-04-01": {
-        "spend": 1120,
-        "sales": 11840,
-        "orders": 8,
-        "cl": 72,
+        "spend": 1400,
+        "sales": 14800,
+        "orders": 10,
+        "cl": 90,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35741,10 +35741,10 @@
     },
     "10001057": {
       "2026-04-01": {
-        "spend": 9376,
-        "sales": 9920,
-        "orders": 8,
-        "cl": 516,
+        "spend": 11720,
+        "sales": 12400,
+        "orders": 10,
+        "cl": 645,
         "spendKw": 160,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35753,10 +35753,10 @@
     },
     "10001083": {
       "2026-04-01": {
-        "spend": 360,
+        "spend": 450,
         "sales": 0,
         "orders": 0,
-        "cl": 20,
+        "cl": 25,
         "spendKw": 40,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35765,10 +35765,10 @@
     },
     "10001095": {
       "2026-04-01": {
-        "spend": 760,
+        "spend": 950,
         "sales": 0,
         "orders": 0,
-        "cl": 40,
+        "cl": 50,
         "spendKw": 80,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35777,10 +35777,10 @@
     },
     "10001096": {
       "2026-04-01": {
-        "spend": 2240,
-        "sales": 15840,
-        "orders": 8,
-        "cl": 64,
+        "spend": 2800,
+        "sales": 19800,
+        "orders": 10,
+        "cl": 80,
         "spendKw": 340,
         "salesKw": 1480,
         "ordersKw": 1,
@@ -35789,10 +35789,10 @@
     },
     "10001098": {
       "2026-04-01": {
-        "spend": 9204,
-        "sales": 29600,
-        "orders": 24,
-        "cl": 644,
+        "spend": 11505,
+        "sales": 37000,
+        "orders": 30,
+        "cl": 805,
         "spendKw": 494,
         "salesKw": 5240,
         "ordersKw": 4,
@@ -35801,10 +35801,10 @@
     },
     "10001118": {
       "2026-04-01": {
-        "spend": 2560,
-        "sales": 11840,
-        "orders": 8,
-        "cl": 96,
+        "spend": 3200,
+        "sales": 14800,
+        "orders": 10,
+        "cl": 120,
         "spendKw": 440,
         "salesKw": 2960,
         "ordersKw": 2,
@@ -35813,10 +35813,10 @@
     },
     "10001120": {
       "2026-04-01": {
-        "spend": 1720,
-        "sales": 16960,
-        "orders": 12,
-        "cl": 64,
+        "spend": 2150,
+        "sales": 21200,
+        "orders": 15,
+        "cl": 80,
         "spendKw": 240,
         "salesKw": 4240,
         "ordersKw": 3,
@@ -35825,10 +35825,10 @@
     },
     "10001130": {
       "2026-04-01": {
-        "spend": 1280,
-        "sales": 12000,
-        "orders": 12,
-        "cl": 64,
+        "spend": 1600,
+        "sales": 15000,
+        "orders": 15,
+        "cl": 80,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35837,10 +35837,10 @@
     },
     "10001131": {
       "2026-04-01": {
-        "spend": 720,
-        "sales": 5920,
-        "orders": 4,
-        "cl": 36,
+        "spend": 900,
+        "sales": 7400,
+        "orders": 5,
+        "cl": 45,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35849,10 +35849,10 @@
     },
     "10001134": {
       "2026-04-01": {
-        "spend": 560,
-        "sales": 4000,
-        "orders": 4,
-        "cl": 20,
+        "spend": 700,
+        "sales": 5000,
+        "orders": 5,
+        "cl": 25,
         "spendKw": 80,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35861,10 +35861,10 @@
     },
     "10001135": {
       "2026-04-01": {
-        "spend": 16200,
-        "sales": 124680,
-        "orders": 96,
-        "cl": 656,
+        "spend": 20250,
+        "sales": 155850,
+        "orders": 120,
+        "cl": 820,
         "spendKw": 1800,
         "salesKw": 9340,
         "ordersKw": 8,
@@ -35873,10 +35873,10 @@
     },
     "10001137": {
       "2026-04-01": {
-        "spend": 1120,
+        "spend": 1400,
         "sales": 0,
         "orders": 0,
-        "cl": 56,
+        "cl": 70,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35885,10 +35885,10 @@
     },
     "10001142": {
       "2026-04-01": {
-        "spend": 480,
-        "sales": 6240,
-        "orders": 4,
-        "cl": 24,
+        "spend": 600,
+        "sales": 7800,
+        "orders": 5,
+        "cl": 30,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35897,10 +35897,10 @@
     },
     "10001143": {
       "2026-04-01": {
-        "spend": 692,
+        "spend": 865,
         "sales": 0,
         "orders": 0,
-        "cl": 36,
+        "cl": 45,
         "spendKw": 80,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35909,10 +35909,10 @@
     },
     "10001146": {
       "2026-04-01": {
-        "spend": 2136,
+        "spend": 2670,
         "sales": 0,
         "orders": 0,
-        "cl": 116,
+        "cl": 145,
         "spendKw": 280,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35921,10 +35921,10 @@
     },
     "10001149": {
       "2026-04-01": {
-        "spend": 6952,
-        "sales": 6320,
-        "orders": 4,
-        "cl": 220,
+        "spend": 8690,
+        "sales": 7900,
+        "orders": 5,
+        "cl": 275,
         "spendKw": 1440,
         "salesKw": 1580,
         "ordersKw": 1,
@@ -35933,10 +35933,10 @@
     },
     "10001150": {
       "2026-04-01": {
-        "spend": 640,
+        "spend": 800,
         "sales": 0,
         "orders": 0,
-        "cl": 60,
+        "cl": 75,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35945,10 +35945,10 @@
     },
     "10001151": {
       "2026-04-01": {
-        "spend": 852,
+        "spend": 1065,
         "sales": 0,
         "orders": 0,
-        "cl": 40,
+        "cl": 50,
         "spendKw": 50,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35957,10 +35957,10 @@
     },
     "10001152": {
       "2026-04-01": {
-        "spend": 2480,
-        "sales": 24480,
-        "orders": 16,
-        "cl": 120,
+        "spend": 3100,
+        "sales": 30600,
+        "orders": 20,
+        "cl": 150,
         "spendKw": 160,
         "salesKw": 1280,
         "ordersKw": 1,
@@ -35969,10 +35969,10 @@
     },
     "10001155": {
       "2026-04-01": {
-        "spend": 1448,
-        "sales": 3120,
-        "orders": 4,
-        "cl": 56,
+        "spend": 1810,
+        "sales": 3900,
+        "orders": 5,
+        "cl": 70,
         "spendKw": 240,
         "salesKw": 0,
         "ordersKw": 0,
@@ -35981,10 +35981,10 @@
     },
     "10001158": {
       "2026-04-01": {
-        "spend": 8800,
-        "sales": 18960,
-        "orders": 12,
-        "cl": 260,
+        "spend": 11000,
+        "sales": 23700,
+        "orders": 15,
+        "cl": 325,
         "spendKw": 1920,
         "salesKw": 3060,
         "ordersKw": 2,
@@ -35993,10 +35993,10 @@
     },
     "10001163": {
       "2026-04-01": {
-        "spend": 944,
-        "sales": 5120,
-        "orders": 4,
-        "cl": 48,
+        "spend": 1180,
+        "sales": 6400,
+        "orders": 5,
+        "cl": 60,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36005,10 +36005,10 @@
     },
     "10001164": {
       "2026-04-01": {
-        "spend": 8076,
-        "sales": 8560,
-        "orders": 12,
-        "cl": 292,
+        "spend": 10095,
+        "sales": 10700,
+        "orders": 15,
+        "cl": 365,
         "spendKw": 1165,
         "salesKw": 680,
         "ordersKw": 1,
@@ -36017,10 +36017,10 @@
     },
     "10001167": {
       "2026-04-01": {
-        "spend": 6504,
-        "sales": 20880,
-        "orders": 16,
-        "cl": 276,
+        "spend": 8130,
+        "sales": 26100,
+        "orders": 20,
+        "cl": 345,
         "spendKw": 920,
         "salesKw": 2560,
         "ordersKw": 2,
@@ -36029,10 +36029,10 @@
     },
     "10001168": {
       "2026-04-01": {
-        "spend": 2160,
-        "sales": 6000,
-        "orders": 4,
-        "cl": 108,
+        "spend": 2700,
+        "sales": 7500,
+        "orders": 5,
+        "cl": 135,
         "spendKw": 280,
         "salesKw": 1500,
         "ordersKw": 1,
@@ -36041,10 +36041,10 @@
     },
     "10001169": {
       "2026-04-01": {
-        "spend": 7048,
-        "sales": 44240,
-        "orders": 40,
-        "cl": 312,
+        "spend": 8810,
+        "sales": 55300,
+        "orders": 50,
+        "cl": 390,
         "spendKw": 960,
         "salesKw": 5780,
         "ordersKw": 5,
@@ -36053,10 +36053,10 @@
     },
     "10001172": {
       "2026-04-01": {
-        "spend": 2720,
-        "sales": 5120,
-        "orders": 4,
-        "cl": 96,
+        "spend": 3400,
+        "sales": 6400,
+        "orders": 5,
+        "cl": 120,
         "spendKw": 480,
         "salesKw": 1280,
         "ordersKw": 1,
@@ -36065,10 +36065,10 @@
     },
     "10001179": {
       "2026-04-01": {
-        "spend": 2700,
-        "sales": 4000,
-        "orders": 4,
-        "cl": 100,
+        "spend": 3375,
+        "sales": 5000,
+        "orders": 5,
+        "cl": 125,
         "spendKw": 350,
         "salesKw": 1000,
         "ordersKw": 1,
@@ -36077,10 +36077,10 @@
     },
     "10001180": {
       "2026-04-01": {
-        "spend": 2480,
-        "sales": 7120,
-        "orders": 4,
-        "cl": 100,
+        "spend": 3100,
+        "sales": 8900,
+        "orders": 5,
+        "cl": 125,
         "spendKw": 440,
         "salesKw": 1780,
         "ordersKw": 1,
@@ -36089,10 +36089,10 @@
     },
     "10001181": {
       "2026-04-01": {
-        "spend": 4596,
-        "sales": 5120,
-        "orders": 4,
-        "cl": 192,
+        "spend": 5745,
+        "sales": 6400,
+        "orders": 5,
+        "cl": 240,
         "spendKw": 760,
         "salesKw": 1280,
         "ordersKw": 1,
@@ -36101,10 +36101,10 @@
     },
     "10001187": {
       "2026-04-01": {
-        "spend": 4008,
-        "sales": 18880,
-        "orders": 16,
-        "cl": 160,
+        "spend": 5010,
+        "sales": 23600,
+        "orders": 20,
+        "cl": 200,
         "spendKw": 520,
         "salesKw": 2160,
         "ordersKw": 2,
@@ -36113,10 +36113,10 @@
     },
     "10001189": {
       "2026-04-01": {
-        "spend": 3360,
-        "sales": 16480,
-        "orders": 16,
-        "cl": 104,
+        "spend": 4200,
+        "sales": 20600,
+        "orders": 20,
+        "cl": 130,
         "spendKw": 680,
         "salesKw": 4120,
         "ordersKw": 4,
@@ -36125,10 +36125,10 @@
     },
     "10001204": {
       "2026-04-01": {
-        "spend": 4448,
-        "sales": 15360,
-        "orders": 12,
-        "cl": 160,
+        "spend": 5560,
+        "sales": 19200,
+        "orders": 15,
+        "cl": 200,
         "spendKw": 800,
         "salesKw": 2560,
         "ordersKw": 2,
@@ -36137,10 +36137,10 @@
     },
     "10001207": {
       "2026-04-01": {
-        "spend": 5440,
-        "sales": 4320,
-        "orders": 4,
-        "cl": 188,
+        "spend": 6800,
+        "sales": 5400,
+        "orders": 5,
+        "cl": 235,
         "spendKw": 880,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36149,10 +36149,10 @@
     },
     "10001208": {
       "2026-04-01": {
-        "spend": 4464,
-        "sales": 27600,
-        "orders": 20,
-        "cl": 156,
+        "spend": 5580,
+        "sales": 34500,
+        "orders": 25,
+        "cl": 195,
         "spendKw": 800,
         "salesKw": 4140,
         "ordersKw": 3,
@@ -36161,10 +36161,10 @@
     },
     "10001209": {
       "2026-04-01": {
-        "spend": 688,
+        "spend": 860,
         "sales": 0,
         "orders": 0,
-        "cl": 56,
+        "cl": 70,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36173,10 +36173,10 @@
     },
     "10001210": {
       "2026-04-01": {
-        "spend": 2600,
-        "sales": 10000,
-        "orders": 8,
-        "cl": 104,
+        "spend": 3250,
+        "sales": 12500,
+        "orders": 10,
+        "cl": 130,
         "spendKw": 360,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36185,10 +36185,10 @@
     },
     "10001213": {
       "2026-04-01": {
-        "spend": 4372,
-        "sales": 34720,
-        "orders": 32,
-        "cl": 140,
+        "spend": 5465,
+        "sales": 43400,
+        "orders": 40,
+        "cl": 175,
         "spendKw": 840,
         "salesKw": 6120,
         "ordersKw": 6,
@@ -36197,10 +36197,10 @@
     },
     "10001214": {
       "2026-04-01": {
-        "spend": 40,
+        "spend": 50,
         "sales": 0,
         "orders": 0,
-        "cl": 4,
+        "cl": 5,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36209,10 +36209,10 @@
     },
     "10001215": {
       "2026-04-01": {
-        "spend": 3396,
-        "sales": 8000,
-        "orders": 4,
-        "cl": 164,
+        "spend": 4245,
+        "sales": 10000,
+        "orders": 5,
+        "cl": 205,
         "spendKw": 460,
         "salesKw": 2000,
         "ordersKw": 1,
@@ -36221,10 +36221,10 @@
     },
     "10001217": {
       "2026-04-01": {
-        "spend": 11920,
-        "sales": 35120,
-        "orders": 24,
-        "cl": 392,
+        "spend": 14900,
+        "sales": 43900,
+        "orders": 30,
+        "cl": 490,
         "spendKw": 2118,
         "salesKw": 7100,
         "ordersKw": 5,
@@ -36233,10 +36233,10 @@
     },
     "10001220": {
       "2026-04-01": {
-        "spend": 800,
+        "spend": 1000,
         "sales": 0,
         "orders": 0,
-        "cl": 28,
+        "cl": 35,
         "spendKw": 130,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36245,10 +36245,10 @@
     },
     "10001221": {
       "2026-04-01": {
-        "spend": 5600,
+        "spend": 7000,
         "sales": 0,
         "orders": 0,
-        "cl": 256,
+        "cl": 320,
         "spendKw": 640,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36257,10 +36257,10 @@
     },
     "10001222": {
       "2026-04-01": {
-        "spend": 2840,
-        "sales": 20000,
-        "orders": 20,
-        "cl": 92,
+        "spend": 3550,
+        "sales": 25000,
+        "orders": 25,
+        "cl": 115,
         "spendKw": 520,
         "salesKw": 3000,
         "ordersKw": 3,
@@ -36269,10 +36269,10 @@
     },
     "10001223": {
       "2026-04-01": {
-        "spend": 2920,
-        "sales": 14880,
-        "orders": 20,
-        "cl": 120,
+        "spend": 3650,
+        "sales": 18600,
+        "orders": 25,
+        "cl": 150,
         "spendKw": 400,
         "salesKw": 1680,
         "ordersKw": 2,
@@ -36281,10 +36281,10 @@
     },
     "10001226": {
       "2026-04-01": {
-        "spend": 2200,
-        "sales": 3120,
-        "orders": 4,
-        "cl": 136,
+        "spend": 2750,
+        "sales": 3900,
+        "orders": 5,
+        "cl": 170,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36293,7 +36293,175 @@
     },
     "10001227": {
       "2026-04-01": {
-        "spend": 360,
+        "spend": 450,
+        "sales": 0,
+        "orders": 0,
+        "cl": 25,
+        "spendKw": 40,
+        "salesKw": 0,
+        "ordersKw": 0,
+        "clKw": 1
+      }
+    },
+    "10001236": {
+      "2026-04-01": {
+        "spend": 10750,
+        "sales": 53700,
+        "orders": 40,
+        "cl": 360,
+        "spendKw": 1560,
+        "salesKw": 9260,
+        "ordersKw": 7,
+        "clKw": 39
+      }
+    },
+    "10001237": {
+      "2026-04-01": {
+        "spend": 2850,
+        "sales": 15000,
+        "orders": 15,
+        "cl": 80,
+        "spendKw": 520,
+        "salesKw": 3000,
+        "ordersKw": 3,
+        "clKw": 13
+      }
+    },
+    "10001240": {
+      "2026-04-01": {
+        "spend": 5390,
+        "sales": 5200,
+        "orders": 5,
+        "cl": 290,
+        "spendKw": 560,
+        "salesKw": 1040,
+        "ordersKw": 1,
+        "clKw": 14
+      }
+    },
+    "10001243": {
+      "2026-04-01": {
+        "spend": 375,
+        "sales": 9000,
+        "orders": 5,
+        "cl": 20,
+        "spendKw": 40,
+        "salesKw": 1800,
+        "ordersKw": 1,
+        "clKw": 1
+      }
+    },
+    "10001251": {
+      "2026-04-01": {
+        "spend": 13625,
+        "sales": 0,
+        "orders": 0,
+        "cl": 275,
+        "spendKw": 2375,
+        "salesKw": 0,
+        "ordersKw": 0,
+        "clKw": 27
+      }
+    },
+    "10001252": {
+      "2026-04-01": {
+        "spend": 4150,
+        "sales": 19300,
+        "orders": 15,
+        "cl": 145,
+        "spendKw": 640,
+        "salesKw": 3860,
+        "ordersKw": 3,
+        "clKw": 16
+      }
+    },
+    "10001254": {
+      "2026-04-01": {
+        "spend": 2950,
+        "sales": 5000,
+        "orders": 5,
+        "cl": 165,
+        "spendKw": 240,
+        "salesKw": 1000,
+        "ordersKw": 1,
+        "clKw": 6
+      }
+    },
+    "10001255": {
+      "2026-04-01": {
+        "spend": 16490,
+        "sales": 134900,
+        "orders": 105,
+        "cl": 735,
+        "spendKw": 1440,
+        "salesKw": 8900,
+        "ordersKw": 7,
+        "clKw": 36
+      }
+    },
+    "10001256": {
+      "2026-04-01": {
+        "spend": 2800,
+        "sales": 0,
+        "orders": 0,
+        "cl": 125,
+        "spendKw": 200,
+        "salesKw": 0,
+        "ordersKw": 0,
+        "clKw": 5
+      }
+    },
+    "10001265": {
+      "2026-04-01": {
+        "spend": 1985,
+        "sales": 0,
+        "orders": 0,
+        "cl": 85,
+        "spendKw": 200,
+        "salesKw": 0,
+        "ordersKw": 0,
+        "clKw": 5
+      }
+    },
+    "10001266": {
+      "2026-04-01": {
+        "spend": 7410,
+        "sales": 57400,
+        "orders": 40,
+        "cl": 235,
+        "spendKw": 1320,
+        "salesKw": 11480,
+        "ordersKw": 8,
+        "clKw": 33
+      }
+    },
+    "10001267": {
+      "2026-04-01": {
+        "spend": 6520,
+        "sales": 62900,
+        "orders": 10,
+        "cl": 315,
+        "spendKw": 640,
+        "salesKw": 780,
+        "ordersKw": 1,
+        "clKw": 14
+      }
+    },
+    "10001270": {
+      "2026-04-01": {
+        "spend": 1450,
+        "sales": 0,
+        "orders": 0,
+        "cl": 50,
+        "spendKw": 200,
+        "salesKw": 0,
+        "ordersKw": 0,
+        "clKw": 5
+      }
+    },
+    "10001271": {
+      "2026-04-01": {
+        "spend": 400,
         "sales": 0,
         "orders": 0,
         "cl": 20,
@@ -36303,180 +36471,12 @@
         "clKw": 1
       }
     },
-    "10001236": {
-      "2026-04-01": {
-        "spend": 8600,
-        "sales": 42960,
-        "orders": 32,
-        "cl": 288,
-        "spendKw": 1560,
-        "salesKw": 9260,
-        "ordersKw": 7,
-        "clKw": 39
-      }
-    },
-    "10001237": {
-      "2026-04-01": {
-        "spend": 2280,
-        "sales": 12000,
-        "orders": 12,
-        "cl": 64,
-        "spendKw": 520,
-        "salesKw": 3000,
-        "ordersKw": 3,
-        "clKw": 13
-      }
-    },
-    "10001240": {
-      "2026-04-01": {
-        "spend": 4312,
-        "sales": 4160,
-        "orders": 4,
-        "cl": 232,
-        "spendKw": 560,
-        "salesKw": 1040,
-        "ordersKw": 1,
-        "clKw": 14
-      }
-    },
-    "10001243": {
-      "2026-04-01": {
-        "spend": 300,
-        "sales": 7200,
-        "orders": 4,
-        "cl": 16,
-        "spendKw": 40,
-        "salesKw": 1800,
-        "ordersKw": 1,
-        "clKw": 1
-      }
-    },
-    "10001251": {
-      "2026-04-01": {
-        "spend": 10900,
-        "sales": 0,
-        "orders": 0,
-        "cl": 220,
-        "spendKw": 2375,
-        "salesKw": 0,
-        "ordersKw": 0,
-        "clKw": 27
-      }
-    },
-    "10001252": {
-      "2026-04-01": {
-        "spend": 3320,
-        "sales": 15440,
-        "orders": 12,
-        "cl": 116,
-        "spendKw": 640,
-        "salesKw": 3860,
-        "ordersKw": 3,
-        "clKw": 16
-      }
-    },
-    "10001254": {
-      "2026-04-01": {
-        "spend": 2360,
-        "sales": 4000,
-        "orders": 4,
-        "cl": 132,
-        "spendKw": 240,
-        "salesKw": 1000,
-        "ordersKw": 1,
-        "clKw": 6
-      }
-    },
-    "10001255": {
-      "2026-04-01": {
-        "spend": 13192,
-        "sales": 107920,
-        "orders": 84,
-        "cl": 588,
-        "spendKw": 1440,
-        "salesKw": 8900,
-        "ordersKw": 7,
-        "clKw": 36
-      }
-    },
-    "10001256": {
-      "2026-04-01": {
-        "spend": 2240,
-        "sales": 0,
-        "orders": 0,
-        "cl": 100,
-        "spendKw": 200,
-        "salesKw": 0,
-        "ordersKw": 0,
-        "clKw": 5
-      }
-    },
-    "10001265": {
-      "2026-04-01": {
-        "spend": 1588,
-        "sales": 0,
-        "orders": 0,
-        "cl": 68,
-        "spendKw": 200,
-        "salesKw": 0,
-        "ordersKw": 0,
-        "clKw": 5
-      }
-    },
-    "10001266": {
-      "2026-04-01": {
-        "spend": 5928,
-        "sales": 45920,
-        "orders": 32,
-        "cl": 188,
-        "spendKw": 1320,
-        "salesKw": 11480,
-        "ordersKw": 8,
-        "clKw": 33
-      }
-    },
-    "10001267": {
-      "2026-04-01": {
-        "spend": 5216,
-        "sales": 50320,
-        "orders": 8,
-        "cl": 252,
-        "spendKw": 640,
-        "salesKw": 780,
-        "ordersKw": 1,
-        "clKw": 14
-      }
-    },
-    "10001270": {
-      "2026-04-01": {
-        "spend": 1160,
-        "sales": 0,
-        "orders": 0,
-        "cl": 40,
-        "spendKw": 200,
-        "salesKw": 0,
-        "ordersKw": 0,
-        "clKw": 5
-      }
-    },
-    "10001271": {
-      "2026-04-01": {
-        "spend": 320,
-        "sales": 0,
-        "orders": 0,
-        "cl": 16,
-        "spendKw": 40,
-        "salesKw": 0,
-        "ordersKw": 0,
-        "clKw": 1
-      }
-    },
     "10001274": {
       "2026-04-01": {
-        "spend": 2400,
-        "sales": 4320,
-        "orders": 4,
-        "cl": 132,
+        "spend": 3000,
+        "sales": 5400,
+        "orders": 5,
+        "cl": 165,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36485,10 +36485,10 @@
     },
     "10001278": {
       "2026-04-01": {
-        "spend": 340,
+        "spend": 425,
         "sales": 0,
         "orders": 0,
-        "cl": 12,
+        "cl": 15,
         "spendKw": 45,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36497,10 +36497,10 @@
     },
     "10001279": {
       "2026-04-01": {
-        "spend": 1864,
-        "sales": 5920,
-        "orders": 4,
-        "cl": 100,
+        "spend": 2330,
+        "sales": 7400,
+        "orders": 5,
+        "cl": 125,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36509,10 +36509,10 @@
     },
     "10001280": {
       "2026-04-01": {
-        "spend": 8000,
-        "sales": 51360,
-        "orders": 16,
-        "cl": 336,
+        "spend": 10000,
+        "sales": 64200,
+        "orders": 20,
+        "cl": 420,
         "spendKw": 960,
         "salesKw": 7230,
         "ordersKw": 2,
@@ -36521,10 +36521,10 @@
     },
     "10001286": {
       "2026-04-01": {
-        "spend": 1784,
-        "sales": 5120,
-        "orders": 4,
-        "cl": 68,
+        "spend": 2230,
+        "sales": 6400,
+        "orders": 5,
+        "cl": 85,
         "spendKw": 276,
         "salesKw": 1280,
         "ordersKw": 1,
@@ -36533,10 +36533,10 @@
     },
     "10001287": {
       "2026-04-01": {
-        "spend": 1360,
-        "sales": 46080,
-        "orders": 8,
-        "cl": 56,
+        "spend": 1700,
+        "sales": 57600,
+        "orders": 10,
+        "cl": 70,
         "spendKw": 240,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36545,10 +36545,10 @@
     },
     "10001288": {
       "2026-04-01": {
-        "spend": 600,
-        "sales": 9920,
-        "orders": 4,
-        "cl": 36,
+        "spend": 750,
+        "sales": 12400,
+        "orders": 5,
+        "cl": 45,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36557,10 +36557,10 @@
     },
     "10001289": {
       "2026-04-01": {
-        "spend": 2000,
+        "spend": 2500,
         "sales": 0,
         "orders": 0,
-        "cl": 56,
+        "cl": 70,
         "spendKw": 440,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36569,10 +36569,10 @@
     },
     "10001290": {
       "2026-04-01": {
-        "spend": 4160,
-        "sales": 15840,
-        "orders": 8,
-        "cl": 172,
+        "spend": 5200,
+        "sales": 19800,
+        "orders": 10,
+        "cl": 215,
         "spendKw": 760,
         "salesKw": 3960,
         "ordersKw": 2,
@@ -36581,10 +36581,10 @@
     },
     "10001291": {
       "2026-04-01": {
-        "spend": 2640,
-        "sales": 21800,
-        "orders": 12,
-        "cl": 92,
+        "spend": 3300,
+        "sales": 27250,
+        "orders": 15,
+        "cl": 115,
         "spendKw": 500,
         "salesKw": 4270,
         "ordersKw": 2,
@@ -36593,10 +36593,10 @@
     },
     "10001292": {
       "2026-04-01": {
-        "spend": 5400,
-        "sales": 22040,
-        "orders": 4,
-        "cl": 200,
+        "spend": 6750,
+        "sales": 27550,
+        "orders": 5,
+        "cl": 250,
         "spendKw": 880,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36605,10 +36605,10 @@
     },
     "10001293": {
       "2026-04-01": {
-        "spend": 1160,
-        "sales": 10240,
-        "orders": 8,
-        "cl": 36,
+        "spend": 1450,
+        "sales": 12800,
+        "orders": 10,
+        "cl": 45,
         "spendKw": 220,
         "salesKw": 1280,
         "ordersKw": 1,
@@ -36617,10 +36617,10 @@
     },
     "10001294": {
       "2026-04-01": {
-        "spend": 520,
+        "spend": 650,
         "sales": 0,
         "orders": 0,
-        "cl": 24,
+        "cl": 30,
         "spendKw": 80,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36629,10 +36629,10 @@
     },
     "10001296": {
       "2026-04-01": {
-        "spend": 2000,
+        "spend": 2500,
         "sales": 0,
         "orders": 0,
-        "cl": 56,
+        "cl": 70,
         "spendKw": 440,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36641,10 +36641,10 @@
     },
     "10001299": {
       "2026-04-01": {
-        "spend": 160,
+        "spend": 200,
         "sales": 0,
         "orders": 0,
-        "cl": 8,
+        "cl": 10,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36653,10 +36653,10 @@
     },
     "10001302": {
       "2026-04-01": {
-        "spend": 360,
+        "spend": 450,
         "sales": 0,
         "orders": 0,
-        "cl": 32,
+        "cl": 40,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36665,10 +36665,10 @@
     },
     "10001303": {
       "2026-04-01": {
-        "spend": 2000,
+        "spend": 2500,
         "sales": 0,
         "orders": 0,
-        "cl": 88,
+        "cl": 110,
         "spendKw": 320,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36677,10 +36677,10 @@
     },
     "10001304": {
       "2026-04-01": {
-        "spend": 1160,
+        "spend": 1450,
         "sales": 0,
         "orders": 0,
-        "cl": 40,
+        "cl": 50,
         "spendKw": 240,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36689,10 +36689,10 @@
     },
     "10001305": {
       "2026-04-01": {
-        "spend": 3848,
-        "sales": 4000,
-        "orders": 4,
-        "cl": 124,
+        "spend": 4810,
+        "sales": 5000,
+        "orders": 5,
+        "cl": 155,
         "spendKw": 840,
         "salesKw": 1000,
         "ordersKw": 1,
@@ -36701,10 +36701,10 @@
     },
     "10001307": {
       "2026-04-01": {
-        "spend": 840,
+        "spend": 1050,
         "sales": 0,
         "orders": 0,
-        "cl": 80,
+        "cl": 100,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36713,10 +36713,10 @@
     },
     "10001308": {
       "2026-04-01": {
-        "spend": 2200,
+        "spend": 2750,
         "sales": 0,
         "orders": 0,
-        "cl": 68,
+        "cl": 85,
         "spendKw": 390,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36725,10 +36725,10 @@
     },
     "10001309": {
       "2026-04-01": {
-        "spend": 640,
+        "spend": 800,
         "sales": 0,
         "orders": 0,
-        "cl": 64,
+        "cl": 80,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36737,10 +36737,10 @@
     },
     "10001310": {
       "2026-04-01": {
-        "spend": 360,
-        "sales": 8240,
-        "orders": 8,
-        "cl": 12,
+        "spend": 450,
+        "sales": 10300,
+        "orders": 10,
+        "cl": 15,
         "spendKw": 80,
         "salesKw": 2060,
         "ordersKw": 2,
@@ -36749,10 +36749,10 @@
     },
     "10001311": {
       "2026-04-01": {
-        "spend": 360,
+        "spend": 450,
         "sales": 0,
         "orders": 0,
-        "cl": 24,
+        "cl": 30,
         "spendKw": 40,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36761,10 +36761,10 @@
     },
     "10001312": {
       "2026-04-01": {
-        "spend": 3280,
-        "sales": 28880,
-        "orders": 40,
-        "cl": 152,
+        "spend": 4100,
+        "sales": 36100,
+        "orders": 50,
+        "cl": 190,
         "spendKw": 280,
         "salesKw": 680,
         "ordersKw": 1,
@@ -36773,10 +36773,10 @@
     },
     "10001313": {
       "2026-04-01": {
-        "spend": 160,
+        "spend": 200,
         "sales": 0,
         "orders": 0,
-        "cl": 4,
+        "cl": 5,
         "spendKw": 40,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36785,10 +36785,10 @@
     },
     "10001322": {
       "2026-04-01": {
-        "spend": 680,
+        "spend": 850,
         "sales": 0,
         "orders": 0,
-        "cl": 48,
+        "cl": 60,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36797,10 +36797,10 @@
     },
     "10001323": {
       "2026-04-01": {
-        "spend": 1488,
+        "spend": 1860,
         "sales": 0,
         "orders": 0,
-        "cl": 76,
+        "cl": 95,
         "spendKw": 120,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36809,10 +36809,10 @@
     },
     "10001324": {
       "2026-04-01": {
-        "spend": 800,
-        "sales": 3120,
-        "orders": 4,
-        "cl": 24,
+        "spend": 1000,
+        "sales": 3900,
+        "orders": 5,
+        "cl": 30,
         "spendKw": 160,
         "salesKw": 780,
         "ordersKw": 1,
@@ -36821,10 +36821,10 @@
     },
     "10001325": {
       "2026-04-01": {
-        "spend": 160,
+        "spend": 200,
         "sales": 0,
         "orders": 0,
-        "cl": 4,
+        "cl": 5,
         "spendKw": 40,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36833,10 +36833,10 @@
     },
     "10001326": {
       "2026-04-01": {
-        "spend": 2000,
-        "sales": 3120,
-        "orders": 4,
-        "cl": 80,
+        "spend": 2500,
+        "sales": 3900,
+        "orders": 5,
+        "cl": 100,
         "spendKw": 320,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36845,10 +36845,10 @@
     },
     "10001327": {
       "2026-04-01": {
-        "spend": 880,
-        "sales": 3120,
-        "orders": 4,
-        "cl": 60,
+        "spend": 1100,
+        "sales": 3900,
+        "orders": 5,
+        "cl": 75,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
@@ -36857,10 +36857,10 @@
     },
     "10001328": {
       "2026-04-01": {
-        "spend": 80,
+        "spend": 100,
         "sales": 0,
         "orders": 0,
-        "cl": 4,
+        "cl": 5,
         "spendKw": 0,
         "salesKw": 0,
         "ordersKw": 0,
