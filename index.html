@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.45</span>
+    <span class="build-date">v1.46</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1822,8 +1822,8 @@ function getStats(p, ym) {
   const spend = days.reduce((s,d) => s+d.spend, 0);
   const clicks = days.reduce((s,d) => s+d.clicks, 0);
   const sales720 = days.reduce((s,d) => s+d.sales720, 0);
-  const roasArr = days.filter(d => d.roas720 > 0).map(d => d.roas720);
-  const avgRoas = roasArr.length ? roasArr.reduce((a,b) => a+b,0)/roasArr.length : 0;
+  // ROAS = 売上合計 ÷ 使用金額合計 × 100（平均ではなく正しい計算式）
+  const avgRoas = spend > 0 ? Math.round(sales720 / spend * 10000) / 100 : 0;
   return { spend, clicks, sales720, avgRoas };
 }
 
