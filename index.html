@@ -268,12 +268,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.52</span>
+    <span class="build-date">v1.53</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
     <button class="header-btn" onclick="openBulkNameModal()">📋 商品名一括更新</button>
-        <button class="header-btn" onclick="openBulkNameModal()">📋 商品名一括更新</button>
         <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
     <button class="header-btn danger-btn" onclick="confirmClearAll()">🗑 データ削除</button>
     <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
@@ -475,26 +474,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="modal-actions" style="justify-content:center;margin-top:20px;gap:12px">
       <button class="modal-btn" onclick="closeConfirmClear()" style="min-width:100px">キャンセル</button>
       <button class="modal-btn save" onclick="doDeleteAll()" style="min-width:100px;background:var(--danger);border-color:var(--danger)">削除する</button>
-    </div>
-  </div>
-</div>
-
-<!-- 商品名一括更新モーダル -->
-<div class="modal-overlay" id="bulkNameModal">
-  <div class="modal" style="max-width:480px">
-    <h3 style="margin-bottom:8px">📋 商品名一括更新</h3>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">商品リストCSVをアップロードすると「商品管理番号」をキーに商品名を一括更新します。</p>
-    <div id="bulkNameDrop" style="border:2px dashed var(--border2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;background:var(--surface2)"
-      onclick="document.getElementById('bulkNameInput').click()">
-      <div style="font-size:24px;margin-bottom:6px">📄</div>
-      <div style="font-size:13px;color:var(--text2)">CSVをドロップ、またはクリックして選択</div>
-      <div id="bulkNameFile" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
-    </div>
-    <input type="file" id="bulkNameInput" style="display:none" accept=".csv" onchange="bulkNameFileSelect(event)">
-    <div id="bulkNameStatus" style="font-size:12px;color:var(--text2);margin-top:10px;min-height:18px"></div>
-    <div class="modal-actions" style="margin-top:16px;gap:10px">
-      <button class="modal-btn" onclick="closeBulkNameModal()">キャンセル</button>
-      <button class="modal-btn save" id="bulkNameRunBtn" onclick="runBulkNameUpdate()" disabled style="opacity:0.5">更新する</button>
     </div>
   </div>
 </div>
