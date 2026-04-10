@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.90</span>
+    <span class="build-date">v1.91</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1538,6 +1538,46 @@ function _renderKwByItem(itemCode, ym) {
   const allSpend = Object.values(dayTotals).reduce((s,v)=>s+v.spend,0);
   const allSales = Object.values(dayTotals).reduce((s,v)=>s+v.sales,0);
   const allRoas  = allSpend > 0 ? Math.round(allSales / allSpend * 100) : 0;
+  // ── 「全体」行（idd.spend/salesをそのまま表示）──
+  const allDates = [...new Set([...dates, ...Object.keys(idd).filter(d=>d.startsWith(ym.slice(0,7)))])].sort();
+  const totSpend = allDates.reduce((s,d)=>s+(idd[d]?.spend||0),0);
+  const totSales = allDates.reduce((s,d)=>s+(idd[d]?.sales||0),0);
+  const totRoas  = totSpend > 0 ? Math.round(totSales/totSpend*100) : 0;
+  html += `<tr>
+    <td style="padding:0;border:1px solid var(--border);width:242px;min-width:242px;background:var(--surface2);position:sticky;left:0;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,0.08)">
+      <div style="display:grid;grid-template-columns:140px 44px 58px;width:242px">
+        <div style="padding:4px 8px;border-right:1px solid var(--border);display:flex;align-items:center">
+          <div style="font-weight:700;font-size:10px;line-height:1.4">全体</div>
+        </div>
+        <div style="padding:4px 6px;border-right:1px solid var(--border);text-align:right">
+          <div style="font-size:10px;color:var(--text3);height:20px;line-height:20px">実績</div>
+          <div style="font-size:10px;color:var(--text3);height:20px;line-height:20px">売上</div>
+          <div style="font-size:10px;color:var(--text3);height:20px;line-height:20px">ROAS</div>
+        </div>
+        <div style="padding:4px 6px;text-align:right">
+          <div style="${M};height:20px;line-height:20px">${fmt(totSpend)}</div>
+          <div style="${M};color:var(--text3);height:20px;line-height:20px">${fmt(totSales)}</div>
+          <div style="${M};font-weight:700;color:${rc2(totRoas)};height:20px;line-height:20px">${totRoas>0?totRoas+'%':'—'}</div>
+        </div>
+      </div>
+    </td>`;
+  dates.forEach(d => {
+    const entry = idd[d] || {};
+    const sp = entry.spend || 0;
+    const sa = entry.sales || 0;
+    const ro = sp > 0 ? Math.round(sa/sp*100) : 0;
+    if (sp > 0) {
+      html += `<td style="padding:4px 6px;border:1px solid var(--border);vertical-align:top;background:var(--surface)">
+        <div style="${M};height:20px;line-height:20px">${fmt(sp)}</div>
+        <div style="${M};color:var(--text3);height:20px;line-height:20px">${fmt(sa)}</div>
+        <div style="${M};font-weight:700;color:${rc2(ro)};height:20px;line-height:20px">${ro>0?ro+'%':'—'}</div>
+      </td>`;
+    } else {
+      html += `<td style="padding:4px 6px;border:1px solid var(--border);color:#ddd;text-align:center;background:var(--surface)">—</td>`;
+    }
+  });
+  html += `</tr>`;
+
   html += `<tr>
     <td style="padding:0;border:1px solid var(--border);width:242px;min-width:242px;background:var(--surface2);position:sticky;left:0;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,0.08)">
       <div style="display:grid;grid-template-columns:140px 44px 58px;width:242px">
