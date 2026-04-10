@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.69</span>
+    <span class="build-date">v1.70</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1666,7 +1666,7 @@ function _parseRppRows(text) {
   return rows;
 }
 
-function _parseKwRows(text) {
+function _parseKwRowsLocal(text) {
   const lines = text.split(/\r?\n/);
   let hi = -1;
   for (let i = 0; i < lines.length; i++) {
@@ -1714,7 +1714,7 @@ function _aggregateKw(rows) {
 
 function _processOneEntry(key, g) {
   const rppRows = _parseRppRows(g.rpp.text);
-  const kwRows  = _parseKwRows(g.kw.text);
+  const kwRows  = _parseKwRowsLocal(g.kw.text);
   const rpp = _aggregateRpp(rppRows);
   const kw  = _aggregateKw(kwRows);
   if (!rpp) return null;
