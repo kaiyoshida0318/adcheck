@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.68</span>
+    <span class="build-date">v1.69</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -791,10 +791,9 @@ async function loadFromGitHub() {
       if (data.itemDailyData && Object.keys(data.itemDailyData).length > 0) {
         itemDailyData = data.itemDailyData;
       }
-      if (data.kwRows && data.kwRows.length > 0) {
+      if (data.kwRows) {
         kwRows = data.kwRows;
-        populateKwMonthSel();
-        renderKwFiltered();
+        if (kwRows.length > 0) { populateKwMonthSel(); renderKwFiltered(); }
       }
       if (data.nichinichiRows && data.nichinichiRows.length > 0) {
         // isPeriodで振り分け（旧データ互換：全部日別の場合もdailyRowsへ）
