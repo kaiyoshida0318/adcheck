@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.72</span>
+    <span class="build-date">v1.73</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1526,7 +1526,15 @@ function _renderKwByItem(itemCode, ym) {
     html += `<tr>
       <td style="padding:4px 8px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:0;z-index:1">
         <div style="font-weight:600;max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${kw}">${kw}</div>
-        <div style="${M};color:var(--text3)">計 ${fmt(tot.spend)} / <span style="color:${rc2(totRoas)};font-weight:700">${totRoas>0?totRoas+'%':'—'}</span></div>
+        <div style="${M};color:var(--text3);margin-top:2px;line-height:1.6">
+          <span style="color:var(--text3)">実績</span> <span style="font-weight:600;color:var(--text2)">${fmt(tot.spend)}</span>
+        </div>
+        <div style="${M};color:var(--text3);line-height:1.6">
+          <span style="color:var(--text3)">売上</span> <span style="font-weight:600;color:var(--text2)">${fmt(tot.sales)}</span>
+        </div>
+        <div style="${M};line-height:1.6">
+          <span style="color:var(--text3)">ROAS</span> <span style="font-weight:700;color:${rc2(totRoas)}">${totRoas>0?totRoas+'%':'—'}</span>
+        </div>
       </td>`;
 
     dates.forEach(d => {
