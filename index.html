@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.105</span>
+    <span class="build-date">v1.106</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -583,7 +583,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
       <div>
         <div style="font-size:10px;color:var(--text3);margin-bottom:2px">商品番号</div>
-        <p id="editItemNum" style="font-size:11px;color:var(--text2);margin:0;font-family:'DM Mono',monospace">—</p>
+        <input type="text" id="editItemNum" class="modal-input" placeholder="例: eq-24-01" style="font-size:11px;font-family:'DM Mono',monospace;padding:4px 8px;width:150px;margin:0">
       </div>
     </div>
     <div class="modal-field">
@@ -635,7 +635,7 @@ function openEditModal(itemId) {
   _resolvedImgUrl = null;
   const cached = productCache[itemId] || {};
   document.getElementById('editItemId').textContent = itemId;
-  document.getElementById('editItemNum').textContent = cached.itemNumber || '—';
+  document.getElementById('editItemNum').value = cached.itemNumber || '';
   document.getElementById('editNameInput').value = cached.manualName || cached.name || '';
   document.getElementById('editImgInput').value = cached.manualImg || '';
   document.getElementById('editModalStatus').className = 'modal-status';
