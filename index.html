@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.103</span>
+    <span class="build-date">v1.104</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -704,7 +704,12 @@ function saveEditItem() {
   const imgVal = document.getElementById('editImgInput').value.trim();
   const resolvedImg = _resolvedImgUrl || (imgVal.match(/\.(jpg|jpeg|png|gif|webp)/i) || imgVal.includes('thumbnail') || imgVal.includes('r10s') ? imgVal : null);
 
+  const numVal = document.getElementById('editItemNum').value.trim();
   if (!productCache[_editItemId]) productCache[_editItemId] = { name: '', img: null, shopCode: _editItemId };
+
+  // 商品番号の更新
+  if (numVal) productCache[_editItemId].itemNumber = numVal;
+  else delete productCache[_editItemId].itemNumber;
 
   // 手動入力があればmanualフラグをセット、空欄なら削除してAPI取得に戻す
   if (nameVal) productCache[_editItemId].manualName = nameVal;
