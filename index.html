@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.51</span>
+    <span class="build-date">v1.52</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -289,7 +289,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn active" id="tab-btn-products" onclick="switchTab('products')">商品別データ</button>
   <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">月別データ</button>
   <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">日別データ</button>
-  <button class="tab-btn" id="tab-btn-kw" onclick="switchTab('kw')">KW別データ</button>
   <button class="tab-btn" id="tab-btn-kw" onclick="switchTab('kw')">KW別データ</button>
   <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">グラフ</button>
 </nav>
@@ -380,28 +379,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg></div>
             <h3>日別データ</h3>
             <p>右上「＋ レポート追加」から<br>rpp_reports（CSV）と rpp_keyword_reports（ZIP）を追加してください</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── KW別データタブ ── -->
-  <div class="tab-panel" id="tab-kw">
-    <div class="container" style="max-width:1400px">
-      <div class="table-card">
-        <div class="table-toolbar">
-          <select class="toolbar-month" id="kwMonthSel" onchange="renderKwFiltered()"></select>
-          <div class="toolbar-right">
-            <span id="kw-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
-          </div>
-        </div>
-        <div id="kw-col-header" style="display:none"></div>
-        <div id="kw-table-wrap">
-          <div class="empty-state" style="padding:60px 24px">
-            <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg></div>
-            <h3>KW別データ</h3>
-            <p>右上「＋ レポート追加」から rpp_keyword_reports を追加してください</p>
           </div>
         </div>
       </div>
@@ -2231,7 +2208,7 @@ function renderRow(p, maxSpend, ym) {
   // 画像：manualImg優先、次にimg、なければプレースホルダー
   const imgSrc = cached?.manualImg || cached?.img || null;
   const imgLoaded = !!imgSrc;
-  const editUrl = p.id ? `https://www.rms.rakuten.co.jp/item/edit.go?itemUrl=${p.id}` : '';
+  const editUrl = p.id ? `https://rsv.rms.rakuten.co.jp/item/edit?itemUrl=${p.id}` : '';
   const imgEl = imgLoaded
     ? `<div id="img-cell-${p.id}" data-loaded="1" style="cursor:pointer" title="商品情報編集ページを開く" onclick="window.open('${editUrl}','_blank')"><img src="${imgSrc}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'"></div>`
     : `<div id="img-cell-${p.id}" class="prod-thumb" style="cursor:pointer" title="商品情報編集ページを開く" onclick="window.open('${editUrl}','_blank')">画像</div>`;
