@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.67</span>
+    <span class="build-date">v1.68</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -285,7 +285,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <!-- タブバー -->
 <nav class="tab-bar">
-  <button class="tab-btn active" id="tab-btn-products" onclick="switchTab('products')">商品別データ</button>
+  <button class="tab-btn active" id="tab-btn-products" onclick="switchTab('products')">商品・KW別データ</button>
   <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">月別データ</button>
   <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">日別データ</button>
   <button class="tab-btn" id="tab-btn-kw" onclick="switchTab('kw')">KW別データ</button>
@@ -1476,6 +1476,61 @@ function _renderItemDailyTable(itemCode) {
   return html;
 }
 
+// ── 商品別KWテーブル（カレンダー下） ──
+function _renderKwByItem(itemCode, ym) {
+  if (!kwRows || kwRows.length === 0) return '';
+  // ymは"YYYY-MM"形式 → kwRowsのymは"YYYYMM"形式
+  const ymKey = ym.replace('-', '');
+  const rows = kwRows.filter(r => r.itemCode === itemCode && r.ym === ymKey);
+  if (rows.length === 0) return '';
+
+  // 日付×KWでグループ化 → 日付でソート
+  const byDate = {};
+  rows.forEach(r => {
+    if (!byDate[r.date]) byDate[r.date] = [];
+    byDate[r.date].push(r);
+  });
+  const dates = Object.keys(byDate).sort();
+
+  const rc2 = v => v>=500?'color:var(--green)':v>=300?'color:var(--amber)':v>0?'color:var(--danger)':'color:var(--text3)';
+  const M = "font-family:'DM Mono',monospace";
+
+  let html = `<div style="margin-top:16px;border-top:2px solid var(--border)">
+    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;padding:10px 0 6px">KW別実績</div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead>
+        <tr style="background:var(--surface2);border-bottom:1px solid var(--border2)">
+          <th style="padding:5px 8px;text-align:left;font-weight:700;color:var(--text3);white-space:nowrap">日付</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:700;color:var(--text3)">キーワード</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:700;color:var(--text3);white-space:nowrap">実績額</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:700;color:var(--text3);white-space:nowrap">売上</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:700;color:var(--text3);white-space:nowrap">ROAS</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:700;color:var(--text3);white-space:nowrap">CL</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  dates.forEach(date => {
+    const kwList = byDate[date].sort((a,b) => b.spend - a.spend);
+    const dateLabel = date.replace(/-/g, '/');
+    kwList.forEach((r, i) => {
+      const roas = r.spend > 0 ? Math.round(r.sales / r.spend * 100) : 0;
+      html += `<tr style="border-bottom:1px solid var(--border)${i===0?';border-top:2px solid var(--border2)':''}">
+        <td style="padding:4px 8px;white-space:nowrap;${M}">${i===0 ? dateLabel : ''}</td>
+        <td style="padding:4px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.kw}">${r.kw}</td>
+        <td style="padding:4px 8px;text-align:right;${M}">${fmt(r.spend)}</td>
+        <td style="padding:4px 8px;text-align:right;${M}">${fmt(r.sales)}</td>
+        <td style="padding:4px 8px;text-align:right;font-weight:700;${rc2(roas)}">${roas > 0 ? roas+'%' : '—'}</td>
+        <td style="padding:4px 8px;text-align:right;${M}">${fmt(r.cl)}</td>
+      </tr>`;
+    });
+  });
+
+  html += `</tbody></table></div></div>`;
+  return html;
+}
+
 function _nichFileType(name) {
   const n = name.toLowerCase();
   // 楽天RPPレポートファイル名で厳密に判定
@@ -2346,6 +2401,7 @@ function renderCalendar(p, ym) {
     <div class="cal-grid-header">${DOW.map(d=>`<div class="cal-day-label">${d}</div>`).join('')}</div>
     <div class="cal-grid">${cells.join('')}</div>
     ${itemUrl?`<div class="prod-link"><a href="${itemUrl}" target="_blank">${itemUrl}</a></div>`:''}
+    ${_renderKwByItem(p.id, ym)}
   </div>`;
 }
 
