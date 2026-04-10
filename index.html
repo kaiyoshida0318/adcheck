@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.101</span>
+    <span class="build-date">v1.102</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2478,7 +2478,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       <div class="cell r mono">${fmt(p.clicks)}</div>
       <div class="cell r mono">${p.sales720>0?fmtY(p.sales720):'—'}</div>
       <div class="roas-cell">
-        <div class="roas-val ${p.spend>0 && p.avgRoas===0 ? 'rb' : rc(p.avgRoas)}">${p.avgRoas>0?fmt(p.avgRoas)+'%':p.spend>0?'0%':'—'}</div>
+        <div class="roas-val ${p.avgRoas===0 ? 'rb' : rc(p.avgRoas)}">${p.avgRoas>0?fmt(p.avgRoas)+'%':'0%'}</div>
         ${p.avgRoas>0?`<div class="mini-bar"><div class="mini-fill" style="width:${roasPct}%;background:${barColor(p.avgRoas)}"></div></div>`:''}
       </div>
       <div class="cell r" style="font-size:11px;font-weight:700">
