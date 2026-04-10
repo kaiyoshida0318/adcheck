@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.112</span>
+    <span class="build-date">v1.113</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1635,6 +1635,45 @@ function _renderKwByItem(itemCode, ym) {
         <div style="${M};height:20px;line-height:20px">${fmt(dt.spend)}</div>
         <div style="${M};color:var(--text3);height:20px;line-height:20px">${fmt(dt.sales)}</div>
         <div style="${M};font-weight:700;color:${rc2(dr)};height:20px;line-height:20px">${dr>0?dr+'%':'—'}</div>
+      </td>`;
+    } else {
+      html += `<td style="padding:4px 6px;border:1px solid var(--border);color:#ddd;text-align:center;background:var(--surface)">—</td>`;
+    }
+  });
+  html += `</tr>`;
+
+  // ── KW合計行（各KWの合計） ──
+  const kwTotSpend = Object.values(kwTotals).reduce((s,v)=>s+v.spend,0);
+  const kwTotSales = Object.values(kwTotals).reduce((s,v)=>s+v.sales,0);
+  const kwTotRoas  = kwTotSpend > 0 ? Math.round(kwTotSales/kwTotSpend*100) : 0;
+  html += `<tr>
+    <td style="padding:0;border:1px solid var(--border);width:242px;min-width:242px;background:var(--surface2);position:sticky;left:0;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,0.08)">
+      <div style="display:grid;grid-template-columns:140px 44px 58px;width:242px">
+        <div style="padding:4px 8px;border-right:1px solid var(--border);display:flex;align-items:center">
+          <div style="font-weight:700;font-size:10px;line-height:1.4">KW合計</div>
+        </div>
+        <div style="padding:4px 6px;border-right:1px solid var(--border);text-align:right">
+          <div style="font-size:10px;color:var(--text3);height:20px;line-height:20px">実績</div>
+          <div style="font-size:10px;color:var(--text3);height:20px;line-height:20px">売上</div>
+          <div style="font-size:10px;color:var(--text3);height:20px;line-height:20px">ROAS</div>
+        </div>
+        <div style="padding:4px 6px;text-align:right">
+          <div style="${M};height:20px;line-height:20px">${fmt(kwTotSpend)}</div>
+          <div style="${M};color:var(--text3);height:20px;line-height:20px">${fmt(kwTotSales)}</div>
+          <div style="${M};font-weight:700;color:${rc2(kwTotRoas)};height:20px;line-height:20px">${kwTotRoas>0?kwTotRoas+'%':'—'}</div>
+        </div>
+      </div>
+    </td>`;
+  dates.forEach(d => {
+    const dt = matrix[Object.keys(kwTotals)[0]]?.[d]; // 日付存在チェック用
+    const dayKwSpend = kwList.reduce((s,kw)=>s+(matrix[kw]?.[d]?.spend||0),0);
+    const dayKwSales = kwList.reduce((s,kw)=>s+(matrix[kw]?.[d]?.sales||0),0);
+    const dayKwRoas  = dayKwSpend > 0 ? Math.round(dayKwSales/dayKwSpend*100) : 0;
+    if (dayKwSpend > 0) {
+      html += `<td style="padding:4px 6px;border:1px solid var(--border);vertical-align:top;background:var(--surface)">
+        <div style="${M};height:20px;line-height:20px">${fmt(dayKwSpend)}</div>
+        <div style="${M};color:var(--text3);height:20px;line-height:20px">${fmt(dayKwSales)}</div>
+        <div style="${M};font-weight:700;color:${rc2(dayKwRoas)};height:20px;line-height:20px">${dayKwRoas>0?dayKwRoas+'%':'—'}</div>
       </td>`;
     } else {
       html += `<td style="padding:4px 6px;border:1px solid var(--border);color:#ddd;text-align:center;background:var(--surface)">—</td>`;
