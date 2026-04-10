@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.91</span>
+    <span class="build-date">v1.92</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1206,13 +1206,13 @@ function _parseKwRows(text) {
     if (!dm) continue;
     const dateStr = `${dm[1]}-${dm[2]}-${dm[3]}`;
     const code = `${dm[1]}${dm[2]}${dm[3]}_${itemCode}_${kw}`;
-    // 同じ日付・商品・KWがあれば合算
-    const existing = kwRows.find(r => r.code === code);
-    if (existing) {
-      existing.spend  += parseFloat(vals[col('実績額(合計)')]) || 0;
-      existing.sales  += parseFloat(vals[col('売上金額(合計720時間)')]) || 0;
-      existing.orders += parseFloat(vals[col('売上件数(合計720時間)')]) || 0;
-      existing.cl     += parseFloat(vals[col('クリック数(合計)')]) || 0;
+    // 同じ日付・商品・KWがあれば上書き（重複投入対策）
+    const existingIdx = kwRows.findIndex(r => r.code === code);
+    if (existingIdx >= 0) {
+      kwRows[existingIdx].spend  = parseFloat(vals[col('実績額(合計)')]) || 0;
+      kwRows[existingIdx].sales  = parseFloat(vals[col('売上金額(合計720時間)')]) || 0;
+      kwRows[existingIdx].orders = parseFloat(vals[col('売上件数(合計720時間)')]) || 0;
+      kwRows[existingIdx].cl     = parseFloat(vals[col('クリック数(合計)')]) || 0;
     } else {
       kwRows.push({
         code, date: dateStr, ym: `${dm[1]}${dm[2]}`, itemCode, kw,
