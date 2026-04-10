@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.102</span>
+    <span class="build-date">v1.103</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2403,7 +2403,7 @@ function getSorted(ym) {
   if (_sortKey === 'contrib') {
     const _ts = products.reduce((s,p)=>s+p.spend,0);
     const _ar = _ts > 0 ? products.reduce((s,p)=>s+p.sales720,0)/_ts : 0;
-    const contribOf = p => _ar > 0 ? (p.spend/_ts)*(p.avgRoas - _ar*100) : 0;
+    const contribOf = p => _ar > 0 ? (p.spend/_ts)*(p.avgRoas - _ar*100)*100 : 0;
     return dir * (contribOf(a) - contribOf(b));
   }
   if (_sortKey === 'itemnum') {
@@ -2484,12 +2484,18 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       <div class="cell r" style="font-size:11px;font-weight:700">
         ${(() => {
           if (!totalSpend || !avgRoas || avgRoas === 0 || p.spend === 0) return '<span style="color:var(--text3)">—</span>';
-          // 寄与度 = spend比率 × (自ROAS - 平均ROAS) → 全体ROASへの貢献ポイント
+          // 寄与度 = spend比率 × (自ROAS - 平均ROAS) × 100
+          // 金額の大きさ（spend比率）とROAS偏差の両方を反映
           const weight = p.spend / totalSpend;
-          const contribPt = weight * (p.avgRoas - avgRoas * 100);
+          const avgRoasPct = avgRoas * 100;
+          const contribPt = weight * (p.avgRoas - avgRoasPct) * 100;
           const color = contribPt >= 0 ? 'var(--green)' : 'var(--danger)';
           const sign = contribPt >= 0 ? '+' : '';
-          return `<span style="color:${color}">${sign}${Math.round(contribPt)}pt</span>`;
+          const wPct = (weight * 100).toFixed(1);
+          return `<div style="line-height:1.4">
+            <span style="color:${color};font-weight:700">${sign}${Math.round(contribPt)}</span>
+            <div style="font-size:9px;color:var(--text3)">比率${wPct}%</div>
+          </div>`;
         })()}
       </div>
       <div class="toggle-cell"><div class="toggle-icon${isExp?' open':''}">▶</div></div>
