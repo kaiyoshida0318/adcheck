@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.65</span>
+    <span class="build-date">v1.66</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -624,7 +624,8 @@ function openEditModal(itemId) {
   _editItemId = itemId;
   _resolvedImgUrl = null;
   const cached = productCache[itemId] || {};
-  document.getElementById('editItemId').textContent = '商品ID: ' + itemId;
+  document.getElementById('editItemId').textContent = itemId;
+  document.getElementById('editItemNum').textContent = cached.itemNumber || '—';
   document.getElementById('editNameInput').value = cached.manualName || cached.name || '';
   document.getElementById('editImgInput').value = cached.manualImg || '';
   document.getElementById('editModalStatus').className = 'modal-status';
