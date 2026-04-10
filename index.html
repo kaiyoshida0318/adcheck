@@ -268,11 +268,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.48</span>
+    <span class="build-date">v1.49</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
-    <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
+    <button class="header-btn" onclick="openBulkNameModal()">📋 商品名一括更新</button>
+        <button class="header-btn" onclick="openBulkNameModal()">📋 商品名一括更新</button>
+        <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
     <button class="header-btn danger-btn" onclick="confirmClearAll()">🗑 データ削除</button>
     <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
@@ -287,6 +289,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn active" id="tab-btn-products" onclick="switchTab('products')">商品別データ</button>
   <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">月別データ</button>
   <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">日別データ</button>
+  <button class="tab-btn" id="tab-btn-kw" onclick="switchTab('kw')">KW別データ</button>
+  <button class="tab-btn" id="tab-btn-kw" onclick="switchTab('kw')">KW別データ</button>
   <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">グラフ</button>
 </nav>
 
@@ -382,6 +386,49 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
 
+  <!-- ── KW別データタブ ── -->
+  <div class="tab-panel" id="tab-kw">
+    <div class="container" style="max-width:1400px">
+      <div class="table-card">
+        <div class="table-toolbar">
+          <select class="toolbar-month" id="kwMonthSel" onchange="renderKwFiltered()"></select>
+          <div class="toolbar-right">
+            <span id="kw-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
+          </div>
+        </div>
+        <div id="kw-col-header" style="display:none"></div>
+        <div id="kw-table-wrap">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg></div>
+            <h3>KW別データ</h3>
+            <p>右上「＋ レポート追加」から rpp_keyword_reports を追加してください</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KW別データタブ ── -->
+  <div class="tab-panel" id="tab-kw">
+    <div class="container" style="max-width:1400px">
+      <div class="table-card">
+        <div class="table-toolbar">
+          <select class="toolbar-month" id="kwMonthSel" onchange="renderKwFiltered()"></select>
+          <div class="toolbar-right">
+            <span id="kw-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
+          </div>
+        </div>
+        <div id="kw-table-wrap">
+          <div style="padding:60px 24px;text-align:center;color:var(--text3)">
+            <div style="font-size:32px;margin-bottom:8px">🔑</div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">KW別データ</div>
+            <div style="font-size:12px">右上「＋ レポート追加」から rpp_keyword_reports を追加してください</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── グラフタブ ── -->
   <div class="tab-panel" id="tab-graph">
     <div class="tab-coming-soon">
@@ -451,6 +498,49 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="modal-actions" style="justify-content:center;margin-top:20px;gap:12px">
       <button class="modal-btn" onclick="closeConfirmClear()" style="min-width:100px">キャンセル</button>
       <button class="modal-btn save" onclick="doDeleteAll()" style="min-width:100px;background:var(--danger);border-color:var(--danger)">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 商品名一括更新モーダル -->
+<div class="modal-overlay" id="bulkNameModal">
+  <div class="modal" style="max-width:480px">
+    <h3 style="margin-bottom:8px">📋 商品名一括更新</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">商品リストCSVをアップロードすると「商品管理番号」をキーに商品名を一括更新します。</p>
+    <div id="bulkNameDrop" style="border:2px dashed var(--border2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;background:var(--surface2)"
+      onclick="document.getElementById('bulkNameInput').click()">
+      <div style="font-size:24px;margin-bottom:6px">📄</div>
+      <div style="font-size:13px;color:var(--text2)">CSVをドロップ、またはクリックして選択</div>
+      <div id="bulkNameFile" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+    </div>
+    <input type="file" id="bulkNameInput" style="display:none" accept=".csv" onchange="bulkNameFileSelect(event)">
+    <div id="bulkNameStatus" style="font-size:12px;color:var(--text2);margin-top:10px;min-height:18px"></div>
+    <div class="modal-actions" style="margin-top:16px;gap:10px">
+      <button class="modal-btn" onclick="closeBulkNameModal()">キャンセル</button>
+      <button class="modal-btn save" id="bulkNameRunBtn" onclick="runBulkNameUpdate()" disabled style="opacity:0.5">更新する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 商品名一括更新モーダル -->
+<div class="modal-overlay" id="bulkNameModal" style="display:none" onclick="if(event.target===this)closeBulkNameModal()">
+  <div class="modal" style="max-width:460px">
+    <h3 style="margin:0 0 8px">📋 商品名一括更新</h3>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 16px">商品リストCSV（"商品管理番号","商品名" 列を含む）をアップロードすると商品名を一括更新します。</p>
+    <div id="bulkDropZone" style="border:2px dashed var(--border2);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;background:var(--surface2);transition:border-color 0.15s"
+      onclick="document.getElementById('bulkFileInput').click()"
+      ondragover="event.preventDefault();this.style.borderColor='var(--red)'"
+      ondragleave="this.style.borderColor='var(--border2)'"
+      ondrop="event.preventDefault();this.style.borderColor='var(--border2)';bulkHandleFile(event.dataTransfer.files[0])">
+      <div style="font-size:28px;margin-bottom:6px">📄</div>
+      <div style="font-size:13px;color:var(--text2)">CSVをドロップ、またはクリックして選択</div>
+      <div id="bulkFileName" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+    </div>
+    <input type="file" id="bulkFileInput" style="display:none" accept=".csv" onchange="bulkHandleFile(this.files[0])">
+    <div id="bulkStatus" style="font-size:12px;color:var(--text2);margin-top:10px;min-height:16px"></div>
+    <div class="modal-actions" style="margin-top:16px;gap:10px">
+      <button class="modal-btn" onclick="closeBulkNameModal()">キャンセル</button>
+      <button class="modal-btn save" id="bulkRunBtn" onclick="runBulkNameUpdate()" disabled style="opacity:0.5">更新する</button>
     </div>
   </div>
 </div>
@@ -689,7 +779,7 @@ async function saveToGitHub() {
       sha = getJson.sha;
     }
     // データをJSON化してBase64エンコード
-    const payload = { DB, productCache, calEvents, nichinichiRows, dailyRows, itemDailyData };
+    const payload = { DB, productCache, calEvents, nichinichiRows, dailyRows, itemDailyData, kwRows };
     const jsonStr = JSON.stringify(payload, null, 2);
     const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
     // PUTで保存
@@ -733,6 +823,11 @@ async function loadFromGitHub() {
       }
       if (data.itemDailyData && Object.keys(data.itemDailyData).length > 0) {
         itemDailyData = data.itemDailyData;
+      }
+      if (data.kwRows && data.kwRows.length > 0) {
+        kwRows = data.kwRows;
+        populateKwMonthSel();
+        renderKwFiltered();
       }
       if (data.nichinichiRows && data.nichinichiRows.length > 0) {
         // isPeriodで振り分け（旧データ互換：全部日別の場合もdailyRowsへ）
@@ -859,6 +954,7 @@ function readFiles(files) {
               });
             }
             _parseItemDaily(text, 'kw');
+            _parseKwRows(text);
           }
         }
         _nichinichiFiles.push(f);
@@ -1120,6 +1216,185 @@ function monthlyClear() {
   document.getElementById('daily-run-status').textContent = '';
   saveToGitHub();
 }
+// ── KW別データ ──
+var kwRows = []; // { code, kw, date, spend, sales, orders, cl, roas, ctr, cpc }
+
+function _parseKwRows(text) {
+  const lines = text.replace(/
+/g, '
+').replace(/
+/g, '
+').split('
+');
+  let hi = -1;
+  for (let i = 0; i < Math.min(10, lines.length); i++) {
+    if (lines[i].includes('キーワード') && lines[i].includes('日付')) { hi = i; break; }
+    if (lines[i].includes('コントロールカラム')) { hi = i; break; }
+  }
+  if (hi < 0) return;
+  const headers = lines[hi].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const col = h => headers.indexOf(h);
+  for (let i = hi + 1; i < lines.length; i++) {
+    const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    if (vals.length < 5) continue;
+    const itemCode = vals[col('商品管理番号')];
+    const kw       = vals[col('キーワード')];
+    if (!itemCode || !kw) continue;
+    const dateRaw = vals[col('日付')] || '';
+    const dm = dateRaw.match(/(20\d\d)年(\d\d)月(\d\d)日/);
+    if (!dm) continue;
+    const dateStr = `${dm[1]}-${dm[2]}-${dm[3]}`;
+    const code = `${dm[1]}${dm[2]}${dm[3]}_${itemCode}_${kw}`;
+    // 同じ日付・商品・KWがあれば合算
+    const existing = kwRows.find(r => r.code === code);
+    if (existing) {
+      existing.spend  += parseFloat(vals[col('実績額(合計)')]) || 0;
+      existing.sales  += parseFloat(vals[col('売上金額(合計720時間)')]) || 0;
+      existing.orders += parseFloat(vals[col('売上件数(合計720時間)')]) || 0;
+      existing.cl     += parseFloat(vals[col('クリック数(合計)')]) || 0;
+    } else {
+      kwRows.push({
+        code, date: dateStr, ym: `${dm[1]}${dm[2]}`, itemCode, kw,
+        spend:  parseFloat(vals[col('実績額(合計)')]) || 0,
+        sales:  parseFloat(vals[col('売上金額(合計720時間)')]) || 0,
+        orders: parseFloat(vals[col('売上件数(合計720時間)')]) || 0,
+        cl:     parseFloat(vals[col('クリック数(合計)')]) || 0,
+      });
+    }
+  }
+}
+
+function populateKwMonthSel() {
+  const sel = document.getElementById('kwMonthSel');
+  if (!sel || kwRows.length === 0) return;
+  const months = [...new Set(kwRows.map(r => r.ym))].sort().reverse();
+  const current = sel.value;
+  sel.innerHTML = months.map(m => `<option value="${m}">${m.slice(0,4)}年${m.slice(4,6)}月</option>`).join('');
+  if (months.includes(current)) sel.value = current;
+}
+
+function renderKwFiltered() {
+  const sel = document.getElementById('kwMonthSel');
+  const wrap = document.getElementById('kw-table-wrap');
+  if (!wrap) return;
+  if (!sel || kwRows.length === 0) {
+    wrap.innerHTML = '<div style="padding:60px 24px;text-align:center;color:var(--text3)"><div style="font-size:32px;margin-bottom:8px">🔑</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">KW別データ</div><div style="font-size:12px">右上「＋ レポート追加」から rpp_keyword_reports を追加してください</div></div>';
+    return;
+  }
+  const ym = sel.value;
+  const rows = kwRows.filter(r => r.ym === ym);
+  if (rows.length === 0) { wrap.innerHTML = '<div style="padding:40px 24px;text-align:center;color:var(--text3)">この月のデータがありません</div>'; return; }
+  // 合計spend降順でソート
+  rows.sort((a,b) => b.spend - a.spend);
+  const monoStyle = "font-family:'DM Mono',monospace";
+  const rc = v => v>=500?'var(--green)':v>=300?'var(--amber)':v>0?'var(--danger)':'var(--text3)';
+  let html = `<div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead><tr style="background:var(--surface2);border-bottom:1px solid var(--border2)">
+        <th style="padding:7px 10px;text-align:left;font-weight:700;color:var(--text3);white-space:nowrap">商品管理番号</th>
+        <th style="padding:7px 10px;text-align:left;font-weight:700;color:var(--text3)">商品名</th>
+        <th style="padding:7px 10px;text-align:left;font-weight:700;color:var(--text3)">キーワード</th>
+        <th style="padding:7px 10px;text-align:left;font-weight:700;color:var(--text3);white-space:nowrap">日付</th>
+        <th style="padding:7px 10px;text-align:right;font-weight:700;color:var(--text3);white-space:nowrap">実績額</th>
+        <th style="padding:7px 10px;text-align:right;font-weight:700;color:var(--text3);white-space:nowrap">売上</th>
+        <th style="padding:7px 10px;text-align:right;font-weight:700;color:var(--text3);white-space:nowrap">ROAS</th>
+        <th style="padding:7px 10px;text-align:right;font-weight:700;color:var(--text3);white-space:nowrap">クリック</th>
+      </tr></thead><tbody>`;
+  rows.forEach(r => {
+    const roas = r.spend > 0 ? Math.round(r.sales/r.spend*100) : 0;
+    const cached = productCache[r.itemCode];
+    const pname = cached?.manualName || cached?.name || r.itemCode;
+    html += `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 10px;white-space:nowrap">${r.itemCode}</td>
+      <td style="padding:5px 10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${pname}">${pname}</td>
+      <td style="padding:5px 10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.kw}">${r.kw}</td>
+      <td style="padding:5px 10px;white-space:nowrap;${monoStyle}">${r.date}</td>
+      <td style="padding:5px 10px;text-align:right;${monoStyle}">${fmt(r.spend)}</td>
+      <td style="padding:5px 10px;text-align:right;${monoStyle}">${fmt(r.sales)}</td>
+      <td style="padding:5px 10px;text-align:right;font-weight:700;color:${rc(roas)}">${roas > 0 ? roas+'%' : '—'}</td>
+      <td style="padding:5px 10px;text-align:right;${monoStyle}">${fmt(r.cl)}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
+  document.getElementById('kw-status').textContent = `${rows.length}件`;
+}
+
+// ── 商品名一括更新 ──
+var _bulkNameFile = null;
+
+function openBulkNameModal() {
+  document.getElementById('bulkNameModal').style.display = 'flex';
+  _bulkNameFile = null;
+  document.getElementById('bulkFileName').textContent = '';
+  document.getElementById('bulkStatus').textContent = '';
+  document.getElementById('bulkRunBtn').disabled = true;
+  document.getElementById('bulkRunBtn').style.opacity = '0.5';
+}
+
+function closeBulkNameModal() {
+  document.getElementById('bulkNameModal').style.display = 'none';
+}
+
+function bulkHandleFile(file) {
+  if (!file) return;
+  _bulkNameFile = file;
+  document.getElementById('bulkFileName').textContent = file.name;
+  document.getElementById('bulkStatus').textContent = 'ファイルを読み込みました。「更新する」を押してください。';
+  document.getElementById('bulkRunBtn').disabled = false;
+  document.getElementById('bulkRunBtn').style.opacity = '1';
+}
+
+function runBulkNameUpdate() {
+  if (!_bulkNameFile) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    let text;
+    try { text = new TextDecoder('utf-8').decode(new Uint8Array(e.target.result)); }
+    catch { text = new TextDecoder('shift-jis').decode(new Uint8Array(e.target.result)); }
+    if (text.includes('�')) {
+      text = new TextDecoder('shift-jis').decode(new Uint8Array(e.target.result));
+    }
+    const lines = text.replace(/
+/g, '
+').replace(/
+/g, '
+').split('
+');
+    // ヘッダー行を探す
+    let hi = -1;
+    for (let i = 0; i < Math.min(5, lines.length); i++) {
+      if (lines[i].includes('商品管理番号') && lines[i].includes('商品名')) { hi = i; break; }
+    }
+    if (hi < 0) { document.getElementById('bulkStatus').textContent = '❌ 「商品管理番号」「商品名」列が見つかりません'; return; }
+    const headers = lines[hi].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    const codeIdx = headers.indexOf('商品管理番号');
+    const nameIdx = headers.indexOf('商品名');
+    // 管理番号→商品名マップを作成（最初の出現を優先）
+    const map = {};
+    for (let i = hi + 1; i < lines.length; i++) {
+      const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      if (vals.length <= Math.max(codeIdx, nameIdx)) continue;
+      const code = vals[codeIdx];
+      const name = vals[nameIdx];
+      if (code && name && !map[code]) map[code] = name;
+    }
+    let updated = 0;
+    Object.keys(map).forEach(code => {
+      if (DB[code]) {
+        if (!productCache[code]) productCache[code] = {};
+        productCache[code].manualName = map[code];
+        updated++;
+      }
+    });
+    document.getElementById('bulkStatus').textContent = `✅ ${updated}件の商品名を更新しました`;
+    saveToGitHub();
+    renderAll();
+    setTimeout(closeBulkNameModal, 1500);
+  };
+  reader.readAsArrayBuffer(_bulkNameFile);
+}
+
 function dailyClear() {
   monthlyClear();
   const sel = document.getElementById('dailyMonthSel');
@@ -1683,6 +1958,8 @@ async function monthlyRun() {
   _renderTable('monthly', nichinichiRows);
   populateDailyMonthSel();
   renderDailyFiltered();
+  populateKwMonthSel();
+  renderKwFiltered();
   saveToGitHub();
   if (newMonthly.length > 0) switchTab('monthly');
   else if (newDaily.length > 0) switchTab('daily');
@@ -1964,9 +2241,10 @@ function renderRow(p, maxSpend, ym) {
   // 画像：manualImg優先、次にimg、なければプレースホルダー
   const imgSrc = cached?.manualImg || cached?.img || null;
   const imgLoaded = !!imgSrc;
+  const editUrl = p.id ? `https://www.rms.rakuten.co.jp/item/edit.go?itemUrl=${p.id}` : '';
   const imgEl = imgLoaded
-    ? `<div id="img-cell-${p.id}" data-loaded="1"><img src="${imgSrc}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'"></div>`
-    : `<div id="img-cell-${p.id}" class="prod-thumb">画像</div>`;
+    ? `<div id="img-cell-${p.id}" data-loaded="1" style="cursor:pointer" title="商品情報編集ページを開く" onclick="window.open('${editUrl}','_blank')"><img src="${imgSrc}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'"></div>`
+    : `<div id="img-cell-${p.id}" class="prod-thumb" style="cursor:pointer" title="商品情報編集ページを開く" onclick="window.open('${editUrl}','_blank')">画像</div>`;
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   return `<div class="item-row">
