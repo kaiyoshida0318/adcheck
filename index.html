@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.73</span>
+    <span class="build-date">v1.74</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1511,7 +1511,8 @@ function _renderKwByItem(itemCode, ym) {
     <table style="border-collapse:collapse;font-size:10px;white-space:nowrap">
       <thead>
         <tr style="background:var(--surface2)">
-          <th style="padding:4px 8px;text-align:left;font-weight:700;color:var(--text3);border:1px solid var(--border2);min-width:140px;position:sticky;left:0;z-index:2;background:var(--surface2)">キーワード</th>`;
+          <th style="padding:4px 8px;text-align:left;font-weight:700;color:var(--text3);border:1px solid var(--border2);min-width:140px;position:sticky;left:0;z-index:2;background:var(--surface2)">キーワード</th>
+          <th style="padding:4px 8px;text-align:right;font-weight:700;color:var(--text3);border:1px solid var(--border2);min-width:80px;position:sticky;left:140px;z-index:2;background:var(--surface2);white-space:nowrap">計</th>`;
 
   dates.forEach(d => {
     const label = d.slice(5).replace('-', '/');
@@ -1524,17 +1525,16 @@ function _renderKwByItem(itemCode, ym) {
     const tot = kwTotals[kw];
     const totRoas = tot.spend > 0 ? Math.round(tot.sales / tot.spend * 100) : 0;
     html += `<tr>
-      <td style="padding:4px 8px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:0;z-index:1">
-        <div style="font-weight:600;max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${kw}">${kw}</div>
-        <div style="${M};color:var(--text3);margin-top:2px;line-height:1.6">
-          <span style="color:var(--text3)">実績</span> <span style="font-weight:600;color:var(--text2)">${fmt(tot.spend)}</span>
-        </div>
-        <div style="${M};color:var(--text3);line-height:1.6">
-          <span style="color:var(--text3)">売上</span> <span style="font-weight:600;color:var(--text2)">${fmt(tot.sales)}</span>
-        </div>
-        <div style="${M};line-height:1.6">
-          <span style="color:var(--text3)">ROAS</span> <span style="font-weight:700;color:${rc2(totRoas)}">${totRoas>0?totRoas+'%':'—'}</span>
-        </div>
+      <td style="padding:4px 8px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:0;z-index:1;min-width:140px;max-width:140px">
+        <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${kw}">${kw}</div>
+      </td>
+      <td style="padding:4px 8px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:140px;z-index:1;min-width:80px;text-align:right">
+        <div style="${M};color:var(--text3)">実績</div>
+        <div style="${M};font-weight:600;color:var(--text2)">${fmt(tot.spend)}</div>
+        <div style="${M};color:var(--text3);margin-top:2px">売上</div>
+        <div style="${M};font-weight:600;color:var(--text2)">${fmt(tot.sales)}</div>
+        <div style="${M};color:var(--text3);margin-top:2px">ROAS</div>
+        <div style="${M};font-weight:700;color:${rc2(totRoas)}">${totRoas>0?totRoas+'%':'—'}</div>
       </td>`;
 
     dates.forEach(d => {
