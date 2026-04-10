@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.81</span>
+    <span class="build-date">v1.82</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1511,9 +1511,13 @@ function _renderKwByItem(itemCode, ym) {
     <table style="border-collapse:collapse;font-size:10px;white-space:nowrap;border-spacing:0;table-layout:fixed">
       <thead>
         <tr style="background:var(--surface2)">
-          <th style="padding:4px 8px;text-align:left;font-weight:700;color:var(--text3);border:1px solid var(--border2);min-width:140px;position:sticky;left:0;z-index:2;background:var(--surface2)">キーワード</th>
-          <th style="padding:4px 8px;text-align:center;font-weight:700;color:var(--text3);border:1px solid var(--border2);width:44px;position:sticky;left:140px;z-index:2;background:var(--surface2);box-shadow:none">指標</th>
-          <th style="padding:4px 8px;text-align:right;font-weight:700;color:var(--text3);border:1px solid var(--border2);min-width:58px;width:58px;position:sticky;left:184px;z-index:2;background:var(--surface2);white-space:nowrap">計</th>`;
+          <th style="padding:0;border:1px solid var(--border2);width:242px;min-width:242px;position:sticky;left:0;z-index:2;background:var(--surface2)">
+            <div style="display:grid;grid-template-columns:140px 44px 58px;width:242px">
+              <div style="padding:4px 8px;font-weight:700;color:var(--text3);border-right:1px solid var(--border2)">キーワード</div>
+              <div style="padding:4px 6px;font-weight:700;color:var(--text3);text-align:center;border-right:1px solid var(--border2)">指標</div>
+              <div style="padding:4px 6px;font-weight:700;color:var(--text3);text-align:right">計</div>
+            </div>
+          </th>`;
 
   dates.forEach(d => {
     const label = d.slice(5).replace('-', '/');
