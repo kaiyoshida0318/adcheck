@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.56</span>
+    <span class="build-date">v1.57</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1314,26 +1314,30 @@ function runBulkNameUpdate() {
     }
     if (hi < 0) { document.getElementById('bulkStatus').textContent = '❌ 「商品管理番号」「商品名」列が見つかりません'; return; }
     const headers = lines[hi].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-    const codeIdx = headers.indexOf('商品管理番号');
-    const nameIdx = headers.indexOf('商品名');
-    // 管理番号→商品名マップを作成（最初の出現を優先）
+    const codeIdx   = headers.indexOf('商品管理番号');
+    const nameIdx   = headers.indexOf('商品名');
+    const numIdx    = headers.indexOf('商品番号');
+    // 管理番号→{名前, 商品番号}マップを作成（最初の出現を優先）
     const map = {};
     for (let i = hi + 1; i < lines.length; i++) {
       const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-      if (vals.length <= Math.max(codeIdx, nameIdx)) continue;
+      if (vals.length <= codeIdx) continue;
       const code = vals[codeIdx];
-      const name = vals[nameIdx];
-      if (code && name && !map[code]) map[code] = name;
+      if (!code) continue;
+      if (!map[code]) map[code] = {};
+      if (nameIdx >= 0 && vals[nameIdx] && !map[code].name) map[code].name = vals[nameIdx];
+      if (numIdx  >= 0 && vals[numIdx]  && !map[code].num)  map[code].num  = vals[numIdx];
     }
     let updated = 0;
     Object.keys(map).forEach(code => {
       if (DB[code]) {
         if (!productCache[code]) productCache[code] = {};
-        productCache[code].manualName = map[code];
+        if (map[code].name) productCache[code].manualName   = map[code].name;
+        if (map[code].num)  productCache[code].itemNumber   = map[code].num;
         updated++;
       }
     });
-    document.getElementById('bulkStatus').textContent = `✅ ${updated}件の商品名を更新しました`;
+    document.getElementById('bulkStatus').textContent = `✅ ${updated}件を更新しました（商品名・商品番号）`;
     saveToGitHub();
     renderAll();
     setTimeout(closeBulkNameModal, 1500);
@@ -2194,7 +2198,10 @@ function renderRow(p, maxSpend, ym) {
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}" onclick="toggleRow('${p.id}','${ym}')">
-      <div class="cell-img">${imgEl}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;max-width:60px;padding:0 4px;gap:3px">
+        ${imgEl}
+        ${cached?.itemNumber ? `<div style="font-size:9px;color:var(--text3);text-align:center;line-height:1.2;word-break:break-all;max-width:56px" title="商品番号">${cached.itemNumber}</div>` : ''}
+      </div>
       <div class="cell-name">
         <div class="prod-name" id="prod-name-${p.id}" title="${name}" data-raw="${cached ? '' : p.id}">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}${isManual?'<span class="manual-badge" title="手動編集済み"></span>':''}</div>
         <div class="prod-id">${itemShopCode && itemShopCode !== p.id ? itemShopCode + ' / ' : ''}${p.id}</div>
