@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.66</span>
+    <span class="build-date">v1.67</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -575,7 +575,16 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <div class="modal-overlay" id="editItemModal">
   <div class="modal" style="max-width:520px">
     <h3>✏️ 商品情報を編集</h3>
-    <p id="editItemId" style="font-size:11px;color:var(--text3);margin-bottom:16px;font-family:'DM Mono',monospace"></p>
+    <div style="display:flex;gap:20px;margin-bottom:14px">
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:2px">商品管理番号</div>
+        <p id="editItemId" style="font-size:11px;color:var(--text2);margin:0;font-family:'DM Mono',monospace"></p>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:2px">商品番号</div>
+        <p id="editItemNum" style="font-size:11px;color:var(--text2);margin:0;font-family:'DM Mono',monospace">—</p>
+      </div>
+    </div>
     <div class="modal-field">
       <label class="modal-label">商品名</label>
       <input type="text" class="modal-input" id="editNameInput" placeholder="商品名を入力">
