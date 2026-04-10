@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.76</span>
+    <span class="build-date">v1.78</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1526,27 +1526,29 @@ function _renderKwByItem(itemCode, ym) {
     const tot = kwTotals[kw];
     const totRoas = tot.spend > 0 ? Math.round(tot.sales / tot.spend * 100) : 0;
     html += `<tr>
-      <td style="padding:4px 8px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:0;z-index:1;min-width:140px;max-width:140px;word-break:break-all;white-space:normal">
+      <td style="padding:4px 8px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:0;z-index:1;min-width:140px;max-width:140px;word-break:break-all;white-space:normal;box-shadow:2px 0 4px rgba(0,0,0,0.06)">
         <div style="font-weight:600;line-height:1.4">${kw}</div>
       </td>
-      <td style="padding:4px 6px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:140px;z-index:1;width:44px;text-align:right;vertical-align:top;box-shadow:none">
-        <div style="font-size:9px;color:var(--text3);line-height:2.05;white-space:nowrap">実績<br>売上<br>ROAS</div>
+      <td style="padding:4px 6px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:140px;z-index:1;width:44px;text-align:right;vertical-align:top">
+        <div style="font-size:9px;color:var(--text3);line-height:1.8;white-space:nowrap;padding-top:1px">実績<br>売上<br>ROAS</div>
       </td>
-      <td style="padding:4px 6px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:184px;z-index:1;min-width:58px;width:58px;text-align:right;vertical-align:top">
-        <div style="${M};line-height:2.05">${fmt(tot.spend)}<br>${fmt(tot.sales)}<br><span style="font-weight:700;color:${rc2(totRoas)}">${totRoas>0?totRoas+'%':'—'}</span></div>
+      <td style="padding:4px 6px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:184px;z-index:1;min-width:58px;width:58px;text-align:right;vertical-align:top;box-shadow:2px 0 4px rgba(0,0,0,0.06)">
+        <div style="${M}">${fmt(tot.spend)}</div>
+        <div style="${M};color:var(--text3)">${fmt(tot.sales)}</div>
+        <div style="${M};font-weight:700;color:${rc2(totRoas)}">${totRoas>0?totRoas+'%':'—'}</div>
       </td>`;
 
     dates.forEach(d => {
       const r = matrix[kw]?.[d];
       if (r && r.spend > 0) {
         const roas = Math.round(r.sales / r.spend * 100);
-        html += `<td style="padding:3px 5px;border:1px solid var(--border);vertical-align:top">
+        html += `<td style="padding:4px 6px;border:1px solid var(--border);vertical-align:top;background:var(--surface)">
           <div style="${M}">${fmt(r.spend)}</div>
           <div style="${M};color:var(--text3)">${fmt(r.sales)}</div>
           <div style="${M};font-weight:700;color:${rc2(roas)}">${roas>0?roas+'%':'—'}</div>
         </td>`;
       } else {
-        html += `<td style="padding:3px 5px;border:1px solid var(--border);color:#ddd;text-align:center">—</td>`;
+        html += `<td style="padding:4px 6px;border:1px solid var(--border);color:#ddd;text-align:center;background:var(--surface)">—</td>`;
       }
     });
     html += `</tr>`;
