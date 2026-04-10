@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.92</span>
+    <span class="build-date">v1.93</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2307,11 +2307,60 @@ function renderSummary(ym) {
   });
   const avgRoas = totalSpend > 0 ? Math.round(totalSales/totalSpend*100) : 0;
   const avgCpc = totalClicks > 0 ? Math.round(totalSpend/totalClicks) : 0;
+
+  // 全体ROAS = totalSpend / totalSales（RPP全体）
+  const roasFull = avgRoas;
+
+  // 20円ROAS・KW ROAS = itemDailyDataから計算
+  const ymKey = ym.replace('-','');
+  let spend20=0, sales20=0, spendKw=0, salesKw=0;
+  Object.keys(itemDailyData).forEach(id => {
+    Object.keys(itemDailyData[id]).forEach(d => {
+      if (!d.startsWith(ym)) return;
+      const e = itemDailyData[id][d];
+      const kw  = e.spendKw || 0;
+      const skw = e.salesKw || 0;
+      spendKw += kw;
+      salesKw += skw;
+      spend20 += Math.max(0, (e.spend||0) - kw);
+      sales20 += Math.max(0, (e.sales||0) - skw);
+    });
+  });
+  const roas20 = spend20 > 0 ? Math.round(sales20/spend20*100) : 0;
+  const roasKw = spendKw > 0 ? Math.round(salesKw/spendKw*100) : 0;
+  const rc = v => v>=500?'var(--green)':v>=300?'var(--amber)':v>0?'var(--danger)':'var(--text3)';
+
   document.getElementById('summaryBar').innerHTML = `
-    <div class="scard scard-accent"><div class="scard-label">月間使用金額合計</div><div class="scard-val">${fmtY(totalSpend)}</div><div class="scard-sub">${getDatesForMonth(ym).length}日間のデータ</div></div>
-    <div class="scard"><div class="scard-label">稼働商品数</div><div class="scard-val">${active}</div><div class="scard-sub">全${products.length}商品中</div></div>
-    <div class="scard"><div class="scard-label">クリック数合計</div><div class="scard-val">${fmt(totalClicks)}</div><div class="scard-sub">平均CPC ¥${fmt(avgCpc)}</div></div>
-    <div class="scard"><div class="scard-label">ROAS(720h)平均</div><div class="scard-val">${fmt(avgRoas)}%</div><div class="scard-sub">売上合計 ${fmtY(totalSales)}</div></div>
+    <div class="scard scard-accent">
+      <div class="scard-label">月間使用金額合計</div>
+      <div class="scard-val">${fmtY(totalSpend)}</div>
+      <div class="scard-sub">${getDatesForMonth(ym).length}日間のデータ</div>
+    </div>
+    <div class="scard">
+      <div class="scard-label">稼働商品数</div>
+      <div class="scard-val">${active}</div>
+      <div class="scard-sub">全${products.length}商品中</div>
+    </div>
+    <div class="scard">
+      <div class="scard-label">クリック数合計</div>
+      <div class="scard-val">${fmt(totalClicks)}</div>
+      <div class="scard-sub">平均CPC ¥${fmt(avgCpc)}</div>
+    </div>
+    <div class="scard">
+      <div class="scard-label">全体 ROAS</div>
+      <div class="scard-val" style="color:${rc(roasFull)}">${roasFull>0?roasFull+'%':'—'}</div>
+      <div class="scard-sub">売上 ${fmtY(totalSales)}</div>
+    </div>
+    <div class="scard">
+      <div class="scard-label">20円 ROAS</div>
+      <div class="scard-val" style="color:${rc(roas20)}">${roas20>0?roas20+'%':'—'}</div>
+      <div class="scard-sub">実績 ${fmtY(spend20)}</div>
+    </div>
+    <div class="scard">
+      <div class="scard-label">KW ROAS</div>
+      <div class="scard-val" style="color:${rc(roasKw)}">${roasKw>0?roasKw+'%':'—'}</div>
+      <div class="scard-sub">実績 ${fmtY(spendKw)}</div>
+    </div>
   `;
 }
 
