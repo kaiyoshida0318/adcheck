@@ -80,7 +80,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 48px minmax(0,1fr) 100px 100px 80px 90px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.col-header { display: grid; grid-template-columns: 48px minmax(0,1fr) 100px 100px 100px 80px 90px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -93,7 +93,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 .item-row { border-bottom: 1px solid var(--border); }
 .item-row:last-child { border-bottom: none; }
-.item-basic { display: grid; grid-template-columns: 48px minmax(0,1fr) 100px 100px 80px 90px 90px 28px; align-items: center; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic { display: grid; grid-template-columns: 48px minmax(0,1fr) 100px 100px 100px 80px 90px 90px 28px; align-items: center; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
 .item-basic:hover, .item-basic.expanded { background: #fafaf9; }
 .cell-img { padding: 6px 8px; display: flex; align-items: center; justify-content: center; }
 .prod-thumb { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; border: 1px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); flex-shrink: 0; }
@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.59</span>
+    <span class="build-date">v1.61</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -323,6 +323,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <div class="col-header">
             <div class="ch"></div>
             <div class="ch" onclick="sortBy('name')">商品</div>
+            <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="min-width:90px;cursor:pointer">商品管理番号</div>
             <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="min-width:90px;cursor:pointer">商品番号</div>
             <div class="ch r" id="ch-spend" onclick="sortBy('spend')">使用金額合計</div>
             <div class="ch r" id="ch-clicks" onclick="sortBy('clicks')">クリック数</div>
@@ -2157,6 +2158,7 @@ function getSorted(ym) {
     if (_sortKey === 'spend')  return dir * (a.spend - b.spend);
     if (_sortKey === 'clicks') return dir * (a.clicks - b.clicks);
     if (_sortKey === 'roas')   return dir * (a.avgRoas - b.avgRoas);
+  if (_sortKey === 'itemid') return dir * a.id.localeCompare(b.id);
   if (_sortKey === 'itemnum') {
     const an = productCache[a.id]?.itemNumber || '';
     const bn = productCache[b.id]?.itemNumber || '';
@@ -2211,6 +2213,12 @@ function renderRow(p, maxSpend, ym) {
         <div class="prod-name" id="prod-name-${p.id}" title="${name}" data-raw="${cached ? '' : p.id}">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}${isManual?'<span class="manual-badge" title="手動編集済み"></span>':''}</div>
         <div class="prod-id">${itemShopCode && itemShopCode !== p.id ? itemShopCode + ' / ' : ''}${p.id}</div>
         <button class="edit-btn" onclick="event.stopPropagation();openEditModal('${p.id}')" title="編集">✏</button>
+      </div>
+      <div style="min-width:90px;max-width:120px;padding:8px 6px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.id}">
+        ${p.id}
+      </div>
+      <div style="min-width:90px;max-width:120px;padding:8px 6px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.id}">
+        ${p.id}
       </div>
       <div style="min-width:90px;max-width:120px;padding:8px 6px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cached?.itemNumber||''}">
         ${cached?.itemNumber || '—'}
