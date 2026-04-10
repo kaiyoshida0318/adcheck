@@ -184,24 +184,24 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 /* ── 列グループ色分け ── */
 /* 全体グループ（4〜6列目: 使用金額・売上・ROAS） */
 .col-header > div:nth-child(4),
-.item-basic > div:nth-child(4) { border-left: 2px solid rgba(191,0,0,0.2); background: rgba(191,0,0,0.03); }
 .col-header > div:nth-child(5),
 .col-header > div:nth-child(6),
+.item-basic > div:nth-child(4),
 .item-basic > div:nth-child(5),
 .item-basic > div:nth-child(6) { background: rgba(191,0,0,0.03); }
 /* KWグループ（7〜8列目: KW実績・KW ROAS） */
 .col-header > div:nth-child(7),
-.item-basic > div:nth-child(7) { border-left: 2px solid rgba(79,70,229,0.25); background: rgba(79,70,229,0.04); }
 .col-header > div:nth-child(8),
+.item-basic > div:nth-child(7),
 .item-basic > div:nth-child(8) { background: rgba(79,70,229,0.04); }
 /* 20円グループ（9〜10列目: 20円実績・20円ROAS） */
 .col-header > div:nth-child(9),
-.item-basic > div:nth-child(9) { border-left: 2px solid rgba(5,150,105,0.25); background: rgba(5,150,105,0.04); }
 .col-header > div:nth-child(10),
+.item-basic > div:nth-child(9),
 .item-basic > div:nth-child(10) { background: rgba(5,150,105,0.04); }
 /* 寄与度（11列目） */
 .col-header > div:nth-child(11),
-.item-basic > div:nth-child(11) { border-left: 2px solid rgba(180,130,0,0.2); background: rgba(245,200,0,0.04); }
+.item-basic > div:nth-child(11) { background: rgba(245,200,0,0.04); }
 
 /* ── Tab Navigation ── */
 .tab-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; top: 52px; z-index: 99; }
@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.111</span>
+    <span class="build-date">v1.112</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
