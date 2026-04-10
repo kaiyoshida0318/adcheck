@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.71</span>
+    <span class="build-date">v1.72</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1511,7 +1511,7 @@ function _renderKwByItem(itemCode, ym) {
     <table style="border-collapse:collapse;font-size:10px;white-space:nowrap">
       <thead>
         <tr style="background:var(--surface2)">
-          <th style="padding:4px 8px;text-align:left;font-weight:700;color:var(--text3);border:1px solid var(--border2);min-width:140px">キーワード</th>`;
+          <th style="padding:4px 8px;text-align:left;font-weight:700;color:var(--text3);border:1px solid var(--border2);min-width:140px;position:sticky;left:0;z-index:2;background:var(--surface2)">キーワード</th>`;
 
   dates.forEach(d => {
     const label = d.slice(5).replace('-', '/');
@@ -1524,7 +1524,7 @@ function _renderKwByItem(itemCode, ym) {
     const tot = kwTotals[kw];
     const totRoas = tot.spend > 0 ? Math.round(tot.sales / tot.spend * 100) : 0;
     html += `<tr>
-      <td style="padding:4px 8px;border:1px solid var(--border);background:var(--surface2)">
+      <td style="padding:4px 8px;border:1px solid var(--border);background:var(--surface2);position:sticky;left:0;z-index:1">
         <div style="font-weight:600;max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${kw}">${kw}</div>
         <div style="${M};color:var(--text3)">計 ${fmt(tot.spend)} / <span style="color:${rc2(totRoas)};font-weight:700">${totRoas>0?totRoas+'%':'—'}</span></div>
       </td>`;
