@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.87</span>
+    <span class="build-date">v1.89</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1524,50 +1524,6 @@ function _renderKwByItem(itemCode, ym) {
     html += `<th style="padding:4px 6px;text-align:center;font-weight:700;color:var(--text3);border:1px solid var(--border2);width:72px;min-width:72px">${label}</th>`;
   });
   html += `</tr></thead><tbody>`;
-
-  // ── 「20円」合計行（全KW合算、一番上）──
-  const allSpend  = dates.reduce((s,d) => s + (rows.filter(r=>r.date===d).reduce((a,r)=>a+r.spend,0)), 0);
-  const allSales  = dates.reduce((s,d) => s + (rows.filter(r=>r.date===d).reduce((a,r)=>a+r.sales,0)), 0);
-  const allRoas   = allSpend > 0 ? Math.round(allSales / allSpend * 100) : 0;
-  // 日付別合算マップ
-  const dayTotals = {};
-  dates.forEach(d => {
-    const dayRows = rows.filter(r => r.date === d);
-    const ds = dayRows.reduce((a,r) => ({spend:a.spend+r.spend, sales:a.sales+r.sales}), {spend:0,sales:0});
-    dayTotals[d] = ds;
-  });
-  html += `<tr>
-    <td style="padding:0;border:1px solid var(--border);width:242px;min-width:242px;background:var(--surface2);position:sticky;left:0;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,0.08)">
-      <div style="display:grid;grid-template-columns:140px 44px 58px;width:242px">
-        <div style="padding:4px 8px;border-right:1px solid var(--border);display:flex;align-items:center">
-          <div style="font-weight:700;font-size:10px;line-height:1.4;color:var(--text)">20円</div>
-        </div>
-        <div style="padding:4px 6px;border-right:1px solid var(--border);text-align:right">
-          <div style="font-size:10px;color:var(--text3);height:20px;line-height:20px">実績</div>
-          <div style="font-size:10px;color:var(--text3);height:20px;line-height:20px">売上</div>
-          <div style="font-size:10px;color:var(--text3);height:20px;line-height:20px">ROAS</div>
-        </div>
-        <div style="padding:4px 6px;text-align:right">
-          <div style="font-family:'DM Mono',monospace;font-size:10px;height:20px;line-height:20px">${fmt(allSpend)}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);height:20px;line-height:20px">${fmt(allSales)}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:${rc2(allRoas)};height:20px;line-height:20px">${allRoas>0?allRoas+'%':'—'}</div>
-        </div>
-      </div>
-    </td>`;
-  dates.forEach(d => {
-    const dt = dayTotals[d];
-    if (dt && dt.spend > 0) {
-      const dr = dt.spend > 0 ? Math.round(dt.sales / dt.spend * 100) : 0;
-      html += `<td style="padding:4px 6px;border:1px solid var(--border);vertical-align:top;background:var(--surface)">
-        <div style="${M};height:20px;line-height:20px">${fmt(dt.spend)}</div>
-        <div style="${M};color:var(--text3);height:20px;line-height:20px">${fmt(dt.sales)}</div>
-        <div style="${M};font-weight:700;color:${rc2(dr)};height:20px;line-height:20px">${dr>0?dr+'%':'—'}</div>
-      </td>`;
-    } else {
-      html += `<td style="padding:4px 6px;border:1px solid var(--border);color:#ddd;text-align:center;background:var(--surface)">—</td>`;
-    }
-  });
-  html += `</tr>`;
 
   // ── 「20円」行（商品全体 - KW合計 = KW未紐付け分）──
   // itemDailyDataから商品全体のspend/salesを取得してKW合計を引く
