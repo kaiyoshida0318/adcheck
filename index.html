@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.54</span>
+    <span class="build-date">v1.56</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2187,10 +2187,9 @@ function renderRow(p, maxSpend, ym) {
   // 画像：manualImg優先、次にimg、なければプレースホルダー
   const imgSrc = cached?.manualImg || cached?.img || null;
   const imgLoaded = !!imgSrc;
-  const editUrl = p.id ? `https://rsv.rms.rakuten.co.jp/item/edit?itemUrl=${p.id}` : '';
   const imgEl = imgLoaded
-    ? `<div id="img-cell-${p.id}" data-loaded="1" style="cursor:pointer" title="商品情報編集ページを開く" onclick="event.stopPropagation();window.open('${editUrl}','_blank')"><img src="${imgSrc}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'"></div>`
-    : `<div id="img-cell-${p.id}" class="prod-thumb" style="cursor:pointer" title="商品情報編集ページを開く" onclick="event.stopPropagation();window.open('${editUrl}','_blank')">画像</div>`;
+    ? `<div id="img-cell-${p.id}" data-loaded="1" style="cursor:pointer" title="商品情報編集ページを開く" onclick="event.stopPropagation();openEditModal('${p.id}')"><img src="${imgSrc}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'"></div>`
+    : `<div id="img-cell-${p.id}" class="prod-thumb" style="cursor:pointer" title="商品情報編集ページを開く" onclick="event.stopPropagation();openEditModal('${p.id}')">画像</div>`;
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   return `<div class="item-row">
