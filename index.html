@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.80</span>
+    <span class="build-date">v1.81</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1508,7 +1508,7 @@ function _renderKwByItem(itemCode, ym) {
   let html = `<div style="margin-top:16px;border-top:2px solid var(--border)">
     <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.5px;padding:10px 0 6px">KW別実績</div>
     <div style="overflow-x:auto">
-    <table style="border-collapse:collapse;font-size:10px;white-space:nowrap;border-spacing:0">
+    <table style="border-collapse:collapse;font-size:10px;white-space:nowrap;border-spacing:0;table-layout:fixed">
       <thead>
         <tr style="background:var(--surface2)">
           <th style="padding:4px 8px;text-align:left;font-weight:700;color:var(--text3);border:1px solid var(--border2);min-width:140px;position:sticky;left:0;z-index:2;background:var(--surface2)">キーワード</th>
@@ -1517,7 +1517,7 @@ function _renderKwByItem(itemCode, ym) {
 
   dates.forEach(d => {
     const label = d.slice(5).replace('-', '/');
-    html += `<th style="padding:4px 6px;text-align:center;font-weight:700;color:var(--text3);border:1px solid var(--border2);min-width:80px">${label}</th>`;
+    html += `<th style="padding:4px 6px;text-align:center;font-weight:700;color:var(--text3);border:1px solid var(--border2);width:72px;min-width:72px">${label}</th>`;
   });
   html += `</tr></thead><tbody>`;
 
