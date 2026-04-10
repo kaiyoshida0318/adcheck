@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.99</span>
+    <span class="build-date">v1.100</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2401,9 +2401,9 @@ function getSorted(ym) {
     if (_sortKey === 'roas')   return dir * (a.avgRoas - b.avgRoas);
   if (_sortKey === 'itemid') return dir * a.id.localeCompare(b.id);
   if (_sortKey === 'contrib') {
-    const _ts = data.reduce((s,p)=>s+p.spend,0);
-    const _ar = _ts > 0 ? data.reduce((s,p)=>s+p.sales720,0)/_ts : 0;
-    const contribOf = p => _ar > 0 ? (p.spend/_ts)*(p.avgRoas/_ar)*100 - (p.spend/_ts)*100 : 0;
+    const _ts = products.reduce((s,p)=>s+p.spend,0);
+    const _ar = _ts > 0 ? products.reduce((s,p)=>s+p.sales720,0)/_ts : 0;
+    const contribOf = p => _ar > 0 ? (p.spend/_ts)*(p.avgRoas - _ar*100) : 0;
     return dir * (contribOf(a) - contribOf(b));
   }
   if (_sortKey === 'itemnum') {
