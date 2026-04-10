@@ -80,7 +80,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 100px 80px 90px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 100px 80px 90px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -93,7 +93,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 .item-row { border-bottom: 1px solid var(--border); }
 .item-row:last-child { border-bottom: none; }
-.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 100px 80px 90px 70px 90px 28px; align-items: center; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 100px 80px 90px 70px 70px 70px 90px 28px; align-items: center; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
 .item-basic:hover, .item-basic.expanded { background: #fafaf9; }
 .cell-img { padding: 6px 8px; display: flex; align-items: center; justify-content: center; }
 .prod-thumb { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; border: 1px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); flex-shrink: 0; }
@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.106</span>
+    <span class="build-date">v1.107</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -327,7 +327,9 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <div class="ch r" id="ch-spend" onclick="sortBy('spend')">使用金額合計</div>
             <div class="ch r" id="ch-clicks" onclick="sortBy('clicks')">クリック数</div>
             <div class="ch r" id="ch-sales" onclick="sortBy('sales')">売上合計(720h)</div>
-            <div class="ch r" id="ch-roas" onclick="sortBy('roas')">ROAS平均(720h)</div>
+            <div class="ch r" id="ch-roas" onclick="sortBy('roas')">ROAS平均</div>
+            <div class="ch r" id="ch-kwroas" onclick="sortBy('kwroas')" style="cursor:pointer">KW ROAS</div>
+            <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer">20円 ROAS</div>
             <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer">寄与度</div>
             <div class="ch"></div>
           </div>
@@ -2359,16 +2361,16 @@ function renderSummary(ym) {
       <div class="scard-sub">売上 ${fmtY(totalSales)}</div>
     </div>
     <div class="scard">
-      <div class="scard-label">20円 ROAS</div>
-      <div class="scard-val" style="color:${rc(roas20)}">${roas20>0?roas20+'%':'—'}</div>
-      <div class="scard-sub">実績 ${fmtY(spend20)}</div>
-      <div class="scard-sub">売上 ${fmtY(sales20)}</div>
-    </div>
-    <div class="scard">
       <div class="scard-label">KW ROAS</div>
       <div class="scard-val" style="color:${rc(roasKw)}">${roasKw>0?roasKw+'%':'—'}</div>
       <div class="scard-sub">実績 ${fmtY(spendKw)}</div>
       <div class="scard-sub">売上 ${fmtY(salesKw)}</div>
+    </div>
+    <div class="scard">
+      <div class="scard-label">20円 ROAS</div>
+      <div class="scard-val" style="color:${rc(roas20)}">${roas20>0?roas20+'%':'—'}</div>
+      <div class="scard-sub">実績 ${fmtY(spend20)}</div>
+      <div class="scard-sub">売上 ${fmtY(sales20)}</div>
     </div>
   `;
 }
@@ -2405,6 +2407,28 @@ function getSorted(ym) {
     if (_sortKey === 'clicks') return dir * (a.clicks - b.clicks);
     if (_sortKey === 'roas')   return dir * (a.avgRoas - b.avgRoas);
   if (_sortKey === 'itemid') return dir * a.id.localeCompare(b.id);
+  if (_sortKey === 'kwroas') {
+    const kwRoasOf = p => {
+      const idd2=itemDailyData[p.id]||{};
+      const ds=Object.keys(idd2).filter(d=>d.startsWith(getSelectedMonth()));
+      const ks=ds.reduce((s,d)=>s+(idd2[d]?.spendKw||0),0);
+      const ksa=ds.reduce((s,d)=>s+(idd2[d]?.salesKw||0),0);
+      return ks>0?ksa/ks:0;
+    };
+    return dir*(kwRoasOf(a)-kwRoasOf(b));
+  }
+  if (_sortKey === 'roas20') {
+    const r20Of = p => {
+      const idd2=itemDailyData[p.id]||{};
+      const ds=Object.keys(idd2).filter(d=>d.startsWith(getSelectedMonth()));
+      const ks=ds.reduce((s,d)=>s+(idd2[d]?.spendKw||0),0);
+      const ksa=ds.reduce((s,d)=>s+(idd2[d]?.salesKw||0),0);
+      const s20=Math.max(0,p.spend-ks);
+      const sa20=Math.max(0,ds.reduce((s,d)=>s+(idd2[d]?.sales||0),0)-ksa);
+      return s20>0?sa20/s20:0;
+    };
+    return dir*(r20Of(a)-r20Of(b));
+  }
   if (_sortKey === 'contrib') {
     const _ts = products.reduce((s,p)=>s+p.spend,0);
     const _ar = _ts > 0 ? products.reduce((s,p)=>s+p.sales720,0)/_ts : 0;
@@ -2485,6 +2509,35 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       <div class="roas-cell">
         <div class="roas-val ${p.avgRoas===0 ? 'rb' : rc(p.avgRoas)}">${p.avgRoas>0?fmt(p.avgRoas)+'%':'0%'}</div>
         ${p.avgRoas>0?`<div class="mini-bar"><div class="mini-fill" style="width:${roasPct}%;background:${barColor(p.avgRoas)}"></div></div>`:''}
+      </div>
+      <div class="cell r" style="font-size:11px;font-weight:700">
+        ${(() => {
+          const iddP = itemDailyData[p.id] || {};
+          const ym2 = ym;
+          const pDates = Object.keys(iddP).filter(d=>d.startsWith(ym2));
+          const pKwSpend = pDates.reduce((s,d)=>s+(iddP[d]?.spendKw||0),0);
+          const pKwSales = pDates.reduce((s,d)=>s+(iddP[d]?.salesKw||0),0);
+          const kwR = pKwSpend>0?Math.round(pKwSales/pKwSpend*100):0;
+          const p20Spend = Math.max(0,p.spend-pKwSpend);
+          const p20Sales = Math.max(0,pDates.reduce((s,d)=>s+(iddP[d]?.sales||0),0)-pKwSales);
+          const r20 = p20Spend>0?Math.round(p20Sales/p20Spend*100):0;
+          const rc2 = v=>v>=500?'var(--green)':v>=300?'var(--amber)':v>=0?'var(--danger)':'var(--text3)';
+          return `<span style="color:${rc2(kwR)};font-weight:700">${kwR>0?kwR+'%':'0%'}</span>`;
+        })()}
+      </div>
+      <div class="cell r" style="font-size:11px;font-weight:700">
+        ${(() => {
+          const iddP = itemDailyData[p.id] || {};
+          const ym2 = ym;
+          const pDates = Object.keys(iddP).filter(d=>d.startsWith(ym2));
+          const pKwSpend = pDates.reduce((s,d)=>s+(iddP[d]?.spendKw||0),0);
+          const pKwSales = pDates.reduce((s,d)=>s+(iddP[d]?.salesKw||0),0);
+          const p20Spend = Math.max(0,p.spend-pKwSpend);
+          const p20Sales = Math.max(0,pDates.reduce((s,d)=>s+(iddP[d]?.sales||0),0)-pKwSales);
+          const r20 = p20Spend>0?Math.round(p20Sales/p20Spend*100):0;
+          const rc2 = v=>v>=500?'var(--green)':v>=300?'var(--amber)':v>=0?'var(--danger)':'var(--text3)';
+          return `<span style="color:${rc2(r20)};font-weight:700">${r20>0?r20+'%':'0%'}</span>`;
+        })()}
       </div>
       <div class="cell r" style="font-size:11px;font-weight:700">
         ${(() => {
