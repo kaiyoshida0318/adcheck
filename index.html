@@ -268,7 +268,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.58</span>
+    <span class="build-date">v1.59</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -323,6 +323,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <div class="col-header">
             <div class="ch"></div>
             <div class="ch" onclick="sortBy('name')">商品</div>
+            <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="min-width:90px;cursor:pointer">商品番号</div>
             <div class="ch r" id="ch-spend" onclick="sortBy('spend')">使用金額合計</div>
             <div class="ch r" id="ch-clicks" onclick="sortBy('clicks')">クリック数</div>
             <div class="ch r" id="ch-roas" onclick="sortBy('roas')">ROAS平均(720h)</div>
@@ -2205,7 +2206,6 @@ function renderRow(p, maxSpend, ym) {
     <div class="item-basic${isExp?' expanded':''}" onclick="toggleRow('${p.id}','${ym}')">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;max-width:60px;padding:0 4px;gap:3px">
         ${imgEl}
-        ${cached?.itemNumber ? `<div style="font-size:9px;color:var(--text3);text-align:center;line-height:1.2;word-break:break-all;max-width:56px" title="商品番号">${cached.itemNumber}</div>` : ''}
       </div>
       <div class="cell-name">
         <div class="prod-name" id="prod-name-${p.id}" title="${name}" data-raw="${cached ? '' : p.id}">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}${isManual?'<span class="manual-badge" title="手動編集済み"></span>':''}</div>
