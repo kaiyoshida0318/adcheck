@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.116</span>
+    <span class="build-date">v1.118</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -370,6 +370,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       <div class="table-card">
         <div class="table-toolbar">
           <div style="font-size:12px;color:var(--text3)">右上「＋レポート追加」から rpp_reports・rpp_keyword_reports を追加</div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
+            <span style="color:#1565C0;font-weight:700">● 最高 500%〜</span>
+            <span style="color:#2E7D32;font-weight:600">● 良い 300〜499%</span>
+            <span style="color:#BA7517;font-weight:600">● 普通 1〜299%</span>
+            <span style="color:#A32D2D;font-weight:700">● 微妙〜悪い</span>
+          </div>
           <div class="toolbar-right">
             <button class="tbtn" onclick="monthlyClear()">クリア</button>
             <span id="monthly-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
@@ -394,6 +400,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       <div class="table-card">
         <div class="table-toolbar">
           <select class="toolbar-month" id="dailyMonthSel" onchange="renderDailyFiltered()"></select>
+          <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
+            <span style="color:#1565C0;font-weight:700">● 最高 500%〜</span>
+            <span style="color:#2E7D32;font-weight:600">● 良い 300〜499%</span>
+            <span style="color:#BA7517;font-weight:600">● 普通 1〜299%</span>
+            <span style="color:#A32D2D;font-weight:700">● 微妙〜悪い</span>
+          </div>
           <div class="toolbar-right">
             <button class="tbtn" onclick="dailyClear()">クリア</button>
             <span id="daily-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
@@ -417,6 +429,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       <div class="table-card">
         <div class="table-toolbar">
           <select class="toolbar-month" id="kwMonthSel" onchange="renderKwFiltered()"></select>
+          <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
+            <span style="color:#1565C0;font-weight:700">● 最高 500%〜</span>
+            <span style="color:#2E7D32;font-weight:600">● 良い 300〜499%</span>
+            <span style="color:#BA7517;font-weight:600">● 普通 1〜299%</span>
+            <span style="color:#A32D2D;font-weight:700">● 微妙〜悪い</span>
+          </div>
           <div class="toolbar-right">
             <span id="kw-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
           </div>
@@ -1325,15 +1343,7 @@ function renderKwFiltered() {
   rows.sort((a,b) => b.spend - a.spend);
   const monoStyle = "font-family:'DM Mono',monospace";
   const rc = v => v>=500?'var(--green)':v>=300?'var(--amber)':v>0?'var(--danger)':'var(--text3)';
-  let html = `<div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--surface2);border-radius:6px;font-size:11px;flex-wrap:wrap;margin-bottom:8px">
-    <span style="color:var(--text3);font-weight:600;margin-right:2px">ROASの色:</span>
-    <span style="color:#1565C0;font-weight:700">●&nbsp;最高&nbsp;500%〜</span>
-    <span style="color:#2E7D32;font-weight:600">●&nbsp;良い&nbsp;300〜499%</span>
-    <span style="color:#1a1a1a;font-weight:400">●&nbsp;普通&nbsp;1〜299%</span>
-    <span style="color:#BA7517;font-weight:600">●&nbsp;微妙&nbsp;〜0%</span>
-    <span style="color:#A32D2D;font-weight:700">●&nbsp;悪い&nbsp;売上なし</span>
-  </div>
-  <div style="overflow-x:auto">
+  let html = `<div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-size:11px">
       <thead><tr style="background:var(--surface2);border-bottom:1px solid var(--border2)">
         <th style="padding:7px 10px;text-align:left;font-weight:700;color:var(--text3);white-space:nowrap">商品管理番号</th>
