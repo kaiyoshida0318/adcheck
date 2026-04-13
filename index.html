@@ -309,7 +309,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.164</span>
+    <span class="build-date">v1.165</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2425,7 +2425,7 @@ function _renderTable(mode, rows) {
       (() => {
         const _sr = _totSales > 0 && r.spend > 0 ? Math.round(_totSales / r.spend * 10000) / 100 : 0;
         if (!_sr) return '<span class="c-bk">—</span>';
-        return `<span class="${_rank5(_sr, vSalesROASAll, true)}">${_sr}%</span>`;
+        return `<span class="c-${_rank5(_sr, vSalesROASAll, true)}">${_sr}%</span>`;
       })(),
       _fmtRoasCell(r.roas,    r.roas,    vRoas),
       _fmtRoasCell(roasKw_r, roasKw_r,  vRoasKw),
