@@ -70,7 +70,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 
 /* ── Table ── */
-.table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);  box-shadow: var(--shadow); }
 .table-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .toolbar-search { font-size: 13px; padding: 6px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); color: var(--text); outline: none; width: 200px; font-family: inherit; transition: all 0.15s; }
 .toolbar-search:focus { border-color: var(--red); background: var(--surface); }
@@ -80,7 +80,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -309,7 +309,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.165</span>
+    <span class="build-date">v1.168</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -361,6 +361,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
               <button class="tbtn" onclick="exportCSV()">CSV出力</button>
             </div>
           </div>
+          <div id="products-scroll-area" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="col-header">
             <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="cursor:pointer">商品番号</div>
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
@@ -376,6 +377,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <div class="ch"></div>
           </div>
           <div id="itemList"></div>
+          </div><!-- /products-scroll-area -->
           <div class="pagination" id="pagination"></div>
         </div>
       </div><!-- /dataArea -->
