@@ -309,7 +309,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.177</span>
+    <span class="build-date">v1.178</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2510,7 +2510,6 @@ function renderMonthlyItem() {
   const fmtY = v => v === 0 ? '—' : '¥' + v.toLocaleString();
   const rcR  = v => v >= 300 ? 'c-g1' : v >= 150 ? 'c-g2' : 'c-bk';
 
-  // 全商品を取得・絞り込み
   let codes = Object.keys(itemDailyData);
   if (q) {
     codes = codes.filter(code => {
@@ -2521,24 +2520,29 @@ function renderMonthlyItem() {
     });
   }
 
-  // 商品×月のデータを集計
   const productRows = [];
   codes.forEach(code => {
     const byDate = itemDailyData[code] || {};
     const monthStats = yms.map(ym => {
       const ymDash = ym.slice(0,4) + '-' + ym.slice(4,6);
-      let spend=0,sales=0,orders=0,spendKw=0,salesKw=0;
+      let spend=0, sales=0, orders=0, spendKw=0, salesKw=0, ordersKw=0, clKw=0;
       Object.entries(byDate).forEach(([date,d]) => {
         if (!date.startsWith(ymDash)) return;
-        spend   += d.spend   ||0; sales  += d.sales  ||0;
-        orders  += d.orders  ||0; spendKw+= d.spendKw||0;
-        salesKw += d.salesKw ||0;
+        spend    += d.spend    ||0;
+        sales    += d.sales    ||0;
+        orders   += d.orders   ||0;
+        spendKw  += d.spendKw  ||0;
+        salesKw  += d.salesKw  ||0;
+        ordersKw += d.ordersKw ||0;
+        clKw     += d.clKw     ||0;
       });
-      const roas   = spend  >0 ? Math.round(sales  /spend  *10000)/100 : 0;
-      const grossP = Math.round(sales*0.45 - spend);
-      const totSales = salesRows.filter(s=>s.ym===ym&&s.itemCode===code).reduce((a,s)=>a+s.sales,0);
-      const sroas  = totSales>0&&spend>0 ? Math.round(totSales/spend*10000)/100 : 0;
-      return { ym, spend, sales, roas, grossP, totSales, sroas };
+      const spend20  = Math.max(0, spend  - spendKw);
+      const sales20  = Math.max(0, sales  - salesKw);
+      const roas     = spend   > 0 ? Math.round(sales   / spend   * 10000) / 100 : 0;
+      const roasKw   = spendKw > 0 ? Math.round(salesKw / spendKw * 10000) / 100 : 0;
+      const roas20v  = spend20 > 0 ? Math.round(sales20 / spend20 * 10000) / 100 : 0;
+      const grossP   = Math.round(sales * 0.45 - spend);
+      return { ym, spend, sales, roas, spendKw, salesKw, roasKw, spend20, sales20, roas20: roas20v, grossP };
     });
     if (!q && monthStats.every(m=>m.spend===0)) return;
     const c    = productCache[code]||{};
@@ -2554,10 +2558,20 @@ function renderMonthlyItem() {
     return;
   }
 
-  // ヘッダー行
-  const HEADS = ['月','実績額■','売上金額■','ROAS■','総売上★','売上ROAS★','粗広告利益'];
-  const HBG   = ['var(--surface2)','#fef08a','#ceead4','#bfdbfe','#93c5fd','#bfdbfe','#a7f3d0'];
-  const BG    = ['var(--surface2)','#fefce8','#e6f5e9','#eff6ff','#eff6ff','#dbeafe','#f0fdf4'];
+  const HEADS = ['月','使用金額合計','売上合計','ROAS','KW実績','KW ROAS','20円実績','20円ROAS','粗広告利益'];
+  const HBG   = ['var(--surface2)','#fef08a','#ceead4','#bfdbfe','#e4d5f9','#ecdffb','#fed7aa','#fde8c8','#a7f3d0'];
+  const BG    = ['var(--surface2)','#fefce8','#e6f5e9','#eff6ff','#f5f3ff','#faf5ff','#fff7ed','#fffbf5','#f0fdf4'];
+
+  const cells = m => [
+    m.spend>0  ? fmtY(m.spend)   : '<span style="color:var(--text3)">—</span>',
+    m.sales>0  ? fmtY(m.sales)   : '<span style="color:var(--text3)">—</span>',
+    `<span class="${rcR(m.roas)}">${m.roas>0?m.roas+'%':'—'}</span>`,
+    m.spendKw>0 ? fmtY(m.spendKw) : '<span style="color:var(--text3)">—</span>',
+    `<span class="${rcR(m.roasKw)}">${m.roasKw>0?m.roasKw+'%':'—'}</span>`,
+    m.spend20>0 ? fmtY(m.spend20) : '<span style="color:var(--text3)">—</span>',
+    `<span class="${rcR(m.roas20)}">${m.roas20>0?m.roas20+'%':'—'}</span>`,
+    (m.spend>0) ? `<span style="color:${m.grossP>=0?'var(--green)':'var(--danger)'};font-weight:600">${m.grossP>=0?'+':''}${fmtY(m.grossP)}</span>` : '—',
+  ];
 
   let html = `<table style="border-collapse:collapse;font-size:11px;width:100%">
     <thead><tr style="position:sticky;top:0;z-index:3;background:var(--surface2)">
@@ -2565,13 +2579,13 @@ function renderMonthlyItem() {
       ${HEADS.map((h,i)=>`<th style="padding:8px 8px;text-align:right;border-bottom:2px solid var(--border);white-space:nowrap;font-size:10px;color:var(--text3);background:${HBG[i]}">${h}</th>`).join('')}
     </tr></thead>
     <tbody>
-    ${productRows.map(({code,name,itemNum,imgSrc,monthStats},pi) => {
-      const rowsBg = pi%2===0?'':'background:#fafafa';
-      return monthStats.map((m,mi) => {
+    ${productRows.map(({code,name,itemNum,imgSrc,monthStats}) =>
+      monthStats.map((m,mi) => {
         const isFirst = mi===0;
         const isLast  = mi===monthStats.length-1;
-        const borderT = isFirst ? 'border-top:2px solid var(--border)' : 'border-top:1px dashed var(--border2)';
-        const borderB = isLast  ? 'border-bottom:2px solid var(--border)' : '';
+        const bT = isFirst ? 'border-top:2px solid var(--border)' : 'border-top:1px dashed var(--border2)';
+        const bB = isLast  ? 'border-bottom:2px solid var(--border)' : '';
+        const ymLabel = m.ym.slice(0,4)+'/'+m.ym.slice(4,6);
         const prodCell = isFirst ? `
           <td rowspan="${monthStats.length}" style="padding:8px 10px;vertical-align:middle;border-top:2px solid var(--border);border-bottom:2px solid var(--border);background:var(--surface)">
             <div style="display:flex;align-items:center;gap:8px">
@@ -2582,20 +2596,13 @@ function renderMonthlyItem() {
               </div>
             </div>
           </td>` : '';
-        const ymLabel = m.ym.slice(0,4)+'/'+m.ym.slice(4,6);
-        const hasData = m.spend>0||m.sales>0;
         return `<tr>
           ${prodCell}
-          <td style="padding:5px 8px;text-align:right;font-weight:700;font-size:11px;color:var(--accent);${borderT};${borderB};background:${BG[0]};font-family:'DM Mono',monospace;white-space:nowrap">${ymLabel}</td>
-          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[1]}">${hasData?fmtY(m.spend):'<span style="color:var(--text3)">—</span>'}</td>
-          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[2]}">${hasData?fmtY(m.sales):'<span style="color:var(--text3)">—</span>'}</td>
-          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[3]}"><span class="${rcR(m.roas)}">${m.roas>0?m.roas+'%':'—'}</span></td>
-          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[4]}">${m.totSales>0?fmtY(m.totSales):'<span style="color:var(--text3)">—</span>'}</td>
-          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[5]}"><span class="${rcR(m.sroas)}">${m.sroas>0?m.sroas+'%':'—'}</span></td>
-          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[6]}">${hasData?`<span style="color:${m.grossP>=0?'var(--green)':'var(--danger)'};font-weight:600">${m.grossP>=0?'+':''}${fmtY(m.grossP)}</span>`:'—'}</td>
+          <td style="padding:5px 8px;text-align:right;font-weight:700;font-size:11px;color:var(--accent);${bT};${bB};background:${BG[0]};font-family:'DM Mono',monospace;white-space:nowrap">${ymLabel}</td>
+          ${cells(m).map((c,i)=>`<td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${bT};${bB};background:${BG[i+1]};white-space:nowrap">${c}</td>`).join('')}
         </tr>`;
-      }).join('');
-    }).join('')}
+      }).join('')
+    ).join('')}
     </tbody>
   </table>`;
   wrap.innerHTML = html;
