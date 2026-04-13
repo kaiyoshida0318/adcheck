@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.188</span>
+    <span class="build-date">v1.189</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2459,15 +2459,15 @@ function _renderTable(mode, rows) {
     }
     return salesRows.filter(s=>s.date===lb.replace(/\//g,'-')).reduce((a,s)=>a+s.sales,0);
   };
+  // 月別モードでは最新月（rows[0]）を色分けの母集団から除外
+  const _rankRows = (mode === 'monthly' && rows.length > 1) ? rows.slice(1) : rows;
+
   const vTotSalesAll = _rankRows.map(_getTotSales).filter(v=>v>0);
   const vSalesROASAll = _rankRows.map(r=>{
     const ts = _getTotSales(r);
     return ts > 0 && r.spend > 0 ? Math.round(ts / r.spend * 10000) / 100 : 0;
   }).filter(v=>v>0);
   const vSeoSalesAll = _rankRows.map(r=>Math.max(0,_getTotSales(r)-(r.sales||0))).filter(v=>v>0);
-
-  // 月別モードでは最新月（rows[0]）を色分けの母集団から除外
-  const _rankRows = (mode === 'monthly' && rows.length > 1) ? rows.slice(1) : rows;
 
   const vSpend  = _rankRows.filter(r=>r.spend>0).map(r=>r.spend);
   const vSales  = _rankRows.filter(r=>r.sales>0).map(r=>r.sales);
