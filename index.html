@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.127</span>
+    <span class="build-date">v1.131</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2092,13 +2092,7 @@ function _parseRppRows(text) {
 }
 
 function _backfillKwCtr(text) {
-  // 既存kwRowsのCTRが0のものを、新しいCSVから補完する
-  const lines = text.replace(/
-/g,'
-').replace(/
-/g,'
-').split('
-');
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
   let hi = -1;
   for (let i = 0; i < Math.min(10, lines.length); i++) {
     if (lines[i].includes('コントロールカラム') || (lines[i].includes('キーワード') && lines[i].includes('日付'))) { hi = i; break; }
@@ -2120,15 +2114,14 @@ function _backfillKwCtr(text) {
     const dm = dateRaw.match(/(20\d\d)年(\d\d)月(\d\d)日/);
     if (!dm) continue;
     const code = `${dm[1]}${dm[2]}${dm[3]}_${itemCode}_${kw}`;
-    const idx = kwRows.findIndex(r => r.code === code);
-    if (idx >= 0 && kwRows[idx].ctr === 0) {
-      kwRows[idx].ctr = ctr;
+    const idx2 = kwRows.findIndex(r => r.code === code);
+    if (idx2 >= 0 && kwRows[idx2].ctr === 0) {
+      kwRows[idx2].ctr = ctr;
       filled++;
     }
   }
   return filled;
 }
-
 function _parseKwRowsLocal(text) {
   const lines = text.split(/\r?\n/);
   let hi = -1;
