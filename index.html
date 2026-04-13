@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.138</span>
+    <span class="build-date">v1.141</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -852,7 +852,7 @@ async function saveToGitHub() {
       sha = getJson.sha;
     }
     // データをJSON化してBase64エンコード
-    const payload = { DB, productCache, calEvents, nichinichiRows, dailyRows, itemDailyData, kwRows };
+    const payload = { DB, productCache, calEvents, nichinichiRows, dailyRows, itemDailyData, kwRows, salesRows };
     const jsonStr = JSON.stringify(payload, null, 2);
     const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
     // PUTで保存
@@ -897,6 +897,7 @@ async function loadFromGitHub() {
       if (data.itemDailyData && Object.keys(data.itemDailyData).length > 0) {
         itemDailyData = data.itemDailyData;
       }
+      if (data.salesRows) salesRows = data.salesRows;
       if (data.kwRows) {
         kwRows = data.kwRows;
         if (kwRows.length > 0) { populateKwMonthSel(); renderKwFiltered(); }
@@ -1005,6 +1006,15 @@ function readFiles(files) {
 
       // rpp_reports / rpp_keyword_reports は日別・月別データ用
       // ただしkwはitemDailyDataにも追記してから処理
+      if (type === 'saleslist') {
+        const text = await _readNichText(f);
+        if (text) {
+          _parseSalesRows(text);
+          renderAll();
+          saveToGitHub();
+        }
+        continue;
+      }
       if (type === 'kw') {
         const buf = await f.arrayBuffer();
         const zip = await JSZip.loadAsync(buf);
@@ -1291,6 +1301,7 @@ function monthlyClear() {
 }
 // ── KW別データ ──
 var kwRows = []; // { code, kw, date, spend, sales, orders, cl, roas, ctr, cpc }
+var salesRows = []; // Item_SalesList 日別総売上
 
 function _parseKwRows(text) {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
@@ -1952,6 +1963,7 @@ function _nichFileType(name) {
   if (n.includes('rpp_keyword_reports_')) return 'kw';    // KW別 → 日別・月別データ
   if (n.includes('rpp_item_reports_'))    return 'item';  // 商品別 → 商品別データ
   if (n.includes('rpp_reports_'))         return 'rpp';   // 全体集計 → 日別・月別データ
+  if (n.includes('_item_saleslist'))      return 'saleslist'; // 売上リスト
   return 'item'; // その他も商品別として試みる
 }
 
@@ -1966,7 +1978,7 @@ async function _readNichText(file) {
     // BOM付きUTF-8も試す
     try {
       const t = new TextDecoder('utf-8').decode(bytes);
-      if (t.includes('日付') || t.includes('コントロールカラム') || t.includes('実績額')) return t;
+      if (t.includes('商品管理番号') || t.includes('日付') || t.includes('コントロールカラム') || t.includes('実績額')) return t;
       return t; // とりあえず返す
     } catch(e) {}
     return new TextDecoder('shift-jis').decode(bytes);
@@ -2080,6 +2092,50 @@ function _parseRppRows(text) {
     rows.push({ cl, spend, sales, orders, cpc, cvr, roas, cpa });
   }
   return rows;
+}
+
+function _parseSalesRows(text) {
+  // Item_SalesList CSVから日別総売上を取得
+  // ファイル名から日付を特定できないのでヘッダー行の「表示期間」から取得
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+  // 「表示期間」行から日付を取得
+  let dateStr = '';
+  for (let i = 0; i < Math.min(10, lines.length); i++) {
+    const m = lines[i].match(/(\d{4})年(\d{2})月(\d{2})日/);
+    if (m) { dateStr = `${m[1]}-${m[2]}-${m[3]}`; break; }
+  }
+  if (!dateStr) return;
+  // ヘッダー行を探す
+  let hi = -1;
+  for (let i = 0; i < Math.min(10, lines.length); i++) {
+    if (lines[i].includes('商品管理番号') && lines[i].includes('売上')) { hi = i; break; }
+  }
+  if (hi < 0) return;
+  const headers = lines[hi].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  const col = h => headers.indexOf(h);
+  const codeIdx  = col('商品管理番号');
+  const salesIdx = col('売上');
+  if (codeIdx < 0 || salesIdx < 0) return;
+  // 既存の同日データを削除して再取得
+  salesRows = salesRows.filter(r => r.date !== dateStr);
+  for (let i = hi+1; i < lines.length; i++) {
+    const vals = lines[i].split(',').map(v=>v.trim().replace(/^"|"$/g,''));
+    if (vals.length <= Math.max(codeIdx, salesIdx)) continue;
+    const code  = vals[codeIdx];
+    const sales = parseFloat(vals[salesIdx]) || 0;
+    if (!code || sales === 0) continue;
+    const ym = dateStr.slice(0,7).replace('-','');
+    salesRows.push({ date: dateStr, ym, itemCode: code, sales });
+  }
+}
+
+function _getSalesSummary(ymOrDate, isMonthly) {
+  // 月別(ym='YYYY-MM') or 日別(date='YYYY-MM-DD')の総売上合計
+  const key = isMonthly ? ymOrDate.replace('-','') : ymOrDate;
+  const rows = isMonthly
+    ? salesRows.filter(r => r.ym === key)
+    : salesRows.filter(r => r.date === ymOrDate);
+  return rows.reduce((s,r) => s + r.sales, 0);
 }
 
 function _backfillKwCtr(text) {
@@ -2271,9 +2327,9 @@ function _renderTable(mode, rows) {
 
   // ── tableタグで統一（ヘッダーと行が自動的に列幅を共有） ──
   const BG = ['#f4f8ff','#edf4ff','#e6f0ff','#f4fbf5','#edf8ef','#e6f5e9','#faf4ff','#f5eeff','#f0e8ff','#fffaf3','#fff5e8','#fff0dd','#fff5f4','#ffeeed','#ffe8e6'];
-  const HBG = ['#e8f0fe','#dce8fd','#d0e0fc','#e6f4ea','#daf0e0','#ceead4','#f3e8fd','#ecdffb','#e4d5f9','#fef3e2','#fdecd4','#fce4c6','#fce8e6','#faddda','#f8d2ce'];
+  const HBG = ['#e8fce8','#d0f5d0','#e8f0fe','#dce8fd','#d0e0fc','#e6f4ea','#daf0e0','#ceead4','#f3e8fd','#ecdffb','#e4d5f9','#fef3e2','#fdecd4','#fce4c6','#fce8e6','#faddda','#f8d2ce'];
   const dateLabel = mode === 'monthly' ? '月' : '日付';
-  const HEADS = ['実績額■','実績額-KW','実績額-20','売上金額■','売上金額-KW','売上金額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','ROAS■','ROAS-KW','ROAS-20'];
+  const HEADS = ['総売上','SEO売上','実績額■','実績額-KW','実績額-20','売上金額■','売上金額-KW','売上金額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','ROAS■','ROAS-KW','ROAS-20'];
 
   let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:auto">
     <thead><tr style="background:var(--surface2)">
