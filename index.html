@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.123</span>
+    <span class="build-date">v1.124</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1709,10 +1709,12 @@ function _renderKwByItem(itemCode, ym) {
     if (!kwTotals[r.kw]) kwTotals[r.kw] = { spend:0, sales:0, vol:0, volDays:0 };
     kwTotals[r.kw].spend += r.spend;
     kwTotals[r.kw].sales += r.sales;
-    // 予測検索vol: cl ÷ (ctr/100) で1日分の検索vol
-    if (r.ctr > 0 && r.cl > 0) {
-      kwTotals[r.kw].vol += r.cl / (r.ctr / 100);
+    // 予測検索vol: cl ÷ (ctr/100) で1日分の検索vol。CTR未取得はデフォルト2%
+    if (r.cl > 0) {
+      const ctrVal = r.ctr > 0 ? r.ctr : 2;
+      kwTotals[r.kw].vol += r.cl / (ctrVal / 100);
       kwTotals[r.kw].volDays++;
+      if (r.ctr === 0) kwTotals[r.kw].usedDefault = true;
     }
   });
   const kwList = Object.keys(kwTotals).sort((a,b) => kwTotals[b].spend - kwTotals[a].spend);
@@ -1920,8 +1922,9 @@ function _renderKwByItem(itemCode, ym) {
               const tot = kwTotals[kw];
               if (!tot || tot.vol === 0) return '<span style="font-size:9px;color:var(--text3)">—</span>';
               const adjVol = Math.round(tot.vol * (daysInMonth / dateDays));
-              return '<span style="font-size:10px;font-weight:700;color:var(--text)">' + adjVol.toLocaleString() + '</span>' +
-                (dateDays < daysInMonth ? '<div style="font-size:8px;color:var(--text3)">' + daysInMonth + '/' + dateDays + '日</div>' : '');
+              const suffix = (dateDays < daysInMonth ? '<div style="font-size:8px;color:var(--text3)">' + daysInMonth + '/' + dateDays + '日</div>' : '') +
+                (tot.usedDefault ? '<div style="font-size:8px;color:var(--text3)">CTR:2%</div>' : '');
+              return '<span style="font-size:10px;font-weight:700;color:var(--text)">' + adjVol.toLocaleString() + '</span>' + suffix;
             })()}
           </div>
           <div style="padding:4px 6px;border-right:1px solid var(--border);text-align:right">
