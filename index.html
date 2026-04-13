@@ -309,7 +309,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.179</span>
+    <span class="build-date">v1.180</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2508,7 +2508,6 @@ function renderMonthlyItem() {
   }
   const q = (document.getElementById('monthlyItemSearch')?.value || '').trim().toLowerCase();
   const fmtY = v => v === 0 ? '—' : '¥' + v.toLocaleString();
-  const rcR  = v => v >= 300 ? 'c-g1' : v >= 150 ? 'c-g2' : 'c-bk';
 
   let codes = Object.keys(itemDailyData);
   if (q) {
@@ -2520,14 +2519,14 @@ function renderMonthlyItem() {
     });
   }
 
+  // 全商品×月のデータを集計
   const productRows = [];
   codes.forEach(code => {
     const byDate = itemDailyData[code] || {};
     const monthStats = yms.map(ym => {
       const ymDash = ym.slice(0,4) + '-' + ym.slice(4,6);
       let spend=0, sales=0, orders=0, cl=0,
-          spendKw=0, salesKw=0, ordersKw=0, clKw=0,
-          spend20=0, sales20=0, orders20=0, cl20=0;
+          spendKw=0, salesKw=0, ordersKw=0, clKw=0;
       Object.entries(byDate).forEach(([date,d]) => {
         if (!date.startsWith(ymDash)) return;
         spend    += d.spend    ||0; sales    += d.sales    ||0;
@@ -2535,25 +2534,22 @@ function renderMonthlyItem() {
         spendKw  += d.spendKw  ||0; salesKw  += d.salesKw  ||0;
         ordersKw += d.ordersKw ||0; clKw     += d.clKw     ||0;
       });
-      spend20  = Math.max(0, spend  - spendKw);
-      sales20  = Math.max(0, sales  - salesKw);
-      orders20 = Math.max(0, orders - ordersKw);
-      cl20     = Math.max(0, cl     - clKw);
+      const spend20  = Math.max(0, spend  - spendKw);
+      const sales20  = Math.max(0, sales  - salesKw);
+      const orders20 = Math.max(0, orders - ordersKw);
+      const cl20     = Math.max(0, cl     - clKw);
       const roas    = spend   > 0 ? Math.round(sales   / spend   * 10000) / 100 : 0;
       const roasKw  = spendKw > 0 ? Math.round(salesKw / spendKw * 10000) / 100 : 0;
       const roas20v = spend20 > 0 ? Math.round(sales20 / spend20 * 10000) / 100 : 0;
-      const cpa     = orders  > 0 ? Math.round(spend   / orders)  : 0;
-      const cpaKw   = ordersKw> 0 ? Math.round(spendKw / ordersKw): 0;
-      const cpa20   = orders20> 0 ? Math.round(spend20 / orders20): 0;
-      const cvr     = cl      > 0 ? Math.round(orders  / cl  * 10000) / 100 : 0;
-      const cvrKw   = clKw    > 0 ? Math.round(ordersKw/ clKw* 10000) / 100 : 0;
-      const cvr20   = cl20    > 0 ? Math.round(orders20/ cl20* 10000) / 100 : 0;
+      const cvr     = cl      > 0 ? Math.round(orders  / cl   * 10000) / 100 : 0;
+      const cvrKw   = clKw    > 0 ? Math.round(ordersKw/ clKw * 10000) / 100 : 0;
+      const cvr20   = cl20    > 0 ? Math.round(orders20/ cl20 * 10000) / 100 : 0;
       const totSales= salesRows.filter(s=>s.ym===ym&&s.itemCode===code).reduce((a,s)=>a+s.sales,0);
       const seoSales= Math.max(0, totSales - sales);
       const sroas   = totSales>0&&spend>0 ? Math.round(totSales/spend*10000)/100 : 0;
       return { ym, spend, sales, roas, spendKw, salesKw, roasKw,
-               spend20, sales20, roas20: roas20v, cpa, cpaKw, cpa20,
-               cvr, cvrKw, cvr20, totSales, seoSales, sroas };
+               spend20, sales20, roas20: roas20v, cvr, cvrKw, cvr20,
+               totSales, seoSales, sroas };
     });
     if (!q && monthStats.every(m=>m.spend===0)) return;
     const c    = productCache[code]||{};
@@ -2569,30 +2565,65 @@ function renderMonthlyItem() {
     return;
   }
 
-  const HEADS = ['月','総売上★','SEO売上','売上金額■','売上金額-KW','売上金額-20','実績額■','実績額-KW','実績額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','売上ROAS★','ROAS■','ROAS-KW','ROAS-20'];
-  const HBG   = ['var(--surface2)','#bfdbfe','#dbeafe','#ceead4','#bbf7d0','#d1fae5','#fef08a','#fef9c3','#fefce8','#ddd6fe','#ede9fe','#f5f3ff','#fed7aa','#fde8c8','#fff7ed','#bfdbfe','#fecdd3','#ffe4e8','#fff1f2'];
-  const BG    = ['var(--surface2)','#eff6ff','#f0f9ff','#f0fdf4','#f0fdf9','#f7fffe','#fefce8','#fefff0','#fffff5','#f5f3ff','#faf5ff','#fcfbff','#fff7ed','#fffbf5','#fffdf9','#eff6ff','#fff1f2','#fff5f6','#fffbfc'];
+  // パーセンタイルベースのrank5（全商品×月の値を集めてランク付け）
+  const _rank5mi = (val, allVals, higherIsBetter) => {
+    if (!val || val === 0 || allVals.length === 0) return 'bk';
+    const sorted = allVals.slice().sort((a,b) => higherIsBetter ? b-a : a-b);
+    let idx2 = sorted.indexOf(val);
+    if (idx2 < 0) idx2 = sorted.reduce((bi,v,i)=>Math.abs(v-val)<Math.abs(sorted[bi]-val)?i:bi, 0);
+    const n = sorted.length;
+    if (idx2 < Math.ceil(n*0.10)) return 'g1';
+    if (idx2 < Math.ceil(n*0.20)) return 'g2';
+    if (idx2 >= Math.floor(n*0.90)) return 'r';
+    if (idx2 >= Math.floor(n*0.80)) return 'o';
+    return 'bk';
+  };
+
+  // 各指標の全値を収集（全商品×月）
+  const allStats = productRows.flatMap(r=>r.monthStats);
+  const vTotSales= allStats.map(m=>m.totSales).filter(v=>v>0);
+  const vSeoSales= allStats.map(m=>m.seoSales).filter(v=>v>0);
+  const vSales   = allStats.map(m=>m.sales).filter(v=>v>0);
+  const vSalesKw = allStats.map(m=>m.salesKw).filter(v=>v>0);
+  const vSales20 = allStats.map(m=>m.sales20).filter(v=>v>0);
+  const vSpend   = allStats.map(m=>m.spend).filter(v=>v>0);
+  const vSpendKw = allStats.map(m=>m.spendKw).filter(v=>v>0);
+  const vSpend20 = allStats.map(m=>m.spend20).filter(v=>v>0);
+  const vCvr     = allStats.map(m=>m.cvr).filter(v=>v>0);
+  const vCvrKw   = allStats.map(m=>m.cvrKw).filter(v=>v>0);
+  const vCvr20   = allStats.map(m=>m.cvr20).filter(v=>v>0);
+  const vSroas   = allStats.map(m=>m.sroas).filter(v=>v>0);
+  const vRoas    = allStats.map(m=>m.roas).filter(v=>v>0);
+  const vRoasKw  = allStats.map(m=>m.roasKw).filter(v=>v>0);
+  const vRoas20  = allStats.map(m=>m.roas20).filter(v=>v>0);
+
+  const cv = (val, allV, hi, fmt) => {
+    if (!val || val===0) return '<span style="color:var(--text3)">—</span>';
+    const cls = 'c-' + _rank5mi(val, allV, hi);
+    return `<span class="${cls}">${fmt(val)}</span>`;
+  };
 
   const cells = m => [
-    m.totSales>0  ? fmtY(m.totSales)  : '<span style="color:var(--text3)">—</span>',
-    m.seoSales>0  ? fmtY(m.seoSales)  : '<span style="color:var(--text3)">—</span>',
-    m.sales>0     ? fmtY(m.sales)     : '<span style="color:var(--text3)">—</span>',
-    m.salesKw>0   ? fmtY(m.salesKw)   : '<span style="color:var(--text3)">—</span>',
-    m.sales20>0   ? fmtY(m.sales20)   : '<span style="color:var(--text3)">—</span>',
-    m.spend>0     ? fmtY(m.spend)     : '<span style="color:var(--text3)">—</span>',
-    m.spendKw>0   ? fmtY(m.spendKw)   : '<span style="color:var(--text3)">—</span>',
-    m.spend20>0   ? fmtY(m.spend20)   : '<span style="color:var(--text3)">—</span>',
-    m.cpa>0       ? fmtY(m.cpa)       : '<span style="color:var(--text3)">—</span>',
-    m.cpaKw>0     ? fmtY(m.cpaKw)     : '<span style="color:var(--text3)">—</span>',
-    m.cpa20>0     ? fmtY(m.cpa20)     : '<span style="color:var(--text3)">—</span>',
-    m.cvr>0       ? `<span class="c-bk">${m.cvr}%</span>`    : '<span style="color:var(--text3)">—</span>',
-    m.cvrKw>0     ? `<span class="c-bk">${m.cvrKw}%</span>`  : '<span style="color:var(--text3)">—</span>',
-    m.cvr20>0     ? `<span class="c-bk">${m.cvr20}%</span>`  : '<span style="color:var(--text3)">—</span>',
-    `<span class="${rcR(m.sroas)}">${m.sroas>0?m.sroas+'%':'—'}</span>`,
-    `<span class="${rcR(m.roas)}">${m.roas>0?m.roas+'%':'—'}</span>`,
-    `<span class="${rcR(m.roasKw)}">${m.roasKw>0?m.roasKw+'%':'—'}</span>`,
-    `<span class="${rcR(m.roas20)}">${m.roas20>0?m.roas20+'%':'—'}</span>`,
+    cv(m.totSales, vTotSales, true,  v=>fmtY(v)),
+    cv(m.seoSales, vSeoSales, true,  v=>fmtY(v)),
+    cv(m.sales,    vSales,    true,  v=>fmtY(v)),
+    cv(m.salesKw,  vSalesKw,  true,  v=>fmtY(v)),
+    cv(m.sales20,  vSales20,  true,  v=>fmtY(v)),
+    cv(m.spend,    vSpend,    false, v=>fmtY(v)),
+    cv(m.spendKw,  vSpendKw,  false, v=>fmtY(v)),
+    cv(m.spend20,  vSpend20,  false, v=>fmtY(v)),
+    cv(m.cvr,      vCvr,      true,  v=>v+'%'),
+    cv(m.cvrKw,    vCvrKw,    true,  v=>v+'%'),
+    cv(m.cvr20,    vCvr20,    true,  v=>v+'%'),
+    cv(m.sroas,    vSroas,    true,  v=>v+'%'),
+    cv(m.roas,     vRoas,     true,  v=>v+'%'),
+    cv(m.roasKw,   vRoasKw,   true,  v=>v+'%'),
+    cv(m.roas20,   vRoas20,   true,  v=>v+'%'),
   ];
+
+  const HEADS = ['月','総売上★','SEO売上','売上金額■','売上金額-KW','売上金額-20','実績額■','実績額-KW','実績額-20','CVR■','CVR-KW','CVR-20','売上ROAS★','ROAS■','ROAS-KW','ROAS-20'];
+  const HBG   = ['var(--surface2)','#bfdbfe','#dbeafe','#ceead4','#bbf7d0','#d1fae5','#fef08a','#fef9c3','#fefce8','#fed7aa','#fde8c8','#fff7ed','#bfdbfe','#fecdd3','#ffe4e8','#fff1f2'];
+  const BG    = ['var(--surface2)','#eff6ff','#f0f9ff','#f0fdf4','#f0fdf9','#f7fffe','#fefce8','#fefff0','#fffff5','#fff7ed','#fffbf5','#fffdf9','#eff6ff','#fff1f2','#fff5f6','#fffbfc'];
 
   let html = `<table style="border-collapse:collapse;font-size:11px;width:100%">
     <thead><tr style="position:sticky;top:0;z-index:3;background:var(--surface2)">
