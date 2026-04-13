@@ -202,6 +202,58 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   z-index: 3;
 }
 
+/* ── Loading Lock Overlay ── */
+#loadingLock {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  backdrop-filter: blur(2px);
+}
+#loadingLock.active { display: flex; }
+#loadingLock .lock-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 28px 36px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  min-width: 280px;
+}
+#loadingLock .lock-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+#loadingLock .lock-sub {
+  font-size: 12px;
+  color: var(--text3);
+  margin-bottom: 18px;
+}
+#loadingLock .lock-progress {
+  width: 100%;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+#loadingLock .lock-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  animation: lockBarAnim 1.5s ease-in-out infinite;
+}
+@keyframes lockBarAnim {
+  0%   { width: 10%; margin-left: 0; }
+  50%  { width: 60%; margin-left: 20%; }
+  100% { width: 10%; margin-left: 90%; }
+}
+
 /* ── Drop Zone ── */
 #dropZoneArea.drag-over { border-color: var(--red); background: var(--red-light); }
 
@@ -293,6 +345,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 </style>
 </head>
 <body>
+<div id="loadingLock">
+  <div class="lock-card">
+    <div class="lock-title">📥 データを保存中...</div>
+    <div class="lock-sub" id="lockSubMsg">GitHubにデータを記録しています。<br>完了するまでお待ちください。</div>
+    <div class="lock-progress"><div class="lock-bar"></div></div>
+  </div>
+</div>
 
 <header>
   <div class="header-left">
@@ -314,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.184</span>
+    <span class="build-date">v1.185</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -935,6 +994,8 @@ async function saveToGitHub() {
     }
   } catch(e) {
     console.error('[ADcheck] GitHub save exception:', e);
+  } finally {
+    _unlockUI();
   }
 }
 
@@ -1059,6 +1120,7 @@ function handleFiles(e) {
 function readFiles(files) {
   if (!files || files.length === 0) return;
   (async () => {
+    _lockUI('ファイルを処理しています...<br>完了するまで画面を操作しないでください。');
     const csvTexts = [];
     let hasMonthlyFile = false;
     let hasSalesUpdate = false;
@@ -2978,6 +3040,17 @@ function getStats(p, ym) {
 // ── 複数月比較モード ──
 let _multiMonthMode = false;
 let _selectedMonths = [];
+
+function _lockUI(msg) {
+  const el = document.getElementById('loadingLock');
+  const sub = document.getElementById('lockSubMsg');
+  if (sub && msg) sub.innerHTML = msg;
+  if (el) el.classList.add('active');
+}
+function _unlockUI() {
+  const el = document.getElementById('loadingLock');
+  if (el) el.classList.remove('active');
+}
 
 function toggleSummaryBar(barId, wrapId, btn) {
   const bar = document.getElementById(barId);
