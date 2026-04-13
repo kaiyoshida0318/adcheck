@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.141</span>
+    <span class="build-date">v1.142</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1970,16 +1970,17 @@ function _nichFileType(name) {
 async function _readNichText(file) {
   // 楽天CSVはShift-JIS。まずShift-JISで試み、失敗時はUTF-8
   function _decode(bytes) {
+    // BOM確認（UTF-8 BOMはEF BB BF）
+    if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+      return new TextDecoder('utf-8').decode(bytes);
+    }
     try {
       const t = new TextDecoder('shift-jis').decode(bytes);
-      // 読めた文字列に日本語が含まれているか確認
-      if (t.includes('日付') || t.includes('コントロールカラム') || t.includes('実績額') || t.includes('集計')) return t;
+      if (t.includes('日付') || t.includes('コントロールカラム') || t.includes('実績額') || t.includes('集計') || t.includes('商品管理番号') || t.includes('売上')) return t;
     } catch(e) {}
-    // BOM付きUTF-8も試す
     try {
       const t = new TextDecoder('utf-8').decode(bytes);
-      if (t.includes('商品管理番号') || t.includes('日付') || t.includes('コントロールカラム') || t.includes('実績額')) return t;
-      return t; // とりあえず返す
+      return t;
     } catch(e) {}
     return new TextDecoder('shift-jis').decode(bytes);
   }
