@@ -309,7 +309,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.176</span>
+    <span class="build-date">v1.177</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2508,22 +2508,17 @@ function renderMonthlyItem() {
   }
   const q = (document.getElementById('monthlyItemSearch')?.value || '').trim().toLowerCase();
   const fmtY = v => v === 0 ? '—' : '¥' + v.toLocaleString();
-  const rcR = v => v >= 300 ? 'c-g1' : v >= 150 ? 'c-g2' : v > 0 ? 'c-bk' : 'c-bk';
+  const rcR  = v => v >= 300 ? 'c-g1' : v >= 150 ? 'c-g2' : 'c-bk';
 
-  // 全商品コードを取得（itemDailyDataから）
+  // 全商品を取得・絞り込み
   let codes = Object.keys(itemDailyData);
-  // 検索で絞り込み（商品管理番号 or 商品番号）
   if (q) {
     codes = codes.filter(code => {
-      const cached = productCache[code] || {};
+      const c = productCache[code] || {};
       return code.toLowerCase().includes(q) ||
-             (cached.itemNumber||'').toLowerCase().includes(q) ||
-             (cached.manualName||cached.name||'').toLowerCase().includes(q);
+        (c.itemNumber||'').toLowerCase().includes(q) ||
+        (c.manualName||c.name||'').toLowerCase().includes(q);
     });
-  }
-  if (codes.length === 0) {
-    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
-    return;
   }
 
   // 商品×月のデータを集計
@@ -2532,78 +2527,75 @@ function renderMonthlyItem() {
     const byDate = itemDailyData[code] || {};
     const monthStats = yms.map(ym => {
       const ymDash = ym.slice(0,4) + '-' + ym.slice(4,6);
-      let spend=0,cl=0,sales=0,orders=0,spendKw=0,salesKw=0,ordersKw=0;
-      Object.entries(byDate).forEach(([date, d]) => {
+      let spend=0,sales=0,orders=0,spendKw=0,salesKw=0;
+      Object.entries(byDate).forEach(([date,d]) => {
         if (!date.startsWith(ymDash)) return;
-        spend    += d.spend    || 0;
-        cl       += d.cl       || 0;
-        sales    += d.sales    || 0;
-        orders   += d.orders   || 0;
-        spendKw  += d.spendKw  || 0;
-        salesKw  += d.salesKw  || 0;
-        ordersKw += d.ordersKw || 0;
+        spend   += d.spend   ||0; sales  += d.sales  ||0;
+        orders  += d.orders  ||0; spendKw+= d.spendKw||0;
+        salesKw += d.salesKw ||0;
       });
-      const spend20  = Math.max(0, spend - spendKw);
-      const sales20  = Math.max(0, sales - salesKw);
-      const roas     = spend  > 0 ? Math.round(sales   / spend   * 10000) / 100 : 0;
-      const roasKw   = spendKw > 0 ? Math.round(salesKw / spendKw * 10000) / 100 : 0;
-      const roas20v  = spend20 > 0 ? Math.round(sales20 / spend20 * 10000) / 100 : 0;
-      const grossP   = Math.round(sales * 0.45 - spend);
-      const totSales = salesRows.filter(s => s.ym === ym && s.itemCode === code).reduce((a,s) => a + s.sales, 0);
-      const seoSales = Math.max(0, totSales - sales);
-      const sroas    = totSales > 0 && spend > 0 ? Math.round(totSales / spend * 10000) / 100 : 0;
-      return { spend, sales, roas, spendKw, salesKw, roasKw, spend20, sales20, roas20: roas20v, grossP, totSales, seoSales, sroas };
+      const roas   = spend  >0 ? Math.round(sales  /spend  *10000)/100 : 0;
+      const grossP = Math.round(sales*0.45 - spend);
+      const totSales = salesRows.filter(s=>s.ym===ym&&s.itemCode===code).reduce((a,s)=>a+s.sales,0);
+      const sroas  = totSales>0&&spend>0 ? Math.round(totSales/spend*10000)/100 : 0;
+      return { ym, spend, sales, roas, grossP, totSales, sroas };
     });
-    const totalSpend = monthStats.reduce((s,m) => s + m.spend, 0);
-    if (totalSpend === 0 && !q) return; // 絞り込みなしの場合は使用金額0の商品をスキップ
-    const cached  = productCache[code] || {};
-    const name    = cached.manualName || cached.name || code;
-    const itemNum = cached.itemNumber || code;
-    const imgSrc  = cached.manualImg  || cached.img  || null;
+    if (!q && monthStats.every(m=>m.spend===0)) return;
+    const c    = productCache[code]||{};
+    const name = c.manualName||c.name||code;
+    const itemNum = c.itemNumber||code;
+    const imgSrc  = c.manualImg||c.img||null;
     productRows.push({ code, name, itemNum, imgSrc, monthStats });
   });
-  productRows.sort((a,b) => b.monthStats.reduce((s,m)=>s+m.spend,0) - a.monthStats.reduce((s,m)=>s+m.spend,0));
+  productRows.sort((a,b)=>b.monthStats.reduce((s,m)=>s+m.spend,0)-a.monthStats.reduce((s,m)=>s+m.spend,0));
 
-  if (productRows.length === 0) {
-    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
+  if (productRows.length===0) {
+    wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
     return;
   }
 
-  // テーブル生成（商品固定列 ＋ 月ごとの列群）
-  const subCols = ['実績額','売上','ROAS','粗利益'];
-  const subBG   = ['#fef9c3','#ceead4','#bfdbfe','#d1fae5'];
-  const subHBG  = ['#fef08a','#bbf7d0','#93c5fd','#a7f3d0'];
+  // ヘッダー行
+  const HEADS = ['月','実績額■','売上金額■','ROAS■','総売上★','売上ROAS★','粗広告利益'];
+  const HBG   = ['var(--surface2)','#fef08a','#ceead4','#bfdbfe','#93c5fd','#bfdbfe','#a7f3d0'];
+  const BG    = ['var(--surface2)','#fefce8','#e6f5e9','#eff6ff','#eff6ff','#dbeafe','#f0fdf4'];
 
-  let html = `<table style="border-collapse:collapse;font-size:11px;width:100%;table-layout:auto">
-    <thead>
-      <tr style="background:var(--surface2);position:sticky;top:0;z-index:3">
-        <th rowspan="2" style="padding:8px 6px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;min-width:220px;background:var(--surface2)">商品</th>
-        ${yms.map(ym=>`<th colspan="${subCols.length}" style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);border-left:2px solid var(--border);font-size:12px;font-weight:700;background:#e8f0fe">${ym.slice(0,4)}/${ym.slice(4,6)}</th>`).join('')}
-      </tr>
-      <tr style="background:var(--surface2);position:sticky;top:33px;z-index:3">
-        ${yms.map(()=>subCols.map((c,i)=>`<th style="padding:4px 6px;text-align:right;border-bottom:2px solid var(--border);${i===0?'border-left:2px solid var(--border)':''}white-space:nowrap;font-size:9px;color:var(--text3);background:${subHBG[i]}">${c}</th>`).join('')).join('')}
-      </tr>
-    </thead>
+  let html = `<table style="border-collapse:collapse;font-size:11px;width:100%">
+    <thead><tr style="position:sticky;top:0;z-index:3;background:var(--surface2)">
+      <th style="padding:8px 10px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;min-width:220px;background:var(--surface2)">商品</th>
+      ${HEADS.map((h,i)=>`<th style="padding:8px 8px;text-align:right;border-bottom:2px solid var(--border);white-space:nowrap;font-size:10px;color:var(--text3);background:${HBG[i]}">${h}</th>`).join('')}
+    </tr></thead>
     <tbody>
-    ${productRows.map(({code,name,itemNum,imgSrc,monthStats})=>`
-      <tr style="border-bottom:1px solid var(--border)" onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
-        <td style="padding:6px 8px;background:var(--surface)">
-          <div style="display:flex;align-items:center;gap:8px">
-            ${imgSrc?`<img src="${imgSrc}" style="width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0">`:`<div style="width:32px;height:32px;border-radius:6px;background:var(--surface2);flex-shrink:0"></div>`}
-            <div style="overflow:hidden">
-              <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace">${itemNum}</div>
-              <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px" title="${name}">${name}</div>
+    ${productRows.map(({code,name,itemNum,imgSrc,monthStats},pi) => {
+      const rowsBg = pi%2===0?'':'background:#fafafa';
+      return monthStats.map((m,mi) => {
+        const isFirst = mi===0;
+        const isLast  = mi===monthStats.length-1;
+        const borderT = isFirst ? 'border-top:2px solid var(--border)' : 'border-top:1px dashed var(--border2)';
+        const borderB = isLast  ? 'border-bottom:2px solid var(--border)' : '';
+        const prodCell = isFirst ? `
+          <td rowspan="${monthStats.length}" style="padding:8px 10px;vertical-align:middle;border-top:2px solid var(--border);border-bottom:2px solid var(--border);background:var(--surface)">
+            <div style="display:flex;align-items:center;gap:8px">
+              ${imgSrc?`<img src="${imgSrc}" style="width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0">`:`<div style="width:32px;height:32px;border-radius:6px;background:var(--surface2);flex-shrink:0"></div>`}
+              <div style="overflow:hidden">
+                <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace">${itemNum}</div>
+                <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px" title="${name}">${name}</div>
+              </div>
             </div>
-          </div>
-        </td>
-        ${monthStats.map((m,mi)=>`
-          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;border-left:2px solid var(--border);background:${subBG[0]}">${m.spend>0?fmtY(m.spend):'<span style="color:var(--text3)">—</span>'}</td>
-          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:${subBG[1]}">${m.sales>0?fmtY(m.sales):'<span style="color:var(--text3)">—</span>'}</td>
-          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:${subBG[2]}"><span class="${rcR(m.roas)}">${m.roas>0?m.roas+'%':'—'}</span></td>
-          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:${subBG[3]}">${m.spend>0?`<span style="color:${m.grossP>=0?'var(--green)':'var(--danger)'};font-weight:600">${m.grossP>=0?'+':''}${fmtY(m.grossP)}</span>`:'—'}</td>
-        `).join('')}
-      </tr>
-    `).join('')}
+          </td>` : '';
+        const ymLabel = m.ym.slice(0,4)+'/'+m.ym.slice(4,6);
+        const hasData = m.spend>0||m.sales>0;
+        return `<tr>
+          ${prodCell}
+          <td style="padding:5px 8px;text-align:right;font-weight:700;font-size:11px;color:var(--accent);${borderT};${borderB};background:${BG[0]};font-family:'DM Mono',monospace;white-space:nowrap">${ymLabel}</td>
+          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[1]}">${hasData?fmtY(m.spend):'<span style="color:var(--text3)">—</span>'}</td>
+          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[2]}">${hasData?fmtY(m.sales):'<span style="color:var(--text3)">—</span>'}</td>
+          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[3]}"><span class="${rcR(m.roas)}">${m.roas>0?m.roas+'%':'—'}</span></td>
+          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[4]}">${m.totSales>0?fmtY(m.totSales):'<span style="color:var(--text3)">—</span>'}</td>
+          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[5]}"><span class="${rcR(m.sroas)}">${m.sroas>0?m.sroas+'%':'—'}</span></td>
+          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${borderT};${borderB};background:${BG[6]}">${hasData?`<span style="color:${m.grossP>=0?'var(--green)':'var(--danger)'};font-weight:600">${m.grossP>=0?'+':''}${fmtY(m.grossP)}</span>`:'—'}</td>
+        </tr>`;
+      }).join('');
+    }).join('')}
     </tbody>
   </table>`;
   wrap.innerHTML = html;
