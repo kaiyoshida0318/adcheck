@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.154</span>
+    <span class="build-date">v1.155</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2339,10 +2339,10 @@ function _renderTable(mode, rows) {
   const vRoas20 = rows.filter(r=>r.roas20>0).map(r=>r.roas20);
 
   // ── tableタグで統一（ヘッダーと行が自動的に列幅を共有） ──
-  const BG  = ['#eff6ff','#f0f9ff','#f0fdf4','#f0fdf9','#f7fffe','#fefce8','#fefff0','#fffff5','#f5f3ff','#faf5ff','#fcfbff','#fff7ed','#fffbf5','#fffdf9','#fff1f2','#fff5f6','#fffbfc'];
-  const HBG = ['#bfdbfe','#dbeafe','#bbf7d0','#a7f3d0','#d1fae5','#fef08a','#fef9c3','#fefce8','#ddd6fe','#ede9fe','#f5f3ff','#fed7aa','#fde8c8','#fff7ed','#fecdd3','#ffe4e8','#fff1f2'];
+  const BG  = ['#eff6ff','#f0f9ff','#f0fdf4','#f0fdf9','#f7fffe','#fefce8','#fefff0','#fffff5','#f5f3ff','#faf5ff','#fcfbff','#fff7ed','#fffbf5','#fffdf9','#eff6ff','#fff1f2','#fff5f6','#fffbfc'];
+  const HBG = ['#bfdbfe','#dbeafe','#bbf7d0','#a7f3d0','#d1fae5','#fef08a','#fef9c3','#fefce8','#ddd6fe','#ede9fe','#f5f3ff','#fed7aa','#fde8c8','#fff7ed','#bfdbfe','#fecdd3','#ffe4e8','#fff1f2'];
   const dateLabel = mode === 'monthly' ? '月' : '日付';
-  const HEADS = ['総売上','SEO売上','売上金額■','売上金額-KW','売上金額-20','実績額■','実績額-KW','実績額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','ROAS■','ROAS-KW','ROAS-20'];
+  const HEADS = ['総売上★','SEO売上','売上金額■','売上金額-KW','売上金額-20','実績額■','実績額-KW','実績額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','売上ROAS★','ROAS■','ROAS-KW','ROAS-20'];
 
   let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:auto">
     <thead><tr style="background:var(--surface2)">
@@ -2377,6 +2377,11 @@ function _renderTable(mode, rows) {
       _cv(r.cvr,     r.cvr>0?r.cvr+'%':'—',        _rank5(r.cvr,     vCvr,     true)),  // CVR：高い=良い
       _cv(cvrKwV,    cvrKwV>0?cvrKwV+'%':'—',      _rank5(cvrKwV,    vCvrKw,   true)),
       _cv(cvr20V,    cvr20V>0?cvr20V+'%':'—',      _rank5(cvr20V,    vCvr20,   true)),
+      // 売上ROAS★ = 総売上 / 実績額■ × 100
+      (() => {
+        const _sr = _totSales > 0 && r.spend > 0 ? Math.round(_totSales / r.spend * 10000) / 100 : 0;
+        return _sr > 0 ? `<span class="${_sr>=500?'c-g1':_sr>=300?'c-g2':_sr>0?'c-o':'c-bk'}">${_sr}%</span>` : '<span class="c-bk">—</span>';
+      })(),
       _fmtRoasCell(r.roas,    r.roas,    vRoas),
       _fmtRoasCell(roasKw_r, roasKw_r,  vRoasKw),
       _fmtRoasCell(r.roas20, r.roas20,  vRoas20),
