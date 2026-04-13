@@ -308,7 +308,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.158</span>
+    <span class="build-date">v1.159</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -417,7 +417,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       <div class="summary-bar" id="daily-summary-bar" style="display:none"></div>
       <div class="table-card">
         <div class="table-toolbar">
-          <select class="toolbar-month" id="dailyMonthSel" onchange="renderDailyFiltered()"></select>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <input type="date" id="dailyDateFrom" class="toolbar-month" style="width:130px;font-size:11px;padding:4px 6px" onchange="renderDailyFiltered()">
+            <span style="font-size:11px;color:var(--text3)">〜</span>
+            <input type="date" id="dailyDateTo" class="toolbar-month" style="width:130px;font-size:11px;padding:4px 6px" onchange="renderDailyFiltered()">
+          </div>
           <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
             <span style="color:#1565C0;font-weight:700">● 最高 500%〜</span>
             <span style="color:#2E7D32;font-weight:600">● 良い 300〜499%</span>
@@ -2426,25 +2430,31 @@ function _renderMonthlyTable(rows) { _renderTable('monthly', rows); }
 
 // 日別データの月セレクターを更新（月が増えると自動追加）
 function populateDailyMonthSel() {
-  const sel = document.getElementById('dailyMonthSel');
-  if (!sel || dailyRows.length === 0) return;
-  // dailyRowsから月一覧を動的生成
-  const months = [...new Set(dailyRows.map(r => r.code.slice(0, 6)))].sort().reverse();
-  const current = sel.value;
-  sel.innerHTML = months.map(m => {
-    const label = m.slice(0,4) + '年' + m.slice(4,6) + '月';
-    return `<option value="${m}">${label}</option>`;
-  }).join('');
-  // 以前選択していた月があれば維持、なければ最新月
-  if (months.includes(current)) sel.value = current;
+  if (dailyRows.length === 0) return;
+  // 日付の範囲を取得して初期値をセット
+  const dates = dailyRows.map(r=>r.label?.replace(/\//g,'-')).filter(Boolean).sort();
+  const minDate = dates[0];
+  const maxDate = dates[dates.length-1];
+  const fromEl = document.getElementById('dailyDateFrom');
+  const toEl   = document.getElementById('dailyDateTo');
+  if (fromEl && !fromEl.value) fromEl.value = minDate;
+  if (toEl   && !toEl.value)   toEl.value   = maxDate;
 }
-
-// 月で絞り込んで日別データを表示
 function renderDailyFiltered() {
-  const sel = document.getElementById('dailyMonthSel');
-  if (!sel || dailyRows.length === 0) return;
-  const ym = sel.value; // "202603"
-  const filtered = dailyRows.filter(r => r.code.slice(0, 6) === ym);
+  if (dailyRows.length === 0) return;
+  const fromEl = document.getElementById('dailyDateFrom');
+  const toEl   = document.getElementById('dailyDateTo');
+  const from = fromEl?.value; // "2026-03-01"
+  const to   = toEl?.value;   // "2026-04-08"
+  let filtered;
+  if (from && to) {
+    filtered = dailyRows.filter(r => {
+      const d = r.label?.replace(/\//g,'-'); // "2026/03/01" → "2026-03-01"
+      return d >= from && d <= to;
+    });
+  } else {
+    filtered = dailyRows;
+  }
   _renderTable('daily', filtered);
 }
 
