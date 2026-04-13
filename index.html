@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.143</span>
+    <span class="build-date">v1.145</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2348,7 +2348,21 @@ function _renderTable(mode, rows) {
     const cpaKw_r  = r.spendKw > 0 && r.ordersKw > 0 ? Math.round(r.spendKw / r.ordersKw) : 0;
     const roasKw_r = r.spendKw > 0 ? Math.round(r.salesKw / r.spendKw * 10000) / 100 : 0;
 
+    // 総売上・SEO売上の計算
+    const _isM = mode === 'monthly';
+    const _ymK = (r.ym||'').replace('-','');
+    const _dtK = r.date||'';
+    const _totSales = _isM
+      ? salesRows.filter(s=>s.ym===_ymK).reduce((a,s)=>a+s.sales,0)
+      : salesRows.filter(s=>s.date===_dtK).reduce((a,s)=>a+s.sales,0);
+    const _seoSales = Math.max(0,_totSales-(r.sales||0));
+    const _vTotSales = rows.map(rr=>{
+      const k=_isM?(rr.ym||'').replace('-',''):(rr.date||'');
+      return _isM?salesRows.filter(s=>s.ym===k).reduce((a,s)=>a+s.sales,0):salesRows.filter(s=>s.date===k).reduce((a,s)=>a+s.sales,0);
+    }).filter(v=>v>0);
     const cells = [
+      _totSales>0?_cv(_totSales,fmtY(_totSales),_rank5(_totSales,_vTotSales,true)):'<span style="color:var(--text3)">—</span>',
+      _seoSales>0?`<span style="color:var(--green);font-weight:600">${fmtY(_seoSales)}</span>`:'<span style="color:var(--text3)">—</span>',
       _cv(r.spend,   fmtY(r.spend),                _rank5(r.spend,   vSpend,   false)), // 実績額：低い=良い
       _cv(r.spendKw, fmtY(r.spendKw),              _rank5(r.spendKw, vSpendKw, false)),
       _cv(r.spend20, fmtY(r.spend20),              _rank5(r.spend20, vSpend20, false)),
