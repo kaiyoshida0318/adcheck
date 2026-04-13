@@ -309,7 +309,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.178</span>
+    <span class="build-date">v1.179</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2525,24 +2525,35 @@ function renderMonthlyItem() {
     const byDate = itemDailyData[code] || {};
     const monthStats = yms.map(ym => {
       const ymDash = ym.slice(0,4) + '-' + ym.slice(4,6);
-      let spend=0, sales=0, orders=0, spendKw=0, salesKw=0, ordersKw=0, clKw=0;
+      let spend=0, sales=0, orders=0, cl=0,
+          spendKw=0, salesKw=0, ordersKw=0, clKw=0,
+          spend20=0, sales20=0, orders20=0, cl20=0;
       Object.entries(byDate).forEach(([date,d]) => {
         if (!date.startsWith(ymDash)) return;
-        spend    += d.spend    ||0;
-        sales    += d.sales    ||0;
-        orders   += d.orders   ||0;
-        spendKw  += d.spendKw  ||0;
-        salesKw  += d.salesKw  ||0;
-        ordersKw += d.ordersKw ||0;
-        clKw     += d.clKw     ||0;
+        spend    += d.spend    ||0; sales    += d.sales    ||0;
+        orders   += d.orders   ||0; cl       += d.cl       ||0;
+        spendKw  += d.spendKw  ||0; salesKw  += d.salesKw  ||0;
+        ordersKw += d.ordersKw ||0; clKw     += d.clKw     ||0;
       });
-      const spend20  = Math.max(0, spend  - spendKw);
-      const sales20  = Math.max(0, sales  - salesKw);
-      const roas     = spend   > 0 ? Math.round(sales   / spend   * 10000) / 100 : 0;
-      const roasKw   = spendKw > 0 ? Math.round(salesKw / spendKw * 10000) / 100 : 0;
-      const roas20v  = spend20 > 0 ? Math.round(sales20 / spend20 * 10000) / 100 : 0;
-      const grossP   = Math.round(sales * 0.45 - spend);
-      return { ym, spend, sales, roas, spendKw, salesKw, roasKw, spend20, sales20, roas20: roas20v, grossP };
+      spend20  = Math.max(0, spend  - spendKw);
+      sales20  = Math.max(0, sales  - salesKw);
+      orders20 = Math.max(0, orders - ordersKw);
+      cl20     = Math.max(0, cl     - clKw);
+      const roas    = spend   > 0 ? Math.round(sales   / spend   * 10000) / 100 : 0;
+      const roasKw  = spendKw > 0 ? Math.round(salesKw / spendKw * 10000) / 100 : 0;
+      const roas20v = spend20 > 0 ? Math.round(sales20 / spend20 * 10000) / 100 : 0;
+      const cpa     = orders  > 0 ? Math.round(spend   / orders)  : 0;
+      const cpaKw   = ordersKw> 0 ? Math.round(spendKw / ordersKw): 0;
+      const cpa20   = orders20> 0 ? Math.round(spend20 / orders20): 0;
+      const cvr     = cl      > 0 ? Math.round(orders  / cl  * 10000) / 100 : 0;
+      const cvrKw   = clKw    > 0 ? Math.round(ordersKw/ clKw* 10000) / 100 : 0;
+      const cvr20   = cl20    > 0 ? Math.round(orders20/ cl20* 10000) / 100 : 0;
+      const totSales= salesRows.filter(s=>s.ym===ym&&s.itemCode===code).reduce((a,s)=>a+s.sales,0);
+      const seoSales= Math.max(0, totSales - sales);
+      const sroas   = totSales>0&&spend>0 ? Math.round(totSales/spend*10000)/100 : 0;
+      return { ym, spend, sales, roas, spendKw, salesKw, roasKw,
+               spend20, sales20, roas20: roas20v, cpa, cpaKw, cpa20,
+               cvr, cvrKw, cvr20, totSales, seoSales, sroas };
     });
     if (!q && monthStats.every(m=>m.spend===0)) return;
     const c    = productCache[code]||{};
@@ -2558,25 +2569,35 @@ function renderMonthlyItem() {
     return;
   }
 
-  const HEADS = ['月','使用金額合計','売上合計','ROAS','KW実績','KW ROAS','20円実績','20円ROAS','粗広告利益'];
-  const HBG   = ['var(--surface2)','#fef08a','#ceead4','#bfdbfe','#e4d5f9','#ecdffb','#fed7aa','#fde8c8','#a7f3d0'];
-  const BG    = ['var(--surface2)','#fefce8','#e6f5e9','#eff6ff','#f5f3ff','#faf5ff','#fff7ed','#fffbf5','#f0fdf4'];
+  const HEADS = ['月','総売上★','SEO売上','売上金額■','売上金額-KW','売上金額-20','実績額■','実績額-KW','実績額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','売上ROAS★','ROAS■','ROAS-KW','ROAS-20'];
+  const HBG   = ['var(--surface2)','#bfdbfe','#dbeafe','#ceead4','#bbf7d0','#d1fae5','#fef08a','#fef9c3','#fefce8','#ddd6fe','#ede9fe','#f5f3ff','#fed7aa','#fde8c8','#fff7ed','#bfdbfe','#fecdd3','#ffe4e8','#fff1f2'];
+  const BG    = ['var(--surface2)','#eff6ff','#f0f9ff','#f0fdf4','#f0fdf9','#f7fffe','#fefce8','#fefff0','#fffff5','#f5f3ff','#faf5ff','#fcfbff','#fff7ed','#fffbf5','#fffdf9','#eff6ff','#fff1f2','#fff5f6','#fffbfc'];
 
   const cells = m => [
-    m.spend>0  ? fmtY(m.spend)   : '<span style="color:var(--text3)">—</span>',
-    m.sales>0  ? fmtY(m.sales)   : '<span style="color:var(--text3)">—</span>',
+    m.totSales>0  ? fmtY(m.totSales)  : '<span style="color:var(--text3)">—</span>',
+    m.seoSales>0  ? fmtY(m.seoSales)  : '<span style="color:var(--text3)">—</span>',
+    m.sales>0     ? fmtY(m.sales)     : '<span style="color:var(--text3)">—</span>',
+    m.salesKw>0   ? fmtY(m.salesKw)   : '<span style="color:var(--text3)">—</span>',
+    m.sales20>0   ? fmtY(m.sales20)   : '<span style="color:var(--text3)">—</span>',
+    m.spend>0     ? fmtY(m.spend)     : '<span style="color:var(--text3)">—</span>',
+    m.spendKw>0   ? fmtY(m.spendKw)   : '<span style="color:var(--text3)">—</span>',
+    m.spend20>0   ? fmtY(m.spend20)   : '<span style="color:var(--text3)">—</span>',
+    m.cpa>0       ? fmtY(m.cpa)       : '<span style="color:var(--text3)">—</span>',
+    m.cpaKw>0     ? fmtY(m.cpaKw)     : '<span style="color:var(--text3)">—</span>',
+    m.cpa20>0     ? fmtY(m.cpa20)     : '<span style="color:var(--text3)">—</span>',
+    m.cvr>0       ? `<span class="c-bk">${m.cvr}%</span>`    : '<span style="color:var(--text3)">—</span>',
+    m.cvrKw>0     ? `<span class="c-bk">${m.cvrKw}%</span>`  : '<span style="color:var(--text3)">—</span>',
+    m.cvr20>0     ? `<span class="c-bk">${m.cvr20}%</span>`  : '<span style="color:var(--text3)">—</span>',
+    `<span class="${rcR(m.sroas)}">${m.sroas>0?m.sroas+'%':'—'}</span>`,
     `<span class="${rcR(m.roas)}">${m.roas>0?m.roas+'%':'—'}</span>`,
-    m.spendKw>0 ? fmtY(m.spendKw) : '<span style="color:var(--text3)">—</span>',
     `<span class="${rcR(m.roasKw)}">${m.roasKw>0?m.roasKw+'%':'—'}</span>`,
-    m.spend20>0 ? fmtY(m.spend20) : '<span style="color:var(--text3)">—</span>',
     `<span class="${rcR(m.roas20)}">${m.roas20>0?m.roas20+'%':'—'}</span>`,
-    (m.spend>0) ? `<span style="color:${m.grossP>=0?'var(--green)':'var(--danger)'};font-weight:600">${m.grossP>=0?'+':''}${fmtY(m.grossP)}</span>` : '—',
   ];
 
   let html = `<table style="border-collapse:collapse;font-size:11px;width:100%">
     <thead><tr style="position:sticky;top:0;z-index:3;background:var(--surface2)">
       <th style="padding:8px 10px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;min-width:220px;background:var(--surface2)">商品</th>
-      ${HEADS.map((h,i)=>`<th style="padding:8px 8px;text-align:right;border-bottom:2px solid var(--border);white-space:nowrap;font-size:10px;color:var(--text3);background:${HBG[i]}">${h}</th>`).join('')}
+      ${HEADS.map((h,i)=>`<th style="padding:8px 6px;text-align:right;border-bottom:2px solid var(--border);white-space:nowrap;font-size:10px;color:var(--text3);background:${HBG[i]}">${h}</th>`).join('')}
     </tr></thead>
     <tbody>
     ${productRows.map(({code,name,itemNum,imgSrc,monthStats}) =>
@@ -2598,8 +2619,8 @@ function renderMonthlyItem() {
           </td>` : '';
         return `<tr>
           ${prodCell}
-          <td style="padding:5px 8px;text-align:right;font-weight:700;font-size:11px;color:var(--accent);${bT};${bB};background:${BG[0]};font-family:'DM Mono',monospace;white-space:nowrap">${ymLabel}</td>
-          ${cells(m).map((c,i)=>`<td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;${bT};${bB};background:${BG[i+1]};white-space:nowrap">${c}</td>`).join('')}
+          <td style="padding:5px 6px;text-align:right;font-weight:700;font-size:11px;color:var(--accent);${bT};${bB};background:${BG[0]};font-family:'DM Mono',monospace;white-space:nowrap">${ymLabel}</td>
+          ${cells(m).map((c,i)=>`<td style="padding:5px 6px;text-align:right;font-family:'DM Mono',monospace;${bT};${bB};background:${BG[i+1]};white-space:nowrap">${c}</td>`).join('')}
         </tr>`;
       }).join('')
     ).join('')}
