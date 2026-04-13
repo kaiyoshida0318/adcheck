@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.194</span>
+    <span class="build-date">v1.195</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -390,8 +390,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <!-- タブバー -->
 <nav class="tab-bar">
-  <button class="tab-btn active" id="tab-btn-products" onclick="switchTab('products')">商品・KW別データ</button>
   <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">月別データ</button>
+  <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">商品・KW別データ</button>
   <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">月別/商品個別</button>
   <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">日別データ</button>
   <button class="tab-btn" id="tab-btn-kw" onclick="switchTab('kw')">KW別データ</button>
@@ -2904,7 +2904,7 @@ async function monthlyRun() {
 
 
 // ── タブ切り替え ──
-let _currentTab = 'products';
+let _currentTab = 'monthly';
 
 function switchTab(tab) {
   _currentTab = tab;
@@ -3688,6 +3688,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const loaded = await loadFromGitHub();
   if (loaded) {
     afterLoad(true);
+    switchTab('monthly');
   }
 });
 </script>
