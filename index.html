@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.185</span>
+    <span class="build-date">v1.187</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2459,28 +2459,31 @@ function _renderTable(mode, rows) {
     }
     return salesRows.filter(s=>s.date===lb.replace(/\//g,'-')).reduce((a,s)=>a+s.sales,0);
   };
-  const vTotSalesAll = rows.map(_getTotSales).filter(v=>v>0);
-  const vSalesROASAll = rows.map(r=>{
+  const vTotSalesAll = _rankRows.map(_getTotSales).filter(v=>v>0);
+  const vSalesROASAll = _rankRows.map(r=>{
     const ts = _getTotSales(r);
     return ts > 0 && r.spend > 0 ? Math.round(ts / r.spend * 10000) / 100 : 0;
   }).filter(v=>v>0);
-  const vSeoSalesAll = rows.map(r=>Math.max(0,_getTotSales(r)-(r.sales||0))).filter(v=>v>0);
+  const vSeoSalesAll = _rankRows.map(r=>Math.max(0,_getTotSales(r)-(r.sales||0))).filter(v=>v>0);
 
-  const vSpend  = rows.filter(r=>r.spend>0).map(r=>r.spend);
-  const vSales  = rows.filter(r=>r.sales>0).map(r=>r.sales);
-  const vCpa    = rows.filter(r=>r.cpa>0).map(r=>r.cpa);
-  const vCvr    = rows.filter(r=>r.cvr>0).map(r=>r.cvr);
-  const vRoas   = rows.filter(r=>r.roas>0).map(r=>r.roas);
-  const vSpendKw= rows.filter(r=>r.spendKw>0).map(r=>r.spendKw);
-  const vSalesKw= rows.filter(r=>r.salesKw>0).map(r=>r.salesKw);
-  const vCpaKw  = rows.filter(r=>r.spendKw>0&&r.ordersKw>0).map(r=>Math.round(r.spendKw/r.ordersKw));
-  const vCvrKw  = rows.filter(r=>r.clKw>0&&r.ordersKw>0).map(r=>Math.round(r.ordersKw/r.clKw*10000)/100);
-  const vRoasKw = rows.filter(r=>r.spendKw>0).map(r=>Math.round(r.salesKw/r.spendKw*10000)/100);
-  const vSpend20= rows.filter(r=>r.spend20>0).map(r=>r.spend20);
-  const vSales20= rows.filter(r=>r.sales20>0).map(r=>r.sales20);
-  const vCpa20  = rows.filter(r=>r.cpa20>0).map(r=>r.cpa20);
-  const vCvr20  = rows.filter(r=>r.cvr20>0).map(r=>r.cvr20);
-  const vRoas20 = rows.filter(r=>r.roas20>0).map(r=>r.roas20);
+  // 月別モードでは最新月（rows[0]）を色分けの母集団から除外
+  const _rankRows = (mode === 'monthly' && rows.length > 1) ? rows.slice(1) : rows;
+
+  const vSpend  = _rankRows.filter(r=>r.spend>0).map(r=>r.spend);
+  const vSales  = _rankRows.filter(r=>r.sales>0).map(r=>r.sales);
+  const vCpa    = _rankRows.filter(r=>r.cpa>0).map(r=>r.cpa);
+  const vCvr    = _rankRows.filter(r=>r.cvr>0).map(r=>r.cvr);
+  const vRoas   = _rankRows.filter(r=>r.roas>0).map(r=>r.roas);
+  const vSpendKw= _rankRows.filter(r=>r.spendKw>0).map(r=>r.spendKw);
+  const vSalesKw= _rankRows.filter(r=>r.salesKw>0).map(r=>r.salesKw);
+  const vCpaKw  = _rankRows.filter(r=>r.spendKw>0&&r.ordersKw>0).map(r=>Math.round(r.spendKw/r.ordersKw));
+  const vCvrKw  = _rankRows.filter(r=>r.clKw>0&&r.ordersKw>0).map(r=>Math.round(r.ordersKw/r.clKw*10000)/100);
+  const vRoasKw = _rankRows.filter(r=>r.spendKw>0).map(r=>Math.round(r.salesKw/r.spendKw*10000)/100);
+  const vSpend20= _rankRows.filter(r=>r.spend20>0).map(r=>r.spend20);
+  const vSales20= _rankRows.filter(r=>r.sales20>0).map(r=>r.sales20);
+  const vCpa20  = _rankRows.filter(r=>r.cpa20>0).map(r=>r.cpa20);
+  const vCvr20  = _rankRows.filter(r=>r.cvr20>0).map(r=>r.cvr20);
+  const vRoas20 = _rankRows.filter(r=>r.roas20>0).map(r=>r.roas20);
 
   // ── tableタグで統一（ヘッダーと行が自動的に列幅を共有） ──
   const BG  = ['#eff6ff','#f0f9ff','#f0fdf4','#f0fdf9','#f7fffe','#fefce8','#fefff0','#fffff5','#f5f3ff','#faf5ff','#fcfbff','#fff7ed','#fffbf5','#fffdf9','#eff6ff','#fff1f2','#fff5f6','#fffbfc'];
