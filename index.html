@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.190</span>
+    <span class="build-date">v1.191</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -516,7 +516,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <input type="date" id="dailyDateFrom" class="toolbar-month" style="width:130px;font-size:11px;padding:4px 6px" onchange="renderDailyFiltered()">
             <span style="font-size:11px;color:var(--text3)">〜</span>
             <input type="date" id="dailyDateTo" class="toolbar-month" style="width:130px;font-size:11px;padding:4px 6px" onchange="renderDailyFiltered()">
-            <div id="dailyMonthBtns" style="display:flex;gap:4px;flex-wrap:wrap;margin-left:8px"></div>
+            <div id="dailyMonthBtns" style="display:flex;flex-direction:column;gap:4px;margin-left:8px"></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
             <span style="color:#1565C0;font-weight:700">● 最高 上位10%</span>
@@ -2757,16 +2757,30 @@ function populateDailyMonthSel() {
   if (fromEl && !fromEl.value) fromEl.value = minDate;
   if (toEl   && !toEl.value)   toEl.value   = maxDate;
 
-  // 月ボタン生成
+  // 月ボタン生成（同じ年を横1列、年が変わったら改行）
   const btnsEl = document.getElementById('dailyMonthBtns');
   if (!btnsEl) return;
   const yms = [...new Set(dates.map(d=>d.slice(0,7)))].sort();
-  btnsEl.innerHTML = yms.map(ym => {
-    const y = ym.slice(0,4), m = ym.slice(5,7);
-    const label = `${y}/${m}`;
-    const firstDay = ym + '-01';
-    const lastDay = new Date(+y, +m, 0).toISOString().slice(0,10);
-    return `<button onclick="setDailyRange('${firstDay}','${lastDay}')" style="font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">${label}</button>`;
+
+  // 年ごとにグループ化
+  const byYear = {};
+  yms.forEach(ym => {
+    const y = ym.slice(0,4);
+    if (!byYear[y]) byYear[y] = [];
+    byYear[y].push(ym);
+  });
+
+  btnsEl.innerHTML = Object.entries(byYear).sort().map(([year, months]) => {
+    const btns = months.map(ym => {
+      const m = ym.slice(5,7);
+      const firstDay = ym + '-01';
+      const lastDay = new Date(+year, +m, 0).toISOString().slice(0,10);
+      return `<button onclick="setDailyRange('${firstDay}','${lastDay}')" style="font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">${year}/${m}</button>`;
+    }).join('');
+    return `<div style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap">
+      <span style="font-size:10px;color:var(--text3);font-weight:700;white-space:nowrap;min-width:36px">${year}</span>
+      ${btns}
+    </div>`;
   }).join('');
 }
 function setDailyRange(from, to) {
