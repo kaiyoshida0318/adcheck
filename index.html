@@ -309,7 +309,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.168</span>
+    <span class="build-date">v1.169</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -425,6 +425,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <input type="date" id="dailyDateFrom" class="toolbar-month" style="width:130px;font-size:11px;padding:4px 6px" onchange="renderDailyFiltered()">
             <span style="font-size:11px;color:var(--text3)">〜</span>
             <input type="date" id="dailyDateTo" class="toolbar-month" style="width:130px;font-size:11px;padding:4px 6px" onchange="renderDailyFiltered()">
+            <div id="dailyMonthBtns" style="display:flex;gap:4px;flex-wrap:wrap;margin-left:8px"></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
             <span style="color:#1565C0;font-weight:700">● 最高 上位10%</span>
@@ -2451,7 +2452,6 @@ function _renderMonthlyTable(rows) { _renderTable('monthly', rows); }
 // 日別データの月セレクターを更新（月が増えると自動追加）
 function populateDailyMonthSel() {
   if (dailyRows.length === 0) return;
-  // 日付の範囲を取得して初期値をセット
   const dates = dailyRows.map(r=>r.label?.replace(/\//g,'-')).filter(Boolean).sort();
   const minDate = dates[0];
   const maxDate = dates[dates.length-1];
@@ -2459,7 +2459,27 @@ function populateDailyMonthSel() {
   const toEl   = document.getElementById('dailyDateTo');
   if (fromEl && !fromEl.value) fromEl.value = minDate;
   if (toEl   && !toEl.value)   toEl.value   = maxDate;
+
+  // 月ボタン生成
+  const btnsEl = document.getElementById('dailyMonthBtns');
+  if (!btnsEl) return;
+  const yms = [...new Set(dates.map(d=>d.slice(0,7)))].sort();
+  btnsEl.innerHTML = yms.map(ym => {
+    const y = ym.slice(0,4), m = ym.slice(5,7);
+    const label = `${y}/${m}`;
+    const firstDay = ym + '-01';
+    const lastDay = new Date(+y, +m, 0).toISOString().slice(0,10);
+    return `<button onclick="setDailyRange('${firstDay}','${lastDay}')" style="font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">${label}</button>`;
+  }).join('');
 }
+function setDailyRange(from, to) {
+  const fromEl = document.getElementById('dailyDateFrom');
+  const toEl   = document.getElementById('dailyDateTo');
+  if (fromEl) fromEl.value = from;
+  if (toEl)   toEl.value   = to;
+  renderDailyFiltered();
+}
+
 function renderDailyFiltered() {
   if (dailyRows.length === 0) return;
   const fromEl = document.getElementById('dailyDateFrom');
