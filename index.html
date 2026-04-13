@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.189</span>
+    <span class="build-date">v1.190</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2640,11 +2640,18 @@ function renderMonthlyItem() {
     productRows.push({ code, name, itemNum, imgSrc, monthStats });
   });
   productRows.sort((a,b)=>b.monthStats.reduce((s,m)=>s+m.spend,0)-a.monthStats.reduce((s,m)=>s+m.spend,0));
+  // 表示は上位5件まで（パフォーマンス対策）
+  const displayRows = productRows.slice(0, 5);
 
-  if (productRows.length===0) {
+  if (displayRows.length===0) {
     wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
     return;
   }
+
+  const totalCount = productRows.length;
+  const countNote = totalCount > 5
+    ? `<div style="padding:6px 12px;font-size:11px;color:var(--text3);background:var(--surface2);border-bottom:1px solid var(--border)">${totalCount}件中 上位5件を表示。商品名・管理番号で絞り込むと特定商品を表示できます。</div>`
+    : '';
 
   // パーセンタイルベースのrank5（全商品×月の値を集めてランク付け）
   const _rank5mi = (val, allVals, higherIsBetter) => {
@@ -2706,13 +2713,13 @@ function renderMonthlyItem() {
   const HBG   = ['var(--surface2)','#bfdbfe','#dbeafe','#ceead4','#bbf7d0','#d1fae5','#fef08a','#fef9c3','#fefce8','#fed7aa','#fde8c8','#fff7ed','#bfdbfe','#fecdd3','#ffe4e8','#fff1f2'];
   const BG    = ['var(--surface2)','#eff6ff','#f0f9ff','#f0fdf4','#f0fdf9','#f7fffe','#fefce8','#fefff0','#fffff5','#fff7ed','#fffbf5','#fffdf9','#eff6ff','#fff1f2','#fff5f6','#fffbfc'];
 
-  let html = `<table style="border-collapse:collapse;font-size:11px;width:100%">
+  let html = countNote + `<table style="border-collapse:collapse;font-size:11px;width:100%">
     <thead><tr style="position:sticky;top:0;z-index:3;background:var(--surface2)">
       <th style="padding:8px 10px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;min-width:220px;background:var(--surface2)">商品</th>
       ${HEADS.map((h,i)=>`<th style="padding:8px 6px;text-align:right;border-bottom:2px solid var(--border);white-space:nowrap;font-size:10px;color:var(--text3);background:${HBG[i]}">${h}</th>`).join('')}
     </tr></thead>
     <tbody>
-    ${productRows.map(({code,name,itemNum,imgSrc,monthStats}) =>
+    ${displayRows.map(({code,name,itemNum,imgSrc,monthStats}) =>
       monthStats.map((m,mi) => {
         const isFirst = mi===0;
         const isLast  = mi===monthStats.length-1;
