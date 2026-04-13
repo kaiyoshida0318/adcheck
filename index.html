@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.193</span>
+    <span class="build-date">v1.194</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2879,9 +2879,17 @@ async function monthlyRun() {
   const mByCode = {};
   nichinichiRows.forEach(r => { mByCode[r.code] = r; });
   newMonthly.forEach(r => { mByCode[r.code] = r; });
-  // 日別データから月単位で集計して追加（期間ファイルがない月を補完）
+  // 日別データから月単位で集計して追加（日別データが揃っている月は常に上書き）
   _aggregateDailyToMonthly(dailyRows).forEach(r => {
-    if (!mByCode[r.code]) mByCode[r.code] = r; // 期間ファイルがある月は上書きしない
+    const ym = r.code; // "202512"
+    // 該当月の日別データが何件あるか確認
+    const daysInData = dailyRows.filter(d => d.code.startsWith(ym)).length;
+    // 日別データが1件以上あれば集計値で上書き（期間ファイルの古いデータを駆逐）
+    if (daysInData > 0) {
+      mByCode[ym] = r;
+    } else if (!mByCode[ym]) {
+      mByCode[ym] = r;
+    }
   });
   nichinichiRows = Object.values(mByCode).sort((a, b) => b.code.localeCompare(a.code));
   _renderTable('monthly', nichinichiRows);
