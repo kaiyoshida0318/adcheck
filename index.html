@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.152</span>
+    <span class="build-date">v1.153</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2339,8 +2339,8 @@ function _renderTable(mode, rows) {
   const vRoas20 = rows.filter(r=>r.roas20>0).map(r=>r.roas20);
 
   // ── tableタグで統一（ヘッダーと行が自動的に列幅を共有） ──
-  const BG = ['#fefff0','#fffde7','#e6f5e9','#edf8ef','#f4fbf5','#e6f0ff','#edf4ff','#f4f8ff','#f0e8ff','#f5eeff','#faf4ff','#fff0dd','#fff5e8','#fffaf3','#ffe8e6','#ffeeed','#fff5f4'];
-  const HBG = ['#fefce8','#fef9c3','#ceead4','#daf0e0','#e6f4ea','#d0e0fc','#dce8fd','#e8f0fe','#e4d5f9','#ecdffb','#f3e8fd','#fce4c6','#fdecd4','#fef3e2','#f8d2ce','#faddda','#fce8e6'];
+  const BG = ['#fffde7','#fefff0','#e6f5e9','#edf8ef','#f4fbf5','#e6f0ff','#edf4ff','#f4f8ff','#f0e8ff','#f5eeff','#faf4ff','#fff0dd','#fff5e8','#fffaf3','#ffe8e6','#ffeeed','#fff5f4'];
+  const HBG = ['#fef9c3','#fefce8','#ceead4','#daf0e0','#e6f4ea','#d0e0fc','#dce8fd','#e8f0fe','#e4d5f9','#ecdffb','#f3e8fd','#fce4c6','#fdecd4','#fef3e2','#f8d2ce','#faddda','#fce8e6'];
   const dateLabel = mode === 'monthly' ? '月' : '日付';
   const HEADS = ['総売上','SEO売上','売上金額■','売上金額-KW','売上金額-20','実績額■','実績額-KW','実績額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','ROAS■','ROAS-KW','ROAS-20'];
 
