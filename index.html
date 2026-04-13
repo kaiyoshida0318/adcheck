@@ -308,7 +308,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.161</span>
+    <span class="build-date">v1.162</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -390,9 +390,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <div style="font-size:12px;color:var(--text3)">右上「＋レポート追加」から rpp_reports・rpp_keyword_reports を追加</div>
           <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
             <span style="color:#1565C0;font-weight:700">● 最高 上位10%</span>
-            <span style="color:#2E7D32;font-weight:600">● 良い 300〜499%</span>
-            <span style="color:#BA7517;font-weight:600">● 普通 1〜299%</span>
-            <span style="color:#A32D2D;font-weight:700">● 微妙〜悪い</span>
+            <span style="color:#2E7D32;font-weight:600">● 良い 上位20%</span>
+            <span style="color:var(--text);font-weight:400">● 普通 中間60%</span>
+            <span style="color:#E65100;font-weight:600">● 微妙 下位20%</span>
+            <span style="color:#C62828;font-weight:700">● 悪い 下位10%</span>
           </div>
           <div class="toolbar-right">
             <button class="tbtn" onclick="monthlyClear()">クリア</button>
@@ -424,9 +425,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           </div>
           <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
             <span style="color:#1565C0;font-weight:700">● 最高 上位10%</span>
-            <span style="color:#2E7D32;font-weight:600">● 良い 300〜499%</span>
-            <span style="color:#BA7517;font-weight:600">● 普通 1〜299%</span>
-            <span style="color:#A32D2D;font-weight:700">● 微妙〜悪い</span>
+            <span style="color:#2E7D32;font-weight:600">● 良い 上位20%</span>
+            <span style="color:var(--text);font-weight:400">● 普通 中間60%</span>
+            <span style="color:#E65100;font-weight:600">● 微妙 下位20%</span>
+            <span style="color:#C62828;font-weight:700">● 悪い 下位10%</span>
           </div>
           <div class="toolbar-right">
             <button class="tbtn" onclick="dailyClear()">クリア</button>
@@ -453,9 +455,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <select class="toolbar-month" id="kwMonthSel" onchange="renderKwFiltered()"></select>
           <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
             <span style="color:#1565C0;font-weight:700">● 最高 上位10%</span>
-            <span style="color:#2E7D32;font-weight:600">● 良い 300〜499%</span>
-            <span style="color:#BA7517;font-weight:600">● 普通 1〜299%</span>
-            <span style="color:#A32D2D;font-weight:700">● 微妙〜悪い</span>
+            <span style="color:#2E7D32;font-weight:600">● 良い 上位20%</span>
+            <span style="color:var(--text);font-weight:400">● 普通 中間60%</span>
+            <span style="color:#E65100;font-weight:600">● 微妙 下位20%</span>
+            <span style="color:#C62828;font-weight:700">● 悪い 下位10%</span>
           </div>
           <div class="toolbar-right">
             <span id="kw-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
