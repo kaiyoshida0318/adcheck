@@ -309,7 +309,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.175</span>
+    <span class="build-date">v1.176</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -422,9 +422,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="tab-panel" id="tab-monthly-item">
     <div class="container" style="max-width:1400px">
       <div class="table-card">
-        <div class="table-toolbar">
-          <select class="toolbar-month" id="monthlyItemYmSel" onchange="renderMonthlyItem()"></select>
-          <div style="font-size:11px;color:var(--text3);margin-left:8px">商品別月次実績</div>
+        <div class="table-toolbar" style="flex-wrap:wrap;gap:8px">
+          <div id="monthlyItemYmBtns" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:11px;color:var(--text3);white-space:nowrap">月選択：</span>
+          </div>
+          <input type="text" id="monthlyItemSearch" class="toolbar-search" placeholder="商品管理番号 or 商品番号で絞り込み..." oninput="renderMonthlyItem()" style="max-width:280px">
         </div>
         <div id="monthly-item-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
       </div>
@@ -2467,118 +2469,145 @@ function _renderTable(mode, rows) {
 function _renderMonthlyTable(rows) { _renderTable('monthly', rows); }
 
 // 日別データの月セレクターを更新（月が増えると自動追加）
+let _miSelectedYms = [];
+
 function populateMonthlyItemSel() {
-  const sel = document.getElementById('monthlyItemYmSel');
-  if (!sel) return;
+  const btns = document.getElementById('monthlyItemYmBtns');
+  if (!btns) return;
   const yms = [...new Set([
     ...nichinichiRows.map(r => r.ym || r.code?.slice(0,6)),
     ..._aggregateDailyToMonthly(dailyRows).map(r => r.code?.slice(0,6))
-  ].filter(Boolean))].sort().reverse();
-  const cur = sel.value;
-  sel.innerHTML = yms.map(ym =>
-    `<option value="${ym}">${ym.slice(0,4)}年${ym.slice(4,6)}月</option>`
-  ).join('');
-  if (cur && yms.includes(cur)) sel.value = cur;
-  else if (yms.length > 0) sel.value = yms[0];
+  ].filter(Boolean))].sort();
+  // 初期値：全月選択
+  if (_miSelectedYms.length === 0) _miSelectedYms = [...yms];
+  // ボタン生成
+  btns.innerHTML = '<span style="font-size:11px;color:var(--text3);white-space:nowrap">月選択：</span>' +
+    yms.map(ym => {
+      const checked = _miSelectedYms.includes(ym);
+      const label = ym.slice(0,4) + '/' + ym.slice(4,6);
+      return `<label style="display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;white-space:nowrap;padding:3px 8px;border-radius:4px;border:1px solid ${checked?'var(--accent)':'var(--border)'};background:${checked?'#e8f0fe':'var(--surface2)'};color:${checked?'var(--accent)':'var(--text)'}">
+        <input type="checkbox" style="display:none" ${checked?'checked':''} onchange="_miToggleYm('${ym}',this.checked)">${label}</label>`;
+    }).join('');
+}
+
+function _miToggleYm(ym, checked) {
+  if (checked) { if (!_miSelectedYms.includes(ym)) _miSelectedYms.push(ym); }
+  else { _miSelectedYms = _miSelectedYms.filter(m => m !== ym); }
+  _miSelectedYms.sort();
+  populateMonthlyItemSel();
+  renderMonthlyItem();
 }
 
 function renderMonthlyItem() {
-  const sel = document.getElementById('monthlyItemYmSel');
-  const ym = sel?.value; // "202604"
-  if (!ym) return;
   const wrap = document.getElementById('monthly-item-wrap');
   if (!wrap) return;
-
-  const ymDash = ym.slice(0,4) + '-' + ym.slice(4,6); // "2026-04"
+  const yms = _miSelectedYms.slice().sort();
+  if (yms.length === 0) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">月を選択してください</div>';
+    return;
+  }
+  const q = (document.getElementById('monthlyItemSearch')?.value || '').trim().toLowerCase();
   const fmtY = v => v === 0 ? '—' : '¥' + v.toLocaleString();
   const rcR = v => v >= 300 ? 'c-g1' : v >= 150 ? 'c-g2' : v > 0 ? 'c-bk' : 'c-bk';
 
-  // itemDailyDataから該当月のデータを商品ごとに集計
-  const rows = [];
-  Object.entries(itemDailyData).forEach(([code, byDate]) => {
-    let spend=0, cl=0, sales=0, orders=0, spendKw=0, clKw=0, salesKw=0, ordersKw=0;
-    Object.entries(byDate).forEach(([date, d]) => {
-      if (!date.startsWith(ymDash)) return;
-      spend    += d.spend    || 0;
-      cl       += d.cl       || 0;
-      sales    += d.sales    || 0;
-      orders   += d.orders   || 0;
-      spendKw  += d.spendKw  || 0;
-      clKw     += d.clKw     || 0;
-      salesKw  += d.salesKw  || 0;
-      ordersKw += d.ordersKw || 0;
+  // 全商品コードを取得（itemDailyDataから）
+  let codes = Object.keys(itemDailyData);
+  // 検索で絞り込み（商品管理番号 or 商品番号）
+  if (q) {
+    codes = codes.filter(code => {
+      const cached = productCache[code] || {};
+      return code.toLowerCase().includes(q) ||
+             (cached.itemNumber||'').toLowerCase().includes(q) ||
+             (cached.manualName||cached.name||'').toLowerCase().includes(q);
     });
-    if (spend === 0 && sales === 0) return;
-    const spend20  = Math.max(0, spend - spendKw);
-    const sales20  = Math.max(0, sales - salesKw);
-    const orders20 = Math.max(0, orders - ordersKw);
-    const cl20     = Math.max(0, cl - clKw);
-    const roas     = spend  > 0 ? Math.round(sales   / spend   * 10000) / 100 : 0;
-    const roasKw   = spendKw > 0 ? Math.round(salesKw / spendKw * 10000) / 100 : 0;
-    const roas20v  = spend20 > 0 ? Math.round(sales20 / spend20 * 10000) / 100 : 0;
-    const cpa      = orders  > 0 ? Math.round(spend   / orders)  : 0;
-    const grossP   = Math.round(sales * 0.45 - spend);
-    // salesRowsから総売上
-    const totSales = salesRows.filter(s => s.ym === ym && s.itemCode === code).reduce((a,s) => a + s.sales, 0);
-    const seoSales = Math.max(0, totSales - sales);
-    const sroas    = totSales > 0 && spend > 0 ? Math.round(totSales / spend * 10000) / 100 : 0;
-    const cached   = productCache[code] || {};
-    const name     = cached.manualName || cached.name || code;
-    const imgSrc   = cached.manualImg  || cached.img  || null;
-    const itemNum  = cached.itemNumber || code;
-    rows.push({ code, name, itemNum, imgSrc, spend, sales, roas, spendKw, salesKw, roasKw, spend20, sales20, roas20: roas20v, grossP, totSales, seoSales, sroas });
-  });
-  rows.sort((a, b) => b.spend - a.spend);
-
-  if (rows.length === 0) {
-    wrap.innerHTML = '<div class="empty" style="padding:40px;text-align:center;color:var(--text3)">該当月のデータがありません</div>';
+  }
+  if (codes.length === 0) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
     return;
   }
 
-  // HBG/BGは月別・日別と同じ色系統
-  const HEADS = ['総売上★','SEO売上','売上金額■','実績額■','実績額-KW','実績額-20','売上ROAS★','ROAS■','ROAS-KW','ROAS-20','粗広告利益'];
-  const HBG   = ['#bfdbfe','#dbeafe','#ceead4','#fef08a','#fef9c3','#fefce8','#bfdbfe','#fecdd3','#ffe4e8','#fff1f2','#d1fae5'];
-  const BG    = ['#eff6ff','#f0f9ff','#e6f5e9','#fefce8','#fefff0','#fffff5','#eff6ff','#fff1f2','#fff5f6','#fffbfc','#f0fdf4'];
+  // 商品×月のデータを集計
+  const productRows = [];
+  codes.forEach(code => {
+    const byDate = itemDailyData[code] || {};
+    const monthStats = yms.map(ym => {
+      const ymDash = ym.slice(0,4) + '-' + ym.slice(4,6);
+      let spend=0,cl=0,sales=0,orders=0,spendKw=0,salesKw=0,ordersKw=0;
+      Object.entries(byDate).forEach(([date, d]) => {
+        if (!date.startsWith(ymDash)) return;
+        spend    += d.spend    || 0;
+        cl       += d.cl       || 0;
+        sales    += d.sales    || 0;
+        orders   += d.orders   || 0;
+        spendKw  += d.spendKw  || 0;
+        salesKw  += d.salesKw  || 0;
+        ordersKw += d.ordersKw || 0;
+      });
+      const spend20  = Math.max(0, spend - spendKw);
+      const sales20  = Math.max(0, sales - salesKw);
+      const roas     = spend  > 0 ? Math.round(sales   / spend   * 10000) / 100 : 0;
+      const roasKw   = spendKw > 0 ? Math.round(salesKw / spendKw * 10000) / 100 : 0;
+      const roas20v  = spend20 > 0 ? Math.round(sales20 / spend20 * 10000) / 100 : 0;
+      const grossP   = Math.round(sales * 0.45 - spend);
+      const totSales = salesRows.filter(s => s.ym === ym && s.itemCode === code).reduce((a,s) => a + s.sales, 0);
+      const seoSales = Math.max(0, totSales - sales);
+      const sroas    = totSales > 0 && spend > 0 ? Math.round(totSales / spend * 10000) / 100 : 0;
+      return { spend, sales, roas, spendKw, salesKw, roasKw, spend20, sales20, roas20: roas20v, grossP, totSales, seoSales, sroas };
+    });
+    const totalSpend = monthStats.reduce((s,m) => s + m.spend, 0);
+    if (totalSpend === 0 && !q) return; // 絞り込みなしの場合は使用金額0の商品をスキップ
+    const cached  = productCache[code] || {};
+    const name    = cached.manualName || cached.name || code;
+    const itemNum = cached.itemNumber || code;
+    const imgSrc  = cached.manualImg  || cached.img  || null;
+    productRows.push({ code, name, itemNum, imgSrc, monthStats });
+  });
+  productRows.sort((a,b) => b.monthStats.reduce((s,m)=>s+m.spend,0) - a.monthStats.reduce((s,m)=>s+m.spend,0));
 
-  const cells = r => [
-    r.totSales > 0 ? fmtY(r.totSales) : '—',
-    r.seoSales > 0 ? fmtY(r.seoSales) : '—',
-    fmtY(r.sales),
-    fmtY(r.spend),
-    fmtY(r.spendKw),
-    fmtY(r.spend20),
-    r.sroas   > 0 ? `<span class="c-${rcR(r.sroas)}">${r.sroas}%</span>`  : '—',
-    r.roas    > 0 ? `<span class="c-${rcR(r.roas)}">${r.roas}%</span>`    : '—',
-    r.roasKw  > 0 ? `<span class="c-${rcR(r.roasKw)}">${r.roasKw}%</span>`: '—',
-    r.roas20  > 0 ? `<span class="c-${rcR(r.roas20)}">${r.roas20}%</span>`: '—',
-    r.spend > 0 ? `<span style="color:${r.grossP>=0?'var(--green)':'var(--danger)'};font-weight:600">${r.grossP>=0?'+':''}${fmtY(r.grossP)}</span>` : '—',
-  ];
+  if (productRows.length === 0) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
+    return;
+  }
 
-  let html = `<table style="border-collapse:collapse;font-size:11px;width:100%">
-    <thead><tr style="background:var(--surface2);position:sticky;top:0;z-index:3">
-      <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;min-width:240px">商品</th>
-      ${HEADS.map((h,i) => `<th style="padding:8px 6px;text-align:right;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:${HBG[i]}">${h}</th>`).join('')}
-    </tr></thead>
+  // テーブル生成（商品固定列 ＋ 月ごとの列群）
+  const subCols = ['実績額','売上','ROAS','粗利益'];
+  const subBG   = ['#fef9c3','#ceead4','#bfdbfe','#d1fae5'];
+  const subHBG  = ['#fef08a','#bbf7d0','#93c5fd','#a7f3d0'];
+
+  let html = `<table style="border-collapse:collapse;font-size:11px;width:100%;table-layout:auto">
+    <thead>
+      <tr style="background:var(--surface2);position:sticky;top:0;z-index:3">
+        <th rowspan="2" style="padding:8px 6px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;min-width:220px;background:var(--surface2)">商品</th>
+        ${yms.map(ym=>`<th colspan="${subCols.length}" style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);border-left:2px solid var(--border);font-size:12px;font-weight:700;background:#e8f0fe">${ym.slice(0,4)}/${ym.slice(4,6)}</th>`).join('')}
+      </tr>
+      <tr style="background:var(--surface2);position:sticky;top:33px;z-index:3">
+        ${yms.map(()=>subCols.map((c,i)=>`<th style="padding:4px 6px;text-align:right;border-bottom:2px solid var(--border);${i===0?'border-left:2px solid var(--border)':''}white-space:nowrap;font-size:9px;color:var(--text3);background:${subHBG[i]}">${c}</th>`).join('')).join('')}
+      </tr>
+    </thead>
     <tbody>
-    ${rows.map(r => `
+    ${productRows.map(({code,name,itemNum,imgSrc,monthStats})=>`
       <tr style="border-bottom:1px solid var(--border)" onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
-        <td style="padding:6px 8px">
+        <td style="padding:6px 8px;background:var(--surface)">
           <div style="display:flex;align-items:center;gap:8px">
-            ${r.imgSrc ? `<img src="${r.imgSrc}" style="width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0">` : `<div style="width:32px;height:32px;border-radius:6px;background:var(--surface2);flex-shrink:0"></div>`}
-            <div>
-              <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace">${r.itemNum}</div>
-              <div style="font-size:11px;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.name}">${r.name}</div>
+            ${imgSrc?`<img src="${imgSrc}" style="width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0">`:`<div style="width:32px;height:32px;border-radius:6px;background:var(--surface2);flex-shrink:0"></div>`}
+            <div style="overflow:hidden">
+              <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace">${itemNum}</div>
+              <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px" title="${name}">${name}</div>
             </div>
           </div>
         </td>
-        ${cells(r).map((c,i) => `<td style="padding:6px 8px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;background:${BG[i]}">${c}</td>`).join('')}
+        ${monthStats.map((m,mi)=>`
+          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;border-left:2px solid var(--border);background:${subBG[0]}">${m.spend>0?fmtY(m.spend):'<span style="color:var(--text3)">—</span>'}</td>
+          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:${subBG[1]}">${m.sales>0?fmtY(m.sales):'<span style="color:var(--text3)">—</span>'}</td>
+          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:${subBG[2]}"><span class="${rcR(m.roas)}">${m.roas>0?m.roas+'%':'—'}</span></td>
+          <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;background:${subBG[3]}">${m.spend>0?`<span style="color:${m.grossP>=0?'var(--green)':'var(--danger)'};font-weight:600">${m.grossP>=0?'+':''}${fmtY(m.grossP)}</span>`:'—'}</td>
+        `).join('')}
       </tr>
     `).join('')}
     </tbody>
   </table>`;
   wrap.innerHTML = html;
 }
-
 function populateDailyMonthSel() {
   if (dailyRows.length === 0) return;
   const dates = dailyRows.map(r=>r.label?.replace(/\//g,'-')).filter(Boolean).sort();
