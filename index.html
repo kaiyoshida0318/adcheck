@@ -308,7 +308,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.159</span>
+    <span class="build-date">v1.160</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -389,7 +389,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div class="table-toolbar">
           <div style="font-size:12px;color:var(--text3)">右上「＋レポート追加」から rpp_reports・rpp_keyword_reports を追加</div>
           <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
-            <span style="color:#1565C0;font-weight:700">● 最高 500%〜</span>
+            <span style="color:#1565C0;font-weight:700">● 最高 上位10%</span>
             <span style="color:#2E7D32;font-weight:600">● 良い 300〜499%</span>
             <span style="color:#BA7517;font-weight:600">● 普通 1〜299%</span>
             <span style="color:#A32D2D;font-weight:700">● 微妙〜悪い</span>
@@ -423,7 +423,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <input type="date" id="dailyDateTo" class="toolbar-month" style="width:130px;font-size:11px;padding:4px 6px" onchange="renderDailyFiltered()">
           </div>
           <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
-            <span style="color:#1565C0;font-weight:700">● 最高 500%〜</span>
+            <span style="color:#1565C0;font-weight:700">● 最高 上位10%</span>
             <span style="color:#2E7D32;font-weight:600">● 良い 300〜499%</span>
             <span style="color:#BA7517;font-weight:600">● 普通 1〜299%</span>
             <span style="color:#A32D2D;font-weight:700">● 微妙〜悪い</span>
@@ -452,7 +452,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div class="table-toolbar">
           <select class="toolbar-month" id="kwMonthSel" onchange="renderKwFiltered()"></select>
           <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
-            <span style="color:#1565C0;font-weight:700">● 最高 500%〜</span>
+            <span style="color:#1565C0;font-weight:700">● 最高 上位10%</span>
             <span style="color:#2E7D32;font-weight:600">● 良い 300〜499%</span>
             <span style="color:#BA7517;font-weight:600">● 普通 1〜299%</span>
             <span style="color:#A32D2D;font-weight:700">● 微妙〜悪い</span>
@@ -2318,14 +2318,20 @@ function _renderTable(mode, rows) {
   function _rank5(val, allVals, higherIsBetter) {
     if (!val || val === 0 || allVals.length === 0) return 'bk';
     const sorted = allVals.slice().sort((a, b) => higherIsBetter ? b - a : a - b);
-    const idx = sorted.indexOf(val);
-    if (idx < 0) return 'bk';
+    // sortedIndexを探す（同値の場合は最初のインデックス）
+    let idx = sorted.indexOf(val);
+    if (idx < 0) {
+      // 近い値を探す
+      const closest = sorted.reduce((a,b) => Math.abs(b-val) < Math.abs(a-val) ? b : a);
+      idx = sorted.indexOf(closest);
+    }
     const n = sorted.length;
-    if (idx < Math.ceil(n * 5 / 31))   return 'g1';
-    if (idx < Math.ceil(n * 10 / 31))  return 'g2';
-    if (idx <= Math.floor(n * 21 / 31)) return 'bk';
-    if (idx < Math.ceil(n * 26 / 31))  return 'o';
-    return 'r';
+    // 上位10%: g1(最高), 10-20%: g2(良い), 下位20-10%: o(微妙), 下位10%: r(悪い), 残り: bk(普通)
+    if (idx < Math.ceil(n * 0.10)) return 'g1'; // 上位10%
+    if (idx < Math.ceil(n * 0.20)) return 'g2'; // 上位10-20%
+    if (idx >= Math.floor(n * 0.90)) return 'r'; // 下位10%
+    if (idx >= Math.floor(n * 0.80)) return 'o'; // 下位10-20%
+    return 'bk'; // 中間60%: 普通
   }
   function _cv(val, formatted, rank) {
     return `<span class="c-${rank || 'bk'}">${formatted}</span>`;
