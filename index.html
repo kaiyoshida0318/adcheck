@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.118</span>
+    <span class="build-date">v1.119</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -525,20 +525,32 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <!-- 商品名一括更新モーダル -->
 <div class="modal-overlay" id="bulkNameModal" style="display:none" onclick="if(event.target===this)closeBulkNameModal()">
-  <div class="modal" style="max-width:580px;max-height:90vh;display:flex;flex-direction:column">
-    <h3 style="margin:0 0 4px;flex-shrink:0">📋 商品情報一括更新</h3>
+  <div class="modal" style="max-width:860px;width:95vw;max-height:92vh;display:flex;flex-direction:column">
+    <h3 style="margin:0 0 12px;flex-shrink:0">📋 商品情報一括更新</h3>
 
-    <!-- STEP1: CSVアップロード -->
+    <!-- STEP1: 基準選択 + CSVアップロード -->
     <div id="bulkStep1">
-      <p style="font-size:12px;color:var(--text2);margin:0 0 12px">商品リストCSVをアップロードしてください。</p>
-      <div id="bulkDropZone" style="border:2px dashed var(--border2);border-radius:10px;padding:24px 16px;text-align:center;cursor:pointer;background:var(--surface2);transition:border-color 0.15s"
+      <!-- 基準の選択 -->
+      <div style="background:var(--surface2);border-radius:8px;padding:12px 16px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px">① 照合基準（CSVのどの列で商品を特定するか）</div>
+        <div style="display:flex;gap:20px">
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:8px 14px;border:2px solid var(--border2);border-radius:7px;background:var(--surface);transition:all 0.15s" id="bulkKeyLabelId">
+            <input type="radio" name="bulkKey" value="id" checked onchange="bulkUpdateNumChk()"> 商品管理番号
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:8px 14px;border:2px solid var(--border2);border-radius:7px;background:var(--surface);transition:all 0.15s" id="bulkKeyLabelNum">
+            <input type="radio" name="bulkKey" value="num" onchange="bulkUpdateNumChk()"> 商品番号
+          </label>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--text2);margin:0 0 10px">商品リストCSVをアップロードしてください。</p>
+      <div id="bulkDropZone" style="border:2px dashed var(--border2);border-radius:10px;padding:20px 16px;text-align:center;cursor:pointer;background:var(--surface2);transition:border-color 0.15s"
         onclick="document.getElementById('bulkFileInput').click()"
         ondragover="event.preventDefault();this.style.borderColor='var(--red)'"
         ondragleave="this.style.borderColor='var(--border2)'"
         ondrop="event.preventDefault();this.style.borderColor='var(--border2)';bulkHandleFile(event.dataTransfer.files[0])">
-        <div style="font-size:28px;margin-bottom:6px">📄</div>
+        <div style="font-size:26px;margin-bottom:5px">📄</div>
         <div style="font-size:13px;color:var(--text2)">CSVをドロップ、またはクリックして選択</div>
-        <div id="bulkFileName" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+        <div id="bulkFileName" style="font-size:11px;color:var(--text3);margin-top:5px"></div>
       </div>
       <input type="file" id="bulkFileInput" style="display:none" accept=".csv" onchange="bulkHandleFile(this.files[0])">
       <div id="bulkStatus" style="font-size:12px;color:var(--text2);margin-top:8px;min-height:16px"></div>
@@ -548,15 +560,15 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
     </div>
 
-    <!-- STEP2: 確認・項目選択 + 変更一覧 -->
-    <div id="bulkStep2" style="display:none;flex:1;overflow:hidden;display:none;flex-direction:column">
+    <!-- STEP2: 変更項目選択 + 変更一覧 -->
+    <div id="bulkStep2" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0">
       <div style="flex-shrink:0;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:10px">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">更新する項目を選択</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">② 変更する項目を選択</div>
         <div style="display:flex;gap:16px">
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
             <input type="checkbox" id="bulkChkName" checked onchange="bulkRebuildList()"> 商品名
           </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer" id="bulkChkNumLabel">
             <input type="checkbox" id="bulkChkNum" checked onchange="bulkRebuildList()"> 商品番号
           </label>
         </div>
@@ -568,15 +580,15 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <button onclick="bulkCheckAll(false)" style="font-size:11px;padding:3px 8px;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text2)">全解除</button>
         </div>
       </div>
-      <div id="bulkListWrap" style="flex:1;overflow-y:auto;border:1px solid var(--border);border-radius:6px;max-height:340px">
-        <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <div id="bulkListWrap" style="flex:1;overflow-y:auto;border:1px solid var(--border);border-radius:6px;min-height:0">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
           <thead>
             <tr style="background:var(--surface2);position:sticky;top:0;z-index:1">
-              <th style="padding:6px 8px;text-align:center;width:32px;border-bottom:1px solid var(--border)">✓</th>
-              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">商品管理番号</th>
-              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">項目</th>
-              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">現在の値</th>
-              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">→ 変更後</th>
+              <th style="padding:7px 8px;text-align:center;width:32px;border-bottom:1px solid var(--border)">✓</th>
+              <th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)" id="bulkThKey">商品管理番号</th>
+              <th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);width:70px">項目</th>
+              <th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)">現在の値</th>
+              <th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)">→ 変更後</th>
             </tr>
           </thead>
           <tbody id="bulkListBody"></tbody>
@@ -1399,6 +1411,22 @@ function runBulkNameUpdate() {
 // CSVパース済みデータを保持
 let _bulkParsedMap = {};
 
+function bulkUpdateNumChk() {
+  // 基準が「商品番号」のときは変更場所の「商品番号」を非表示
+  const keyVal = document.querySelector('input[name="bulkKey"]:checked')?.value || 'id';
+  const numLabel = document.getElementById('bulkChkNumLabel');
+  if (numLabel) {
+    numLabel.style.opacity = keyVal === 'num' ? '0.35' : '1';
+    numLabel.style.pointerEvents = keyVal === 'num' ? 'none' : '';
+    if (keyVal === 'num') document.getElementById('bulkChkNum').checked = false;
+    else document.getElementById('bulkChkNum').checked = true;
+  }
+  // テーブルヘッダーの基準列名を更新
+  const th = document.getElementById('bulkThKey');
+  if (th) th.textContent = keyVal === 'num' ? '商品番号（基準）' : '商品管理番号';
+  if (_bulkParsedMap && Object.keys(_bulkParsedMap).length > 0) bulkRebuildList();
+}
+
 function bulkHandleFile(file) {
   if (!file) return;
   _bulkNameFile = file;
@@ -1416,25 +1444,45 @@ function bulkHandleFile(file) {
     const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
     let hi = -1;
     for (let i = 0; i < Math.min(5, lines.length); i++) {
-      if (lines[i].includes('商品管理番号') && lines[i].includes('商品名')) { hi = i; break; }
+      if (lines[i].includes('商品管理番号') || lines[i].includes('商品番号')) { hi = i; break; }
     }
     if (hi < 0) {
-      document.getElementById('bulkStatus').textContent = '❌ 「商品管理番号」「商品名」列が見つかりません';
+      document.getElementById('bulkStatus').textContent = '❌ 「商品管理番号」または「商品番号」列が見つかりません';
       return;
     }
+    const keyVal = document.querySelector('input[name="bulkKey"]:checked')?.value || 'id';
     const headers = lines[hi].split(',').map(h => h.trim().replace(/^"|"$/g,''));
-    const codeIdx = headers.indexOf('商品管理番号');
-    const nameIdx = headers.indexOf('商品名');
+    const idIdx   = headers.indexOf('商品管理番号');
     const numIdx  = headers.indexOf('商品番号');
+    const nameIdx = headers.indexOf('商品名');
+    // 基準列
+    const keyIdx  = keyVal === 'num' ? numIdx : idIdx;
+    if (keyIdx < 0) {
+      document.getElementById('bulkStatus').textContent = `❌ 基準列「${keyVal==='num'?'商品番号':'商品管理番号'}」が見つかりません`;
+      return;
+    }
+
+    // 基準がnumの場合: productCacheからnum→idの逆引きマップを作成
+    const numToId = {};
+    if (keyVal === 'num') {
+      Object.keys(productCache).forEach(id => {
+        const n = productCache[id]?.itemNumber;
+        if (n) numToId[n] = id;
+      });
+    }
+
     _bulkParsedMap = {};
     for (let i = hi + 1; i < lines.length; i++) {
       const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g,''));
-      if (vals.length <= codeIdx) continue;
-      const code = vals[codeIdx];
+      if (vals.length <= keyIdx) continue;
+      const keyVal2 = vals[keyIdx];
+      if (!keyVal2) continue;
+      // 商品IDを特定
+      const code = keyVal === 'num' ? numToId[keyVal2] : keyVal2;
       if (!code || !DB[code]) continue;
-      if (!_bulkParsedMap[code]) _bulkParsedMap[code] = {};
+      if (!_bulkParsedMap[code]) _bulkParsedMap[code] = { keyDisplay: keyVal2 };
       if (nameIdx >= 0 && vals[nameIdx] && !_bulkParsedMap[code].name) _bulkParsedMap[code].name = vals[nameIdx];
-      if (numIdx  >= 0 && vals[numIdx]  && !_bulkParsedMap[code].num)  _bulkParsedMap[code].num  = vals[numIdx];
+      if (numIdx  >= 0 && vals[numIdx]  && !_bulkParsedMap[code].num && keyVal !== 'num') _bulkParsedMap[code].num = vals[numIdx];
     }
     const count = Object.keys(_bulkParsedMap).length;
     document.getElementById('bulkStatus').textContent = `✅ ${count}件の対象商品が見つかりました`;
@@ -1448,6 +1496,7 @@ function bulkShowConfirm() {
   document.getElementById('bulkStep1').style.display = 'none';
   const step2 = document.getElementById('bulkStep2');
   step2.style.display = 'flex';
+  bulkUpdateNumChk();
   bulkRebuildList();
 }
 
@@ -1469,7 +1518,7 @@ function bulkRebuildList() {
       const changed = cur !== val.name;
       tbody.innerHTML += `<tr style="border-bottom:1px solid var(--border);${!changed?'opacity:0.45':''}">
         <td style="padding:5px 8px;text-align:center"><input type="checkbox" class="bulk-chk" data-code="${code}" data-field="name" ${changed?'checked':''}></td>
-        <td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text3)">${code}</td>
+        <td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text3)">${val.keyDisplay||code}</td>
         <td style="padding:5px 8px;color:var(--text3)">商品名</td>
         <td style="padding:5px 8px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cur}">${cur}</td>
         <td style="padding:5px 8px;font-weight:600;color:var(--text);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${val.name}">${val.name}</td>
@@ -1481,7 +1530,7 @@ function bulkRebuildList() {
       const changed = cur !== val.num;
       tbody.innerHTML += `<tr style="border-bottom:1px solid var(--border);${!changed?'opacity:0.45':''}">
         <td style="padding:5px 8px;text-align:center"><input type="checkbox" class="bulk-chk" data-code="${code}" data-field="num" ${changed?'checked':''}></td>
-        <td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text3)">${code}</td>
+        <td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text3)">${val.keyDisplay||code}</td>
         <td style="padding:5px 8px;color:var(--text3)">商品番号</td>
         <td style="padding:5px 8px;color:var(--text2)">${cur}</td>
         <td style="padding:5px 8px;font-weight:600;color:var(--text)">${val.num}</td>
