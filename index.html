@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.125</span>
+    <span class="build-date">v1.127</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1027,6 +1027,7 @@ function readFiles(files) {
             }
             _parseItemDaily(text, 'kw');
             _parseKwRows(text);
+            _backfillKwCtr(text);
           }
         }
         _nichinichiFiles.push(f);
@@ -2088,6 +2089,44 @@ function _parseRppRows(text) {
     rows.push({ cl, spend, sales, orders, cpc, cvr, roas, cpa });
   }
   return rows;
+}
+
+function _backfillKwCtr(text) {
+  // 既存kwRowsのCTRが0のものを、新しいCSVから補完する
+  const lines = text.replace(/
+/g,'
+').replace(/
+/g,'
+').split('
+');
+  let hi = -1;
+  for (let i = 0; i < Math.min(10, lines.length); i++) {
+    if (lines[i].includes('コントロールカラム') || (lines[i].includes('キーワード') && lines[i].includes('日付'))) { hi = i; break; }
+  }
+  if (hi < 0) return 0;
+  const headers = lines[hi].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  const col = h => headers.indexOf(h);
+  const ctrIdx = col('CTR(%)');
+  if (ctrIdx < 0) return 0;
+  let filled = 0;
+  for (let i = hi+1; i < lines.length; i++) {
+    const vals = lines[i].split(',').map(v=>v.trim().replace(/^"|"$/g,''));
+    if (vals.length <= ctrIdx) continue;
+    const itemCode = vals[col('商品管理番号')];
+    const kw = vals[col('キーワード')];
+    const ctr = parseFloat(vals[ctrIdx]) || 0;
+    if (!itemCode || !kw || ctr === 0) continue;
+    const dateRaw = vals[col('日付')] || '';
+    const dm = dateRaw.match(/(20\d\d)年(\d\d)月(\d\d)日/);
+    if (!dm) continue;
+    const code = `${dm[1]}${dm[2]}${dm[3]}_${itemCode}_${kw}`;
+    const idx = kwRows.findIndex(r => r.code === code);
+    if (idx >= 0 && kwRows[idx].ctr === 0) {
+      kwRows[idx].ctr = ctr;
+      filled++;
+    }
+  }
+  return filled;
 }
 
 function _parseKwRowsLocal(text) {
