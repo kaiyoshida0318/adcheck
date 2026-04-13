@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.150</span>
+    <span class="build-date">v1.151</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2339,10 +2339,10 @@ function _renderTable(mode, rows) {
   const vRoas20 = rows.filter(r=>r.roas20>0).map(r=>r.roas20);
 
   // ── tableタグで統一（ヘッダーと行が自動的に列幅を共有） ──
-  const BG = ['#f0fff0','#e6ffe6','#f4f8ff','#edf4ff','#e6f0ff','#f4fbf5','#edf8ef','#e6f5e9','#faf4ff','#f5eeff','#f0e8ff','#fffaf3','#fff5e8','#fff0dd','#fff5f4','#ffeeed','#ffe8e6'];
-  const HBG = ['#e8fce8','#d0f5d0','#e8f0fe','#dce8fd','#d0e0fc','#e6f4ea','#daf0e0','#ceead4','#f3e8fd','#ecdffb','#e4d5f9','#fef3e2','#fdecd4','#fce4c6','#fce8e6','#faddda','#f8d2ce'];
+  const BG = ['#fefff0','#fffde7','#f4fbf5','#edf8ef','#e6f5e9','#f4f8ff','#edf4ff','#e6f0ff','#faf4ff','#f5eeff','#f0e8ff','#fffaf3','#fff5e8','#fff0dd','#fff5f4','#ffeeed','#ffe8e6'];
+  const HBG = ['#fefce8','#fef9c3','#e6f4ea','#daf0e0','#ceead4','#e8f0fe','#dce8fd','#d0e0fc','#f3e8fd','#ecdffb','#e4d5f9','#fef3e2','#fdecd4','#fce4c6','#fce8e6','#faddda','#f8d2ce'];
   const dateLabel = mode === 'monthly' ? '月' : '日付';
-  const HEADS = ['総売上','SEO売上','実績額■','実績額-KW','実績額-20','売上金額■','売上金額-KW','売上金額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','ROAS■','ROAS-KW','ROAS-20'];
+  const HEADS = ['総売上','SEO売上','売上金額■','売上金額-KW','売上金額-20','実績額■','実績額-KW','実績額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','ROAS■','ROAS-KW','ROAS-20'];
 
   let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:auto">
     <thead><tr style="background:var(--surface2)">
@@ -2365,12 +2365,12 @@ function _renderTable(mode, rows) {
     const cells = [
       _totSales>0?_cv(_totSales,fmtY(_totSales),_rank5(_totSales,vTotSalesAll,true)):'<span style="color:var(--text3)">—</span>',
       _seoSales>0?_cv(_seoSales,fmtY(_seoSales),_rank5(_seoSales,vSeoSalesAll,true)):'<span style="color:var(--text3)">—</span>',
-      _cv(r.spend,   fmtY(r.spend),                _rank5(r.spend,   vSpend,   false)), // 実績額：低い=良い
-      _cv(r.spendKw, fmtY(r.spendKw),              _rank5(r.spendKw, vSpendKw, false)),
-      _cv(r.spend20, fmtY(r.spend20),              _rank5(r.spend20, vSpend20, false)),
       _cv(r.sales,   fmtY(r.sales),                _rank5(r.sales,   vSales,   true)),  // 売上：高い=良い
       _cv(r.salesKw, fmtY(r.salesKw),              _rank5(r.salesKw, vSalesKw, true)),
       _cv(r.sales20, fmtY(r.sales20),              _rank5(r.sales20, vSales20, true)),
+      _cv(r.spend,   fmtY(r.spend),                _rank5(r.spend,   vSpend,   false)), // 実績額：低い=良い
+      _cv(r.spendKw, fmtY(r.spendKw),              _rank5(r.spendKw, vSpendKw, false)),
+      _cv(r.spend20, fmtY(r.spend20),              _rank5(r.spend20, vSpend20, false)),
       _cv(r.cpa,     r.cpa>0?fmtY(r.cpa):'—',     _rank5(r.cpa,     vCpa,     false)), // 獲得単価：低い=良い
       _cv(cpaKw_r,   cpaKw_r>0?fmtY(cpaKw_r):'—', _rank5(cpaKw_r,   vCpaKw,   false)),
       _cv(cpa20V,    cpa20V>0?fmtY(cpa20V):'—',   _rank5(cpa20V,    vCpa20,   false)),
