@@ -60,7 +60,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 #mainScreen { display: block; }
 
 /* ── Summary ── */
-.summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; transition: all 0.2s; overflow: hidden; }
+.summary-bar.collapsed { display: none; margin-bottom: 0; }
+.summary-bar-wrap { position: relative; margin-bottom: 4px; }
+.summary-toggle-btn { position: absolute; right: 0; top: -28px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 10px; color: var(--text3); cursor: pointer; z-index: 2; display: flex; align-items: center; gap: 4px; }
+.summary-toggle-btn:hover { background: var(--surface); color: var(--text); }
 .scard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
 .scard-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
 .scard-val { font-size: 22px; font-weight: 700; color: var(--text); font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
@@ -310,7 +314,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.183</span>
+    <span class="build-date">v1.184</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -351,7 +355,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <p style="margin-top:12px;font-size:11px;color:var(--text3)">対応形式：楽天RMS →「検索連動型広告（RPP）」→「パフォーマンスレポート」→「全商品レポートダウンロード」</p>
       </div>
       <div id="dataArea" style="display:none">
-        <div class="summary-bar" id="summaryBar"></div>
+        <div class="summary-bar-wrap" id="summaryBarWrap">
+          <button class="summary-toggle-btn" onclick="toggleSummaryBar('summaryBar','summaryBarWrap',this)" id="summaryBarBtn">▲ 閉じる</button>
+          <div class="summary-bar" id="summaryBar"></div>
+        </div>
         <div class="table-card">
           <div class="table-toolbar">
             <select class="toolbar-month" id="monthSel" onchange="renderAll()" style="transition:opacity 0.2s"></select>
@@ -391,7 +398,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <!-- ── 月別データタブ ── -->
   <div class="tab-panel" id="tab-monthly">
     <div class="container" style="max-width:1400px">
-      <div class="summary-bar" id="monthly-summary-bar" style="display:none"></div>
+      <div class="summary-bar-wrap" id="monthlySummaryBarWrap">
+        <button class="summary-toggle-btn" onclick="toggleSummaryBar('monthly-summary-bar','monthlySummaryBarWrap',this)" id="monthlySummaryBarBtn" style="display:none">▲ 閉じる</button>
+        <div class="summary-bar" id="monthly-summary-bar" style="display:none"></div>
+      </div>
       <div class="table-card">
         <div class="table-toolbar">
           <div style="font-size:12px;color:var(--text3)">右上「＋レポート追加」から rpp_reports・rpp_keyword_reports を追加</div>
@@ -437,7 +447,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <!-- ── 日別データタブ ── -->
   <div class="tab-panel" id="tab-daily">
     <div class="container" style="max-width:1400px">
-      <div class="summary-bar" id="daily-summary-bar" style="display:none"></div>
+      <div class="summary-bar-wrap" id="dailySummaryBarWrap">
+        <button class="summary-toggle-btn" onclick="toggleSummaryBar('daily-summary-bar','dailySummaryBarWrap',this)" id="dailySummaryBarBtn" style="display:none">▲ 閉じる</button>
+        <div class="summary-bar" id="daily-summary-bar" style="display:none"></div>
+      </div>
       <div class="table-card">
         <div class="table-toolbar">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -2331,6 +2344,8 @@ function _renderTable(mode, rows) {
   const avgRoas    = totalSpend > 0 ? Math.round(totalSales / totalSpend * 10000) / 100 : 0;
   if (summaryBar) {
     summaryBar.style.display = 'grid';
+    const _sbBtnId = summaryBar.id === 'monthly-summary-bar' ? 'monthlySummaryBarBtn' : summaryBar.id === 'daily-summary-bar' ? 'dailySummaryBarBtn' : null;
+    if (_sbBtnId) _showSummaryBtn(_sbBtnId);
     summaryBar.innerHTML = `
       <div class="scard scard-accent"><div class="scard-label">累計実績額■</div><div class="scard-val">${fmtY(totalSpend)}</div><div class="scard-sub">${rows.length}件</div></div>
       <div class="scard"><div class="scard-label">累計クリック数■</div><div class="scard-val">${fmt(totalCl)}</div></div>
@@ -2963,6 +2978,26 @@ function getStats(p, ym) {
 // ── 複数月比較モード ──
 let _multiMonthMode = false;
 let _selectedMonths = [];
+
+function toggleSummaryBar(barId, wrapId, btn) {
+  const bar = document.getElementById(barId);
+  if (!bar) return;
+  const isCollapsed = bar.classList.contains('collapsed');
+  if (isCollapsed) {
+    bar.classList.remove('collapsed');
+    bar.style.display = '';
+    btn.textContent = '▲ 閉じる';
+  } else {
+    bar.classList.add('collapsed');
+    btn.textContent = '▼ 開く';
+  }
+}
+
+// summaryBarが表示される時にトグルボタンも表示
+function _showSummaryBtn(btnId) {
+  const btn = document.getElementById(btnId);
+  if (btn) btn.style.display = 'flex';
+}
 
 function toggleMultiMonth() {
   _multiMonthMode = !_multiMonthMode;
