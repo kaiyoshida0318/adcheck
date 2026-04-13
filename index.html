@@ -178,6 +178,24 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .api-status.set { background: #f0fdf4; color: var(--green); }
 .api-status.unset { background: var(--red-light); color: var(--red); cursor: pointer; }
 
+/* ── 月別・日別テーブル スクロール固定ヘッダー ── */
+#monthly-table-wrap, #daily-table-wrap {
+  overflow-y: auto;
+  max-height: 75vh;
+}
+#monthly-table-wrap table thead tr,
+#daily-table-wrap table thead tr {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+#monthly-table-wrap table thead th,
+#daily-table-wrap table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
 /* ── Drop Zone ── */
 #dropZoneArea.drag-over { border-color: var(--red); background: var(--red-light); }
 
@@ -290,7 +308,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.156</span>
+    <span class="build-date">v1.158</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2350,8 +2368,8 @@ function _renderTable(mode, rows) {
   const HEADS = ['総売上★','SEO売上','売上金額■','売上金額-KW','売上金額-20','実績額■','実績額-KW','実績額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','売上ROAS★','ROAS■','ROAS-KW','ROAS-20'];
 
   let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:auto">
-    <thead><tr style="background:var(--surface2)">
-      <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);white-space:nowrap">${dateLabel}</th>
+    <thead><tr style="background:var(--surface2);position:sticky;top:0;z-index:3">
+      <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)">${dateLabel}</th>
       ${HEADS.map((h,i) => `<th style="padding:8px 6px;text-align:right;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid var(--border);white-space:nowrap;background:${HBG[i]}">${h}</th>`).join('')}
     </tr></thead><tbody>`;
 
