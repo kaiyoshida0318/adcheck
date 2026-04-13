@@ -309,7 +309,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.163</span>
+    <span class="build-date">v1.164</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2352,9 +2352,12 @@ function _renderTable(mode, rows) {
   const _isMonthly = mode === 'monthly';
   const _getTotSales = r => {
     const lb = r.label||'';
-    return _isMonthly
-      ? salesRows.filter(s=>s.ym===lb.replace('/','').slice(0,6)).reduce((a,s)=>a+s.sales,0)
-      : salesRows.filter(s=>s.date===lb.replace(/\//g,'-')).reduce((a,s)=>a+s.sales,0);
+    if (_isMonthly) {
+      // monthly: code="202603" or label="2026年03月" → ym="202603"
+      const ymk = r.code ? String(r.code).slice(0,6) : lb.replace(/[^0-9]/g,'').slice(0,6);
+      return salesRows.filter(s=>s.ym===ymk).reduce((a,s)=>a+s.sales,0);
+    }
+    return salesRows.filter(s=>s.date===lb.replace(/\//g,'-')).reduce((a,s)=>a+s.sales,0);
   };
   const vTotSalesAll = rows.map(_getTotSales).filter(v=>v>0);
   const vSalesROASAll = rows.map(r=>{
