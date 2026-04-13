@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.191</span>
+    <span class="build-date">v1.193</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1165,13 +1165,17 @@ function readFiles(files) {
             _backfillKwCtr(text);
           }
         }
-        _nichinichiFiles.push(f);
+        // kwはZIP内最初のCSVのdateInfoを使用
+        const _kwInfo = await (async()=>{ const b=await f.arrayBuffer(); const z=await JSZip.loadAsync(b); for(const [n,e] of Object.entries(z.files)){if(n.toLowerCase().endsWith('.csv')&&!e.dir){const cb=await e.async('arraybuffer');const t=new TextDecoder('shift-jis').decode(new Uint8Array(cb));return _extractDateInfo(t);}} return null; })();
+        _addNichFile(f, null, _kwInfo);
         _renderMonthlyBadges();
         hasMonthlyFile = true;
         continue;
       }
       if (type === 'rpp') {
-        _nichinichiFiles.push(f);
+        const _rppText = await _readNichText(f);
+        const _rppInfo = _rppText ? _extractDateInfo(_rppText) : null;
+        _addNichFile(f, _rppText, _rppInfo);
         _renderMonthlyBadges();
         hasMonthlyFile = true;
         continue;
@@ -3064,6 +3068,29 @@ function getStats(p, ym) {
 // ── 複数月比較モード ──
 let _multiMonthMode = false;
 let _selectedMonths = [];
+
+// 同じ日付・タイプのファイルを置き換えて追加（再アップ対応）
+// _nichFileMeta: [{start, type, idx}] でメタ情報を管理
+let _nichFileMeta = [];
+
+function _addNichFile(f, text, info) {
+  const type = _nichFileType(f.name);
+  if (info) {
+    // 同じstart・タイプの既存エントリを削除
+    const toRemove = _nichFileMeta
+      .filter(m => m.start === info.start && m.type === type)
+      .map(m => m.idx);
+    if (toRemove.length > 0) {
+      _nichinichiFiles = _nichinichiFiles.filter((_, i) => !toRemove.includes(i));
+      _nichFileMeta = _nichFileMeta
+        .filter(m => !(m.start === info.start && m.type === type))
+        .map(m => ({ ...m, idx: _nichinichiFiles.length })); // idxは使わないので適当でOK
+      console.log(`[ADcheck] 再アップ: ${info.start} ${type} → 古いデータを削除`);
+    }
+  }
+  _nichFileMeta.push({ start: info?.start || '', type, idx: _nichinichiFiles.length });
+  _nichinichiFiles.push(f);
+}
 
 function _lockUI(msg) {
   const el = document.getElementById('loadingLock');
