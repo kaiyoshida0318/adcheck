@@ -290,7 +290,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.122</span>
+    <span class="build-date">v1.123</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1705,11 +1705,6 @@ function _renderKwByItem(itemCode, ym) {
 
   // KW一覧（全期間合計のspend降順）
   const kwTotals = {};
-  // 月の全日数とデータ日数
-  const ymDate = new Date(ym + '-01');
-  const daysInMonth = new Date(ymDate.getFullYear(), ymDate.getMonth()+1, 0).getDate();
-  const dateDays = dates.length; // データがある日数
-
   rows.forEach(r => {
     if (!kwTotals[r.kw]) kwTotals[r.kw] = { spend:0, sales:0, vol:0, volDays:0 };
     kwTotals[r.kw].spend += r.spend;
@@ -1724,6 +1719,11 @@ function _renderKwByItem(itemCode, ym) {
 
   // 日付一覧（ソート済み）
   const dates = [...new Set(rows.map(r => r.date))].sort();
+
+  // 月の全日数とデータ日数（datesが確定した後で計算）
+  const ymDate = new Date(ym + '-01');
+  const daysInMonth = new Date(ymDate.getFullYear(), ymDate.getMonth()+1, 0).getDate();
+  const dateDays = dates.length;
 
   // KW×日付のマップ
   const matrix = {};
