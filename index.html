@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.233</span>
+    <span class="build-date">v1.234</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -597,7 +597,18 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <option value="cvr">CVR</option>
           </select>
 
-          <span style="font-size:12px;color:var(--text3)">月別推移</span>
+          <!-- 月別期間選択 -->
+          <div id="graphMonthRange" style="display:flex;align-items:center;gap:6px">
+            <select id="graphMonthFrom" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px"></select>
+            <span style="font-size:12px;color:var(--text3)">〜</span>
+            <select id="graphMonthTo" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px"></select>
+          </div>
+          <!-- 日別期間選択 -->
+          <div id="graphDateRange" style="display:none;align-items:center;gap:6px">
+            <input type="date" id="graphDateFrom" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px">
+            <span style="font-size:12px;color:var(--text3)">〜</span>
+            <input type="date" id="graphDateTo" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px">
+          </div>
         </div>
         <div style="position:relative;height:400px">
           <canvas id="graphCanvas"></canvas>
@@ -3000,18 +3011,52 @@ let _currentTab = 'monthly';
 
 // ── グラフ ──
 let _chartInstance = null;
+
+function _initGraphRange() {
+  if (_graphPeriod === 'monthly') {
+    const sel1 = document.getElementById('graphMonthFrom');
+    const sel2 = document.getElementById('graphMonthTo');
+    if (!sel1 || !sel2) return;
+    const mByCode = {};
+    nichinichiRows.forEach(r => { mByCode[r.code] = r; });
+    _aggregateDailyToMonthly(dailyRows).forEach(r => { if (!mByCode[r.code]) mByCode[r.code] = r; });
+    const months = Object.keys(mByCode).sort();
+    if (months.length === 0) return;
+    const cur1 = sel1.value, cur2 = sel2.value;
+    const opts = months.map(m => `<option value="${m}">${m.slice(0,4)}/${m.slice(4,6)}</option>`).join('');
+    sel1.innerHTML = opts;
+    sel2.innerHTML = opts;
+    sel1.value = (cur1 && months.includes(cur1)) ? cur1 : months[0];
+    sel2.value = (cur2 && months.includes(cur2)) ? cur2 : months[months.length-1];
+  } else {
+    const d1 = document.getElementById('graphDateFrom');
+    const d2 = document.getElementById('graphDateTo');
+    if (!d1 || !d2) return;
+    const dates = dailyRows.map(r => r.label?.replace(/\//g,'-')).filter(Boolean).sort();
+    if (dates.length === 0) return;
+    if (!d1.value) d1.value = dates[0];
+    if (!d2.value) d2.value = dates[dates.length-1];
+  }
+}
 let _graphPeriod = 'monthly'; // 'monthly' or 'daily'
 
 function setGraphPeriod(period) {
   _graphPeriod = period;
   const mBtn = document.getElementById('graphPeriodMonth');
   const dBtn = document.getElementById('graphPeriodDaily');
+  const mRange = document.getElementById('graphMonthRange');
+  const dRange = document.getElementById('graphDateRange');
   if (mBtn && dBtn) {
-    const active = 'border:1px solid var(--accent);background:var(--accent);color:#fff;';
-    const inactive = 'border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
-    mBtn.style.cssText = mBtn.style.cssText.replace(/border[^;]+;background[^;]+;color[^;]+;/, period==='monthly' ? active : inactive);
-    dBtn.style.cssText = dBtn.style.cssText.replace(/border[^;]+;background[^;]+;color[^;]+;/, period==='daily' ? active : inactive);
+    mBtn.style.background  = period === 'monthly' ? 'var(--accent)' : 'var(--surface2)';
+    mBtn.style.color       = period === 'monthly' ? '#fff' : 'var(--text3)';
+    mBtn.style.borderColor = period === 'monthly' ? 'var(--accent)' : 'var(--border)';
+    dBtn.style.background  = period === 'daily' ? 'var(--accent)' : 'var(--surface2)';
+    dBtn.style.color       = period === 'daily' ? '#fff' : 'var(--text3)';
+    dBtn.style.borderColor = period === 'daily' ? 'var(--accent)' : 'var(--border)';
   }
+  if (mRange) mRange.style.display = period === 'monthly' ? 'flex' : 'none';
+  if (dRange) dRange.style.display = period === 'daily'   ? 'flex' : 'none';
+  _initGraphRange();
   renderGraph();
 }
 
@@ -3024,14 +3069,25 @@ function renderGraph() {
   // 月別 or 日別データを収集
   let rows;
   if (_graphPeriod === 'daily') {
-    rows = dailyRows.slice().sort((a,b) => a.code.localeCompare(b.code));
+    const fromD = document.getElementById('graphDateFrom')?.value || '';
+    const toD   = document.getElementById('graphDateTo')?.value   || '';
+    rows = dailyRows.slice().sort((a,b) => a.code.localeCompare(b.code)).filter(r => {
+      if (!fromD && !toD) return true;
+      const d = r.label?.replace(/\//g,'-') || '';
+      return (!fromD || d >= fromD) && (!toD || d <= toD);
+    });
   } else {
+    const fromM = document.getElementById('graphMonthFrom')?.value || '';
+    const toM   = document.getElementById('graphMonthTo')?.value   || '';
     const mByCode = {};
     nichinichiRows.forEach(r => { mByCode[r.code] = r; });
     _aggregateDailyToMonthly(dailyRows).forEach(r => {
       if (!mByCode[r.code]) mByCode[r.code] = r;
     });
-    rows = Object.values(mByCode).sort((a,b) => a.code.localeCompare(b.code));
+    rows = Object.values(mByCode).sort((a,b) => a.code.localeCompare(b.code)).filter(r => {
+      const c = r.code || '';
+      return (!fromM || c >= fromM) && (!toM || c <= toM);
+    });
   }
 
   if (rows.length === 0) {
@@ -3394,7 +3450,7 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab)?.classList.add('active');
   // 月別/商品個別タブを開いたら自動でレンダリング
   if (tab === 'monthly-item') renderMonthlyItem();
-  if (tab === 'graph') renderGraph();
+  if (tab === 'graph') { _initGraphRange(); renderGraph(); }
 }
 
 // ── カレンダーイベント ──
