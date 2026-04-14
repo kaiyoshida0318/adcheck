@@ -374,7 +374,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.213</span>
+    <span class="build-date">v1.215</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -2570,7 +2570,10 @@ function _renderTable(mode, rows) {
       ${HEADS.map((h,i) => `<th style="padding:8px 6px;text-align:right;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid var(--border);white-space:nowrap;background:${HBG[i]}">${h}</th>`).join('')}
     </tr></thead><tbody>`;
 
+  const _latestRow = (mode === 'monthly' && rows.length > 0) ? rows[0] : null;
   for (const r of rows) {
+    const _isLatest = r === _latestRow;
+    const _rank5_ = _isLatest ? () => 'bk' : _rank5;
     const roasKw = r.spendKw > 0 ? Math.round(r.salesKw / r.spendKw * 10000) / 100 : 0;
     const cpaKwV = r.spendKw > 0 && r.ordersKw > 0 ? Math.round(r.spendKw / r.ordersKw) : 0;
     const cvrKwV = r.clKw > 0 && r.ordersKw > 0 ? Math.round(r.ordersKw / r.clKw * 10000) / 100 : 0;
@@ -2583,25 +2586,25 @@ function _renderTable(mode, rows) {
     const _totSales = _getTotSales(r);
     const _seoSales = Math.max(0, _totSales - (r.sales||0));
     const cells = [
-      _totSales>0?_cv(_totSales,fmtY(_totSales),_rank5(_totSales,vTotSalesAll,true)):'<span style="color:var(--text3)">—</span>',
-      _seoSales>0?_cv(_seoSales,fmtY(_seoSales),_rank5(_seoSales,vSeoSalesAll,true)):'<span style="color:var(--text3)">—</span>',
-      _cv(r.sales,   fmtY(r.sales),                _rank5(r.sales,   vSales,   true)),  // 売上：高い=良い
-      _cv(r.salesKw, fmtY(r.salesKw),              _rank5(r.salesKw, vSalesKw, true)),
-      _cv(r.sales20, fmtY(r.sales20),              _rank5(r.sales20, vSales20, true)),
-      _cv(r.spend,   fmtY(r.spend),                _rank5(r.spend,   vSpend,   false)), // 実績額：低い=良い
-      _cv(r.spendKw, fmtY(r.spendKw),              _rank5(r.spendKw, vSpendKw, false)),
-      _cv(r.spend20, fmtY(r.spend20),              _rank5(r.spend20, vSpend20, false)),
-      _cv(r.cpa,     r.cpa>0?fmtY(r.cpa):'—',     _rank5(r.cpa,     vCpa,     false)), // 獲得単価：低い=良い
-      _cv(cpaKw_r,   cpaKw_r>0?fmtY(cpaKw_r):'—', _rank5(cpaKw_r,   vCpaKw,   false)),
-      _cv(cpa20V,    cpa20V>0?fmtY(cpa20V):'—',   _rank5(cpa20V,    vCpa20,   false)),
-      _cv(r.cvr,     r.cvr>0?r.cvr+'%':'—',        _rank5(r.cvr,     vCvr,     true)),  // CVR：高い=良い
-      _cv(cvrKwV,    cvrKwV>0?cvrKwV+'%':'—',      _rank5(cvrKwV,    vCvrKw,   true)),
-      _cv(cvr20V,    cvr20V>0?cvr20V+'%':'—',      _rank5(cvr20V,    vCvr20,   true)),
+      _totSales>0?_cv(_totSales,fmtY(_totSales),_rank5_(_totSales,vTotSalesAll,true)):'<span style="color:var(--text3)">—</span>',
+      _seoSales>0?_cv(_seoSales,fmtY(_seoSales),_rank5_(_seoSales,vSeoSalesAll,true)):'<span style="color:var(--text3)">—</span>',
+      _cv(r.sales,   fmtY(r.sales),                _rank5_(r.sales,   vSales,   true)),  // 売上：高い=良い
+      _cv(r.salesKw, fmtY(r.salesKw),              _rank5_(r.salesKw, vSalesKw, true)),
+      _cv(r.sales20, fmtY(r.sales20),              _rank5_(r.sales20, vSales20, true)),
+      _cv(r.spend,   fmtY(r.spend),                _rank5_(r.spend,   vSpend,   false)), // 実績額：低い=良い
+      _cv(r.spendKw, fmtY(r.spendKw),              _rank5_(r.spendKw, vSpendKw, false)),
+      _cv(r.spend20, fmtY(r.spend20),              _rank5_(r.spend20, vSpend20, false)),
+      _cv(r.cpa,     r.cpa>0?fmtY(r.cpa):'—',     _rank5_(r.cpa,     vCpa,     false)), // 獲得単価：低い=良い
+      _cv(cpaKw_r,   cpaKw_r>0?fmtY(cpaKw_r):'—', _rank5_(cpaKw_r,   vCpaKw,   false)),
+      _cv(cpa20V,    cpa20V>0?fmtY(cpa20V):'—',   _rank5_(cpa20V,    vCpa20,   false)),
+      _cv(r.cvr,     r.cvr>0?r.cvr+'%':'—',        _rank5_(r.cvr,     vCvr,     true)),  // CVR：高い=良い
+      _cv(cvrKwV,    cvrKwV>0?cvrKwV+'%':'—',      _rank5_(cvrKwV,    vCvrKw,   true)),
+      _cv(cvr20V,    cvr20V>0?cvr20V+'%':'—',      _rank5_(cvr20V,    vCvr20,   true)),
       // 売上ROAS★ = 総売上 / 実績額■ × 100
       (() => {
         const _sr = _totSales > 0 && r.spend > 0 ? Math.round(_totSales / r.spend * 10000) / 100 : 0;
         if (!_sr) return '<span class="c-bk">—</span>';
-        return `<span class="c-${_rank5(_sr, vSalesROASAll, true)}">${_sr}%</span>`;
+        return `<span class="c-${_rank5_(_sr, vSalesROASAll, true)}">${_sr}%</span>`;
       })(),
       _fmtRoasCell(r.roas,    r.roas,    vRoas),
       _fmtRoasCell(roasKw_r, roasKw_r,  vRoasKw),
