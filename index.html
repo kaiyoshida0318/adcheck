@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.238</span>
+    <span class="build-date">v1.239</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -592,7 +592,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <select id="graphMetricSel" class="toolbar-month" onchange="renderGraph()" style="font-size:13px;padding:6px 12px">
             <option value="spend">実績額</option>
             <option value="spend_ratio">実績額-割合 (KW/20円)</option>
-            <option value="cl">クリック数</option>
             <option value="roas">ROAS</option>
             <option value="cvr">CVR</option>
           </select>
@@ -3409,35 +3408,7 @@ function renderGraph() {
     return;
   }
 
-  // クリック数は棒グラフ
-  const data2 = rows.map(r => r.cl || r.clicks || 0);
 
-  _chartInstance = new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: cfg.label,
-        data: data2,
-        backgroundColor: cfg.color + 'cc',
-        borderColor: cfg.color,
-        borderWidth: 2,
-        borderRadius: 6,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ' ' + cfg.yFmt(ctx.raw) } }
-      },
-      scales: {
-        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
-        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 }, callback: v => cfg.yFmt(v) } }
-      }
-    }
-  });
 }
 
 function switchTab(tab) {
