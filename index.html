@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.231</span>
+    <span class="build-date">v1.233</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -3167,29 +3167,25 @@ function renderGraph() {
     });
     const data20 = rows.map((r,i) => Math.max(0, (r.spend||0) - dataKw[i]));
 
+        const lineDs2 = (label, data, color) => ({
+      label, data,
+      borderColor: color,
+      backgroundColor: color + '33',
+      borderWidth: 2.5,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      tension: 0.3,
+      fill: true,
+      stack: 'spend',
+    });
+
     _chartInstance = new Chart(canvas, {
-      type: 'bar',
+      type: 'line',
       data: {
         labels,
         datasets: [
-          {
-            label: 'KW実績',
-            data: dataKw,
-            backgroundColor: '#60a5facc',
-            borderColor: '#60a5fa',
-            borderWidth: 1,
-            borderRadius: 0,
-            stack: 'spend',
-          },
-          {
-            label: '20円実績',
-            data: data20,
-            backgroundColor: '#f97316cc',
-            borderColor: '#f97316',
-            borderWidth: 1,
-            borderRadius: 4,
-            stack: 'spend',
-          }
+          lineDs2('20円実績', data20, '#f97316'),
+          lineDs2('KW実績',  dataKw,  '#60a5fa'),
         ]
       },
       options: {
