@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.242</span>
+    <span class="build-date">v1.243</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -395,8 +395,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">月別データ</button>
   <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">日別データ</button>
   <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">月・日別データ-グラフ</button>
-  <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">商品別データ-グラフ</button>
   <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">商品/KW別データ</button>
+  <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">商品別データ-グラフ</button>
   <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">商品/月別データ</button>
 </nav>
 
@@ -3069,7 +3069,8 @@ function _itemGraphSuggest(val) {
     const cached = productCache[code] || {};
     return (cached.itemNumber||'').toLowerCase().includes(q) ||
            (cached.manualName||cached.name||'').toLowerCase().includes(q) ||
-           code.toLowerCase().includes(q);
+           code.toLowerCase().includes(q) ||
+           (DB[code]?.id||'').toLowerCase().includes(q);
   }).slice(0, 10);
   if (!matches.length) { box.style.display = 'none'; return; }
   box.innerHTML = matches.map(code => {
