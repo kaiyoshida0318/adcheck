@@ -60,10 +60,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 #mainScreen { display: block; }
 
 /* ── Summary ── */
-.summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
-.summary-bar-wrap { position: relative; margin-bottom: 4px; }
-.summary-bar-inner { overflow: hidden; max-height: 400px; transition: max-height 0.25s ease, opacity 0.25s ease, margin 0.25s ease; opacity: 1; margin-bottom: 0; }
-.summary-bar-inner.collapsed { max-height: 0; opacity: 0; }
+.summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.summary-bar-wrap { margin-bottom: 0; }
+.summary-bar-inner { overflow: hidden; max-height: 500px; transition: max-height 0.3s ease, opacity 0.3s ease; opacity: 1; margin-bottom: 16px; }
+.summary-bar-inner.collapsed { max-height: 0 !important; opacity: 0; margin-bottom: 0; }
 .summary-toggle-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 10px; font-size: 10px; color: var(--text3); cursor: pointer; white-space: nowrap; }
 .summary-toggle-btn:hover { background: var(--surface); color: var(--text); }
 .scard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
@@ -374,7 +374,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.211</span>
+    <span class="build-date">v1.213</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
