@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.195</span>
+    <span class="build-date">v1.196</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1125,7 +1125,33 @@ function readFiles(files) {
     let hasMonthlyFile = false;
     let hasSalesUpdate = false;
 
+    // フォルダZIP（中にrpp_等のファイルが入っているZIP）を展開してフラット化
+    const expandedFiles = [];
     for (const f of Array.from(files)) {
+      const fname = f.name.toLowerCase();
+      if (fname.endsWith('.zip') && !fname.includes('rpp_') && !fname.includes('_item_saleslist')) {
+        // フォルダZIPとして展開
+        try {
+          const buf = await f.arrayBuffer();
+          const zip = await JSZip.loadAsync(buf);
+          for (const [entryName, entry] of Object.entries(zip.files)) {
+            if (entry.dir) continue;
+            const baseName = entryName.split('/').pop(); // フォルダ部分を除去
+            if (!baseName) continue;
+            const blob = await entry.async('blob');
+            const virtualFile = new File([blob], baseName, { type: blob.type });
+            expandedFiles.push(virtualFile);
+          }
+        } catch(e) {
+          console.error('[ADcheck] フォルダZIP展開エラー:', e);
+          expandedFiles.push(f); // 展開失敗時はそのまま
+        }
+      } else {
+        expandedFiles.push(f);
+      }
+    }
+
+    for (const f of expandedFiles) {
       const fname = f.name.toLowerCase();
       const type = _nichFileType(f.name);
 
