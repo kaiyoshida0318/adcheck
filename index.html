@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.240</span>
+    <span class="build-date">v1.242</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -395,6 +395,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">月別データ</button>
   <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">日別データ</button>
   <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">月・日別データ-グラフ</button>
+  <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">商品別データ-グラフ</button>
   <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">商品/KW別データ</button>
   <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">商品/月別データ</button>
 </nav>
@@ -572,6 +573,53 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <div style="font-size:14px;font-weight:600;margin-bottom:4px">KW別データ</div>
             <div style="font-size:12px">右上「＋ レポート追加」から rpp_keyword_reports を追加してください</div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 商品別グラフタブ ── -->
+  <div class="tab-panel" id="tab-item-graph">
+    <div class="container" style="max-width:1200px">
+      <div class="table-card" style="padding:20px">
+        <div style="position:relative;display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <input type="text" id="itemGraphCode" placeholder="商品管理番号を入力..."
+            style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:220px;background:var(--surface);color:var(--text)"
+            oninput="_itemGraphSuggest(this.value)">
+          <button onclick="_itemGraphToggle()" id="itemGraphOnBtn"
+            style="padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer;font-weight:600">ON</button>
+          <span id="itemGraphLabel" style="font-size:12px;color:var(--text3)"></span>
+          <div id="itemGraphSuggest" style="display:none;position:absolute;top:40px;left:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow);max-height:200px;overflow-y:auto;z-index:100;min-width:300px"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+          <div style="display:flex;gap:4px">
+            <button id="itemGraphPeriodMonth" onclick="_setItemGraphPeriod('monthly')"
+              style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
+            <button id="itemGraphPeriodDaily" onclick="_setItemGraphPeriod('daily')"
+              style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
+          </div>
+          <select id="itemGraphMetric" class="toolbar-month" onchange="renderItemGraph()" style="font-size:13px;padding:6px 12px">
+            <option value="spend">実績額</option>
+            <option value="spend_ratio">実績額-割合 (KW/20円)</option>
+            <option value="roas">ROAS</option>
+            <option value="cvr">CVR</option>
+          </select>
+          <div id="itemGraphMonthRange" style="display:flex;align-items:center;gap:6px">
+            <select id="itemGraphMonthFrom" class="toolbar-month" onchange="renderItemGraph()" style="font-size:12px;padding:4px 8px"></select>
+            <span style="font-size:12px;color:var(--text3)">〜</span>
+            <select id="itemGraphMonthTo" class="toolbar-month" onchange="renderItemGraph()" style="font-size:12px;padding:4px 8px"></select>
+          </div>
+          <div id="itemGraphDateRange" style="display:none;align-items:center;gap:6px">
+            <input type="date" id="itemGraphDateFrom" class="toolbar-month" onchange="renderItemGraph()" style="font-size:12px;padding:4px 8px">
+            <span style="font-size:12px;color:var(--text3)">〜</span>
+            <input type="date" id="itemGraphDateTo" class="toolbar-month" onchange="renderItemGraph()" style="font-size:12px;padding:4px 8px">
+          </div>
+        </div>
+        <div style="position:relative;height:400px">
+          <canvas id="itemGraphCanvas" style="display:none"></canvas>
+        </div>
+        <div id="itemGraphEmpty" style="text-align:center;padding:60px;color:var(--text3);font-size:13px">
+          商品管理番号を入力してONを押してください。
         </div>
       </div>
     </div>
@@ -3007,6 +3055,246 @@ async function monthlyRun() {
 // ── タブ切り替え ──
 let _currentTab = 'monthly';
 
+// ── 商品別グラフ ──
+let _itemChartInstance = null;
+let _itemGraphPeriod = 'monthly';
+let _itemGraphCode = null; // アクティブな商品コード
+let _itemGraphOn = false;
+
+function _itemGraphSuggest(val) {
+  const box = document.getElementById('itemGraphSuggest');
+  if (!val || val.length < 1) { box.style.display = 'none'; return; }
+  const q = val.toLowerCase();
+  const matches = Object.keys(itemDailyData).filter(code => {
+    const cached = productCache[code] || {};
+    return (cached.itemNumber||'').toLowerCase().includes(q) ||
+           (cached.manualName||cached.name||'').toLowerCase().includes(q) ||
+           code.toLowerCase().includes(q);
+  }).slice(0, 10);
+  if (!matches.length) { box.style.display = 'none'; return; }
+  box.innerHTML = matches.map(code => {
+    const c = productCache[code] || {};
+    const num = c.itemNumber || code;
+    const name = c.manualName || c.name || code;
+    return `<div onclick="_itemGraphSelect('${code}')" style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border2)"
+      onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
+      <span style="color:var(--accent);font-family:'DM Mono',monospace">${num}</span>
+      <span style="color:var(--text3);margin-left:8px">${name.slice(0,30)}</span>
+    </div>`;
+  }).join('');
+  box.style.display = 'block';
+}
+
+function _itemGraphSelect(code) {
+  const c = productCache[code] || {};
+  const num = c.itemNumber || code;
+  document.getElementById('itemGraphCode').value = num;
+  document.getElementById('itemGraphSuggest').style.display = 'none';
+  _itemGraphCode = code;
+}
+
+function _itemGraphToggle() {
+  const input = document.getElementById('itemGraphCode').value.trim();
+  const btn = document.getElementById('itemGraphOnBtn');
+  const label = document.getElementById('itemGraphLabel');
+
+  if (_itemGraphOn && _itemGraphCode) {
+    // OFFにする
+    _itemGraphOn = false;
+    _itemGraphCode = null;
+    btn.style.background = 'var(--surface2)';
+    btn.style.color = 'var(--text)';
+    btn.style.borderColor = 'var(--border)';
+    btn.textContent = 'ON';
+    label.textContent = '';
+    const canvas = document.getElementById('itemGraphCanvas');
+    const empty = document.getElementById('itemGraphEmpty');
+    if (canvas) canvas.style.display = 'none';
+    if (empty) { empty.style.display = 'block'; empty.textContent = '商品管理番号を入力してONを押してください。'; }
+    if (_itemChartInstance) { _itemChartInstance.destroy(); _itemChartInstance = null; }
+    return;
+  }
+
+  // 入力値から商品コードを特定
+  let foundCode = null;
+  if (_itemGraphCode && productCache[_itemGraphCode]?.itemNumber === input) {
+    foundCode = _itemGraphCode;
+  } else {
+    foundCode = Object.keys(itemDailyData).find(code => {
+      const c = productCache[code] || {};
+      return (c.itemNumber||'') === input || code === input;
+    });
+  }
+  if (!foundCode) {
+    document.getElementById('itemGraphLabel').textContent = '⚠ 商品が見つかりません';
+    return;
+  }
+  _itemGraphCode = foundCode;
+  _itemGraphOn = true;
+  const c = productCache[foundCode] || {};
+  label.textContent = c.manualName || c.name || foundCode;
+  btn.style.background = '#f97316';
+  btn.style.color = '#fff';
+  btn.style.borderColor = '#f97316';
+  btn.textContent = 'OFF';
+  _initItemGraphRange();
+  renderItemGraph();
+}
+
+function _setItemGraphPeriod(period) {
+  _itemGraphPeriod = period;
+  const mBtn = document.getElementById('itemGraphPeriodMonth');
+  const dBtn = document.getElementById('itemGraphPeriodDaily');
+  const mRange = document.getElementById('itemGraphMonthRange');
+  const dRange = document.getElementById('itemGraphDateRange');
+  [['monthly', mBtn], ['daily', dBtn]].forEach(([p, btn]) => {
+    if (!btn) return;
+    const active = p === period;
+    btn.style.setProperty('background', active ? '#f97316' : 'var(--surface2)', 'important');
+    btn.style.setProperty('color', active ? '#fff' : 'var(--text)', 'important');
+    btn.style.setProperty('border-color', active ? '#f97316' : 'var(--border)', 'important');
+  });
+  if (mRange) mRange.style.display = period === 'monthly' ? 'flex' : 'none';
+  if (dRange) dRange.style.display = period === 'daily'   ? 'flex' : 'none';
+  _initItemGraphRange();
+  if (_itemGraphOn) renderItemGraph();
+}
+
+function _initItemGraphRange() {
+  if (_itemGraphPeriod === 'monthly') {
+    const sel1 = document.getElementById('itemGraphMonthFrom');
+    const sel2 = document.getElementById('itemGraphMonthTo');
+    if (!sel1 || !sel2) return;
+    const mByCode = {};
+    nichinichiRows.forEach(r => { mByCode[r.code] = r; });
+    _aggregateDailyToMonthly(dailyRows).forEach(r => { if (!mByCode[r.code]) mByCode[r.code] = r; });
+    const months = Object.keys(mByCode).sort();
+    if (!months.length) return;
+    const cur1 = sel1.value, cur2 = sel2.value;
+    const monthsDesc = months.slice().reverse();
+    const opts = monthsDesc.map(m => `<option value="${m}">${m.slice(0,4)}/${m.slice(4,6)}</option>`).join('');
+    sel1.innerHTML = opts; sel2.innerHTML = opts;
+    sel1.value = (cur1 && months.includes(cur1)) ? cur1 : months[0];
+    sel2.value = (cur2 && months.includes(cur2)) ? cur2 : months[months.length-1];
+  } else {
+    const d1 = document.getElementById('itemGraphDateFrom');
+    const d2 = document.getElementById('itemGraphDateTo');
+    if (!d1 || !d2 || !_itemGraphCode) return;
+    const dates = Object.keys(itemDailyData[_itemGraphCode] || {}).sort();
+    if (!dates.length) return;
+    if (!d1.value) d1.value = dates[0];
+    if (!d2.value) d2.value = dates[dates.length-1];
+  }
+}
+
+function renderItemGraph() {
+  const canvas = document.getElementById('itemGraphCanvas');
+  const empty  = document.getElementById('itemGraphEmpty');
+  if (!canvas) return;
+  if (!_itemGraphOn || !_itemGraphCode) {
+    canvas.style.display = 'none'; empty.style.display = 'block'; return;
+  }
+
+  const byDate = itemDailyData[_itemGraphCode] || {};
+  const metric = document.getElementById('itemGraphMetric')?.value || 'spend';
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? '#a0aec0' : '#718096';
+
+  // 期間フィルタ適用してデータ集計
+  let labels = [], dataMap = {};
+  if (_itemGraphPeriod === 'daily') {
+    const fromD = document.getElementById('itemGraphDateFrom')?.value || '';
+    const toD   = document.getElementById('itemGraphDateTo')?.value   || '';
+    labels = Object.keys(byDate).sort().filter(d => (!fromD || d >= fromD) && (!toD || d <= toD));
+    labels.forEach(d => { dataMap[d] = byDate[d]; });
+  } else {
+    const fromM = document.getElementById('itemGraphMonthFrom')?.value || '';
+    const toM   = document.getElementById('itemGraphMonthTo')?.value   || '';
+    // 月別集計
+    const monthly = {};
+    Object.entries(byDate).forEach(([d, v]) => {
+      const ym = d.slice(0,7).replace('-','');
+      if ((fromM && ym < fromM) || (toM && ym > toM)) return;
+      if (!monthly[ym]) monthly[ym] = {spend:0,sales:0,spendKw:0,salesKw:0,cl:0,clKw:0,orders:0,ordersKw:0};
+      ['spend','sales','spendKw','salesKw','cl','clKw','orders','ordersKw'].forEach(k => {
+        monthly[ym][k] = (monthly[ym][k]||0) + (v[k]||0);
+      });
+    });
+    labels = Object.keys(monthly).sort();
+    labels.forEach(m => { dataMap[m] = monthly[m]; });
+  }
+
+  if (!labels.length) {
+    canvas.style.display = 'none'; empty.style.display = 'block';
+    empty.textContent = '選択期間にデータがありません。'; return;
+  }
+  canvas.style.display = 'block'; empty.style.display = 'none';
+
+  const displayLabels = labels.map(l =>
+    _itemGraphPeriod === 'daily' ? l.slice(5) : l.slice(0,4)+'/'+l.slice(4,6)
+  );
+
+  if (_itemChartInstance) { _itemChartInstance.destroy(); _itemChartInstance = null; }
+
+  const lineDs = (label, data, color) => ({
+    label, data, borderColor: color, backgroundColor: color+'22',
+    borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, fill: false,
+  });
+
+  if (metric === 'spend') {
+    const dataKw = labels.map(l => dataMap[l]?.spendKw || 0);
+    const data20 = labels.map((l,i) => Math.max(0, (dataMap[l]?.spend||0) - dataKw[i]));
+    _itemChartInstance = new Chart(canvas, {
+      type: 'bar',
+      data: { labels: displayLabels, datasets: [
+        { label: '20円実績', data: data20, backgroundColor:'#f9731688', borderColor:'#f97316', borderWidth:1, borderRadius:0, stack:'s' },
+        { label: 'KW実績',  data: dataKw, backgroundColor:'#60a5fa88', borderColor:'#60a5fa', borderWidth:1, borderRadius:4, stack:'s',
+          onClick: undefined }
+      ]},
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins: { legend:{ display:true, position:'top', labels:{color:textColor,font:{size:12},usePointStyle:true},
+          onClick:(e,li,leg)=>{ const chart=leg.chart; const other=li.datasetIndex===0?1:0; const meta=chart.getDatasetMeta(other); meta.hidden=!meta.hidden; chart.update(); }
+        }, tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ¥${Math.round(ctx.raw).toLocaleString()}`}}},
+        scales:{ x:{stacked:true,grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},
+          y:{stacked:true,grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>'¥'+v.toLocaleString()}} }
+      }
+    });
+  } else if (metric === 'spend_ratio') {
+    const dataKwR = labels.map(l => { const sp=dataMap[l]?.spend||0; return sp?Math.round((dataMap[l]?.spendKw||0)/sp*1000)/10:0; });
+    const data20R = labels.map(l => { const sp=dataMap[l]?.spend||0; const sk=dataMap[l]?.spendKw||0; const s20=Math.max(0,sp-sk); return sp?Math.round(s20/sp*1000)/10:0; });
+    _itemChartInstance = new Chart(canvas, {
+      type:'line', data:{labels:displayLabels, datasets:[lineDs('KW実績 割合',dataKwR,'#60a5fa'),lineDs('20円実績 割合',data20R,'#f97316')]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
+        scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{min:0,max:100,grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
+      }
+    });
+  } else if (metric === 'roas') {
+    const dataR   = labels.map(l => { const sp=dataMap[l]?.spend||0; return sp?Math.round((dataMap[l]?.sales||0)/sp*10000)/100:0; });
+    const dataRKw = labels.map(l => { const sk=dataMap[l]?.spendKw||0; return sk?Math.round((dataMap[l]?.salesKw||0)/sk*10000)/100:0; });
+    const dataR20 = labels.map(l => { const sp=dataMap[l]?.spend||0,sk=dataMap[l]?.spendKw||0,sl=dataMap[l]?.sales||0,slk=dataMap[l]?.salesKw||0; const s20=Math.max(0,sp-sk),sl20=Math.max(0,sl-slk); return s20?Math.round(sl20/s20*10000)/100:0; });
+    _itemChartInstance = new Chart(canvas, {
+      type:'line', data:{labels:displayLabels, datasets:[lineDs('ROAS■ (全体)',dataR,'#fbbf24'),lineDs('KW ROAS',dataRKw,'#60a5fa'),lineDs('20円 ROAS',dataR20,'#f97316')]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
+        scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
+      }
+    });
+  } else if (metric === 'cvr') {
+    const dataCvr  = labels.map(l => { const cl=dataMap[l]?.cl||0; return cl?Math.round((dataMap[l]?.orders||0)/cl*10000)/100:0; });
+    const dataCKw  = labels.map(l => { const clk=dataMap[l]?.clKw||0; return clk?Math.round((dataMap[l]?.ordersKw||0)/clk*10000)/100:0; });
+    const dataCvr20= labels.map(l => { const cl=dataMap[l]?.cl||0,clk=dataMap[l]?.clKw||0,ord=dataMap[l]?.orders||0,ork=dataMap[l]?.ordersKw||0; const cl20=Math.max(0,cl-clk),or20=Math.max(0,ord-ork); return cl20?Math.round(or20/cl20*10000)/100:0; });
+    _itemChartInstance = new Chart(canvas, {
+      type:'line', data:{labels:displayLabels, datasets:[lineDs('CVR■ (全体)',dataCvr,'#a78bfa'),lineDs('KW CVR',dataCKw,'#60a5fa'),lineDs('20円 CVR',dataCvr20,'#f97316')]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
+        scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
+      }
+    });
+  }
+}
+
 // ── グラフ ──
 let _chartInstance = null;
 
@@ -3421,6 +3709,7 @@ function switchTab(tab) {
   // 月別/商品個別タブを開いたら自動でレンダリング
   if (tab === 'monthly-item') renderMonthlyItem();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
+  if (tab === 'item-graph') { _initItemGraphRange(); }
 }
 
 // ── カレンダーイベント ──
