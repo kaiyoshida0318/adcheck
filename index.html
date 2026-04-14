@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.198</span>
+    <span class="build-date">v1.199</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -953,7 +953,8 @@ const DOW = ['日','月','火','水','木','金','土'];
 // ── GitHub データ永続化 ──
 const GH_OWNER = 'kaiyoshida0318';
 const GH_REPO = 'adcheck';
-const GH_FILE = 'data/rpp_data.json';
+const GH_FILE = 'data/rpp_data.json'
+const GH_KW_FILE = 'data/rpp_kw.json';;
 
 async function saveToGitHub() {
   const pat = localStorage.getItem('github_pat');
@@ -972,7 +973,7 @@ async function saveToGitHub() {
       sha = getJson.sha;
     }
     // データをJSON化してBase64エンコード
-    const payload = { DB, productCache, calEvents, nichinichiRows, dailyRows, itemDailyData, kwRows, salesRows };
+    const payload = { DB, productCache, calEvents, nichinichiRows, dailyRows, itemDailyData, salesRows };
     const jsonStr = JSON.stringify(payload, null, 2);
     const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
     // PUTで保存
@@ -991,6 +992,23 @@ async function saveToGitHub() {
       console.error('[ADcheck] GitHub save error:', err);
     } else {
       console.log('[ADcheck] GitHub保存成功');
+    // kwRowsを別ファイルに保存
+    if (kwRows.length > 0) {
+      try {
+        const kwPayload = { kwRows };
+        const kwStr = JSON.stringify(kwPayload);
+        const kwBase64 = btoa(unescape(encodeURIComponent(kwStr)));
+        let kwSha = null;
+        const kwGetRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_KW_FILE}`, { headers });
+        if (kwGetRes.ok) { kwSha = (await kwGetRes.json()).sha; }
+        const kwBody = { message: 'Update kw data', content: kwBase64 };
+        if (kwSha) kwBody.sha = kwSha;
+        await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_KW_FILE}`, {
+          method: 'PUT', headers, body: JSON.stringify(kwBody)
+        });
+        console.log('[ADcheck] KW保存成功');
+      } catch(e) { console.warn('[ADcheck] KW保存エラー:', e); }
+    }
     }
   } catch(e) {
     console.error('[ADcheck] GitHub save exception:', e);
@@ -1020,6 +1038,15 @@ async function loadFromGitHub() {
         itemDailyData = data.itemDailyData;
       }
       if (data.salesRows) salesRows = data.salesRows;
+      // kwRowsを別ファイルから読み込む
+      try {
+        const kwUrl = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_KW_FILE}`;
+        const kwRes = await fetch(kwUrl + '?t=' + Date.now());
+        if (kwRes.ok) {
+          const kwData = await kwRes.json();
+          if (kwData.kwRows) { kwRows = kwData.kwRows; }
+        }
+      } catch(e) { console.warn('[ADcheck] KW読込エラー:', e); }
       if (data.kwRows) {
         kwRows = data.kwRows;
         if (kwRows.length > 0) { populateKwMonthSel(); renderKwFiltered(); }
