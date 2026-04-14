@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.237</span>
+    <span class="build-date">v1.238</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -3023,11 +3023,12 @@ function _initGraphRange() {
     const months = Object.keys(mByCode).sort();
     if (months.length === 0) return;
     const cur1 = sel1.value, cur2 = sel2.value;
-    const opts = months.map(m => `<option value="${m}">${m.slice(0,4)}/${m.slice(4,6)}</option>`).join('');
+    const monthsDesc = months.slice().reverse(); // 降順
+    const opts = monthsDesc.map(m => `<option value="${m}">${m.slice(0,4)}/${m.slice(4,6)}</option>`).join('');
     sel1.innerHTML = opts;
     sel2.innerHTML = opts;
-    sel1.value = (cur1 && months.includes(cur1)) ? cur1 : months[0];
-    sel2.value = (cur2 && months.includes(cur2)) ? cur2 : months[months.length-1];
+    sel1.value = (cur1 && months.includes(cur1)) ? cur1 : months[0];     // 開始は最古
+    sel2.value = (cur2 && months.includes(cur2)) ? cur2 : months[months.length-1]; // 終了は最新
   } else {
     const d1 = document.getElementById('graphDateFrom');
     const d2 = document.getElementById('graphDateTo');
