@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.223</span>
+    <span class="build-date">v1.224</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -590,6 +590,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <option value="roas">ROAS</option>
             <option value="cvr">CVR</option>
           </select>
+          <div style="display:flex;gap:4px">
+            <button id="graphTypBar" onclick="setGraphType('bar')"
+              style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer">縦棒</button>
+            <button id="graphTypLine" onclick="setGraphType('line')"
+              style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer">折れ線</button>
+          </div>
           <span style="font-size:12px;color:var(--text3)">月別推移</span>
         </div>
         <div style="position:relative;height:400px">
@@ -2993,6 +2999,22 @@ let _currentTab = 'monthly';
 
 // ── グラフ ──
 let _chartInstance = null;
+let _graphType = 'bar'; // 'bar' or 'line'
+
+function setGraphType(type) {
+  _graphType = type;
+  const barBtn  = document.getElementById('graphTypBar');
+  const lineBtn = document.getElementById('graphTypLine');
+  if (barBtn && lineBtn) {
+    barBtn.style.background  = type === 'bar'  ? 'var(--accent)' : 'var(--surface2)';
+    barBtn.style.color       = type === 'bar'  ? '#fff' : 'var(--text3)';
+    barBtn.style.borderColor = type === 'bar'  ? 'var(--accent)' : 'var(--border)';
+    lineBtn.style.background  = type === 'line' ? 'var(--accent)' : 'var(--surface2)';
+    lineBtn.style.color       = type === 'line' ? '#fff' : 'var(--text3)';
+    lineBtn.style.borderColor = type === 'line' ? 'var(--accent)' : 'var(--border)';
+  }
+  renderGraph();
+}
 
 function renderGraph() {
   const metric = document.getElementById('graphMetricSel')?.value || 'spend';
@@ -3128,17 +3150,22 @@ function renderGraph() {
     return r.spend || 0;
   });
 
+  const isLine = _graphType === 'line';
   _chartInstance = new Chart(canvas, {
-    type: 'bar',
+    type: _graphType,
     data: {
       labels,
       datasets: [{
         label: cfg.label,
         data,
-        backgroundColor: cfg.color + 'cc',
+        backgroundColor: isLine ? cfg.color + '33' : cfg.color + 'cc',
         borderColor: cfg.color,
-        borderWidth: 2,
-        borderRadius: 6,
+        borderWidth: isLine ? 2.5 : 2,
+        borderRadius: isLine ? 0 : 6,
+        pointRadius: isLine ? 4 : 0,
+        pointHoverRadius: isLine ? 6 : 0,
+        tension: isLine ? 0.3 : 0,
+        fill: isLine,
         hoverBackgroundColor: cfg.color,
       }]
     },
