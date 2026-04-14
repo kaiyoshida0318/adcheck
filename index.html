@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.200</span>
+    <span class="build-date">v1.201</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -966,68 +966,37 @@ async function saveToGitHub() {
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json'
     };
-    // 現在のファイルのSHAを取得
-    let sha = null;
-    const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, { headers });
-    if (getRes.ok) {
-      const getJson = await getRes.json();
-      sha = getJson.sha;
-    }
-    // データをJSON化してBase64エンコード
-    const payload = { productCache, calEvents, nichinichiRows, dailyRows, salesRows };
-    const jsonStr = JSON.stringify(payload, null, 2);
-    const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
-    // PUTで保存
-    const body = {
-      message: `RPPデータ更新 ${new Date().toLocaleString('ja-JP')}`,
-      content: base64,
-      ...(sha ? { sha } : {})
+
+    const _ghPut = async (file, payload) => {
+      const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${file}`, { headers });
+      const sha = getRes.ok ? (await getRes.json()).sha : null;
+      const jsonStr = JSON.stringify(payload);
+      const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+      const body = { message: 'Update ' + file, content: base64 };
+      if (sha) body.sha = sha;
+      const putRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${file}`, {
+        method: 'PUT', headers, body: JSON.stringify(body)
+      });
+      if (!putRes.ok) throw new Error(await putRes.text());
+      return file;
     };
-    const putRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify(body)
+
+    // 3ファイルを並列保存
+    const results = await Promise.allSettled([
+      _ghPut(GH_FILE,      { productCache, calEvents, nichinichiRows, dailyRows, salesRows }),
+      _ghPut(GH_KW_FILE,   { kwRows }),
+      _ghPut(GH_ITEM_FILE, { DB, itemDailyData }),
+    ]);
+
+    results.forEach(r => {
+      if (r.status === 'fulfilled') console.log('[ADcheck] 保存成功:', r.value);
+      else console.error('[ADcheck] 保存失敗:', r.reason);
     });
-    if (!putRes.ok) {
-      const err = await putRes.json();
-      console.error('[ADcheck] GitHub save error:', err);
-    } else {
-      console.log('[ADcheck] GitHub保存成功');
-    // DB・itemDailyDataを別ファイルに保存
-    if (Object.keys(DB).length > 0) {
-      try {
-        const itemPayload = { DB, itemDailyData };
-        const itemStr = JSON.stringify(itemPayload);
-        const itemBase64 = btoa(unescape(encodeURIComponent(itemStr)));
-        let itemSha = null;
-        const itemGetRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_ITEM_FILE}`, { headers });
-        if (itemGetRes.ok) { itemSha = (await itemGetRes.json()).sha; }
-        const itemBody = { message: 'Update item data', content: itemBase64 };
-        if (itemSha) itemBody.sha = itemSha;
-        await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_ITEM_FILE}`, {
-          method: 'PUT', headers, body: JSON.stringify(itemBody)
-        });
-        console.log('[ADcheck] ITEM保存成功');
-      } catch(e) { console.warn('[ADcheck] ITEM保存エラー:', e); }
-    }
-    // kwRowsを別ファイルに保存
-    if (kwRows.length > 0) {
-      try {
-        const kwPayload = { kwRows };
-        const kwStr = JSON.stringify(kwPayload);
-        const kwBase64 = btoa(unescape(encodeURIComponent(kwStr)));
-        let kwSha = null;
-        const kwGetRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_KW_FILE}`, { headers });
-        if (kwGetRes.ok) { kwSha = (await kwGetRes.json()).sha; }
-        const kwBody = { message: 'Update kw data', content: kwBase64 };
-        if (kwSha) kwBody.sha = kwSha;
-        await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_KW_FILE}`, {
-          method: 'PUT', headers, body: JSON.stringify(kwBody)
-        });
-        console.log('[ADcheck] KW保存成功');
-      } catch(e) { console.warn('[ADcheck] KW保存エラー:', e); }
-    }
-    }
+
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length > 0) console.error('[ADcheck] 一部保存失敗');
+    else console.log('[ADcheck] 全ファイル保存完了');
+
   } catch(e) {
     console.error('[ADcheck] GitHub save exception:', e);
   } finally {
