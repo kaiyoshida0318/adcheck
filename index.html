@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.201</span>
+    <span class="build-date">v1.202</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -977,25 +977,18 @@ async function saveToGitHub() {
       const putRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${file}`, {
         method: 'PUT', headers, body: JSON.stringify(body)
       });
-      if (!putRes.ok) throw new Error(await putRes.text());
-      return file;
+      if (!putRes.ok) {
+        const err = await putRes.json();
+        console.error('[ADcheck] 保存失敗:', file, err);
+      } else {
+        console.log('[ADcheck] 保存成功:', file);
+      }
     };
 
-    // 3ファイルを並列保存
-    const results = await Promise.allSettled([
-      _ghPut(GH_FILE,      { productCache, calEvents, nichinichiRows, dailyRows, salesRows }),
-      _ghPut(GH_KW_FILE,   { kwRows }),
-      _ghPut(GH_ITEM_FILE, { DB, itemDailyData }),
-    ]);
-
-    results.forEach(r => {
-      if (r.status === 'fulfilled') console.log('[ADcheck] 保存成功:', r.value);
-      else console.error('[ADcheck] 保存失敗:', r.reason);
-    });
-
-    const failed = results.filter(r => r.status === 'rejected');
-    if (failed.length > 0) console.error('[ADcheck] 一部保存失敗');
-    else console.log('[ADcheck] 全ファイル保存完了');
+    // 3ファイルを順番に保存（SHA競合を避けるため直列）
+    await _ghPut(GH_FILE,      { productCache, calEvents, nichinichiRows, dailyRows, salesRows });
+    await _ghPut(GH_ITEM_FILE, { DB, itemDailyData });
+    await _ghPut(GH_KW_FILE,   { kwRows });
 
   } catch(e) {
     console.error('[ADcheck] GitHub save exception:', e);
