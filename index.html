@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.197</span>
+    <span class="build-date">v1.198</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1193,6 +1193,7 @@ function readFiles(files) {
         }
         // kwはZIP内最初のCSVのdateInfoを使用
         const _kwInfo = await (async()=>{ const b=await f.arrayBuffer(); const z=await JSZip.loadAsync(b); for(const [n,e] of Object.entries(z.files)){if(n.toLowerCase().endsWith('.csv')&&!e.dir){const cb=await e.async('arraybuffer');const t=new TextDecoder('shift-jis').decode(new Uint8Array(cb));return _extractDateInfo(t);}} return null; })();
+        console.log('[ADcheck] kw file:', f.name, 'kwInfo:', JSON.stringify(_kwInfo));
         _addNichFile(f, null, _kwInfo);
         _renderMonthlyBadges();
         hasMonthlyFile = true;
@@ -1201,6 +1202,7 @@ function readFiles(files) {
       if (type === 'rpp') {
         const _rppText = await _readNichText(f);
         const _rppInfo = _rppText ? _extractDateInfo(_rppText) : null;
+        console.log('[ADcheck] rpp file:', f.name, 'info:', JSON.stringify(_rppInfo), 'text len:', _rppText?.length);
         _addNichFile(f, _rppText, _rppInfo);
         _renderMonthlyBadges();
         hasMonthlyFile = true;
@@ -2893,11 +2895,12 @@ async function monthlyRun() {
   document.getElementById('monthly-run-status').textContent = '処理中...';
   document.getElementById('daily-run-status').textContent = '処理中...';
   const grouped = await _classifyAllFiles();
+  console.log('[ADcheck] grouped keys:', Object.keys(grouped), JSON.stringify(Object.entries(grouped).map(([k,v])=>({k,rpp:!!v.rpp,kw:!!v.kw}))));
   const keys = Object.keys(grouped).sort().reverse();
   const newMonthly = [], newDaily = [];
   for (const key of keys) {
     const g = grouped[key];
-    if (!g.rpp || !g.kw) continue;
+    if (!g.rpp || !g.kw) { console.log('[ADcheck] skip key:', key, 'rpp:', !!g.rpp, 'kw:', !!g.kw); continue; }
     const row = _processOneEntry(key, g);
     if (!row) continue;
     if (row.isPeriod) newMonthly.push(row); else newDaily.push(row);
