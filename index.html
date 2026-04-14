@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.235</span>
+    <span class="build-date">v1.236</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -3046,14 +3046,13 @@ function setGraphPeriod(period) {
   const dBtn = document.getElementById('graphPeriodDaily');
   const mRange = document.getElementById('graphMonthRange');
   const dRange = document.getElementById('graphDateRange');
-  if (mBtn && dBtn) {
-    mBtn.style.background  = period === 'monthly' ? 'var(--accent)' : 'var(--surface2)';
-    mBtn.style.color       = period === 'monthly' ? '#fff' : 'var(--text3)';
-    mBtn.style.borderColor = period === 'monthly' ? 'var(--accent)' : 'var(--border)';
-    dBtn.style.background  = period === 'daily' ? 'var(--accent)' : 'var(--surface2)';
-    dBtn.style.color       = period === 'daily' ? '#fff' : 'var(--text3)';
-    dBtn.style.borderColor = period === 'daily' ? 'var(--accent)' : 'var(--border)';
-  }
+  [['monthly', mBtn], ['daily', dBtn]].forEach(([p, btn]) => {
+    if (!btn) return;
+    const active = p === period;
+    btn.style.setProperty('background', active ? 'var(--accent)' : 'var(--surface2)', 'important');
+    btn.style.setProperty('color', active ? '#fff' : 'var(--text)', 'important');
+    btn.style.setProperty('border-color', active ? 'var(--accent)' : 'var(--border)', 'important');
+  });
   if (mRange) mRange.style.display = period === 'monthly' ? 'flex' : 'none';
   if (dRange) dRange.style.display = period === 'daily'   ? 'flex' : 'none';
   _initGraphRange();
