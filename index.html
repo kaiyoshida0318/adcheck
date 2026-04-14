@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.229</span>
+    <span class="build-date">v1.231</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -583,6 +583,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="container" style="max-width:1200px">
       <div class="table-card" style="padding:20px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+          <div style="display:flex;gap:4px">
+            <button id="graphPeriodMonth" onclick="setGraphPeriod('monthly')"
+              style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;white-space:nowrap">月別</button>
+            <button id="graphPeriodDaily" onclick="setGraphPeriod('daily')"
+              style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">日別</button>
+          </div>
           <select id="graphMetricSel" class="toolbar-month" onchange="renderGraph()" style="font-size:13px;padding:6px 12px">
             <option value="spend">実績額</option>
             <option value="spend_ratio">実績額-割合 (KW/20円)</option>
@@ -2994,6 +3000,20 @@ let _currentTab = 'monthly';
 
 // ── グラフ ──
 let _chartInstance = null;
+let _graphPeriod = 'monthly'; // 'monthly' or 'daily'
+
+function setGraphPeriod(period) {
+  _graphPeriod = period;
+  const mBtn = document.getElementById('graphPeriodMonth');
+  const dBtn = document.getElementById('graphPeriodDaily');
+  if (mBtn && dBtn) {
+    const active = 'border:1px solid var(--accent);background:var(--accent);color:#fff;';
+    const inactive = 'border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
+    mBtn.style.cssText = mBtn.style.cssText.replace(/border[^;]+;background[^;]+;color[^;]+;/, period==='monthly' ? active : inactive);
+    dBtn.style.cssText = dBtn.style.cssText.replace(/border[^;]+;background[^;]+;color[^;]+;/, period==='daily' ? active : inactive);
+  }
+  renderGraph();
+}
 
 function renderGraph() {
   const metric = document.getElementById('graphMetricSel')?.value || 'spend';
@@ -3001,13 +3021,18 @@ function renderGraph() {
   const empty  = document.getElementById('graphEmpty');
   if (!canvas) return;
 
-  // nichinichiRowsとdailyRowsから月別データを収集
-  const mByCode = {};
-  nichinichiRows.forEach(r => { mByCode[r.code] = r; });
-  _aggregateDailyToMonthly(dailyRows).forEach(r => {
-    if (!mByCode[r.code]) mByCode[r.code] = r;
-  });
-  const rows = Object.values(mByCode).sort((a,b) => a.code.localeCompare(b.code));
+  // 月別 or 日別データを収集
+  let rows;
+  if (_graphPeriod === 'daily') {
+    rows = dailyRows.slice().sort((a,b) => a.code.localeCompare(b.code));
+  } else {
+    const mByCode = {};
+    nichinichiRows.forEach(r => { mByCode[r.code] = r; });
+    _aggregateDailyToMonthly(dailyRows).forEach(r => {
+      if (!mByCode[r.code]) mByCode[r.code] = r;
+    });
+    rows = Object.values(mByCode).sort((a,b) => a.code.localeCompare(b.code));
+  }
 
   if (rows.length === 0) {
     canvas.style.display = 'none';
@@ -3019,6 +3044,10 @@ function renderGraph() {
 
   const labels = rows.map(r => {
     const c = r.code || '';
+    if (_graphPeriod === 'daily') {
+      // 日別: code=20260401 → '04/01'
+      return c.length === 8 ? c.slice(4,6)+'/'+c.slice(6,8) : (r.label || c);
+    }
     return c.length === 6 ? c.slice(0,4) + '/' + c.slice(4,6) : (r.label || c);
   });
 
@@ -3132,6 +3161,7 @@ function renderGraph() {
   // 実績額は積み上げ棒グラフ（KW実績 + 20円実績）
   if (metric === 'spend') {
     const dataKw = rows.map(r => {
+      if (_graphPeriod === 'daily') return r.spendKw || 0;
       const ym = r.code || '';
       return dailyRows.filter(d => d.code?.startsWith(ym)).reduce((s,d)=>s+(d.spendKw||0),0) || (r.spendKw || 0);
     });
@@ -3205,6 +3235,9 @@ function renderGraph() {
   if (metric === 'roas') {
     const dataRoas   = rows.map(r => r.roas || 0);
     const dataRoasKw = rows.map(r => {
+      if (_graphPeriod === 'daily') {
+        return r.spendKw > 0 ? Math.round((r.salesKw||0)/r.spendKw*10000)/100 : 0;
+      }
       const ym = r.code || '';
       const ds = dailyRows.filter(d => d.code?.startsWith(ym));
       const sk = ds.reduce((s,d)=>s+(d.spendKw||0),0) || (r.spendKw||0);
@@ -3212,6 +3245,11 @@ function renderGraph() {
       return sk > 0 ? Math.round(slk/sk*10000)/100 : 0;
     });
     const dataRoas20 = rows.map((r,i) => {
+      if (_graphPeriod === 'daily') {
+        const s20 = Math.max(0,(r.spend||0)-(r.spendKw||0));
+        const sl20= Math.max(0,(r.sales||0)-(r.salesKw||0));
+        return s20 > 0 ? Math.round(sl20/s20*10000)/100 : 0;
+      }
       const ym = r.code || '';
       const ds = dailyRows.filter(d => d.code?.startsWith(ym));
       const sp  = r.spend || 0;
