@@ -373,7 +373,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.202</span>
+    <span class="build-date">v1.203</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1138,6 +1138,11 @@ function readFiles(files) {
   if (!files || files.length === 0) return;
   (async () => {
     _lockUI('ファイルを処理しています...<br>完了するまで画面を操作しないでください。');
+    // メモリが空の場合はGitHubから最新データをロードしてからマージ
+    if (dailyRows.length === 0 && nichinichiRows.length === 0) {
+      _lockUI('GitHubから最新データを読み込み中...<br>しばらくお待ちください。');
+      await loadFromGitHub();
+    }
     const csvTexts = [];
     let hasMonthlyFile = false;
     let hasSalesUpdate = false;
