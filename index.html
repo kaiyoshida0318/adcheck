@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.254</span>
+    <span class="build-date">v1.256</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -3189,6 +3189,26 @@ function _initItemGraphRange() {
   }
 }
 
+function _drawGraphClLines(chart, labels, code) {
+  const logs = (productCache[code]?.changeLog || []).filter(l => l.date && l.note);
+  if (!logs.length) return;
+
+  chart._clLogs = logs;
+  chart._clLabels = labels;
+  chart._clCode = code;
+  chart._clPeriod = _graphPeriod; // 月別/日別
+
+  if (!chart._clHooked) {
+    chart._clHooked = true;
+    const origDraw = chart.draw.bind(chart);
+    chart.draw = function() {
+      origDraw();
+      _renderChangeLogOverlay(this);
+    };
+  }
+  chart.update('none');
+}
+
 function _drawChangeLogLines(chart, labels, code) {
   const logs = (productCache[code]?.changeLog || []).filter(l => l.date && l.note);
   // afterDrawフックをchartインスタンスに直接設定
@@ -3789,7 +3809,10 @@ function renderGraph() {
     return;
   }
 
-
+  // 変更記録の縦線を描画（商品選択済みの場合）
+  if (_chartInstance && _graphClCode) {
+    _drawGraphClLines(_chartInstance, labels, _graphClCode);
+  }
 }
 
 function switchTab(tab) {
