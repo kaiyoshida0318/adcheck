@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.248</span>
+    <span class="build-date">v1.249</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -392,12 +392,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <!-- タブバー -->
 <nav class="tab-bar">
-  <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">月別データ</button>
-  <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">日別データ</button>
-  <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">月・日別データ-グラフ</button>
-  <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">商品/KW別データ</button>
-  <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">商品別データ-グラフ</button>
-  <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">商品/月別データ</button>
+  <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">全-月別データ</button>
+  <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">全-日別データ</button>
+  <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">全-日別グラフ</button>
+  <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">商品-月別データ</button>
+  <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">商品-KW別データ</button>
+  <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">商品-グラフ</button>
 </nav>
 
 <!-- Main Screen -->
@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <select class="toolbar-month" id="monthSel" onchange="renderAll()" style="transition:opacity 0.2s"></select>
             <button id="multiMonthToggle" class="tbtn" onclick="toggleMultiMonth()" style="font-size:11px;white-space:nowrap">📊 月比較</button>
             <div id="multiMonthPicker" style="display:none;align-items:center;gap:6px;flex-wrap:wrap"></div>
-            <input type="text" class="toolbar-search" id="searchBox" placeholder="商品名・管理番号で検索..." oninput="renderTable()">
+            <input type="text" class="toolbar-search" id="searchBox" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderTable()">
             <select class="toolbar-select" id="sortSel" onchange="renderTable()" style="display:none"></select>
             <div class="toolbar-right">
               <button class="summary-toggle-btn" id="summaryBarBtn" onclick="toggleSummaryBar('summaryBarInner','summaryBarBtn')">▲ 閉じる</button>
@@ -4216,7 +4216,7 @@ function updateSortHeaders() {
 
 function getSorted(ym) {
   const q = document.getElementById('searchBox').value.toLowerCase();
-  let products = getProducts().filter(p => !q || p.id.toString().includes(q));
+  let products = getProducts().filter(p => !q || p.id.toString().includes(q) || (productCache[p.id]?.itemNumber||'').toLowerCase().includes(q) || (productCache[p.id]?.manualName||productCache[p.id]?.name||'').toLowerCase().includes(q));
   products = products.map(p => ({ ...p, ...getStats(p, ym) }));
   const dir = _sortDir === 'asc' ? 1 : -1;
   products.sort((a,b) => {
