@@ -398,7 +398,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.304</span>
+    <span class="build-date">v1.305</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -427,14 +427,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <nav class="tab-sub-row tab-sub-row-2">
   <span class="tab-row-label red">【状態】</span>
   <button class="tab-btn" id="tab-btn-monthly-all" onclick="switchTab('monthly-all')">全体</button>
-  <button class="tab-btn" id="tab-btn-monthly-g1" onclick="switchTab('monthly-g1')">健常<span class="s-g1">◎</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-g2" onclick="switchTab('monthly-g2')">健常-要注意<span class="s-g2">◯</span></button>
+  <button class="tab-btn" id="tab-btn-monthly-g1" onclick="switchTab('monthly-g1')">健常◎</button>
+  <button class="tab-btn" id="tab-btn-monthly-g2" onclick="switchTab('monthly-g2')">健常-要注意◯</button>
   <button class="tab-btn" id="tab-btn-monthly-g3" onclick="switchTab('monthly-g3')">健常-広告無し</button>
   <button class="tab-btn" id="tab-btn-monthly-new" onclick="switchTab('monthly-new')">新商品</button>
-  <button class="tab-btn" id="tab-btn-monthly-mid" onclick="switchTab('monthly-mid')">中立<span class="s-mid">□</span></button>
+  <button class="tab-btn" id="tab-btn-monthly-mid" onclick="switchTab('monthly-mid')">中立□</button>
   <button class="tab-btn" id="tab-btn-monthly-mid2" onclick="switchTab('monthly-mid2')">中立-広告無し</button>
-  <button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退検討<span class="s-warn">▲</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退<span class="s-out">■</span></button>
+  <button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退検討▲</button>
+  <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退■</button>
   <span class="tab-row-label blue" style="padding-left:16px">【SS】</span>
   <button class="tab-btn" id="tab-btn-ss-mar" onclick="switchTab('ss-mar')">3月</button>
   <button class="tab-btn" id="tab-btn-ss-jun" onclick="switchTab('ss-jun')">6月</button>
@@ -1026,14 +1026,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <label class="modal-label">区分</label>
         <select id="editStatusSel" style="padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);width:160px">
           <option value="unset">選択前■</option>
-          <option value="g1"   style="color:#1B7A3E">健常◎</option>
-          <option value="g2"   style="color:#7CB518">健常-要注意◯</option>
-          <option value="g3"   style="color:#5C8A5C">健常-広告無し</option>
-          <option value="new"  style="color:#1565C0">新商品</option>
-          <option value="mid"  style="color:#777">中立□</option>
-          <option value="mid2" style="color:#999">中立-広告無し</option>
-          <option value="warn" style="color:#E65100">撤退検討▲</option>
-          <option value="out"  style="color:#C62828">撤退■</option>
+          <option value="g1"   style="color:#1B7A3E;font-weight:600">健常◎</option>
+          <option value="g2"   style="color:#7CB518;font-weight:600">健常-要注意◯</option>
+          <option value="g3"   style="color:#5C8A5C;font-weight:600">健常-広告無し</option>
+          <option value="new"  style="color:#1565C0;font-weight:600">新商品</option>
+          <option value="mid"  style="color:#777;font-weight:600">中立□</option>
+          <option value="mid2" style="color:#999;font-weight:600">中立-広告無し</option>
+          <option value="warn" style="color:#E65100;font-weight:600">撤退検討▲</option>
+          <option value="out"  style="color:#C62828;font-weight:600">撤退■</option>
         </select>
       </div>
     </div>
@@ -5150,7 +5150,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
             const labels = {unset:'選択前■',g1:'健常◎',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',mid2:'中立-広告無し',warn:'撤退検討▲',out:'撤退■'};
             const colors = {unset:'',g1:'#1B7A3E',g2:'#7CB518',g3:'#5C8A5C',new:'#1565C0',mid:'#777',mid2:'#999',warn:'#E65100',out:'#C62828'};
             const cur = productCache[p.id]?.status || 'unset';
-            const col = colors[v] ? `style="color:${colors[v]}"` : '';
+            const col = colors[v] ? `style="color:${colors[v]};font-weight:600"` : '';
             return `<option value="${v}"${cur===v?' selected':''} ${col}>${labels[v]}</option>`;
           }).join('')}
         </select>
