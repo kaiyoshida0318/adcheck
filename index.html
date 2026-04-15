@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.267</span>
+    <span class="build-date">v1.269</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -398,6 +398,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">商品-基本データ</button>
   <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">商品-月別データ</button>
   <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">商品-グラフ</button>
+  <button class="tab-btn" id="tab-btn-retired" onclick="switchTab('retired')">引退済商品</button>
 </nav>
 
 <!-- Main Screen -->
@@ -496,6 +497,22 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   </div>
 
   <!-- ── 月別/商品個別タブ ── -->
+  <div class="tab-panel" id="tab-retired">
+    <div class="container" style="max-width:1400px">
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div style="font-size:12px;color:var(--text3)">引退商品一覧</div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px">
+            <input type="text" id="retiredSearchBox" placeholder="商品名・番号で検索..."
+              style="padding:5px 10px;border:1px solid var(--border);border-radius:5px;font-size:11px;width:180px;background:var(--surface);color:var(--text)"
+              oninput="renderRetired()">
+          </div>
+        </div>
+        <div id="retiredList" style="padding:8px 0"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="tab-panel" id="tab-monthly-item">
     <div class="container" style="max-width:1400px">
       <div class="table-card">
@@ -936,6 +953,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <input type="text" id="editItemNum" class="modal-input" placeholder="例: eq-24-01" style="font-size:11px;font-family:'DM Mono',monospace;padding:4px 8px;width:150px;margin:0">
       </div>
     </div>
+    <div class="modal-field" style="margin-bottom:12px">
+      <label class="modal-label">ステータス</label>
+      <select id="editRetiredSel" style="padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);width:180px">
+        <option value="active">現役商品</option>
+        <option value="retired">引退商品</option>
+      </select>
+    </div>
     <div class="modal-field">
       <label class="modal-label">商品名</label>
       <input type="text" class="modal-input" id="editNameInput" placeholder="商品名を入力">
@@ -988,6 +1012,7 @@ function openEditModal(itemId) {
   document.getElementById('editItemNum').value = cached.itemNumber || '';
   document.getElementById('editNameInput').value = cached.manualName || cached.name || '';
   document.getElementById('editImgInput').value = cached.manualImg || '';
+  document.getElementById('editRetiredSel').value = cached.retired ? 'retired' : 'active';
   document.getElementById('editModalStatus').className = 'modal-status';
   // 画像プレビュー
   const preview = document.getElementById('editImgPreview');
@@ -1060,6 +1085,10 @@ function saveEditItem() {
   // 商品番号の更新
   if (numVal) productCache[_editItemId].itemNumber = numVal;
   else delete productCache[_editItemId].itemNumber;
+
+  // 引退ステータス
+  const retiredVal = document.getElementById('editRetiredSel').value;
+  productCache[_editItemId].retired = retiredVal === 'retired';
 
   // 手動入力があればmanualフラグをセット、空欄なら削除してAPI取得に戻す
   if (nameVal) productCache[_editItemId].manualName = nameVal;
@@ -2793,7 +2822,7 @@ function renderMonthlyItem() {
   const q = (document.getElementById('monthlyItemSearch')?.value || '').trim().toLowerCase();
   const fmtY = v => v === 0 ? '—' : '¥' + v.toLocaleString();
 
-  let codes = Object.keys(itemDailyData);
+  let codes = Object.keys(itemDailyData).filter(code => !productCache[code]?.retired);
   if (q) {
     codes = codes.filter(code => {
       const c = productCache[code] || {};
@@ -3113,6 +3142,7 @@ function _itemGraphSuggest(val) {
   if (!val || val.length < 1) { box.style.display = 'none'; return; }
   const q = val.toLowerCase();
   const matches = Object.keys(itemDailyData).filter(code => {
+    if (productCache[code]?.retired) return false;
     const cached = productCache[code] || {};
     return (cached.itemNumber||'').toLowerCase().includes(q) ||
            (cached.manualName||cached.name||'').toLowerCase().includes(q) ||
@@ -3993,6 +4023,54 @@ function renderGraph() {
   _applyGlobalClLines(_chartInstance, labels);
 }
 
+function renderRetired() {
+  const wrap = document.getElementById('retiredList');
+  if (!wrap) return;
+  const q = (document.getElementById('retiredSearchBox')?.value || '').trim().toLowerCase();
+  const retired = Object.keys(productCache).filter(code => {
+    if (!productCache[code]?.retired) return false;
+    if (!q) return true;
+    const c = productCache[code];
+    return (c.itemNumber||'').toLowerCase().includes(q) ||
+           (c.manualName||c.name||code).toLowerCase().includes(q) ||
+           code.toLowerCase().includes(q);
+  });
+  if (!retired.length) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">引退商品はありません</div>';
+    return;
+  }
+  wrap.innerHTML = `<div style="display:grid;grid-template-columns:90px 110px 1fr 120px;gap:0;font-size:12px">
+    <div style="padding:8px 10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);background:var(--surface2)">商品番号</div>
+    <div style="padding:8px 10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);background:var(--surface2)">商品管理番号</div>
+    <div style="padding:8px 10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);background:var(--surface2)">商品名</div>
+    <div style="padding:8px 10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);background:var(--surface2)">操作</div>
+    ${retired.map(code => {
+      const c = productCache[code] || {};
+      const name = c.manualName || c.name || code;
+      const num = c.itemNumber || '—';
+      return `
+        <div style="padding:8px 10px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;color:var(--text3)">${num}</div>
+        <div style="padding:8px 10px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;color:var(--text3)">${code}</div>
+        <div style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2)">${name}</div>
+        <div style="padding:8px 10px;border-bottom:1px solid var(--border)">
+          <button onclick="restoreProduct('${code}')"
+            style="font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);cursor:pointer">
+            現役に戻す
+          </button>
+        </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function restoreProduct(code) {
+  if (!productCache[code]) return;
+  productCache[code].retired = false;
+  saveProductCache();
+  saveToGitHub();
+  renderRetired();
+  renderPage();
+}
+
 function switchTab(tab) {
   _currentTab = tab;
   // ボタンのactive切り替え
@@ -4003,6 +4081,7 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab)?.classList.add('active');
   // 月別/商品個別タブを開いたら自動でレンダリング
   if (tab === 'monthly-item') renderMonthlyItem();
+  if (tab === 'retired') renderRetired();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
 }
@@ -4460,7 +4539,7 @@ function updateSortHeaders() {
 
 function getSorted(ym) {
   const q = document.getElementById('searchBox').value.toLowerCase();
-  let products = getProducts().filter(p => !q || p.id.toString().includes(q) || (productCache[p.id]?.itemNumber||'').toLowerCase().includes(q) || (productCache[p.id]?.manualName||productCache[p.id]?.name||'').toLowerCase().includes(q));
+  let products = getProducts().filter(p => !productCache[p.id]?.retired && (!q || p.id.toString().includes(q) || (productCache[p.id]?.itemNumber||'').toLowerCase().includes(q) || (productCache[p.id]?.manualName||productCache[p.id]?.name||'').toLowerCase().includes(q)));
   products = products.map(p => ({ ...p, ...getStats(p, ym) }));
   const dir = _sortDir === 'asc' ? 1 : -1;
   products.sort((a,b) => {
