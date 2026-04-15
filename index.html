@@ -86,7 +86,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.243</span>
+    <span class="build-date">v1.245</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -3188,6 +3188,53 @@ function _initItemGraphRange() {
   }
 }
 
+function _drawChangeLogLines(chart, labels, code) {
+  const logs = (productCache[code]?.changeLog || []).filter(l => l.date && l.note);
+  if (!logs.length) return;
+  const plugin = {
+    id: 'changeLogLines',
+    afterDraw(chart) {
+      const ctx = chart.ctx;
+      const xAxis = chart.scales.x;
+      const yAxis = chart.scales.y || chart.scales[Object.keys(chart.scales).find(k=>k!=='x')];
+      if (!xAxis || !yAxis) return;
+      logs.forEach(log => {
+        // ラベルと日付を照合
+        const idx = labels.findIndex(l => {
+          if (_itemGraphPeriod === 'daily') return l === log.date.slice(5); // MM-DD
+          return l === log.date.slice(0,7).replace('-','/'); // YYYY/MM
+        });
+        if (idx < 0) return;
+        const x = xAxis.getPixelForValue(idx);
+        const top = yAxis.top;
+        const bottom = yAxis.bottom;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x, bottom);
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // ラベル
+        ctx.fillStyle = '#f97316';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.save();
+        ctx.translate(x + 4, top + 10);
+        ctx.fillText(log.note.slice(0, 10), 0, 0);
+        ctx.restore();
+        ctx.restore();
+      });
+    }
+  };
+  chart.config.plugins = chart.config.plugins || [];
+  // 既存のchangeLogLinesを削除して追加
+  chart.config.plugins = chart.config.plugins.filter(p => p.id !== 'changeLogLines');
+  chart.config.plugins.push(plugin);
+  chart.update();
+}
+
 function renderItemGraph() {
   const canvas = document.getElementById('itemGraphCanvas');
   const empty  = document.getElementById('itemGraphEmpty');
@@ -3294,6 +3341,8 @@ function renderItemGraph() {
       }
     });
   }
+  // 変更記録の縦線を描画
+  if (_itemChartInstance) _drawChangeLogLines(_itemChartInstance, displayLabels, _itemGraphCode);
 }
 
 // ── グラフ ──
@@ -3910,6 +3959,80 @@ function _unlockUI() {
   if (el) el.classList.remove('active');
 }
 
+// ── 変更記録 ──
+let _clCurrentCode = null;
+
+function openChangeLog(code) {
+  _clCurrentCode = code;
+  const cached = productCache[code] || {};
+  const name = cached.manualName || cached.name || code;
+  const num = cached.itemNumber || code;
+  document.getElementById('clModalTitle').textContent = '変更記録';
+  document.getElementById('clModalSub').textContent = `${num}  ${name}`;
+  const logs = cached.changeLog || [];
+  _renderClRows(logs);
+  document.getElementById('changeLogModal').style.display = 'flex';
+}
+
+function closeChangeLog() {
+  document.getElementById('changeLogModal').style.display = 'none';
+  _clCurrentCode = null;
+}
+
+function _renderClRows(logs) {
+  const container = document.getElementById('clRows');
+  container.innerHTML = logs.map((log, i) => `
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="date" value="${log.date||''}" data-idx="${i}" data-field="date"
+        onchange="_clUpdateRow(this)"
+        style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
+      <input type="text" value="${log.note||''}" data-idx="${i}" data-field="note"
+        onchange="_clUpdateRow(this)" placeholder="内容を入力..."
+        style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex:1">
+      <button onclick="_clDeleteRow(${i})" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 4px">✕</button>
+    </div>
+  `).join('');
+}
+
+function _clUpdateRow(el) {
+  const idx = +el.dataset.idx;
+  const field = el.dataset.field;
+  if (!productCache[_clCurrentCode]) productCache[_clCurrentCode] = {};
+  if (!productCache[_clCurrentCode].changeLog) productCache[_clCurrentCode].changeLog = [];
+  productCache[_clCurrentCode].changeLog[idx][field] = el.value;
+}
+
+function _clDeleteRow(idx) {
+  if (!productCache[_clCurrentCode]?.changeLog) return;
+  productCache[_clCurrentCode].changeLog.splice(idx, 1);
+  _renderClRows(productCache[_clCurrentCode].changeLog);
+}
+
+function addChangeLogRow() {
+  if (!productCache[_clCurrentCode]) productCache[_clCurrentCode] = {};
+  if (!productCache[_clCurrentCode].changeLog) productCache[_clCurrentCode].changeLog = [];
+  productCache[_clCurrentCode].changeLog.push({ date: new Date().toISOString().slice(0,10), note: '' });
+  _renderClRows(productCache[_clCurrentCode].changeLog);
+}
+
+function saveChangeLog() {
+  // 入力中の値を取得
+  const inputs = document.querySelectorAll('#clRows input');
+  const logs = [];
+  const rows = document.querySelectorAll('#clRows > div');
+  rows.forEach((row, i) => {
+    const dateEl = row.querySelector('[data-field="date"]');
+    const noteEl = row.querySelector('[data-field="note"]');
+    if (dateEl && noteEl) logs.push({ date: dateEl.value, note: noteEl.value });
+  });
+  if (!productCache[_clCurrentCode]) productCache[_clCurrentCode] = {};
+  productCache[_clCurrentCode].changeLog = logs.filter(l => l.date || l.note);
+  saveProductCache();
+  saveToGitHub();
+  closeChangeLog();
+  renderTable(); // ボタンの件数表示を更新
+}
+
 function toggleSummaryBar(innerId, btnId) {
   const inner = document.getElementById(innerId);
   const btn   = document.getElementById(btnId);
@@ -4232,6 +4355,12 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           <button class="edit-btn" onclick="event.stopPropagation();openEditModal('${p.id}')" title="編集">✏</button>
         </div>
       </div>
+      <div style="display:flex;align-items:center;justify-content:center;padding:4px">
+        <button onclick="event.stopPropagation();openChangeLog('${p.id}')"
+          style="font-size:9px;padding:2px 6px;border-radius:3px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap;line-height:1.4">
+          変更記録${(productCache['${p.id}']?.changeLog?.length>0)?`<span style="color:var(--accent);margin-left:2px">(${productCache['${p.id}'].changeLog.length})</span>`:''}
+        </button>
+      </div>
       <div class="cell r mono">
         ${fmtY(p.spend)}
         <div class="mini-bar"><div class="mini-fill" style="width:${spendPct}%;background:var(--red);opacity:0.6"></div></div>
@@ -4486,5 +4615,23 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 </script>
+<!-- 変更記録モーダル -->
+<div id="changeLogModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9000;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:12px;padding:24px;width:480px;max-width:95vw;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <div style="font-weight:700;font-size:15px" id="clModalTitle">変更記録</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px" id="clModalSub"></div>
+      </div>
+      <button onclick="closeChangeLog()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--text3)">✕</button>
+    </div>
+    <button onclick="addChangeLogRow()" style="margin-bottom:12px;padding:5px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);font-size:12px;cursor:pointer;font-weight:600">＋ 追加</button>
+    <div id="clRows" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button onclick="closeChangeLog()" style="padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">キャンセル</button>
+      <button onclick="saveChangeLog()" style="padding:6px 16px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;cursor:pointer;font-weight:600">保存</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
