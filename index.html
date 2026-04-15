@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.252</span>
+    <span class="build-date">v1.253</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -3191,85 +3191,92 @@ function _initItemGraphRange() {
 
 function _drawChangeLogLines(chart, labels, code) {
   const logs = (productCache[code]?.changeLog || []).filter(l => l.date && l.note);
-  if (!logs.length) return;
+  // afterDrawフックをchartインスタンスに直接設定
+  chart._clLogs = logs;
+  chart._clLabels = labels;
+  chart._clCode = code;
 
-  const plugin = {
-    id: 'changeLogLines',
-    afterDraw(chart) {
-      const ctx = chart.ctx;
-      const xAxis = chart.scales.x;
-      const yScale = chart.scales.y || chart.scales[Object.keys(chart.scales).find(k=>k!=='x')];
-      if (!xAxis || !yScale) return;
+  if (!chart._clHooked) {
+    chart._clHooked = true;
+    const origDraw = chart.draw.bind(chart);
+    chart.draw = function() {
+      origDraw();
+      _renderChangeLogOverlay(this);
+    };
+  }
+  chart.update('none');
+}
 
-      logs.forEach((log, li) => {
-        const idx = labels.findIndex(l => {
-          if (_itemGraphPeriod === 'daily') return l === log.date.slice(5);
-          return l === log.date.slice(0,7).replace('-','/');
-        });
-        if (idx < 0) return;
+function _renderChangeLogOverlay(chart) {
+  const logs = chart._clLogs || [];
+  const labels = chart._clLabels || [];
+  if (!logs.length || !labels.length) return;
 
-        const x = xAxis.getPixelForValue(idx);
-        const top = yScale.top;
-        const bottom = yScale.bottom;
-        const note = log.note;
-        const dateLabel = log.date.slice(0,10);
+  const ctx = chart.ctx;
+  const xAxis = chart.scales?.x;
+  const yKeys = Object.keys(chart.scales || {}).filter(k => k !== 'x');
+  const yScale = yKeys.length ? chart.scales[yKeys[0]] : null;
+  if (!xAxis || !yScale) return;
 
-        ctx.save();
+  logs.forEach((log, li) => {
+    const idx = labels.findIndex(l => {
+      if (_itemGraphPeriod === 'daily') return l === log.date.slice(5);
+      return l === log.date.slice(0,7).replace('-','/');
+    });
+    if (idx < 0) return;
 
-        // 縦線（太め・実線）
-        ctx.beginPath();
-        ctx.moveTo(x, top);
-        ctx.lineTo(x, bottom);
-        ctx.strokeStyle = '#f97316';
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([6, 3]);
-        ctx.globalAlpha = 0.85;
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.globalAlpha = 1;
+    const x = xAxis.getPixelForValue(idx);
+    const top = yScale.top;
+    const bottom = yScale.bottom;
+    const note = log.note;
 
-        // 上部のラベルバッジ
-        const badgePad = 6;
-        const fontSize = 11;
-        ctx.font = `bold ${fontSize}px 'Noto Sans JP', sans-serif`;
-        const noteText = note.length > 12 ? note.slice(0, 12) + '…' : note;
-        const textW = ctx.measureText(noteText).width;
-        const badgeW = textW + badgePad * 2;
-        const badgeH = fontSize + badgePad * 2;
+    ctx.save();
 
-        // バッジ位置（交互にずらして重ならないように）
-        const badgeX = x - badgeW / 2;
-        const badgeY = top + (li % 2 === 0 ? 4 : badgeH + 10);
+    // 縦線
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, bottom);
+    ctx.strokeStyle = '#f97316';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 3]);
+    ctx.globalAlpha = 0.85;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
 
-        // バッジ背景
-        ctx.beginPath();
-        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
-        ctx.fillStyle = '#f97316';
-        ctx.fill();
+    // バッジ
+    const badgePad = 5;
+    const fontSize = 11;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    const noteText = note.length > 12 ? note.slice(0, 12) + '…' : note;
+    const textW = ctx.measureText(noteText).width;
+    const badgeW = textW + badgePad * 2;
+    const badgeH = fontSize + badgePad * 2;
+    const badgeX = x - badgeW / 2;
+    const badgeY = top + (li % 2 === 0 ? 4 : badgeH + 12);
 
-        // バッジテキスト
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(noteText, x, badgeY + badgeH / 2);
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    const r = 4;
+    ctx.roundRect(badgeX, badgeY, badgeW, badgeH, r);
+    ctx.fill();
 
-        // 三角形（バッジから線への接続）
-        ctx.beginPath();
-        ctx.moveTo(x - 5, badgeY + badgeH);
-        ctx.lineTo(x + 5, badgeY + badgeH);
-        ctx.lineTo(x, badgeY + badgeH + 5);
-        ctx.closePath();
-        ctx.fillStyle = '#f97316';
-        ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(noteText, x, badgeY + badgeH / 2);
 
-        ctx.restore();
-      });
-    }
-  };
+    // 三角形
+    ctx.beginPath();
+    ctx.moveTo(x - 5, badgeY + badgeH);
+    ctx.lineTo(x + 5, badgeY + badgeH);
+    ctx.lineTo(x, badgeY + badgeH + 5);
+    ctx.closePath();
+    ctx.fillStyle = '#f97316';
+    ctx.fill();
 
-  chart.config.plugins = (chart.config.plugins || []).filter(p => p.id !== 'changeLogLines');
-  chart.config.plugins.push(plugin);
-  chart.update();
+    ctx.restore();
+  });
 }
 
 function renderItemGraph() {
