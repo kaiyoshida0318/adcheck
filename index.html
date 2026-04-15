@@ -87,6 +87,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tbtn:hover { background: var(--surface2); }
 
 .col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.col-header.with-status { grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 120px 28px; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -100,6 +101,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .item-row { border-bottom: 1px solid rgba(0,0,0,0.18); }
 .item-row:last-child { border-bottom: none; }
 .item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic.with-status { grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 120px 28px; }
+.status-cell { display: flex; align-items: center; gap: 4px; padding: 4px 6px; justify-content: center; }
+.status-update-btn { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent); background: var(--surface2); color: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.status-update-btn:hover { background: var(--accent); color: #fff; }
 .item-basic:hover, .item-basic.expanded { background: #fafaf9; }
 .cell-img { padding: 6px 8px; display: flex; align-items: center; justify-content: center; }
 .prod-thumb { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; border: 1px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); flex-shrink: 0; }
@@ -385,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.288</span>
+    <span class="build-date">v1.289</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4815,7 +4820,11 @@ function renderPage() {
         : `<div class="empty">該当する商品がありません（${label}）</div>`;
       // col-headerを商品-基本データから複製
       const origHeader = document.querySelector('#tab-products .col-header');
-      const headerHtml = origHeader ? origHeader.outerHTML : '';
+      const headerHtml = origHeader
+        ? origHeader.outerHTML
+            .replace('class="col-header"','class="col-header with-status"')
+            .replace(/<div class="ch"><\/div>\s*$/, '<div class="ch" style="text-align:center;font-size:10px">区分</div><div class="ch"></div>')
+        : '';
       panel.innerHTML = `<div class="container" style="max-width:1400px"><div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${inner}</div></div></div>`;
     }
     return;
@@ -4873,7 +4882,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   return `<div class="item-row">
-    <div class="item-basic${isExp?' expanded':''}" onclick="toggleRow('${p.id}','${ym}')">
+    <div class="item-basic${isExp?' expanded':''}${_subTabFilter?' with-status':''}" onclick="toggleRow('${p.id}','${ym}')">
       <div style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center" title="${cached?.itemNumber||''}">
         ${cached?.itemNumber || '—'}
       </div>
@@ -4969,7 +4978,21 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           return `<span style="color:${color}">${grossProfit >= 0 ? '+' : ''}${fmtY(grossProfit)}</span>`;
         })()}
       </div>
-
+      ${_subTabFilter ? `
+      <div class="status-cell" onclick="event.stopPropagation()">
+        <select id="status-sel-${p.id}" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);flex:1;min-width:0;cursor:pointer">
+          <option value="unset" ${(productCache['${p.id}']?.status||'unset')==='unset'?'selected':''}>選択前■</option>
+          <option value="g1"    ${productCache['${p.id}']?.status==='g1'   ?'selected':''}>健常◎</option>
+          <option value="g2"    ${productCache['${p.id}']?.status==='g2'   ?'selected':''}>健常-要注意◯</option>
+          <option value="g3"    ${productCache['${p.id}']?.status==='g3'   ?'selected':''}>健常-広告無し</option>
+          <option value="new"   ${productCache['${p.id}']?.status==='new'  ?'selected':''}>新商品</option>
+          <option value="mid"   ${productCache['${p.id}']?.status==='mid'  ?'selected':''}>中立□</option>
+          <option value="mid2"  ${productCache['${p.id}']?.status==='mid2' ?'selected':''}>中立-広告無し</option>
+          <option value="warn"  ${productCache['${p.id}']?.status==='warn' ?'selected':''}>撤退検討▲</option>
+          <option value="out"   ${productCache['${p.id}']?.status==='out'  ?'selected':''}>撤退■</option>
+        </select>
+        <button class="status-update-btn" onclick="setProductStatus('${p.id}',document.getElementById('status-sel-${p.id}').value)">更新</button>
+      </div>` : ''}
       <div class="toggle-cell"><div class="toggle-icon${isExp?' open':''}">▶</div></div>
     </div>
     <div class="daily-panel${isExp?' open':''}" id="dp-${p.id}">
