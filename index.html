@@ -97,7 +97,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .page-btns { display: none; }
 .pagination { display: none; }
 
-.item-row { border-bottom: 1px solid var(--border); }
+.item-row { border-bottom: 1px solid rgba(0,0,0,0.18); }
 .item-row:last-child { border-bottom: none; }
 .item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
 .item-basic:hover, .item-basic.expanded { background: #fafaf9; }
@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.274</span>
+    <span class="build-date">v1.276</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -419,7 +419,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
       <div id="dataArea" style="display:none">
         <div class="summary-bar-wrap" id="summaryBarWrap">
-          <div class="summary-bar-inner" id="summaryBarInner">
+          <div class="summary-bar-inner collapsed" id="summaryBarInner">
             <div class="summary-bar" id="summaryBar"></div>
           </div>
         </div>
@@ -431,7 +431,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <input type="text" class="toolbar-search" id="searchBox" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderTable()">
             <select class="toolbar-select" id="sortSel" onchange="renderTable()" style="display:none"></select>
             <div class="toolbar-right">
-              <button class="summary-toggle-btn" id="summaryBarBtn" onclick="toggleSummaryBar('summaryBarInner','summaryBarBtn')">▲ 閉じる</button>
+              <button class="summary-toggle-btn" id="summaryBarBtn" onclick="toggleSummaryBar('summaryBarInner','summaryBarBtn')">▼ 開く</button>
               <button class="tbtn" onclick="expandAll()">全展開</button>
               <button class="tbtn" onclick="collapseAll()">全折りたたみ</button>
               <button class="tbtn" onclick="exportCSV()">CSV出力</button>
@@ -467,7 +467,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="tab-panel" id="tab-monthly">
     <div class="container" style="max-width:1400px">
       <div class="summary-bar-wrap" id="monthlySummaryBarWrap">
-        <div class="summary-bar-inner" id="monthlySummaryBarInner">
+        <div class="summary-bar-inner collapsed" id="monthlySummaryBarInner">
           <div class="summary-bar" id="monthly-summary-bar" style="display:none"></div>
         </div>
       </div>
@@ -482,7 +482,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <span style="color:#C62828;font-weight:700">● 下位10%</span>
           </div>
           <div class="toolbar-right">
-            <button class="summary-toggle-btn" id="monthlySummaryBarBtn" onclick="toggleSummaryBar('monthlySummaryBarInner','monthlySummaryBarBtn')" style="display:none">▲ 閉じる</button>
+            <button class="summary-toggle-btn" id="monthlySummaryBarBtn" onclick="toggleSummaryBar('monthlySummaryBarInner','monthlySummaryBarBtn')" style="display:none">▼ 開く</button>
             <button class="tbtn" onclick="monthlyClear()">クリア</button>
             <span id="monthly-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
           </div>
@@ -534,7 +534,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="tab-panel" id="tab-daily">
     <div class="container" style="max-width:1400px">
       <div class="summary-bar-wrap" id="dailySummaryBarWrap">
-        <div class="summary-bar-inner" id="dailySummaryBarInner">
+        <div class="summary-bar-inner collapsed" id="dailySummaryBarInner">
           <div class="summary-bar" id="daily-summary-bar" style="display:none"></div>
         </div>
       </div>
@@ -554,7 +554,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <span style="color:#C62828;font-weight:700">● 下位10%</span>
           </div>
           <div class="toolbar-right">
-            <button class="summary-toggle-btn" id="dailySummaryBarBtn" onclick="toggleSummaryBar('dailySummaryBarInner','dailySummaryBarBtn')" style="display:none">▲ 閉じる</button>
+            <button class="summary-toggle-btn" id="dailySummaryBarBtn" onclick="toggleSummaryBar('dailySummaryBarInner','dailySummaryBarBtn')" style="display:none">▼ 開く</button>
             <button class="tbtn" onclick="dailyClear()">クリア</button>
             <span id="daily-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
           </div>
@@ -2633,7 +2633,6 @@ function _renderTable(mode, rows) {
     const _sbBtnId = summaryBar.id === 'monthly-summary-bar' ? 'monthlySummaryBarBtn' : summaryBar.id === 'daily-summary-bar' ? 'dailySummaryBarBtn' : null;
     const _sbInnerId = summaryBar.id === 'monthly-summary-bar' ? 'monthlySummaryBarInner' : summaryBar.id === 'daily-summary-bar' ? 'dailySummaryBarInner' : null;
     if (_sbBtnId) _showSummaryBtn(_sbBtnId);
-    if (_sbInnerId) { const inn = document.getElementById(_sbInnerId); if(inn) inn.classList.remove('collapsed'); }
     summaryBar.innerHTML = `
       <div class="scard scard-accent"><div class="scard-label">累計実績額■</div><div class="scard-val">${fmtY(totalSpend)}</div><div class="scard-sub">${rows.length}件</div></div>
       <div class="scard"><div class="scard-label">累計クリック数■</div><div class="scard-val">${fmt(totalCl)}</div></div>
@@ -4372,7 +4371,10 @@ function toggleSummaryBar(innerId, btnId) {
 // summaryBarが表示される時にトグルボタンも表示
 function _showSummaryBtn(btnId) {
   const btn = document.getElementById(btnId);
-  if (btn) btn.style.display = 'flex';
+  if (btn) {
+    btn.style.display = 'flex';
+    btn.textContent = '▼ 開く';
+  }
 }
 
 function toggleMultiMonth() {
@@ -4694,7 +4696,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           <button class="edit-btn" onclick="event.stopPropagation();openEditModal('${p.id}')" title="編集">✏</button>
         </div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:center;padding:4px">
+      <div style="display:flex;align-items:center;justify-content:center;padding:8px 6px">
         <button onclick="event.stopPropagation();openChangeLog('${p.id}')"
           style="font-size:9px;padding:2px 6px;border-radius:3px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap;line-height:1.4">
           変更記録${(productCache['${p.id}']?.changeLog?.length>0)?`<span style="color:var(--accent);margin-left:2px">(${productCache['${p.id}'].changeLog.length})</span>`:''}
