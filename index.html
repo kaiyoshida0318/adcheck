@@ -289,7 +289,9 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 /* sub-tab rows (2nd and 3rd row) */
 .tab-sub-row { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; z-index: 98; }
 .tab-sub-row-2 { top: calc(52px + 46px); }
-.tab-row-label { font-size: 11px; font-weight: 700; color: var(--text3); padding: 0 10px 14px 4px; white-space: nowrap; align-self: flex-end; letter-spacing: 0.3px; }
+.tab-row-label { font-size: 12px; font-weight: 700; padding: 0 10px 14px 4px; white-space: nowrap; align-self: flex-end; letter-spacing: 0.3px; }
+.tab-row-label.red { color: var(--red); }
+.tab-row-label.blue { color: #1565C0; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 .tab-coming-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; gap: 12px; }
@@ -380,7 +382,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.283</span>
+    <span class="build-date">v1.284</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -407,7 +409,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn" id="tab-btn-retired" onclick="switchTab('retired')">🗂 引退済商品</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-2">
-  <span class="tab-row-label">【最新月】</span>
+  <span class="tab-row-label red">【最新月】</span>
   <button class="tab-btn" id="tab-btn-monthly-all" onclick="switchTab('monthly-all')">全体</button>
   <button class="tab-btn" id="tab-btn-monthly-g1" onclick="switchTab('monthly-g1')">健常◎</button>
   <button class="tab-btn" id="tab-btn-monthly-g2" onclick="switchTab('monthly-g2')">健常-要注意◯</button>
@@ -417,7 +419,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn" id="tab-btn-monthly-mid2" onclick="switchTab('monthly-mid2')">中立-広告無し</button>
   <button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退検討▲</button>
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退■</button>
-  <span class="tab-row-label" style="padding-left:16px">【SS】</span>
+  <span class="tab-row-label blue" style="padding-left:16px">【SS】</span>
   <button class="tab-btn" id="tab-btn-monthly-active" onclick="switchTab('monthly-active')">参加中商品</button>
 </nav>
 
