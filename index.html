@@ -286,13 +286,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tab-btn { font-size: 13px; font-weight: 500; padding: 12px 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
-/* monthly sub-tabs */
-.tab-dropdown { position: relative; display: flex; flex-direction: column; }
-.tab-sub-bar { display: none; position: absolute; top: 100%; left: 0; min-width: 100%; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 200; flex-direction: column; gap: 0; }
-.tab-dropdown:hover .tab-sub-bar, .tab-dropdown.open .tab-sub-bar { display: flex; }
-.tab-sub-btn { font-size: 12px; font-weight: 500; padding: 8px 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; white-space: nowrap; text-align: left; transition: background 0.1s, color 0.1s; }
-.tab-sub-btn:hover { color: var(--text); background: var(--surface2); }
-.tab-sub-btn.active { color: var(--red); font-weight: 700; background: #fef2f2; }
+/* 3-row tab bar */
+.tab-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0; display: flex; flex-direction: column; position: sticky; top: 52px; z-index: 99; }
+.tab-row { display: flex; align-items: flex-end; gap: 2px; padding: 0 24px; }
+.tab-row-1 { border-bottom: 1px solid var(--border); }
+.tab-row-2 { background: var(--surface2); border-bottom: 1px solid var(--border); }
+.tab-row-3 { background: var(--surface2); }
+.tab-row-2 .tab-btn, .tab-row-3 .tab-btn { font-size: 11px; padding: 7px 14px; color: var(--text3); }
+.tab-row-2 .tab-btn.active, .tab-row-3 .tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 .tab-coming-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; gap: 12px; }
@@ -383,7 +384,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.279</span>
+    <span class="build-date">v1.280</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -400,20 +401,30 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <!-- タブバー -->
 <nav class="tab-bar">
-  <div class="tab-dropdown" id="tab-dropdown-monthly">
-    <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">📊 全-月別データ ▾</button>
-    <div class="tab-sub-bar">
-      <button class="tab-sub-btn" id="tab-sub-btn-monthly-latest" onclick="switchTab('monthly-latest')">【最新月】</button>
-      <button class="tab-sub-btn" id="tab-sub-btn-monthly-ss" onclick="switchTab('monthly-ss')">【SS】</button>
-    </div>
+  <div class="tab-row tab-row-1">
+    <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">📊 全-月別データ</button>
+    <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">📊 全-日別データ</button>
+    <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">📈 全-日別グラフ</button>
+    <div style="width:1px;background:var(--border);margin:8px 4px;align-self:stretch;flex-shrink:0"></div>
+    <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">📊 商品-基本データ</button>
+    <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">📊 商品-月別データ</button>
+    <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">📈 商品-グラフ</button>
+    <button class="tab-btn" id="tab-btn-retired" onclick="switchTab('retired')">🗂 引退済商品</button>
   </div>
-  <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">📊 全-日別データ</button>
-  <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">📈 全-日別グラフ</button>
-  <div style="width:1px;background:var(--border);margin:8px 4px;align-self:stretch;flex-shrink:0"></div>
-  <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">📊 商品-基本データ</button>
-  <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">📊 商品-月別データ</button>
-  <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">📈 商品-グラフ</button>
-  <button class="tab-btn" id="tab-btn-retired" onclick="switchTab('retired')">🗂 引退済商品</button>
+  <div class="tab-row tab-row-2">
+    <button class="tab-btn" id="tab-btn-monthly-all" onclick="switchTab('monthly-all')">全体</button>
+    <button class="tab-btn" id="tab-btn-monthly-g1" onclick="switchTab('monthly-g1')">健常◎</button>
+    <button class="tab-btn" id="tab-btn-monthly-g2" onclick="switchTab('monthly-g2')">健常-要注意◯</button>
+    <button class="tab-btn" id="tab-btn-monthly-g3" onclick="switchTab('monthly-g3')">健常-広告無し</button>
+    <button class="tab-btn" id="tab-btn-monthly-new" onclick="switchTab('monthly-new')">新商品</button>
+    <button class="tab-btn" id="tab-btn-monthly-mid" onclick="switchTab('monthly-mid')">中立□</button>
+    <button class="tab-btn" id="tab-btn-monthly-mid2" onclick="switchTab('monthly-mid2')">中立-広告無し</button>
+    <button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退検討▲</button>
+    <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退■</button>
+  </div>
+  <div class="tab-row tab-row-3">
+    <button class="tab-btn" id="tab-btn-monthly-active" onclick="switchTab('monthly-active')">参加中商品</button>
+  </div>
 </nav>
 
 <!-- Main Screen -->
@@ -477,13 +488,17 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
 
-  <!-- ── 全-月別データ サブタブ ── -->
-  <div class="tab-panel" id="tab-monthly-latest">
-    <div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">【最新月】</div><div style="color:var(--text3);font-size:13px">準備中</div></div>
-  </div>
-  <div class="tab-panel" id="tab-monthly-ss">
-    <div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">【SS】</div><div style="color:var(--text3);font-size:13px">準備中</div></div>
-  </div>
+  <!-- ── 全-月別データ サブタブ（2行目・3行目）── -->
+  <div class="tab-panel" id="tab-monthly-all"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">全体</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
+  <div class="tab-panel" id="tab-monthly-g1"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">健常◎</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
+  <div class="tab-panel" id="tab-monthly-g2"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">健常-要注意◯</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
+  <div class="tab-panel" id="tab-monthly-g3"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">健常-広告無し</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
+  <div class="tab-panel" id="tab-monthly-new"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">新商品</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
+  <div class="tab-panel" id="tab-monthly-mid"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">中立□</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
+  <div class="tab-panel" id="tab-monthly-mid2"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">中立-広告無し</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
+  <div class="tab-panel" id="tab-monthly-warn"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">撤退検討▲</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
+  <div class="tab-panel" id="tab-monthly-out"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">撤退■</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
+  <div class="tab-panel" id="tab-monthly-active"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">参加中商品</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
 
   <!-- ── 月別データタブ ── -->
   <div class="tab-panel" id="tab-monthly">
@@ -4097,18 +4112,14 @@ function restoreProduct(code) {
 
 function switchTab(tab) {
   _currentTab = tab;
-  // ボタンのactive切り替え
+  // 全ボタンのactive解除
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-sub-btn').forEach(b => b.classList.remove('active'));
-  // サブタブの場合は親ボタンもactive
-  const subTabParent = { 'monthly-latest': 'monthly', 'monthly-ss': 'monthly' };
-  const parentTab = subTabParent[tab];
-  if (parentTab) {
-    document.getElementById('tab-btn-' + parentTab)?.classList.add('active');
-    document.getElementById('tab-sub-btn-' + tab)?.classList.add('active');
-  } else {
-    document.getElementById('tab-btn-' + tab)?.classList.add('active');
+  // 2・3行目サブタブの場合は1行目のmonthlyも光らせる
+  const monthlySubTabs = ['monthly-all','monthly-g1','monthly-g2','monthly-g3','monthly-new','monthly-mid','monthly-mid2','monthly-warn','monthly-out','monthly-active'];
+  if (monthlySubTabs.includes(tab)) {
+    document.getElementById('tab-btn-monthly')?.classList.add('active');
   }
+  document.getElementById('tab-btn-' + tab)?.classList.add('active');
   // パネルのactive切り替え
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + tab)?.classList.add('active');
