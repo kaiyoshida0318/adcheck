@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.260</span>
+    <span class="build-date">v1.261</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -3224,10 +3224,28 @@ function _renderGlobalClRows(logs) {
   `).join('');
 }
 function addGlobalClRow() {
-  globalChangeLogs.push({ date: new Date().toISOString().slice(0,10), note: '' });
+  // 先にDOMの現在値をglobalChangeLogsに同期
+  const rows = document.querySelectorAll('#globalClRows > div');
+  const current = [];
+  rows.forEach(row => {
+    const dateEl = row.querySelector('input[type="date"]');
+    const noteEl = row.querySelector('input[type="text"]');
+    if (dateEl && noteEl) current.push({ date: dateEl.value, note: noteEl.value });
+  });
+  globalChangeLogs = current;
+  // 先頭に新しい行を追加
+  globalChangeLogs.unshift({ date: new Date().toISOString().slice(0,10), note: '' });
   _renderGlobalClRows(globalChangeLogs);
 }
 function _deleteGlobalClRow(idx) {
+  const rows = document.querySelectorAll('#globalClRows > div');
+  const current = [];
+  rows.forEach(row => {
+    const dateEl = row.querySelector('input[type="date"]');
+    const noteEl = row.querySelector('input[type="text"]');
+    if (dateEl && noteEl) current.push({ date: dateEl.value, note: noteEl.value });
+  });
+  globalChangeLogs = current;
   globalChangeLogs.splice(idx, 1);
   _renderGlobalClRows(globalChangeLogs);
 }
