@@ -87,7 +87,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tbtn:hover { background: var(--surface2); }
 
 .col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
-.col-header.with-status { grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 120px 28px; }
+.col-header.with-status { grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 120px 120px 28px; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -101,7 +101,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .item-row { border-bottom: 1px solid rgba(0,0,0,0.18); }
 .item-row:last-child { border-bottom: none; }
 .item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
-.item-basic.with-status { grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 120px 28px; }
+.item-basic.with-status { grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 120px 120px 28px; }
 .status-cell { display: flex; align-items: center; gap: 4px; padding: 4px 6px; justify-content: center; }
 .status-update-btn { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent); background: var(--surface2); color: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .status-update-btn:hover { background: var(--accent); color: #fff; }
@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.296</span>
+    <span class="build-date">v1.297</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -417,7 +417,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn tab-btn-all" id="tab-btn-graph" onclick="switchTab('graph')">📈 全-日別グラフ</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-2">
-  <span class="tab-row-label red">【最新月】</span>
+  <span class="tab-row-label red">【状態】</span>
   <button class="tab-btn" id="tab-btn-monthly-all" onclick="switchTab('monthly-all')">全体</button>
   <button class="tab-btn" id="tab-btn-monthly-g1" onclick="switchTab('monthly-g1')">健常◎</button>
   <button class="tab-btn" id="tab-btn-monthly-g2" onclick="switchTab('monthly-g2')">健常-要注意◯</button>
@@ -428,8 +428,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退検討▲</button>
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退■</button>
   <span class="tab-row-label blue" style="padding-left:16px">【SS】</span>
-  <button class="tab-btn" id="tab-btn-monthly-active" onclick="switchTab('monthly-active')">参加中商品</button>
+  <button class="tab-btn" id="tab-btn-ss-mar" onclick="switchTab('ss-mar')">3月</button>
+  <button class="tab-btn" id="tab-btn-ss-jun" onclick="switchTab('ss-jun')">6月</button>
+  <button class="tab-btn" id="tab-btn-ss-sep" onclick="switchTab('ss-sep')">9月</button>
+  <button class="tab-btn" id="tab-btn-ss-dec" onclick="switchTab('ss-dec')">12月</button>
   <div style="flex:1"></div>
+  <select id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)" style="display:none;margin:8px 10px 8px 0;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text)"></select>
   <button id="status-update-global-btn" onclick="applyAllStatusUpdates()" style="display:none;margin:6px 16px 6px 0;padding:6px 18px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(249,115,22,0.35);white-space:nowrap">💾 更新</button>
 </nav>
 
@@ -504,7 +508,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="tab-panel" id="tab-monthly-mid2"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">中立-広告無し</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
   <div class="tab-panel" id="tab-monthly-warn"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">撤退検討▲</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
   <div class="tab-panel" id="tab-monthly-out"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">撤退■</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-monthly-active"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">参加中商品</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
+  <div class="tab-panel" id="tab-monthly-active" style="display:none"></div>
+  <div class="tab-panel" id="tab-ss-mar"></div>
+  <div class="tab-panel" id="tab-ss-jun"></div>
+  <div class="tab-panel" id="tab-ss-sep"></div>
+  <div class="tab-panel" id="tab-ss-dec"></div>
 
   <!-- ── 月別データタブ ── -->
   <div class="tab-panel" id="tab-monthly">
@@ -4204,32 +4212,57 @@ function setProductStatus(code, val) {
   renderMonthlySubTab(_currentTab);
 }
 
-// サブタブの全行の区分を一括更新
+// SSボタントグル（見た目のみ、更新ボタンで確定）
+function toggleSSBtn(code, mon, btn) {
+  const active = btn.style.background === 'rgb(21, 101, 192)' || btn.style.background === '#1565C0';
+  if (active) {
+    btn.style.background = 'var(--surface)';
+    btn.style.color = 'var(--text3)';
+    btn.style.borderColor = 'var(--border)';
+  } else {
+    btn.style.background = '#1565C0';
+    btn.style.color = '#fff';
+    btn.style.borderColor = '#1565C0';
+  }
+}
+
+// サブタブの全行の区分・SSを一括更新
 function applyAllStatusUpdates() {
+  // 区分
   document.querySelectorAll('[id^="status-sel-"]').forEach(sel => {
     const code = sel.id.replace('status-sel-', '');
     if (!productCache[code]) productCache[code] = {};
     productCache[code].status = sel.value;
   });
+  // SS
+  const ssMap = {};
+  document.querySelectorAll('[id^="ss-btn-"]').forEach(btn => {
+    const parts = btn.id.replace('ss-btn-','').split('-');
+    const code = parts.slice(0,-1).join('-');
+    const mon  = parts[parts.length-1];
+    if (!ssMap[code]) ssMap[code] = [];
+    const active = btn.style.background === 'rgb(21, 101, 192)' || btn.style.background === '#1565C0';
+    if (active) ssMap[code].push(mon);
+  });
+  Object.entries(ssMap).forEach(([code, mons]) => {
+    if (!productCache[code]) productCache[code] = {};
+    productCache[code].ss = mons;
+  });
   saveProductCache();
   saveToGitHub();
-  // ボタンに「保存しました」フィードバック
+  // フィードバック
   const btn = document.getElementById('status-update-global-btn');
   if (btn) {
     const orig = btn.innerHTML;
     btn.innerHTML = '✅ 保存しました';
     btn.style.background = '#16a34a';
     btn.disabled = true;
-    setTimeout(() => {
-      btn.innerHTML = orig;
-      btn.style.background = '#f97316';
-      btn.disabled = false;
-    }, 2000);
+    setTimeout(() => { btn.innerHTML = orig; btn.style.background = '#f97316'; btn.disabled = false; }, 2000);
   }
   renderMonthlySubTab(_currentTab);
 }
 
-// 【最新月】サブタブのレンダリング
+// 【状態】サブタブのレンダリング
 const STATUS_LABELS = {
   'unset': '選択前■',
   'all':   '全体',
@@ -4242,6 +4275,8 @@ const STATUS_LABELS = {
   'warn':  '撤退検討▲',
   'out':   '撤退■',
 };
+const SS_TABS = { 'ss-mar':'03', 'ss-jun':'06', 'ss-sep':'09', 'ss-dec':'12' };
+const SS_LABELS = { 'ss-mar':'3月', 'ss-jun':'6月', 'ss-sep':'9月', 'ss-dec':'12月' };
 const SUB_TAB_STATUS = {
   'monthly-all':  'all',
   'monthly-g1':   'g1',
@@ -4256,10 +4291,57 @@ const SUB_TAB_STATUS = {
 // 現在サブタブで絞り込み中のstatusVal（nullなら通常表示）
 let _subTabFilter = null;
 
+function _populateSubTabMonthSel() {
+  const sel = document.getElementById('subTabMonthSel');
+  if (!sel) return;
+  const months = getMonths ? getMonths() : [];
+  sel.innerHTML = months.map(m => `<option value="${m}">${m.replace('-','年')}月</option>`).join('');
+  if (months.length) sel.value = months[months.length - 1];
+}
+
+function _getSubTabMonth() {
+  const sel = document.getElementById('subTabMonthSel');
+  return sel && sel.value ? sel.value : (getSelectedMonth ? getSelectedMonth() : '');
+}
+
 function renderMonthlySubTab(tab) {
-  if (!(tab in SUB_TAB_STATUS)) { _subTabFilter = null; return; }
-  _subTabFilter = SUB_TAB_STATUS[tab]; // 'all' or 'g1' etc.
-  renderPage();
+  const isStatus = tab in SUB_TAB_STATUS;
+  const isSS     = tab in SS_TABS;
+  if (!isStatus && !isSS) { _subTabFilter = null; return; }
+
+  if (isStatus) {
+    _subTabFilter = SUB_TAB_STATUS[tab];
+    renderPage();
+  } else {
+    // SSタブ：対応月・ss列に対象月が含まれる商品を表示
+    _subTabFilter = null;
+    const mon = SS_TABS[tab]; // '03','06' etc
+    const panel = document.getElementById('tab-' + tab);
+    if (!panel) return;
+    const ym = _getSubTabMonth();
+    const allCodes = Object.keys(DB).filter(code => !productCache[code]?.retired);
+    const codes = allCodes.filter(code => {
+      const ss = productCache[code]?.ss || [];
+      return ss.includes(mon);
+    });
+    const label = SS_LABELS[tab];
+    if (codes.length === 0) {
+      panel.innerHTML = `<div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">${label}</div><div style="color:var(--text3);font-size:13px">該当商品なし</div></div>`;
+      return;
+    }
+    const maxSpend = Math.max(...codes.map(c => { const s=getStats(DB[c],ym); return s.spend; }), 1);
+    const _totSpend = codes.reduce((s,c)=>s+getStats(DB[c],ym).spend,0);
+    const _totSales = codes.reduce((s,c)=>s+getStats(DB[c],ym).sales720,0);
+    const _avgRoas  = _totSpend>0?_totSales/_totSpend:0;
+    const origHeader = document.querySelector('#tab-products .col-header');
+    let headerHtml = '';
+    if (origHeader) {
+      let h = origHeader.outerHTML.replace('class="col-header"','class="col-header"');
+      headerHtml = h;
+    }
+    const rows = codes.map(c => renderRow({...DB[c],...getStats(DB[c],ym)}, maxSpend, ym, _totSpend, _avgRoas)).join('');
+    panel.innerHTML = `<div class="container" style="max-width:1400px"><div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${rows}</div></div></div>`;
+  }
 }
 function switchTab(tab) {
   _currentTab = tab;
@@ -4281,7 +4363,18 @@ function switchTab(tab) {
   if (tab === 'item-graph') { _initItemGraphRange(); }
   // サブタブ以外では更新ボタンを隠す
   const globalBtn = document.getElementById('status-update-global-btn');
-  if (globalBtn) globalBtn.style.display = (tab in SUB_TAB_STATUS) ? 'block' : 'none';
+  const monthSelEl = document.getElementById('subTabMonthSel');
+  const isStatusTab = tab in SUB_TAB_STATUS;
+  const isSSTab = tab in SS_TABS;
+  if (globalBtn) globalBtn.style.display = isStatusTab ? 'block' : 'none';
+  if (monthSelEl) {
+    if (isStatusTab || isSSTab) {
+      monthSelEl.style.display = 'block';
+      _populateSubTabMonthSel();
+    } else {
+      monthSelEl.style.display = 'none';
+    }
+  }
   renderMonthlySubTab(tab);
 }
 
@@ -4830,7 +4923,7 @@ function getSorted(ym) {
 function renderTable() { renderPage(); }
 
 function renderPage() {
-  const ym = getSelectedMonth();
+  const ym = _subTabFilter ? _getSubTabMonth() : getSelectedMonth();
   const data = getSorted(ym);
   const total = data.length;
   const maxSpend = Math.max(...data.map(d => d.spend), 1);
@@ -4858,6 +4951,7 @@ function renderPage() {
         if (lastEmpty !== -1) {
           h = h.slice(0, lastEmpty)
             + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
+            + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS</div>'
             + h.slice(lastEmpty);
         }
         headerHtml = h;
@@ -5027,6 +5121,14 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
             return `<option value="${v}"${cur===v?' selected':''}>${labels[v]}</option>`;
           }).join('')}
         </select>
+      </div>
+      <div class="status-cell" onclick="event.stopPropagation()" style="gap:2px;flex-wrap:wrap">
+        ${['03','06','09','12'].map(m => {
+          const active = (productCache[p.id]?.ss || []).includes(m);
+          const lbl = {'03':'3月','06':'6月','09':'9月','12':'12月'}[m] || m+'月';
+          return `<button id="ss-btn-${p.id}-${m}" onclick="toggleSSBtn('${p.id}','${m}',this)"
+            style="font-size:9px;padding:1px 5px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;white-space:nowrap">${lbl}</button>`;
+        }).join('')}
       </div>` : ''}
       <div class="toggle-cell"><div class="toggle-icon${isExp?' open':''}">▶</div></div>
     </div>
