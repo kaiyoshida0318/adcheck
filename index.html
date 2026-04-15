@@ -398,7 +398,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.313</span>
+    <span class="build-date">v1.314</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4412,10 +4412,10 @@ function renderMonthlySubTab(tab) {
       headerHtml = h;
     }
     const rows = codes.map(code => renderRow({...DB[code],...getStats(DB[code],ym)}, maxSpend, ym, _totSpend, _avgRoas)).join('');
-    panel.innerHTML = `<div style="padding:0">
+    panel.innerHTML = `
       ${_subTabToolbar(tab, ym)}
-      <div style="overflow-y:auto;max-height:calc(75vh - 52px);overflow-x:auto">${headerHtml}<div>${rows}</div></div>
-    </div>`;
+      <div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${rows}</div></div>
+    `;
     _subTabFilter = null; _ssTabActive = false;
   }
 }
@@ -5019,10 +5019,10 @@ function renderPage() {
         }
         headerHtml = h;
       }
-      panel.innerHTML = `<div style="padding:0">
+      panel.innerHTML = `
         ${_subTabToolbar(_currentTab, ym)}
-        <div style="overflow-y:auto;max-height:calc(75vh - 52px);overflow-x:auto">${headerHtml}<div>${inner}</div></div>
-      </div>`;
+        <div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${inner}</div></div>
+      `;
     }
     return;
   }
