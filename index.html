@@ -299,12 +299,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tab-row-label.blue { color: #1565C0; }
 .s-g1   { color: #1565C0; }   /* 健常◎        青 */
 .s-g2   { color: #0288D1; }   /* 要注意◯      黄青 */
-.s-g3   { color: #546E7A; }   /* 広告無し      グレー青 */
+.s-g3   { color: #4FC3F7; }   /* 広告無し   水色 */
 .s-new  { color: #2E7D32; }   /* 新商品        緑 */
-.s-mid  { color: #777; }      /* 中立□         グレー */
-.s-mid2 { color: #999; }      /* 中立広告無し  グレー薄 */
-.s-warn { color: #E65100; }   /* 撤退検討▲    オレンジ */
-.s-out  { color: #C62828; }   /* 撤退■         赤 */
+.s-mid  { color: #F9A825; }   /* 中立□      グレー黄 */
+.s-mid2 { color: #E65100; }   /* 中立広告無し オレンジ */
+.s-warn { color: #C62828; }   /* 撤退検討▲  赤 */
+.s-out  { color: #6D1111; }   /* 撤退■      エンジ */
 .tab-btn-all { background: #e8f4fb; }
 .tab-btn-all:hover { background: #d4ecf7; }
 .tab-btn-all.active { background: #e8f4fb; }
@@ -398,7 +398,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.306</span>
+    <span class="build-date">v1.307</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1028,12 +1028,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <option value="unset">選択前■</option>
           <option value="g1"   style="color:#1565C0;font-weight:600">健常◎</option>
           <option value="g2"   style="color:#0288D1;font-weight:600">健常-要注意◯</option>
-          <option value="g3"   style="color:#546E7A;font-weight:600">健常-広告無し</option>
+          <option value="g3"   style="color:#4FC3F7;font-weight:600">健常-広告無し</option>
           <option value="new"  style="color:#2E7D32;font-weight:600">新商品</option>
-          <option value="mid"  style="color:#777;font-weight:600">中立□</option>
-          <option value="mid2" style="color:#999;font-weight:600">中立-広告無し</option>
-          <option value="warn" style="color:#E65100;font-weight:600">撤退検討▲</option>
-          <option value="out"  style="color:#C62828;font-weight:600">撤退■</option>
+          <option value="mid"  style="color:#F9A825;font-weight:600">中立□</option>
+          <option value="mid2" style="color:#E65100;font-weight:600">中立-広告無し</option>
+          <option value="warn" style="color:#C62828;font-weight:600">撤退検討▲</option>
+          <option value="out"  style="color:#6D1111;font-weight:600">撤退■</option>
       </select>
       </div>
     </div>
@@ -4289,8 +4289,8 @@ function applyAllStatusUpdates() {
 
 // 【状態】サブタブのレンダリング
 const STATUS_COLORS = {
-  unset:'', g1:'#1565C0', g2:'#0288D1', g3:'#546E7A',
-  new:'#2E7D32', mid:'#777', mid2:'#999', warn:'#E65100', out:'#C62828'
+  unset:'', g1:'#1565C0', g2:'#0288D1', g3:'#4FC3F7',
+  new:'#2E7D32', mid:'#F9A825', mid2:'#E65100', warn:'#C62828', out:'#6D1111'
 };
 function applyStatusColor(sel) {
   const c = STATUS_COLORS[sel.value] || '';
@@ -5158,7 +5158,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
         <select id="status-sel-${p.id}" onchange="applyStatusColor(this)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);width:100%;cursor:pointer;font-weight:${STATUS_COLORS[productCache[p.id]?.status||'unset']?'600':''};color:${STATUS_COLORS[productCache[p.id]?.status||'unset']||'var(--text)'}">
           ${['unset','g1','g2','g3','new','mid','mid2','warn','out'].map(v => {
             const labels = {unset:'選択前■',g1:'健常◎',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',mid2:'中立-広告無し',warn:'撤退検討▲',out:'撤退■'};
-            const colors = {unset:'',g1:'#1565C0',g2:'#0288D1',g3:'#546E7A',new:'#2E7D32',mid:'#777',mid2:'#999',warn:'#E65100',out:'#C62828'};
+            const colors = {unset:'',g1:'#1565C0',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',mid2:'#E65100',warn:'#C62828',out:'#6D1111'};
             const cur = productCache[p.id]?.status || 'unset';
             const col = colors[v] ? `style="color:${colors[v]};font-weight:600"` : '';
             return `<option value="${v}"${cur===v?' selected':''} ${col}>${labels[v]}</option>`;
