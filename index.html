@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.300</span>
+    <span class="build-date">v1.301</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4289,6 +4289,7 @@ const SUB_TAB_STATUS = {
 };
 // 現在サブタブで絞り込み中のstatusVal（nullなら通常表示）
 let _subTabFilter = null;
+let _ssTabActive = false;
 
 function _populateSubTabMonthSel() {
   const sel = document.getElementById('subTabMonthSel');
@@ -4306,26 +4307,25 @@ function _getSubTabMonth() {
 function renderMonthlySubTab(tab) {
   const isStatus = tab in SUB_TAB_STATUS;
   const isSS     = tab in SS_TABS;
-  if (!isStatus && !isSS) { _subTabFilter = null; return; }
+  if (!isStatus && !isSS) { _subTabFilter = null; _ssTabActive = false; return; }
 
   if (isStatus) {
     _subTabFilter = SUB_TAB_STATUS[tab];
+    _ssTabActive = false;
     renderPage();
   } else {
-    // SSタブ：対応月・ss列に対象月が含まれる商品を表示
-    _subTabFilter = null;
-    const mon = SS_TABS[tab]; // '03','06' etc
+    _subTabFilter = 'all';
+    _ssTabActive = true;
+    const mon = SS_TABS[tab];
     const panel = document.getElementById('tab-' + tab);
     if (!panel) return;
     const ym = _getSubTabMonth();
     const allCodes = Object.keys(DB).filter(code => !productCache[code]?.retired);
-    const codes = allCodes.filter(code => {
-      const ss = productCache[code]?.ss || [];
-      return ss.includes(mon);
-    });
+    const codes = allCodes.filter(code => (productCache[code]?.ss || []).includes(mon));
     const label = SS_LABELS[tab];
     if (codes.length === 0) {
       panel.innerHTML = `<div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">${label}</div><div style="color:var(--text3);font-size:13px">該当商品なし</div></div>`;
+      _subTabFilter = null; _ssTabActive = false;
       return;
     }
     const maxSpend = Math.max(...codes.map(c => { const s=getStats(DB[c],ym); return s.spend; }), 1);
@@ -4335,11 +4335,19 @@ function renderMonthlySubTab(tab) {
     const origHeader = document.querySelector('#tab-products .col-header');
     let headerHtml = '';
     if (origHeader) {
-      let h = origHeader.outerHTML.replace('class="col-header"','class="col-header"');
+      let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
+      const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
+      if (lastEmpty !== -1) {
+        h = h.slice(0, lastEmpty)
+          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
+          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS</div>'
+          + h.slice(lastEmpty);
+      }
       headerHtml = h;
     }
-    const rows = codes.map(c => renderRow({...DB[c],...getStats(DB[c],ym)}, maxSpend, ym, _totSpend, _avgRoas)).join('');
+    const rows = codes.map(code => renderRow({...DB[code],...getStats(DB[code],ym)}, maxSpend, ym, _totSpend, _avgRoas)).join('');
     panel.innerHTML = `<div style="padding:12px 16px"><div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${rows}</div></div></div>`;
+    _subTabFilter = null; _ssTabActive = false;
   }
 }
 function switchTab(tab) {
