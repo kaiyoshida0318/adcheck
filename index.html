@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.270</span>
+    <span class="build-date">v1.272</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -443,15 +443,15 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
             <div class="ch" onclick="sortBy('name')">商品</div>
             <div class="ch" style="font-size:9px;color:var(--text3);text-align:center"></div>
-            <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eff6ff">総売上</div>
-            <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#f0f9ff">SEO売上</div>
-            <div class="ch r" id="ch-spend" onclick="sortBy('spend')">使用金額合計</div>
-            <div class="ch r" id="ch-sales" onclick="sortBy('sales')">売上合計(720h)</div>
-            <div class="ch r" id="ch-roas" onclick="sortBy('roas')">ROAS平均</div>
-            <div class="ch r" id="ch-kwspend" onclick="sortBy('kwspend')" style="cursor:pointer">KW 実績</div>
-            <div class="ch r" id="ch-kwroas" onclick="sortBy('kwroas')" style="cursor:pointer">KW ROAS</div>
-            <div class="ch r" id="ch-spend20" onclick="sortBy('spend20')" style="cursor:pointer">20円実績</div>
-            <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer">20円 ROAS</div>
+            <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#deeaf6">総売上</div>
+            <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#deeaf6">SEO売上</div>
+            <div class="ch r" id="ch-sales" onclick="sortBy('sales')" style="background:#fbe4d5">広告売上合計</div>
+            <div class="ch r" id="ch-spend" onclick="sortBy('spend')" style="cursor:pointer;background:#fbe4d5">全広告実績</div>
+            <div class="ch r" id="ch-roas" onclick="sortBy('roas')" style="cursor:pointer;background:#fbe4d5">全広告ROAS</div>
+            <div class="ch r" id="ch-kwspend" onclick="sortBy('kwspend')" style="cursor:pointer;background:#e2eeda">KW実績</div>
+            <div class="ch r" id="ch-kwroas" onclick="sortBy('kwroas')" style="cursor:pointer;background:#e2eeda">KW ROAS</div>
+            <div class="ch r" id="ch-spend20" onclick="sortBy('spend20')" style="cursor:pointer;background:#fff2cb">20円実績</div>
+            <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer;background:#fff2cb">20円 ROAS</div>
             <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer">粗広告利益</div>
             <div class="ch"></div>
           </div>
@@ -4700,14 +4700,14 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           変更記録${(productCache['${p.id}']?.changeLog?.length>0)?`<span style="color:var(--accent);margin-left:2px">(${productCache['${p.id}'].changeLog.length})</span>`:''}
         </button>
       </div>
-      <div class="cell r mono" style="background:#eff6ff">
+      <div class="cell r mono" style="background:#deeaf6">
         ${(() => {
           const ym = getSelectedMonth();
           const totS = salesRows.filter(s=>s.ym===ym.replace('-','')&&s.itemCode===p.id).reduce((a,s)=>a+s.sales,0);
           return totS > 0 ? fmtY(totS) : '<span style="color:var(--text3)">—</span>';
         })()}
       </div>
-      <div class="cell r mono" style="background:#f0f9ff">
+      <div class="cell r mono" style="background:#deeaf6">
         ${(() => {
           const ym = getSelectedMonth();
           const totS = salesRows.filter(s=>s.ym===ym.replace('-','')&&s.itemCode===p.id).reduce((a,s)=>a+s.sales,0);
@@ -4716,27 +4716,29 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           return seo > 0 ? fmtY(seo) : '<span style="color:var(--text3)">—</span>';
         })()}
       </div>
-      <div class="cell r mono">
+      <div class="cell r mono" style="background:#fbe4d5">
+        ${p.sales720>0?fmtY(p.sales720):'—'}
+      </div>
+      <div class="cell r mono" style="background:#fbe4d5">
         ${fmtY(p.spend)}
-        <div class="mini-bar"><div class="mini-fill" style="width:${spendPct}%;background:var(--red);opacity:0.6"></div></div>
+        <div class="mini-bar"><div class="mini-fill" style="width:${spendPct}%;background:#ED7D31;opacity:0.6"></div></div>
       </div>
-      <div class="cell r mono">${p.sales720>0?fmtY(p.sales720):'—'}</div>
-      <div class="roas-cell">
+      <div class="roas-cell" style="background:#fbe4d5">
         <div class="roas-val ${p.avgRoas===0 ? 'rb' : rc(p.avgRoas)}">${p.avgRoas>0?fmt(p.avgRoas)+'%':'0%'}</div>
-        ${p.avgRoas>0?`<div class="mini-bar"><div class="mini-fill" style="width:${roasPct}%;background:${barColor(p.avgRoas)}"></div></div>`:''}
+        ${p.avgRoas>0?`<div class="mini-bar"><div class="mini-fill" style="width:${roasPct}%;background:#ED7D31"></div></div>`:''}
       </div>
-      <div class="cell r mono" style="font-size:11px">
+      <div class="cell r mono" style="font-size:11px;background:#e2eeda">
         ${(() => {
           const iddP = itemDailyData[p.id]||{};
           const pDates = Object.keys(iddP).filter(d=>d.startsWith(ym));
           const pKwSpend = pDates.reduce((s,d)=>s+(iddP[d]?.spendKw||0),0);
           const pct = Math.round(pKwSpend/maxSpend*100);
           return pKwSpend>0
-            ? fmtY(pKwSpend)+'<div class="mini-bar"><div class="mini-fill" style="width:'+pct+'%;background:#4f46e5;opacity:0.6"></div></div>'
+            ? fmtY(pKwSpend)+'<div class="mini-bar"><div class="mini-fill" style="width:'+pct+'%;background:#70AD47;opacity:0.7"></div></div>'
             : '—';
         })()}
       </div>
-      <div class="cell r" style="font-size:11px;font-weight:700">
+      <div class="cell r" style="font-size:11px;font-weight:700;background:#e2eeda">
         ${(() => {
           const iddP = itemDailyData[p.id]||{};
           const pDates = Object.keys(iddP).filter(d=>d.startsWith(ym));
@@ -4747,7 +4749,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           return `<span style="color:${rc2(kwR)};font-weight:700">${kwR>0?kwR+'%':'0%'}</span>`;
         })()}
       </div>
-      <div class="cell r mono" style="font-size:11px">
+      <div class="cell r mono" style="font-size:11px;background:#fff2cb">
         ${(() => {
           const iddP = itemDailyData[p.id]||{};
           const pDates = Object.keys(iddP).filter(d=>d.startsWith(ym));
@@ -4755,11 +4757,11 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           const p20Spend = Math.max(0,p.spend-pKwSpend);
           const pct = Math.round(p20Spend/maxSpend*100);
           return p20Spend>0
-            ? fmtY(p20Spend)+'<div class="mini-bar"><div class="mini-fill" style="width:'+pct+'%;background:#059669;opacity:0.6"></div></div>'
+            ? fmtY(p20Spend)+'<div class="mini-bar"><div class="mini-fill" style="width:'+pct+'%;background:#FFC000;opacity:0.7"></div></div>'
             : '—';
         })()}
       </div>
-      <div class="cell r" style="font-size:11px;font-weight:700">
+      <div class="cell r" style="font-size:11px;font-weight:700;background:#fff2cb">
         ${(() => {
           const iddP = itemDailyData[p.id]||{};
           const pDates = Object.keys(iddP).filter(d=>d.startsWith(ym));
