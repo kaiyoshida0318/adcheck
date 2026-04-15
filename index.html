@@ -398,7 +398,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.312</span>
+    <span class="build-date">v1.313</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -446,8 +446,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn" id="tab-btn-ss-sep" onclick="switchTab('ss-sep')">9月</button>
   <button class="tab-btn" id="tab-btn-ss-dec" onclick="switchTab('ss-dec')">12月</button>
   <div style="flex:1"></div>
-  <select id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)" style="display:none;margin:8px 10px 8px 0;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text)"></select>
-  <button id="status-update-global-btn" onclick="applyAllStatusUpdates()" style="display:none;margin:6px 16px 6px 0;padding:6px 18px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(249,115,22,0.35);white-space:nowrap">💾 更新</button>
 </nav>
 
 <!-- Main Screen -->
@@ -4295,7 +4293,7 @@ function applyAllStatusUpdates() {
   saveProductCache();
   saveToGitHub();
   // フィードバック
-  const btn = document.getElementById('status-update-global-btn');
+  const btn = document.querySelector('#tab-' + _currentTab + ' .table-toolbar button[onclick="applyAllStatusUpdates()"]');
   if (btn) {
     const orig = btn.innerHTML;
     btn.innerHTML = '✅ 保存しました';
@@ -4358,6 +4356,20 @@ function _getSubTabMonth() {
   return sel && sel.value ? sel.value : (getSelectedMonth ? getSelectedMonth() : '');
 }
 
+function _subTabToolbar(tab, currentYm) {
+  const months = (getMonths ? getMonths() : []).slice().reverse();
+  const monthOpts = months.map(m => `<option value="${m}"${m===currentYm?' selected':''}>${m.replace('-','年')}月</option>`).join('');
+  const isStatus = tab in SUB_TAB_STATUS;
+  const updateBtn = isStatus
+    ? `<button onclick="applyAllStatusUpdates()" style="padding:5px 16px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(249,115,22,0.35)">💾 更新</button>`
+    : '';
+  return `<div class="table-toolbar">
+    <select class="toolbar-month" id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)">${monthOpts}</select>
+    <input type="text" class="toolbar-search" id="subTabSearchBox" placeholder="商品名・商品番号で検索..." oninput="renderMonthlySubTab(_currentTab)" style="width:220px">
+    <div class="toolbar-right">${updateBtn}</div>
+  </div>`;
+}
+
 function renderMonthlySubTab(tab) {
   const isStatus = tab in SUB_TAB_STATUS;
   const isSS     = tab in SS_TABS;
@@ -4400,7 +4412,10 @@ function renderMonthlySubTab(tab) {
       headerHtml = h;
     }
     const rows = codes.map(code => renderRow({...DB[code],...getStats(DB[code],ym)}, maxSpend, ym, _totSpend, _avgRoas)).join('');
-    panel.innerHTML = `<div style="padding:12px 16px"><div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${rows}</div></div></div>`;
+    panel.innerHTML = `<div style="padding:0">
+      ${_subTabToolbar(tab, ym)}
+      <div style="overflow-y:auto;max-height:calc(75vh - 52px);overflow-x:auto">${headerHtml}<div>${rows}</div></div>
+    </div>`;
     _subTabFilter = null; _ssTabActive = false;
   }
 }
@@ -4422,20 +4437,6 @@ function switchTab(tab) {
   if (tab === 'retired') renderRetired();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
-  // サブタブ以外では更新ボタンを隠す
-  const globalBtn = document.getElementById('status-update-global-btn');
-  const monthSelEl = document.getElementById('subTabMonthSel');
-  const isStatusTab = tab in SUB_TAB_STATUS;
-  const isSSTab = tab in SS_TABS;
-  if (globalBtn) globalBtn.style.display = isStatusTab ? 'block' : 'none';
-  if (monthSelEl) {
-    if (isStatusTab || isSSTab) {
-      monthSelEl.style.display = 'block';
-      _populateSubTabMonthSel();
-    } else {
-      monthSelEl.style.display = 'none';
-    }
-  }
   renderMonthlySubTab(tab);
 }
 
@@ -4894,7 +4895,8 @@ function updateSortHeaders() {
 }
 
 function getSorted(ym) {
-  const q = document.getElementById('searchBox').value.toLowerCase();
+  const qEl = _subTabFilter ? document.getElementById('subTabSearchBox') : document.getElementById('searchBox');
+  const q = (qEl ? qEl.value : '').toLowerCase();
   let products = getProducts().filter(p => {
     if (productCache[p.id]?.retired) return false;
     if (q && !p.id.toString().includes(q) && !(productCache[p.id]?.itemNumber||'').toLowerCase().includes(q) && !(productCache[p.id]?.manualName||productCache[p.id]?.name||'').toLowerCase().includes(q)) return false;
@@ -5017,10 +5019,10 @@ function renderPage() {
         }
         headerHtml = h;
       }
-      panel.innerHTML = `<div style="padding:12px 16px">
-        <div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${inner}</div></div>
+      panel.innerHTML = `<div style="padding:0">
+        ${_subTabToolbar(_currentTab, ym)}
+        <div style="overflow-y:auto;max-height:calc(75vh - 52px);overflow-x:auto">${headerHtml}<div>${inner}</div></div>
       </div>`;
-      document.getElementById('status-update-global-btn').style.display = 'block';
     }
     return;
   }
