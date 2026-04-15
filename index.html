@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.299</span>
+    <span class="build-date">v1.300</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -442,7 +442,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
   <!-- ── 商品別タブ ── -->
   <div class="tab-panel active" id="tab-products">
-    <div class="container">
+    <div style="padding:12px 16px">
       <div id="emptyState" class="empty-state">
         <div class="empty-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -4339,7 +4339,7 @@ function renderMonthlySubTab(tab) {
       headerHtml = h;
     }
     const rows = codes.map(c => renderRow({...DB[c],...getStats(DB[c],ym)}, maxSpend, ym, _totSpend, _avgRoas)).join('');
-    panel.innerHTML = `<div class="container" style="max-width:1400px"><div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${rows}</div></div></div>`;
+    panel.innerHTML = `<div style="padding:12px 16px"><div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${rows}</div></div></div>`;
   }
 }
 function switchTab(tab) {
@@ -4955,7 +4955,7 @@ function renderPage() {
         }
         headerHtml = h;
       }
-      panel.innerHTML = `<div class="container" style="max-width:1400px">
+      panel.innerHTML = `<div style="padding:12px 16px">
         <div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${inner}</div></div>
       </div>`;
       document.getElementById('status-update-global-btn').style.display = 'block';
