@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.253</span>
+    <span class="build-date">v1.254</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -588,7 +588,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:220px;background:var(--surface);color:var(--text)"
             oninput="_itemGraphSuggest(this.value)">
           <button onclick="_itemGraphToggle()" id="itemGraphOnBtn"
-            style="padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer;font-weight:600">ON</button>
+            style="padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer;font-weight:600">検索</button>
           <span id="itemGraphLabel" style="font-size:12px;color:var(--text3)"></span>
           <div id="itemGraphSuggest" style="display:none;position:absolute;top:40px;left:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow);max-height:200px;overflow-y:auto;z-index:100;min-width:300px"></div>
         </div>
@@ -3107,7 +3107,7 @@ function _itemGraphToggle() {
     btn.style.background = 'var(--surface2)';
     btn.style.color = 'var(--text)';
     btn.style.borderColor = 'var(--border)';
-    btn.textContent = 'ON';
+    btn.textContent = '検索';
     label.textContent = '';
     const canvas = document.getElementById('itemGraphCanvas');
     const empty = document.getElementById('itemGraphEmpty');
@@ -3138,7 +3138,7 @@ function _itemGraphToggle() {
   btn.style.background = '#f97316';
   btn.style.color = '#fff';
   btn.style.borderColor = '#f97316';
-  btn.textContent = 'OFF';
+  btn.textContent = '✕ クリア';
   _initItemGraphRange();
   renderItemGraph();
 }
@@ -4678,9 +4678,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       <div id="clRows" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
     <!-- フッター（固定） -->
-    <div style="padding:12px 24px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0">
-      <button onclick="closeChangeLog()" style="padding:8px 20px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">キャンセル</button>
-      <button onclick="saveChangeLog()" style="padding:8px 20px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;cursor:pointer;font-weight:600">保存</button>
+    <div style="padding:14px 24px 20px;border-top:2px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;background:var(--surface);border-radius:0 0 12px 12px">
+      <button onclick="closeChangeLog()" style="padding:9px 22px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">キャンセル</button>
+      <button onclick="saveChangeLog()" style="padding:9px 22px;border-radius:7px;border:none;background:#f97316;color:#fff;font-size:13px;cursor:pointer;font-weight:700;box-shadow:0 2px 8px rgba(249,115,22,0.4)">💾 保存</button>
     </div>
   </div>
 </div>
