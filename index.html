@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.292</span>
+    <span class="build-date">v1.293</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4843,7 +4843,7 @@ function renderPage() {
         headerHtml = h;
       }
       panel.innerHTML = `<div class="container" style="max-width:1400px">
-        <div style="padding:10px 16px 8px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)">
+        <div style="padding:10px 16px 8px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);justify-content:flex-end">
           <span style="font-size:12px;color:var(--text3)">区分を変更したら「💾 更新」を押して保存</span>
           <button onclick="applyAllStatusUpdates()" style="padding:7px 20px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(249,115,22,0.35);letter-spacing:0.3px">💾 更新</button>
         </div>
