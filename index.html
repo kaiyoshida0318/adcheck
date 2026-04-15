@@ -108,6 +108,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .prod-id { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: 'DM Mono', monospace; }
 .cell { padding: 8px 10px; font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; display: flex; flex-direction: column; justify-content: center; }
 .cell.r { text-align: right; align-items: flex-end; }
+.cell.r.has-bar { align-items: stretch; text-align: right; }
 .cell.mono { font-family: 'DM Mono', monospace; }
 .cell.muted { color: var(--text2); }
 .roas-cell { padding: 8px 10px; text-align: right; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; }
@@ -375,7 +376,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.277</span>
+    <span class="build-date">v1.278</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4721,7 +4722,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       <div class="cell r mono" style="background:#fdf0e8">
         ${p.sales720>0?fmtY(p.sales720):'—'}
       </div>
-      <div class="cell r mono" style="background:#fdf0e8">
+      <div class="cell r mono has-bar" style="background:#fdf0e8">
         <span>${fmtY(p.spend)}</span>
         <div class="mini-bar"><div class="mini-fill" style="width:${spendPct}%;background:#ED7D31;opacity:0.6"></div></div>
       </div>
@@ -4729,7 +4730,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
         <div class="roas-val ${p.avgRoas===0 ? 'rb' : rc(p.avgRoas)}">${p.avgRoas>0?fmt(p.avgRoas)+'%':'0%'}</div>
         ${p.avgRoas>0?`<div class="mini-bar"><div class="mini-fill" style="width:${roasPct}%;background:#ED7D31"></div></div>`:''}
       </div>
-      <div class="cell r mono" style="font-size:11px;background:#eff5ec">
+      <div class="cell r mono has-bar" style="font-size:11px;background:#eff5ec">
         ${(() => {
           const iddP = itemDailyData[p.id]||{};
           const pDates = Object.keys(iddP).filter(d=>d.startsWith(ym));
@@ -4751,7 +4752,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           return `<span style="color:${rc2(kwR)};font-weight:700">${kwR>0?kwR+'%':'0%'}</span>`;
         })()}
       </div>
-      <div class="cell r mono" style="font-size:11px;background:#fff8e5">
+      <div class="cell r mono has-bar" style="font-size:11px;background:#fff8e5">
         ${(() => {
           const iddP = itemDailyData[p.id]||{};
           const pDates = Object.keys(iddP).filter(d=>d.startsWith(ym));
