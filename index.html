@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.261</span>
+    <span class="build-date">v1.262</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -3266,6 +3266,21 @@ function saveGlobalChangeLog() {
   renderGraph();
 }
 
+function _applyGlobalClLines(chart, labels) {
+  if (!chart || !globalChangeLogs.length) return;
+  const logs = globalChangeLogs.filter(l => l.date && l.note);
+  if (!logs.length) return;
+  chart._clLogs   = logs;
+  chart._clLabels = labels;
+  chart._clPeriod = _graphPeriod;
+  if (!chart._clHooked) {
+    chart._clHooked = true;
+    const origDraw = chart.draw.bind(chart);
+    chart.draw = function() { origDraw(); _renderChangeLogOverlay(this); };
+  }
+  chart.update('none');
+}
+
 function _drawGraphClLines(chart, labels, code) {
   const logs = (productCache[code]?.changeLog || []).filter(l => l.date && l.note);
   if (!logs.length) return;
@@ -3681,6 +3696,7 @@ function renderGraph() {
         }
       }
     });
+    _applyGlobalClLines(_chartInstance, labels);
     return;
   }
 
@@ -3757,6 +3773,7 @@ function renderGraph() {
         }
       }
     });
+    _applyGlobalClLines(_chartInstance, labels);
     return;
   }
 
@@ -3824,6 +3841,7 @@ function renderGraph() {
         }
       }
     });
+    _applyGlobalClLines(_chartInstance, labels);
     return;
   }
 
@@ -3883,21 +3901,11 @@ function renderGraph() {
         }
       }
     });
+    _applyGlobalClLines(_chartInstance, labels);
     return;
   }
 
-  // 変更記録の縦線を描画（グローバル変更記録）
-  if (_chartInstance && globalChangeLogs.length > 0) {
-    _chartInstance._clLogs   = globalChangeLogs.filter(l => l.date && l.note);
-    _chartInstance._clLabels = labels;
-    _chartInstance._clPeriod = _graphPeriod;
-    if (!_chartInstance._clHooked) {
-      _chartInstance._clHooked = true;
-      const origDraw = _chartInstance.draw.bind(_chartInstance);
-      _chartInstance.draw = function() { origDraw(); _renderChangeLogOverlay(this); };
-    }
-    _chartInstance.update('none');
-  }
+  _applyGlobalClLines(_chartInstance, labels);
 }
 
 function switchTab(tab) {
