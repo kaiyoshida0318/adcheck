@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.250</span>
+    <span class="build-date">v1.251</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -584,7 +584,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="container" style="max-width:1200px">
       <div class="table-card" style="padding:20px">
         <div style="position:relative;display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-          <input type="text" id="itemGraphCode" placeholder="商品管理番号を入力..."
+          <input type="text" id="itemGraphCode" placeholder="商品名・管理番号・商品番号を入力..."
             style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:220px;background:var(--surface);color:var(--text)"
             oninput="_itemGraphSuggest(this.value)">
           <button onclick="_itemGraphToggle()" id="itemGraphOnBtn"
