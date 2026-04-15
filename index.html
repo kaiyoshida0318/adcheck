@@ -3,16 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<script>
-(function(){
-  var dpr = window.devicePixelRatio || 1;
-  if(dpr !== 1) {
-    document.documentElement.style.zoom = (1 / dpr);
-    var vp = document.querySelector('meta[name="viewport"]');
-    if(vp) vp.setAttribute('content','width=device-width, initial-scale='+dpr+', maximum-scale='+dpr);
-  }
-})();
-</script>
 <title>ADcheck — 楽天RPP 日別使用金額</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -408,7 +398,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.308</span>
+    <span class="build-date">v1.309</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
