@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.293</span>
+    <span class="build-date">v1.294</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -997,26 +997,28 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <input type="text" id="editItemNum" class="modal-input" placeholder="例: eq-24-01" style="font-size:11px;font-family:'DM Mono',monospace;padding:4px 8px;width:150px;margin:0">
       </div>
     </div>
-    <div class="modal-field" style="margin-bottom:12px">
-      <label class="modal-label">ステータス</label>
-      <select id="editRetiredSel" style="padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);width:180px">
-        <option value="active">現役商品</option>
-        <option value="retired">引退商品</option>
-      </select>
-    </div>
-    <div class="modal-field" style="margin-bottom:12px">
-      <label class="modal-label">区分</label>
-      <select id="editStatusSel" style="padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);width:180px">
-        <option value="unset">選択前■</option>
-        <option value="g1">健常◎</option>
-        <option value="g2">健常-要注意◯</option>
-        <option value="g3">健常-広告無し</option>
-        <option value="new">新商品</option>
-        <option value="mid">中立□</option>
-        <option value="mid2">中立-広告無し</option>
-        <option value="warn">撤退検討▲</option>
-        <option value="out">撤退■</option>
-      </select>
+    <div style="display:flex;gap:20px;margin-bottom:12px">
+      <div>
+        <label class="modal-label">ステータス</label>
+        <select id="editRetiredSel" style="padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);width:160px">
+          <option value="active">現役商品</option>
+          <option value="retired">引退商品</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">区分</label>
+        <select id="editStatusSel" style="padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);width:160px">
+          <option value="unset">選択前■</option>
+          <option value="g1">健常◎</option>
+          <option value="g2">健常-要注意◯</option>
+          <option value="g3">健常-広告無し</option>
+          <option value="new">新商品</option>
+          <option value="mid">中立□</option>
+          <option value="mid2">中立-広告無し</option>
+          <option value="warn">撤退検討▲</option>
+          <option value="out">撤退■</option>
+        </select>
+      </div>
     </div>
     <div class="modal-field">
       <label class="modal-label">商品名</label>
