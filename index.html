@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.318</span>
+    <span class="build-date">v1.319</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4452,16 +4452,27 @@ function applyAllStatusUpdates() {
     });
     productCache[code].ss = next;
   });
-  saveProductCache();
-  saveToGitHub();
-  // フィードバック
+  // フィードバック：更新中 → 保存しました
   const btn = document.querySelector('#tab-' + _currentTab + ' .table-toolbar button[onclick="applyAllStatusUpdates()"]');
   if (btn) {
     const orig = btn.innerHTML;
-    btn.innerHTML = '✅ 保存しました';
-    btn.style.background = '#16a34a';
+    btn.innerHTML = '⏳ 更新中…';
+    btn.style.background = '#888';
     btn.disabled = true;
-    setTimeout(() => { btn.innerHTML = orig; btn.style.background = '#f97316'; btn.disabled = false; }, 2000);
+    saveProductCache();
+    saveToGitHub();
+    setTimeout(() => {
+      btn.innerHTML = '✅ 保存しました';
+      btn.style.background = '#16a34a';
+      setTimeout(() => {
+        btn.innerHTML = orig;
+        btn.style.background = '#f97316';
+        btn.disabled = false;
+      }, 1500);
+    }, 400);
+  } else {
+    saveProductCache();
+    saveToGitHub();
   }
   renderMonthlySubTab(_currentTab);
 }
@@ -4522,7 +4533,8 @@ function _subTabToolbar(tab, currentYm) {
   const months = (getMonths ? getMonths() : []).slice().reverse();
   const monthOpts = months.map(m => `<option value="${m}"${m===currentYm?' selected':''}>${m.replace('-','年')}月</option>`).join('');
   const isStatus = tab in SUB_TAB_STATUS;
-  const updateBtn = isStatus
+  const isSS = tab in SS_TABS;
+  const updateBtn = (isStatus || isSS)
     ? `<button onclick="applyAllStatusUpdates()" style="padding:5px 16px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(249,115,22,0.35)">💾 更新</button>`
     : '';
   return `<div class="table-toolbar">
