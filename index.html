@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.302</span>
+    <span class="build-date">v1.303</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4311,9 +4311,9 @@ let _ssTabActive = false;
 function _populateSubTabMonthSel() {
   const sel = document.getElementById('subTabMonthSel');
   if (!sel) return;
-  const months = getMonths ? getMonths() : [];
+  const months = (getMonths ? getMonths() : []).slice().reverse();
   sel.innerHTML = months.map(m => `<option value="${m}">${m.replace('-','年')}月</option>`).join('');
-  if (months.length) sel.value = months[months.length - 1];
+  if (months.length) sel.value = months[0];
 }
 
 function _getSubTabMonth() {
