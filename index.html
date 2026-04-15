@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.294</span>
+    <span class="build-date">v1.295</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -429,6 +429,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退■</button>
   <span class="tab-row-label blue" style="padding-left:16px">【SS】</span>
   <button class="tab-btn" id="tab-btn-monthly-active" onclick="switchTab('monthly-active')">参加中商品</button>
+  <div style="flex:1"></div>
+  <button id="status-update-global-btn" onclick="applyAllStatusUpdates()" style="display:none;margin:6px 16px 6px 0;padding:6px 18px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(249,115,22,0.35);white-space:nowrap">💾 更新</button>
 </nav>
 
 <!-- Main Screen -->
@@ -4264,6 +4266,9 @@ function switchTab(tab) {
   if (tab === 'retired') renderRetired();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
+  // サブタブ以外では更新ボタンを隠す
+  const globalBtn = document.getElementById('status-update-global-btn');
+  if (globalBtn) globalBtn.style.display = (tab in SUB_TAB_STATUS) ? 'block' : 'none';
   renderMonthlySubTab(tab);
 }
 
@@ -4845,12 +4850,9 @@ function renderPage() {
         headerHtml = h;
       }
       panel.innerHTML = `<div class="container" style="max-width:1400px">
-        <div style="padding:10px 16px 8px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);justify-content:flex-end">
-          <span style="font-size:12px;color:var(--text3)">区分を変更したら「💾 更新」を押して保存</span>
-          <button onclick="applyAllStatusUpdates()" style="padding:7px 20px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(249,115,22,0.35);letter-spacing:0.3px">💾 更新</button>
-        </div>
-        <div style="overflow-y:auto;max-height:calc(75vh - 48px);overflow-x:auto">${headerHtml}<div>${inner}</div></div>
+        <div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${inner}</div></div>
       </div>`;
+      document.getElementById('status-update-global-btn').style.display = 'block';
     }
     return;
   }
