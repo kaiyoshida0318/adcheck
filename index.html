@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.265</span>
+    <span class="build-date">v1.266</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4780,12 +4780,13 @@ function exportCSV() {
   const ym = getSelectedMonth();
   const data = getSorted(ym);
   const dates = getDatesForMonth(ym);
-  const header = ['商品管理番号','商品名','商品URL','使用金額合計','クリック数合計','ROAS平均(720h)%','売上合計(720h)', ...dates].join(',');
+  const header = ['商品管理番号','商品番号','商品名','商品URL','使用金額合計','クリック数合計','ROAS平均(720h)%','売上合計(720h)', ...dates].join(',');
   const rows = data.map(p => {
     const cached = productCache[p.id];
-    const name = cached ? `"${cached.name.replace(/"/g,'""')}"` : p.id;
+    const name = cached ? `"${(cached.manualName||cached.name||'').replace(/"/g,'""')}"` : p.id;
+    const itemNum = cached?.itemNumber || '';
     const dayVals = dates.map(d => (p.days[d]?.spend||0));
-    return [p.id, name, `"${p.url||''}"`, p.spend, p.clicks, Math.round(p.avgRoas), p.sales720, ...dayVals].join(',');
+    return [p.id, itemNum, name, `"${p.url||''}"`, p.spend, p.clicks, Math.round(p.avgRoas), p.sales720, ...dayVals].join(',');
   });
   const blob = new Blob(['\uFEFF'+header+'\n'+rows.join('\n')], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`adcheck_rpp_${ym}.csv`; a.click();
