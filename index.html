@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.266</span>
+    <span class="build-date">v1.267</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -819,10 +819,47 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <!-- Settings Modal -->
 <!-- ドロップゾーンモーダル -->
 <div class="modal-overlay" id="dropZoneModal" ondragover="onDropModalOver(event)" ondragleave="onDropModalLeave(event)" ondrop="onDropModalDrop(event)">
-  <div class="modal" style="max-width:560px;text-align:center">
+  <div class="modal" style="max-width:600px;text-align:center">
     <h3 style="margin-bottom:8px">📂 レポートを追加</h3>
-    <p style="margin-bottom:20px">楽天RMSからダウンロードしたRPPレポートのZIPまたはCSVを<br>複数まとめてドロップできます</p>
-    <div id="dropZoneArea" style="border:2px dashed var(--border2);border-radius:12px;padding:48px 24px;cursor:pointer;transition:all 0.15s;background:var(--surface2)" onclick="document.getElementById('addFileInput').click()" ondragover="onDropModalOver(event)" ondrop="onDropModalDrop(event)">
+    <p style="margin-bottom:16px">楽天RMSからダウンロードしたRPPレポートのZIPまたはCSVを<br>複数まとめてドロップできます</p>
+
+    <!-- ファイル種別説明 -->
+    <div style="text-align:left;background:var(--surface2);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:11px">
+      <div style="font-weight:700;color:var(--text2);margin-bottom:8px;font-size:12px">📋 対応ファイルとキー列</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="color:var(--text3);font-size:10px;border-bottom:1px solid var(--border)">
+            <th style="padding:4px 8px;text-align:left;font-weight:600">ファイル名</th>
+            <th style="padding:4px 8px;text-align:left;font-weight:600">内容</th>
+            <th style="padding:4px 8px;text-align:left;font-weight:600">キー列</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--accent);font-size:10px">rpp_reports_*.csv</td>
+            <td style="padding:5px 8px;color:var(--text2)">全体集計（日別/月別）</td>
+            <td style="padding:5px 8px;color:var(--text3)">なし（全体のみ）</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--accent);font-size:10px">rpp_keyword_reports_*.zip</td>
+            <td style="padding:5px 8px;color:var(--text2)">KW別実績</td>
+            <td style="padding:5px 8px;font-weight:700;color:var(--text)">商品管理番号</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--accent);font-size:10px">rpp_item_reports_*.zip</td>
+            <td style="padding:5px 8px;color:var(--text2)">商品別日次実績</td>
+            <td style="padding:5px 8px;font-weight:700;color:var(--text)">商品管理番号</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--accent);font-size:10px">*_Item_SalesList.csv</td>
+            <td style="padding:5px 8px;color:var(--text2)">商品別売上</td>
+            <td style="padding:5px 8px;font-weight:700;color:var(--text)">商品管理番号</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="dropZoneArea" style="border:2px dashed var(--border2);border-radius:12px;padding:36px 24px;cursor:pointer;transition:all 0.15s;background:var(--surface2)" onclick="document.getElementById('addFileInput').click()" ondragover="onDropModalOver(event)" ondrop="onDropModalDrop(event)">
       <div style="font-size:36px;margin-bottom:12px">📥</div>
       <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">ZIPまたはCSVをここにドロップ</div>
       <div style="font-size:12px;color:var(--text3)">複数ファイル同時OK　クリックしてファイル選択も可</div>
