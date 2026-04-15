@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.276</span>
+    <span class="build-date">v1.277</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4722,7 +4722,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
         ${p.sales720>0?fmtY(p.sales720):'—'}
       </div>
       <div class="cell r mono" style="background:#fdf0e8">
-        ${fmtY(p.spend)}
+        <span>${fmtY(p.spend)}</span>
         <div class="mini-bar"><div class="mini-fill" style="width:${spendPct}%;background:#ED7D31;opacity:0.6"></div></div>
       </div>
       <div class="roas-cell" style="background:#fdf0e8;border-right:2px solid #f0c9a8">
@@ -4736,7 +4736,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           const pKwSpend = pDates.reduce((s,d)=>s+(iddP[d]?.spendKw||0),0);
           const pct = Math.round(pKwSpend/maxSpend*100);
           return pKwSpend>0
-            ? fmtY(pKwSpend)+'<div class="mini-bar"><div class="mini-fill" style="width:'+pct+'%;background:#70AD47;opacity:0.7"></div></div>'
+            ? '<span>'+fmtY(pKwSpend)+'</span><div class="mini-bar"><div class="mini-fill" style="width:'+pct+'%;background:#70AD47;opacity:0.7"></div></div>'
             : '—';
         })()}
       </div>
@@ -4759,7 +4759,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           const p20Spend = Math.max(0,p.spend-pKwSpend);
           const pct = Math.round(p20Spend/maxSpend*100);
           return p20Spend>0
-            ? fmtY(p20Spend)+'<div class="mini-bar"><div class="mini-fill" style="width:'+pct+'%;background:#FFC000;opacity:0.7"></div></div>'
+            ? '<span>'+fmtY(p20Spend)+'</span><div class="mini-bar"><div class="mini-fill" style="width:'+pct+'%;background:#FFC000;opacity:0.7"></div></div>'
             : '—';
         })()}
       </div>
