@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.251</span>
+    <span class="build-date">v1.252</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4654,19 +4654,26 @@ window.addEventListener('DOMContentLoaded', async () => {
 </script>
 <!-- 変更記録モーダル -->
 <div id="changeLogModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9000;align-items:center;justify-content:center">
-  <div style="background:var(--surface);border-radius:12px;padding:24px;width:480px;max-width:95vw;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div>
-        <div style="font-weight:700;font-size:15px" id="clModalTitle">変更記録</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px" id="clModalSub"></div>
+  <div style="background:var(--surface);border-radius:12px;width:480px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
+    <!-- ヘッダー（固定） -->
+    <div style="padding:20px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:700;font-size:15px" id="clModalTitle">変更記録</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px" id="clModalSub"></div>
+        </div>
+        <button onclick="closeChangeLog()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--text3)">✕</button>
       </div>
-      <button onclick="closeChangeLog()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--text3)">✕</button>
+      <button onclick="addChangeLogRow()" style="margin-top:10px;padding:5px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);font-size:12px;cursor:pointer;font-weight:600">＋ 追加</button>
     </div>
-    <button onclick="addChangeLogRow()" style="margin-bottom:12px;padding:5px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);font-size:12px;cursor:pointer;font-weight:600">＋ 追加</button>
-    <div id="clRows" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
-      <button onclick="closeChangeLog()" style="padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">キャンセル</button>
-      <button onclick="saveChangeLog()" style="padding:6px 16px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;cursor:pointer;font-weight:600">保存</button>
+    <!-- コンテンツ（スクロール可能） -->
+    <div style="padding:16px 24px;overflow-y:auto;flex:1">
+      <div id="clRows" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <!-- フッター（固定） -->
+    <div style="padding:12px 24px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0">
+      <button onclick="closeChangeLog()" style="padding:8px 20px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">キャンセル</button>
+      <button onclick="saveChangeLog()" style="padding:8px 20px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;cursor:pointer;font-weight:600">保存</button>
     </div>
   </div>
 </div>
