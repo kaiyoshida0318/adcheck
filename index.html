@@ -398,7 +398,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.310</span>
+    <span class="build-date">v1.312</span>
+    <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
+      <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
+      <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
+      <button onclick="adjustZoom(+0.02)" style="border:none;background:none;cursor:pointer;font-size:15px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を大きく">A+</button>
+    </div>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -1068,6 +1073,20 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 </div>
 
 <script>
+// ── ズーム設定（PCごとにlocalStorageで保存） ──
+const ZOOM_KEY = 'adcheck_zoom';
+let _zoom = parseFloat(localStorage.getItem(ZOOM_KEY) || '1');
+function _applyZoom() {
+  _zoom = Math.round(_zoom * 100) / 100;
+  _zoom = Math.max(0.7, Math.min(1.5, _zoom));
+  document.documentElement.style.zoom = _zoom;
+  const lbl = document.getElementById('zoomLabel');
+  if (lbl) lbl.textContent = Math.round(_zoom * 100) + '%';
+  localStorage.setItem(ZOOM_KEY, _zoom);
+}
+function adjustZoom(delta) { _zoom += delta; _applyZoom(); }
+_applyZoom(); // 起動時に即適用
+
 // ── State ──
 const DB = {};
 let expandedSet = new Set();
