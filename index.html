@@ -99,7 +99,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 .item-row { border-bottom: 1px solid var(--border); }
 .item-row:last-child { border-bottom: none; }
-.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
 .item-basic:hover, .item-basic.expanded { background: #fafaf9; }
 .cell-img { padding: 6px 8px; display: flex; align-items: center; justify-content: center; }
 .prod-thumb { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; border: 1px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); flex-shrink: 0; }
@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.245</span>
+    <span class="build-date">v1.247</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
