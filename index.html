@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.257</span>
+    <span class="build-date">v1.260</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -656,6 +656,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <span style="font-size:12px;color:var(--text3)">〜</span>
             <input type="date" id="graphDateTo" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px">
           </div>
+          <button onclick="openGlobalChangeLog()"
+            style="margin-left:auto;font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">
+            📝 変更記録
+          </button>
         </div>
         <div style="position:relative;height:400px">
           <canvas id="graphCanvas"></canvas>
@@ -1097,6 +1101,10 @@ async function loadFromGitHub() {
       if (data.productCache) {
         Object.assign(productCache, data.productCache);
         saveProductCache(); // 他のPCでもlocalStorageに書き戻して次回即表示
+        // globalChangeLogsを復元
+        if (productCache['__global__']?.changeLogs) {
+          globalChangeLogs = productCache['__global__'].changeLogs;
+        }
       }
       if (data.calEvents) {
         calEvents = data.calEvents;
@@ -3189,6 +3197,57 @@ function _initItemGraphRange() {
   }
 }
 
+// ── グローバル変更記録（全-日別グラフ用） ──
+let globalChangeLogs = [];
+
+function openGlobalChangeLog() {
+  _renderGlobalClRows(globalChangeLogs);
+  document.getElementById('globalClModal').style.display = 'flex';
+}
+function closeGlobalChangeLog() {
+  document.getElementById('globalClModal').style.display = 'none';
+}
+function _renderGlobalClRows(logs) {
+  const container = document.getElementById('globalClRows');
+  if (!logs.length) {
+    container.innerHTML = '<div style="padding:16px 0;color:var(--text3);font-size:12px">まだ記録がありません。＋追加で記録してください。</div>';
+    return;
+  }
+  container.innerHTML = logs.map((log, i) => `
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="date" value="${log.date||''}"
+        style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
+      <input type="text" value="${log.note||''}" placeholder="内容を入力..."
+        style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex:1">
+      <button onclick="_deleteGlobalClRow(${i})" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 4px">✕</button>
+    </div>
+  `).join('');
+}
+function addGlobalClRow() {
+  globalChangeLogs.push({ date: new Date().toISOString().slice(0,10), note: '' });
+  _renderGlobalClRows(globalChangeLogs);
+}
+function _deleteGlobalClRow(idx) {
+  globalChangeLogs.splice(idx, 1);
+  _renderGlobalClRows(globalChangeLogs);
+}
+function saveGlobalChangeLog() {
+  const rows = document.querySelectorAll('#globalClRows > div');
+  const logs = [];
+  rows.forEach(row => {
+    const dateEl = row.querySelector('input[type="date"]');
+    const noteEl = row.querySelector('input[type="text"]');
+    if (dateEl && noteEl) logs.push({ date: dateEl.value, note: noteEl.value });
+  });
+  globalChangeLogs = logs.filter(l => l.date || l.note);
+  if (!productCache['__global__']) productCache['__global__'] = {};
+  productCache['__global__'].changeLogs = globalChangeLogs;
+  saveProductCache();
+  saveToGitHub();
+  closeGlobalChangeLog();
+  renderGraph();
+}
+
 function _drawGraphClLines(chart, labels, code) {
   const logs = (productCache[code]?.changeLog || []).filter(l => l.date && l.note);
   if (!logs.length) return;
@@ -3809,9 +3868,17 @@ function renderGraph() {
     return;
   }
 
-  // 変更記録の縦線を描画（商品選択済みの場合）
-  if (_chartInstance && _graphClCode) {
-    _drawGraphClLines(_chartInstance, labels, _graphClCode);
+  // 変更記録の縦線を描画（グローバル変更記録）
+  if (_chartInstance && globalChangeLogs.length > 0) {
+    _chartInstance._clLogs   = globalChangeLogs.filter(l => l.date && l.note);
+    _chartInstance._clLabels = labels;
+    _chartInstance._clPeriod = _graphPeriod;
+    if (!_chartInstance._clHooked) {
+      _chartInstance._clHooked = true;
+      const origDraw = _chartInstance.draw.bind(_chartInstance);
+      _chartInstance.draw = function() { origDraw(); _renderChangeLogOverlay(this); };
+    }
+    _chartInstance.update('none');
   }
 }
 
@@ -4683,6 +4750,26 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 </script>
 <!-- 変更記録モーダル -->
+<!-- グローバル変更記録モーダル（全-日別グラフ用） -->
+<div id="globalClModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9000;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:12px;width:480px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
+    <div style="padding:20px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700;font-size:15px">変更記録（グラフ表示用）</div>
+        <button onclick="closeGlobalChangeLog()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--text3)">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">全-日別グラフに縦線として表示されます</div>
+      <button onclick="addGlobalClRow()" style="margin-top:10px;padding:5px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);font-size:12px;cursor:pointer;font-weight:600">＋ 追加</button>
+    </div>
+    <div style="padding:16px 24px;overflow-y:auto;flex:1">
+      <div id="globalClRows" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <div style="padding:14px 24px 20px;border-top:2px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;background:var(--surface);border-radius:0 0 12px 12px">
+      <button onclick="closeGlobalChangeLog()" style="padding:9px 22px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">キャンセル</button>
+      <button onclick="saveGlobalChangeLog()" style="padding:9px 22px;border-radius:7px;border:none;background:#f97316;color:#fff;font-size:13px;cursor:pointer;font-weight:700;box-shadow:0 2px 8px rgba(249,115,22,0.4)">💾 保存</button>
+    </div>
+  </div>
+</div>
 <div id="changeLogModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9000;align-items:center;justify-content:center">
   <div style="background:var(--surface);border-radius:12px;width:480px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
     <!-- ヘッダー（固定） -->
