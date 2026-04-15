@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.290</span>
+    <span class="build-date">v1.291</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4837,11 +4837,18 @@ function renderPage() {
         : `<div class="empty">該当する商品がありません（${label}）</div>`;
       // col-headerを商品-基本データから複製
       const origHeader = document.querySelector('#tab-products .col-header');
-      const headerHtml = origHeader
-        ? origHeader.outerHTML
-            .replace('class="col-header"','class="col-header with-status"')
-            .replace(/<div class="ch"><\/div>\s*$/, '<div class="ch" style="text-align:center;padding:4px 6px"><button class="status-update-btn" style="font-size:11px;padding:4px 12px" onclick="applyAllStatusUpdates()">更新</button></div><div class="ch"></div>')
-        : '';
+      let headerHtml = '';
+      if (origHeader) {
+        let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
+        // 最後の空 ch div の直前に更新ボタン列を挿入
+        const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
+        if (lastEmpty !== -1) {
+          h = h.slice(0, lastEmpty)
+            + '<div class="ch" style="text-align:center;padding:4px 6px"><button class="status-update-btn" style="font-size:11px;padding:4px 12px" onclick="applyAllStatusUpdates()">更新</button></div>'
+            + h.slice(lastEmpty);
+        }
+        headerHtml = h;
+      }
       panel.innerHTML = `<div class="container" style="max-width:1400px"><div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${inner}</div></div></div>`;
     }
     return;
