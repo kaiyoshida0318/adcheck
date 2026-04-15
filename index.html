@@ -86,8 +86,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
-.col-header.with-status { grid-template-columns: 90px 80px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 110px 70px 28px; }
+.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.col-header.with-status { grid-template-columns: 90px 80px minmax(0,1fr) 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 110px 70px 28px; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -100,8 +100,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 .item-row { border-bottom: 1px solid rgba(0,0,0,0.18); }
 .item-row:last-child { border-bottom: none; }
-.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
-.item-basic.with-status { grid-template-columns: 90px 80px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 110px 70px 28px; }
+.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic.with-status { grid-template-columns: 90px 80px minmax(0,1fr) 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 110px 70px 28px; }
 .status-cell { display: flex; align-items: center; gap: 4px; padding: 4px 6px; justify-content: center; }
 .status-update-btn { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent); background: var(--surface2); color: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .status-update-btn:hover { background: var(--accent); color: #fff; }
@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.298</span>
+    <span class="build-date">v1.299</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -477,7 +477,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="cursor:pointer">商品番号</div>
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
             <div class="ch" onclick="sortBy('name')">商品</div>
-            <div class="ch" style="font-size:9px;color:var(--text3);text-align:center"></div>
             <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eef4fb">総売上</div>
             <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#eef4fb;border-right:2px solid #c9dff0">SEO売上</div>
             <div class="ch r" id="ch-sales" onclick="sortBy('sales')" style="background:#fdf0e8">広告売上合計</div>
@@ -5030,7 +5029,6 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           <button class="edit-btn" onclick="event.stopPropagation();openEditModal('${p.id}')" title="編集">✏</button>
         </div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:center;padding:8px 6px"></div>
       <div class="cell r mono" style="background:#eef4fb">
         ${(() => {
           const ym = getSelectedMonth();
