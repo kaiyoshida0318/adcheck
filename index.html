@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.301</span>
+    <span class="build-date">v1.302</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4233,19 +4233,36 @@ function applyAllStatusUpdates() {
     if (!productCache[code]) productCache[code] = {};
     productCache[code].status = sel.value;
   });
-  // SS
-  const ssMap = {};
-  document.querySelectorAll('[id^="ss-btn-"]').forEach(btn => {
-    const parts = btn.id.replace('ss-btn-','').split('-');
-    const code = parts.slice(0,-1).join('-');
-    const mon  = parts[parts.length-1];
-    if (!ssMap[code]) ssMap[code] = [];
-    const active = btn.style.background === 'rgb(21, 101, 192)' || btn.style.background === '#1565C0';
-    if (active) ssMap[code].push(mon);
+  // SS：商品ごとに現在の4ボタン状態を読み取り、既存設定を上書き
+  const MONTHS = ['03','06','09','12'];
+  const codesInView = new Set();
+  MONTHS.forEach(mon => {
+    const btn = document.querySelector(`[id^="ss-btn-"][id$="-${mon}"]`);
+    if (!btn) return;
+    // そのmonの全ボタンを走査
   });
-  Object.entries(ssMap).forEach(([code, mons]) => {
+  // 全ss-btnを商品コードごとにまとめる
+  const ssPerCode = {};
+  document.querySelectorAll('[id^="ss-btn-"]').forEach(btn => {
+    // id形式: ss-btn-{code}-{mon}  monは必ず2桁(03,06,09,12)
+    const id = btn.id; // "ss-btn-cg-22-01-03"
+    const mon = id.slice(-2);           // "03"
+    const code = id.slice('ss-btn-'.length, -(3)); // "cg-22-01" (-3 = "-" + 2桁)
+    if (!ssPerCode[code]) ssPerCode[code] = {};
+    const active = btn.style.background.includes('21, 101, 192') || btn.style.background === '#1565C0';
+    ssPerCode[code][mon] = active;
+    codesInView.add(code);
+  });
+  // 画面に出ている商品のSS設定だけ更新（他は保持）
+  codesInView.forEach(code => {
     if (!productCache[code]) productCache[code] = {};
-    productCache[code].ss = mons;
+    const prev = productCache[code].ss || [];
+    // 画面で操作された月は上書き、それ以外は既存値を保持
+    const next = MONTHS.filter(m => {
+      if (ssPerCode[code] && m in ssPerCode[code]) return ssPerCode[code][m];
+      return prev.includes(m); // 画面にないボタンはそのまま
+    });
+    productCache[code].ss = next;
   });
   saveProductCache();
   saveToGitHub();
