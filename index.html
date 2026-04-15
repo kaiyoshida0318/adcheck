@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.295</span>
+    <span class="build-date">v1.296</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4213,6 +4213,19 @@ function applyAllStatusUpdates() {
   });
   saveProductCache();
   saveToGitHub();
+  // ボタンに「保存しました」フィードバック
+  const btn = document.getElementById('status-update-global-btn');
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✅ 保存しました';
+    btn.style.background = '#16a34a';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.style.background = '#f97316';
+      btn.disabled = false;
+    }, 2000);
+  }
   renderMonthlySubTab(_currentTab);
 }
 
