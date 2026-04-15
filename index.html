@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.291</span>
+    <span class="build-date">v1.292</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4202,19 +4202,13 @@ function setProductStatus(code, val) {
 
 // サブタブの全行の区分を一括更新
 function applyAllStatusUpdates() {
-  let changed = false;
   document.querySelectorAll('[id^="status-sel-"]').forEach(sel => {
     const code = sel.id.replace('status-sel-', '');
     if (!productCache[code]) productCache[code] = {};
-    if (productCache[code].status !== sel.value) {
-      productCache[code].status = sel.value;
-      changed = true;
-    }
+    productCache[code].status = sel.value;
   });
-  if (changed) {
-    saveProductCache();
-    saveToGitHub();
-  }
+  saveProductCache();
+  saveToGitHub();
   renderMonthlySubTab(_currentTab);
 }
 
@@ -4840,16 +4834,21 @@ function renderPage() {
       let headerHtml = '';
       if (origHeader) {
         let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
-        // 最後の空 ch div の直前に更新ボタン列を挿入
         const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
         if (lastEmpty !== -1) {
           h = h.slice(0, lastEmpty)
-            + '<div class="ch" style="text-align:center;padding:4px 6px"><button class="status-update-btn" style="font-size:11px;padding:4px 12px" onclick="applyAllStatusUpdates()">更新</button></div>'
+            + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
             + h.slice(lastEmpty);
         }
         headerHtml = h;
       }
-      panel.innerHTML = `<div class="container" style="max-width:1400px"><div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${inner}</div></div></div>`;
+      panel.innerHTML = `<div class="container" style="max-width:1400px">
+        <div style="padding:10px 16px 8px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)">
+          <span style="font-size:12px;color:var(--text3)">区分を変更したら「💾 更新」を押して保存</span>
+          <button onclick="applyAllStatusUpdates()" style="padding:7px 20px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(249,115,22,0.35);letter-spacing:0.3px">💾 更新</button>
+        </div>
+        <div style="overflow-y:auto;max-height:calc(75vh - 48px);overflow-x:auto">${headerHtml}<div>${inner}</div></div>
+      </div>`;
     }
     return;
   }
