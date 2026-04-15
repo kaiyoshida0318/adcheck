@@ -86,7 +86,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -99,7 +99,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 .item-row { border-bottom: 1px solid var(--border); }
 .item-row:last-child { border-bottom: none; }
-.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
 .item-basic:hover, .item-basic.expanded { background: #fafaf9; }
 .cell-img { padding: 6px 8px; display: flex; align-items: center; justify-content: center; }
 .prod-thumb { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; border: 1px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); flex-shrink: 0; }
@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.269</span>
+    <span class="build-date">v1.270</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -392,13 +392,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <!-- タブバー -->
 <nav class="tab-bar">
-  <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">全-月別データ</button>
-  <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">全-日別データ</button>
-  <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">全-日別グラフ</button>
-  <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">商品-基本データ</button>
-  <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">商品-月別データ</button>
-  <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">商品-グラフ</button>
-  <button class="tab-btn" id="tab-btn-retired" onclick="switchTab('retired')">引退済商品</button>
+  <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">📊 全-月別データ</button>
+  <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">📊 全-日別データ</button>
+  <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">📈 全-日別グラフ</button>
+  <div style="width:1px;background:var(--border);margin:8px 4px;align-self:stretch;flex-shrink:0"></div>
+  <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">📊 商品-基本データ</button>
+  <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">📊 商品-月別データ</button>
+  <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">📈 商品-グラフ</button>
+  <button class="tab-btn" id="tab-btn-retired" onclick="switchTab('retired')">🗂 引退済商品</button>
 </nav>
 
 <!-- Main Screen -->
@@ -442,6 +443,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
             <div class="ch" onclick="sortBy('name')">商品</div>
             <div class="ch" style="font-size:9px;color:var(--text3);text-align:center"></div>
+            <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eff6ff">総売上</div>
+            <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#f0f9ff">SEO売上</div>
             <div class="ch r" id="ch-spend" onclick="sortBy('spend')">使用金額合計</div>
             <div class="ch r" id="ch-sales" onclick="sortBy('sales')">売上合計(720h)</div>
             <div class="ch r" id="ch-roas" onclick="sortBy('roas')">ROAS平均</div>
@@ -4594,6 +4597,18 @@ function getSorted(ym) {
     const bn = productCache[b.id]?.itemNumber || '';
     return dir * an.localeCompare(bn);
   }
+    if (_sortKey === 'totsales') {
+      const totOf = p => salesRows.filter(s=>s.ym===getSelectedMonth().replace('-','')&&s.itemCode===p.id).reduce((a,s)=>a+s.sales,0);
+      return dir * (totOf(a) - totOf(b));
+    }
+    if (_sortKey === 'seosales') {
+      const seoOf = p => {
+        const ym=getSelectedMonth(); const totS=salesRows.filter(s=>s.ym===ym.replace('-','')&&s.itemCode===p.id).reduce((a,s)=>a+s.sales,0);
+        const rppS=Object.keys(itemDailyData[p.id]||{}).filter(d=>d.startsWith(ym)).reduce((s,d)=>s+(itemDailyData[p.id][d]?.sales||0),0);
+        return Math.max(0,totS-rppS);
+      };
+      return dir * (seoOf(a) - seoOf(b));
+    }
     if (_sortKey === 'sales')  return dir * (a.sales720 - b.sales720);
     if (_sortKey === 'name') {
       const na = (productCache[a.id]?.manualName || productCache[a.id]?.name || a.id).toLowerCase();
@@ -4684,6 +4699,22 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           style="font-size:9px;padding:2px 6px;border-radius:3px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap;line-height:1.4">
           変更記録${(productCache['${p.id}']?.changeLog?.length>0)?`<span style="color:var(--accent);margin-left:2px">(${productCache['${p.id}'].changeLog.length})</span>`:''}
         </button>
+      </div>
+      <div class="cell r mono" style="background:#eff6ff">
+        ${(() => {
+          const ym = getSelectedMonth();
+          const totS = salesRows.filter(s=>s.ym===ym.replace('-','')&&s.itemCode===p.id).reduce((a,s)=>a+s.sales,0);
+          return totS > 0 ? fmtY(totS) : '<span style="color:var(--text3)">—</span>';
+        })()}
+      </div>
+      <div class="cell r mono" style="background:#f0f9ff">
+        ${(() => {
+          const ym = getSelectedMonth();
+          const totS = salesRows.filter(s=>s.ym===ym.replace('-','')&&s.itemCode===p.id).reduce((a,s)=>a+s.sales,0);
+          const rppS = (() => { const idd=itemDailyData[p.id]||{}; return Object.keys(idd).filter(d=>d.startsWith(ym)).reduce((s,d)=>s+(idd[d]?.sales||0),0); })();
+          const seo = Math.max(0, totS - rppS);
+          return seo > 0 ? fmtY(seo) : '<span style="color:var(--text3)">—</span>';
+        })()}
       </div>
       <div class="cell r mono">
         ${fmtY(p.spend)}
