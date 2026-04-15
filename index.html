@@ -390,7 +390,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.289</span>
+    <span class="build-date">v1.290</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4197,7 +4197,24 @@ function setProductStatus(code, val) {
   productCache[code].status = val;
   saveProductCache();
   saveToGitHub();
-  // 現在開いているサブタブがあれば再レンダリング
+  renderMonthlySubTab(_currentTab);
+}
+
+// サブタブの全行の区分を一括更新
+function applyAllStatusUpdates() {
+  let changed = false;
+  document.querySelectorAll('[id^="status-sel-"]').forEach(sel => {
+    const code = sel.id.replace('status-sel-', '');
+    if (!productCache[code]) productCache[code] = {};
+    if (productCache[code].status !== sel.value) {
+      productCache[code].status = sel.value;
+      changed = true;
+    }
+  });
+  if (changed) {
+    saveProductCache();
+    saveToGitHub();
+  }
   renderMonthlySubTab(_currentTab);
 }
 
@@ -4823,7 +4840,7 @@ function renderPage() {
       const headerHtml = origHeader
         ? origHeader.outerHTML
             .replace('class="col-header"','class="col-header with-status"')
-            .replace(/<div class="ch"><\/div>\s*$/, '<div class="ch" style="text-align:center;font-size:10px">区分</div><div class="ch"></div>')
+            .replace(/<div class="ch"><\/div>\s*$/, '<div class="ch" style="text-align:center;padding:4px 6px"><button class="status-update-btn" style="font-size:11px;padding:4px 12px" onclick="applyAllStatusUpdates()">更新</button></div><div class="ch"></div>')
         : '';
       panel.innerHTML = `<div class="container" style="max-width:1400px"><div style="overflow-y:auto;max-height:75vh;overflow-x:auto">${headerHtml}<div>${inner}</div></div></div>`;
     }
@@ -4980,18 +4997,13 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       </div>
       ${_subTabFilter ? `
       <div class="status-cell" onclick="event.stopPropagation()">
-        <select id="status-sel-${p.id}" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);flex:1;min-width:0;cursor:pointer">
-          <option value="unset" ${(productCache['${p.id}']?.status||'unset')==='unset'?'selected':''}>選択前■</option>
-          <option value="g1"    ${productCache['${p.id}']?.status==='g1'   ?'selected':''}>健常◎</option>
-          <option value="g2"    ${productCache['${p.id}']?.status==='g2'   ?'selected':''}>健常-要注意◯</option>
-          <option value="g3"    ${productCache['${p.id}']?.status==='g3'   ?'selected':''}>健常-広告無し</option>
-          <option value="new"   ${productCache['${p.id}']?.status==='new'  ?'selected':''}>新商品</option>
-          <option value="mid"   ${productCache['${p.id}']?.status==='mid'  ?'selected':''}>中立□</option>
-          <option value="mid2"  ${productCache['${p.id}']?.status==='mid2' ?'selected':''}>中立-広告無し</option>
-          <option value="warn"  ${productCache['${p.id}']?.status==='warn' ?'selected':''}>撤退検討▲</option>
-          <option value="out"   ${productCache['${p.id}']?.status==='out'  ?'selected':''}>撤退■</option>
+        <select id="status-sel-${p.id}" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);width:100%;cursor:pointer">
+          ${['unset','g1','g2','g3','new','mid','mid2','warn','out'].map(v => {
+            const labels = {unset:'選択前■',g1:'健常◎',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',mid2:'中立-広告無し',warn:'撤退検討▲',out:'撤退■'};
+            const cur = productCache[p.id]?.status || 'unset';
+            return `<option value="${v}"${cur===v?' selected':''}>${labels[v]}</option>`;
+          }).join('')}
         </select>
-        <button class="status-update-btn" onclick="setProductStatus('${p.id}',document.getElementById('status-sel-${p.id}').value)">更新</button>
       </div>` : ''}
       <div class="toggle-cell"><div class="toggle-icon${isExp?' open':''}">▶</div></div>
     </div>
