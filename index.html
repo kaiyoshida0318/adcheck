@@ -99,18 +99,18 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 .item-row { border-bottom: 1px solid var(--border); }
 .item-row:last-child { border-bottom: none; }
-.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: center; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 60px 90px 90px 100px 90px 70px 70px 70px 70px 70px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
 .item-basic:hover, .item-basic.expanded { background: #fafaf9; }
 .cell-img { padding: 6px 8px; display: flex; align-items: center; justify-content: center; }
 .prod-thumb { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; border: 1px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); flex-shrink: 0; }
-.cell-name { padding: 8px 8px 8px 4px; overflow: hidden; }
+.cell-name { padding: 8px 8px 8px 4px; overflow: hidden; display: flex; align-items: center; }
 .prod-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prod-id { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: 'DM Mono', monospace; }
-.cell { padding: 8px 10px; font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; }
-.cell.r { text-align: right; }
+.cell { padding: 8px 10px; font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; display: flex; flex-direction: column; justify-content: center; }
+.cell.r { text-align: right; align-items: flex-end; }
 .cell.mono { font-family: 'DM Mono', monospace; }
 .cell.muted { color: var(--text2); }
-.roas-cell { padding: 8px 10px; text-align: right; }
+.roas-cell { padding: 8px 10px; text-align: right; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; }
 .roas-val { font-size: 12px; font-weight: 700; font-family: 'DM Mono', monospace; }
 .rg { color: var(--green); }
 .rw { color: var(--amber); }
@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.272</span>
+    <span class="build-date">v1.273</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -4681,10 +4681,10 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}" onclick="toggleRow('${p.id}','${ym}')">
-      <div style="padding:6px 6px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cached?.itemNumber||''}">
+      <div style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center" title="${cached?.itemNumber||''}">
         ${cached?.itemNumber || '—'}
       </div>
-      <div style="padding:4px 8px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.id}">
+      <div style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center" title="${p.id}">
         ${p.id}
       </div>
       <div class="cell-name" style="display:flex;align-items:center;gap:6px">
