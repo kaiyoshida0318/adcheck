@@ -375,7 +375,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.262</span>
+    <span class="build-date">v1.264</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -602,6 +602,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <select id="itemGraphMetric" class="toolbar-month" onchange="renderItemGraph()" style="font-size:13px;padding:6px 12px">
             <option value="spend">実績額</option>
             <option value="spend_ratio">実績額-割合 (KW/20円)</option>
+            <option value="sales">売上</option>
             <option value="roas">ROAS</option>
             <option value="cvr">CVR</option>
           </select>
@@ -3496,7 +3497,54 @@ function renderItemGraph() {
         scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
       }
     });
+  } else if (metric === 'sales') {
+    // 売上4本折れ線（全体・SEO・KW商品・20円）
+    // 全体売上はsalesRowsから
+    const getTotSales = (label) => {
+      if (_itemGraphPeriod === 'daily') {
+        return salesRows.filter(r => r.itemCode === _itemGraphCode && r.date === label.replace(/\//g, '-').replace(/^(\d+)-(\d+)$/, new Date().getFullYear() + '-$1-$2'))
+          .reduce((s,r)=>s+r.sales,0) ||
+          // ラベルがMM-DDの場合、全年から探す
+          salesRows.filter(r => r.itemCode === _itemGraphCode && r.date.slice(5) === label)
+          .reduce((s,r)=>s+r.sales,0);
+      } else {
+        // 月別: labelがYYYY/MMの形式
+        const ym = label.replace('/', '');
+        return salesRows.filter(r => r.itemCode === _itemGraphCode && r.ym === ym)
+          .reduce((s,r)=>s+r.sales,0);
+      }
+    };
+
+    const dataTot  = labels.map(l => getTotSales(displayLabels[labels.indexOf(l)] || l));
+    const dataRpp  = labels.map(l => Object.values(dataMap[l]||{}).length ? (dataMap[l]?.sales||0) : 0);
+    const dataKwS  = labels.map(l => dataMap[l]?.salesKw||0);
+    const data20S  = labels.map((l,i) => Math.max(0, (dataMap[l]?.sales||0) - (dataMap[l]?.salesKw||0)));
+    const dataSeo  = labels.map((l,i) => Math.max(0, dataTot[i] - dataRpp[i]));
+
+    const lineDs2 = (label, data, color) => ({
+      label, data, borderColor: color, backgroundColor: color+'22',
+      borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, fill: false,
+    });
+
+    _itemChartInstance = new Chart(canvas, {
+      type: 'line',
+      data: { labels: displayLabels, datasets: [
+        lineDs2('全体売上', dataTot, '#1d4ed8'),
+        lineDs2('SEO売上', dataSeo, '#7c3aed'),
+        lineDs2('KW商品売上', dataKwS, '#60a5fa'),
+        lineDs2('20円売上', data20S, '#f97316'),
+      ]},
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins: { legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},
+          tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ¥${Math.round(ctx.raw).toLocaleString()}`}}},
+        scales: {
+          x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},
+          y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>'¥'+v.toLocaleString()}}
+        }
+      }
+    });
   }
+
   // 変更記録の縦線を描画
   if (_itemChartInstance) _drawChangeLogLines(_itemChartInstance, displayLabels, _itemGraphCode);
 }
