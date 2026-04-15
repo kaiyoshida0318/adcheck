@@ -286,6 +286,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .tab-btn { font-size: 13px; font-weight: 500; padding: 12px 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
+/* monthly sub-tabs */
+.tab-dropdown { position: relative; display: flex; flex-direction: column; }
+.tab-sub-bar { display: none; position: absolute; top: 100%; left: 0; min-width: 100%; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 200; flex-direction: column; gap: 0; }
+.tab-dropdown:hover .tab-sub-bar, .tab-dropdown.open .tab-sub-bar { display: flex; }
+.tab-sub-btn { font-size: 12px; font-weight: 500; padding: 8px 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; white-space: nowrap; text-align: left; transition: background 0.1s, color 0.1s; }
+.tab-sub-btn:hover { color: var(--text); background: var(--surface2); }
+.tab-sub-btn.active { color: var(--red); font-weight: 700; background: #fef2f2; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 .tab-coming-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; gap: 12px; }
@@ -376,7 +383,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.278</span>
+    <span class="build-date">v1.279</span>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
     <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
@@ -393,7 +400,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <!-- タブバー -->
 <nav class="tab-bar">
-  <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">📊 全-月別データ</button>
+  <div class="tab-dropdown" id="tab-dropdown-monthly">
+    <button class="tab-btn" id="tab-btn-monthly" onclick="switchTab('monthly')">📊 全-月別データ ▾</button>
+    <div class="tab-sub-bar">
+      <button class="tab-sub-btn" id="tab-sub-btn-monthly-latest" onclick="switchTab('monthly-latest')">【最新月】</button>
+      <button class="tab-sub-btn" id="tab-sub-btn-monthly-ss" onclick="switchTab('monthly-ss')">【SS】</button>
+    </div>
+  </div>
   <button class="tab-btn" id="tab-btn-daily" onclick="switchTab('daily')">📊 全-日別データ</button>
   <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">📈 全-日別グラフ</button>
   <div style="width:1px;background:var(--border);margin:8px 4px;align-self:stretch;flex-shrink:0"></div>
@@ -462,6 +475,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         </div>
       </div><!-- /dataArea -->
     </div>
+  </div>
+
+  <!-- ── 全-月別データ サブタブ ── -->
+  <div class="tab-panel" id="tab-monthly-latest">
+    <div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">【最新月】</div><div style="color:var(--text3);font-size:13px">準備中</div></div>
+  </div>
+  <div class="tab-panel" id="tab-monthly-ss">
+    <div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">【SS】</div><div style="color:var(--text3);font-size:13px">準備中</div></div>
   </div>
 
   <!-- ── 月別データタブ ── -->
@@ -4078,7 +4099,16 @@ function switchTab(tab) {
   _currentTab = tab;
   // ボタンのactive切り替え
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-btn-' + tab)?.classList.add('active');
+  document.querySelectorAll('.tab-sub-btn').forEach(b => b.classList.remove('active'));
+  // サブタブの場合は親ボタンもactive
+  const subTabParent = { 'monthly-latest': 'monthly', 'monthly-ss': 'monthly' };
+  const parentTab = subTabParent[tab];
+  if (parentTab) {
+    document.getElementById('tab-btn-' + parentTab)?.classList.add('active');
+    document.getElementById('tab-sub-btn-' + tab)?.classList.add('active');
+  } else {
+    document.getElementById('tab-btn-' + tab)?.classList.add('active');
+  }
   // パネルのactive切り替え
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + tab)?.classList.add('active');
