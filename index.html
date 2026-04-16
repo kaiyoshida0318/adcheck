@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.337</span>
+    <span class="build-date">v1.338</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -435,8 +435,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <span class="tab-row-label" style="color:#7B3FA0">【対応検討】</span>
   <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近半年</button>
   <button class="tab-btn" id="tab-btn-cvr-trend" onclick="switchTab('cvr-trend')">CVR推移-直近半年</button>
-  <button class="tab-btn" id="tab-btn-kw-adjust" onclick="switchTab('kw-adjust')">KW調整-直近4か月vol順</button>
-  <button class="tab-btn" id="tab-btn-title-adjust" onclick="switchTab('title-adjust')">タイトル調整-直近4か月vol順</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3">
   <span class="tab-row-label red">【状態】</span>
@@ -540,8 +538,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
     </div>
   </div>
-  <div class="tab-panel" id="tab-kw-adjust"><div class="tab-coming-soon"><div class="icon">🔑</div><div style="font-size:15px;font-weight:700;color:var(--text)">KW調整-直近4か月vol順</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-title-adjust"><div class="tab-coming-soon"><div class="icon">✏️</div><div style="font-size:15px;font-weight:700;color:var(--text)">タイトル調整-直近4か月vol順</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
 
   <!-- ── 全-月別データ サブタブ（2行目・3行目）── -->
   <div class="tab-panel" id="tab-monthly-all"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">全体</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
