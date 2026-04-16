@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.330</span>
+    <span class="build-date">v1.331</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3731,7 +3731,7 @@ function renderItemGraph() {
         { label: 'KW実績',  data: dataKw, backgroundColor:'#60a5fa88', borderColor:'#60a5fa', borderWidth:1, borderRadius:4, stack:'s',
           onClick: undefined }
       ]},
-      options: { responsive:true, maintainAspectRatio:false,
+      options: { interaction: { mode: 'index', intersect: false }, responsive:true, maintainAspectRatio:false,
         plugins: { legend:{ display:true, position:'top', labels:{color:textColor,font:{size:12},usePointStyle:true},
           onClick:(e,li,leg)=>{ const chart=leg.chart; const other=li.datasetIndex===0?1:0; const meta=chart.getDatasetMeta(other); meta.hidden=!meta.hidden; chart.update(); }
         }, tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ¥${Math.round(ctx.raw).toLocaleString()}`}}},
@@ -3744,7 +3744,7 @@ function renderItemGraph() {
     const data20R = labels.map(l => { const sp=dataMap[l]?.spend||0; const sk=dataMap[l]?.spendKw||0; const s20=Math.max(0,sp-sk); return sp?Math.round(s20/sp*1000)/10:0; });
     _itemChartInstance = new Chart(canvas, {
       type:'line', data:{labels:displayLabels, datasets:[lineDs('KW実績 割合',dataKwR,'#60a5fa'),lineDs('20円実績 割合',data20R,'#f97316')]},
-      options:{responsive:true,maintainAspectRatio:false,
+      options:{interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
         scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{min:0,max:100,grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
       }
@@ -3755,7 +3755,7 @@ function renderItemGraph() {
     const dataR20 = labels.map(l => { const sp=dataMap[l]?.spend||0,sk=dataMap[l]?.spendKw||0,sl=dataMap[l]?.sales||0,slk=dataMap[l]?.salesKw||0; const s20=Math.max(0,sp-sk),sl20=Math.max(0,sl-slk); return s20?Math.round(sl20/s20*10000)/100:0; });
     _itemChartInstance = new Chart(canvas, {
       type:'line', data:{labels:displayLabels, datasets:[lineDs('ROAS■ (全体)',dataR,'#fbbf24'),lineDs('KW ROAS',dataRKw,'#60a5fa'),lineDs('20円 ROAS',dataR20,'#f97316')]},
-      options:{responsive:true,maintainAspectRatio:false,
+      options:{interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
         scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
       }
@@ -3766,7 +3766,7 @@ function renderItemGraph() {
     const dataCvr20= labels.map(l => { const cl=dataMap[l]?.cl||0,clk=dataMap[l]?.clKw||0,ord=dataMap[l]?.orders||0,ork=dataMap[l]?.ordersKw||0; const cl20=Math.max(0,cl-clk),or20=Math.max(0,ord-ork); return cl20?Math.round(or20/cl20*10000)/100:0; });
     _itemChartInstance = new Chart(canvas, {
       type:'line', data:{labels:displayLabels, datasets:[lineDs('CVR■ (全体)',dataCvr,'#a78bfa'),lineDs('KW CVR',dataCKw,'#60a5fa'),lineDs('20円 CVR',dataCvr20,'#f97316')]},
-      options:{responsive:true,maintainAspectRatio:false,
+      options:{interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
         scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
       }
@@ -3808,7 +3808,7 @@ function renderItemGraph() {
         lineDs2('KW商品売上', dataKwS, '#60a5fa'),
         lineDs2('20円売上', data20S, '#f97316'),
       ]},
-      options: { responsive:true, maintainAspectRatio:false,
+      options: { interaction: { mode: 'index', intersect: false }, responsive:true, maintainAspectRatio:false,
         plugins: { legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},
           tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ¥${Math.round(ctx.raw).toLocaleString()}`}}},
         scales: {
@@ -3997,6 +3997,7 @@ function renderGraph() {
       ]},
       options: {
         responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
         plugins: { legend: { labels: { color: textColor, font: { size: 12 } } }, tooltip: {
           callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ¥' + Math.round(ctx.raw).toLocaleString() }
         }},
