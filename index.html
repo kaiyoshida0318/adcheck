@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.327</span>
+    <span class="build-date">v1.328</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4280,8 +4280,20 @@ function renderRoasTrend() {
     wrap.innerHTML = '<div class="tab-coming-soon"><div class="icon">📈</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>';
     return;
   }
+  // 翌月1日になるまでは当月を除外（データが途中のためブレを防ぐ）
+  const today = new Date();
+  const todayYm = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0');
+  const latestDataYm = months[months.length-1]; // データ上の最新月
+  // 当月1日 = まだ翌月になっていない → 当月データは除外
+  const useMonths = (latestDataYm === todayYm)
+    ? months.slice(0,-1)  // 当月除外
+    : months;             // 翌月以降 → そのまま（当月は完結済み）
+  if (useMonths.length === 0) {
+    wrap.innerHTML = '<div class="tab-coming-soon"><div class="icon">📈</div><div style="font-size:13px;color:var(--text3)">確定データがありません（翌月1日以降に表示されます）</div></div>';
+    return;
+  }
   // 直近6ヶ月
-  const last6 = months.slice(-6);
+  const last6 = useMonths.slice(-6);
   let products = Object.values(DB).filter(p => !productCache[p.id]?.retired);
   const calcGross = (p, m) => {
     const s = getStats(p, m);
