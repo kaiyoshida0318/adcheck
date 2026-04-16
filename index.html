@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.362</span>
+    <span class="build-date">v1.363</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4160,6 +4160,93 @@ function renderGraph() {
   _renderGraphTable(labels, _chartInstance.data.datasets);
 }
 let _memoEditCode = null;
+
+// ── KW vol順モーダル ──
+let _kwVolCode = null;
+
+function openKwVolModal(itemCode) {
+  _kwVolCode = itemCode;
+  const cached = productCache[itemCode] || {};
+  const name = cached.manualName || cached.name || itemCode;
+  document.getElementById('kwVolModalTitle').textContent = name;
+
+  const itemKwRows = kwRows.filter(r => r.itemCode === itemCode);
+  const allYms = [...new Set(itemKwRows.map(r => r.ym))].sort();
+  const months = allYms.slice(-3);
+  const kws = [...new Set(itemKwRows.map(r => r.kw))];
+
+  if (kws.length === 0) {
+    document.getElementById('kwVolModalBody').innerHTML = '<div style="padding:20px;color:var(--text3);text-align:center">KWデータがありません</div>';
+    document.getElementById('kwVolModal').style.display = 'flex';
+    return;
+  }
+
+  const kwColorMap = {};
+  const KW_COLORS = ['#1565C0','#C62828','#2E7D32','#E65100','#6A1B9A','#00838F','#AD1457','#558B2F','#4527A0','#F57F17','#00695C','#283593','#BF360C','#1B5E20','#4A148C'];
+  kws.forEach((kw, i) => { kwColorMap[kw] = KW_COLORS[i % KW_COLORS.length]; });
+
+  const getMonthAgg = (kw, ym) => {
+    const rows = itemKwRows.filter(r => r.kw === kw && r.ym === ym);
+    if (rows.length === 0) return null;
+    const spend = rows.reduce((s,r) => s+(r.spend||0), 0);
+    const sales = rows.reduce((s,r) => s+(r.sales||0), 0);
+    const cl    = rows.reduce((s,r) => s+(r.cl||0), 0);
+    let volSum = 0;
+    rows.forEach(r => { if (r.cl > 0) { volSum += r.cl / ((r.ctr > 0 ? r.ctr : 2) / 100); } });
+    const dateDays = [...new Set(rows.map(r => r.date))].length;
+    const vol = dateDays > 0 ? Math.round(volSum * (30 / dateDays)) : 0;
+    return { spend, sales, cl, vol, dateDays };
+  };
+
+  const totalClByYm = {};
+  months.forEach(ym => { totalClByYm[ym] = itemKwRows.filter(r => r.ym === ym).reduce((s,r) => s+(r.cl||0), 0); });
+
+  const M = "font-family:'DM Mono',monospace;font-size:11px";
+  const rc = v => v>=500?'#2E7D32':v>=300?'#E65100':v>0?'#C62828':'#bbb';
+  const fmtY = v => v > 0 ? '¥'+Math.round(v).toLocaleString() : '—';
+  const b1 = '1px solid #d0d0d0', b2 = '2px solid #999';
+  const thS = `border:${b1};padding:6px 8px;font-size:10px;font-weight:700;color:#555;background:#f0f0f0;white-space:nowrap`;
+
+  const tables = months.map(ym => {
+    const y = ym.slice(0,4), mo = ym.slice(4,6);
+    const totalCl = totalClByYm[ym] || 0;
+    const kwSorted = kws.map(kw => { const d = getMonthAgg(kw, ym); return { kw, d, vol: d?.vol||0 }; }).sort((a,b) => b.vol - a.vol);
+    const rows = kwSorted.map(({ kw, d, vol }) => {
+      const color = kwColorMap[kw];
+      const share = d && d.cl>0 && totalCl>0 ? (d.cl/totalCl*100).toFixed(1)+'%' : '—';
+      const roas  = d && d.spend>0 ? Math.round(d.sales/d.spend*100) : 0;
+      return `
+        <tr><td rowspan="3" style="border:${b1};padding:6px 8px;vertical-align:middle;width:160px;max-width:160px">
+            <div style="color:${color};font-weight:600;font-size:11px;white-space:normal;word-break:break-all;line-height:1.5">${kw}</div></td>
+          <td rowspan="3" style="border:${b1};padding:6px 8px;text-align:right;vertical-align:middle;width:70px;${M}"><div>${d&&vol>0?vol.toLocaleString()+(d.dateDays<30?`<div style="font-size:8px;color:#aaa">30/${d.dateDays}日</div>`:''): '—'}</div></td>
+          <td rowspan="3" style="border:${b1};padding:6px 8px;text-align:right;vertical-align:middle;width:60px;${M}">${share}</td>
+          <td style="border:${b1};padding:4px 6px;text-align:center;font-size:10px;color:#888;width:36px">実績</td>
+          <td style="border:${b1};padding:4px 10px;text-align:right;width:90px;${M}">${fmtY(d?.spend||0)}</td></tr>
+        <tr><td style="border:${b1};padding:4px 6px;text-align:center;font-size:10px;color:#888">売上</td>
+          <td style="border:${b1};padding:4px 10px;text-align:right;${M}">${fmtY(d?.sales||0)}</td></tr>
+        <tr><td style="border:${b1};padding:4px 6px;text-align:center;font-size:10px;color:#888">ROAS</td>
+          <td style="border:${b1};padding:4px 10px;text-align:right;font-weight:700;${M};color:${rc(roas)}">${roas>0?roas+'%':'—'}</td></tr>`;
+    }).join('');
+    return `<div style="flex:0 0 auto">
+      <div style="font-weight:700;font-size:13px;padding:4px 2px 6px;color:var(--text);border-bottom:2px solid #999;margin-bottom:4px">${y}年${mo}月</div>
+      <table style="border-collapse:collapse;table-layout:fixed;width:420px">
+        <colgroup><col style="width:160px"><col style="width:70px"><col style="width:60px"><col style="width:36px"><col style="width:90px"></colgroup>
+        <thead><tr>
+          <th style="${thS};text-align:left">KW</th><th style="${thS};text-align:right">予測vol</th>
+          <th style="${thS};text-align:right">KWシェア</th><th style="${thS};text-align:center">指標</th><th style="${thS};text-align:right">計</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+
+  document.getElementById('kwVolModalBody').innerHTML = `<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">${tables}</div>`;
+  document.getElementById('kwVolModal').style.display = 'flex';
+}
+
+function closeKwVolModal() {
+  document.getElementById('kwVolModal').style.display = 'none';
+}
 
 function renderRoasTrend() {
   const wrap = document.getElementById('roas-trend-list');
