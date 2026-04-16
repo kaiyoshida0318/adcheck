@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.325</span>
+    <span class="build-date">v1.327</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3951,12 +3951,14 @@ function renderGraph() {
     });
     const dataAdv = rows.map(r => r.sales || 0);
     const dataSeo = dataTot.map((t,i) => Math.max(0, t - dataAdv[i]));
+    const dataSpend = rows.map(r => r.spend || 0);
     _chartInstance = new Chart(canvas, {
       type: 'line',
       data: { labels, datasets: [
-        { label: '総売上', data: dataTot, borderColor: '#3b82f6', backgroundColor: '#3b82f622', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
-        { label: 'SEO売上', data: dataSeo, borderColor: '#a855f7', backgroundColor: '#a855f722', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
-        { label: '広告売上', data: dataAdv, borderColor: '#f97316', backgroundColor: '#f9731622', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
+        { label: '総売上',  data: dataTot,   borderColor: '#3b82f6', backgroundColor: '#3b82f622', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
+        { label: 'SEO売上', data: dataSeo,   borderColor: '#a855f7', backgroundColor: '#a855f722', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
+        { label: '広告売上', data: dataAdv,  borderColor: '#f97316', backgroundColor: '#f9731622', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
+        { label: '実績額',  data: dataSpend, borderColor: '#ef4444', backgroundColor: '#ef444422', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false, borderDash: [5,3] },
       ]},
       options: {
         responsive: true, maintainAspectRatio: false,
@@ -4301,7 +4303,7 @@ function renderRoasTrend() {
   }
 
   // ヘッダー
-  const colW = `90px 80px minmax(0,1fr) ${last6.map(()=>'70px').join(' ')} 70px minmax(0,160px) 110px 70px`;
+  const colW = `90px 80px minmax(0,1fr) ${last6.map(()=>'90px').join(' ')} 90px minmax(0,160px) 110px 70px`;
   const headerCells = last6.map(m => {
     const [y, mo] = m.split('-');
     return `<div class="ch r" style="background:#e8f5e9">${mo}月<br><span style="font-size:9px;color:var(--text3)">${y}</span></div>`;
