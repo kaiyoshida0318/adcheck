@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.322</span>
+    <span class="build-date">v1.323</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -429,7 +429,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <span class="tab-row-label" style="color:#0288D1;padding-left:16px">【数値】</span>
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">📊 全-月別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-daily" onclick="switchTab('daily')">📊 全-日別データ</button>
-  <button class="tab-btn tab-btn-all" id="tab-btn-graph" onclick="switchTab('graph')">📈 全-日別グラフ</button>
+  <button class="tab-btn tab-btn-all" id="tab-btn-graph" onclick="switchTab('graph')">📈 全-日月別グラフ</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-2">
   <span class="tab-row-label" style="color:#7B3FA0">【対応検討】</span>
@@ -768,6 +768,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
               style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">日別</button>
           </div>
           <select id="graphMetricSel" class="toolbar-month" onchange="renderGraph()" style="font-size:13px;padding:6px 12px">
+            <option value="sales">売上（総売上/SEO/広告）</option>
             <option value="spend">実績額</option>
             <option value="spend_ratio">実績額-割合 (KW/20円)</option>
             <option value="roas">ROAS</option>
@@ -3933,6 +3934,37 @@ function renderGraph() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const textColor = isDark ? '#a0aec0' : '#718096';
+
+  if (metric === 'sales') {
+    // 総売上・SEO売上・広告売上の3本折れ線
+    const dataTot = rows.map(r => {
+      const ym = (_graphPeriod === 'monthly') ? r.code : (r.code || '').slice(0,6);
+      return salesRows.filter(s => s.ym === (ym.length===6 ? ym.slice(0,4)+'-'+ym.slice(4,6) : ym))
+                      .reduce((a,s) => a+s.sales, 0);
+    });
+    const dataAdv = rows.map(r => r.sales || 0);
+    const dataSeo = dataTot.map((t,i) => Math.max(0, t - dataAdv[i]));
+    _chartInstance = new Chart(canvas, {
+      type: 'line',
+      data: { labels, datasets: [
+        { label: '総売上', data: dataTot, borderColor: '#3b82f6', backgroundColor: '#3b82f622', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
+        { label: 'SEO売上', data: dataSeo, borderColor: '#a855f7', backgroundColor: '#a855f722', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
+        { label: '広告売上', data: dataAdv, borderColor: '#f97316', backgroundColor: '#f9731622', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
+      ]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: textColor, font: { size: 12 } } }, tooltip: {
+          callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ¥' + Math.round(ctx.raw).toLocaleString() }
+        }},
+        scales: {
+          x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+          y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 }, callback: v => '¥'+Math.round(v).toLocaleString() } }
+        }
+      }
+    });
+    _applyGlobalClLines(_chartInstance, labels);
+    return;
+  }
 
   if (metric === 'spend_ratio') {
     // KW実績割合・20円実績割合の折れ線グラフ
