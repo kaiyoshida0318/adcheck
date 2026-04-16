@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.360</span>
+    <span class="build-date">v1.361</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -568,7 +568,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <div style="color:var(--text3);font-weight:600">クリック数 (cl)</div><div>RPPレポート「クリック数(合計)」列</div>
           <div style="color:var(--text3);font-weight:600">CTR (%)</div><div>RPPレポート「CTR(%)」列（取得できない場合はデフォルト 2% を使用）</div>
           <div style="color:var(--text3);font-weight:600">データ日数</div><div>そのKWでデータが存在する日数（cl &gt; 0 の日数）</div>
-          <div style="color:var(--text3);font-weight:600">月日数</div><div>その月の総日数（例：3月＝31日、4月＝30日）</div>
+          <div style="color:var(--text3);font-weight:600">月日数</div><div>30日固定（月によるブレを防ぐため統一）</div>
         </div>
         <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">計算式</div>
         <div style="background:var(--surface2);border-radius:8px;padding:14px 18px;font-family:'DM Mono',monospace;font-size:12px;line-height:2">
@@ -579,7 +579,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         </div>
         <div style="margin-top:12px;font-size:11px;color:var(--text3);line-height:1.8">
           <div>・日別volを全データ日で合算し、月全体に外挿した推計値です。</div>
-          <div>・データ日数が月日数より少ない場合（月途中・入札停止期間あり）は補正されます。</div>
+          <div>・月日数は30日固定（28〜31日の月ブレを排除）。データ日数が30日より少ない場合は外挿補正されます。</div>
           <div>・補正が入った場合は数値の下に <span style="font-family:monospace;background:var(--surface2);padding:1px 4px;border-radius:3px">31/16日</span> のように表示されます。</div>
           <div>・CTRが取得できなかった日は 2% を仮定して計算しています（数値の下に CTR:2% と表示）。</div>
         </div>
@@ -2338,7 +2338,7 @@ function _renderKwByItem(itemCode, ym) {
 
   // 月の全日数とデータ日数（datesが確定した後で計算）
   const ymDate = new Date(ym + '-01');
-  const daysInMonth = new Date(ymDate.getFullYear(), ymDate.getMonth()+1, 0).getDate();
+  const daysInMonth = 30; // 月ブレ防止のため30日固定
   const dateDays = dates.length;
 
   // KW×日付のマップ
@@ -4682,7 +4682,7 @@ function openKwVolModal(itemCode) {
     });
     // dateDays = このKW×月のデータがある日数
     const dateDays = [...new Set(rows.map(r => r.date))].length;
-    const daysInMonth = new Date(parseInt(ym.slice(0,4)), parseInt(ym.slice(4,6)), 0).getDate();
+    const daysInMonth = 30; // 月ブレ防止のため30日固定
     const vol = dateDays > 0 ? Math.round(volSum * (daysInMonth / dateDays)) : 0;
     return { spend, sales, cl, vol, dateDays, daysInMonth };
   };
@@ -4787,7 +4787,7 @@ function renderFormulaBrowser() {
   const q   = (document.getElementById('formulaSearch')?.value || '').toLowerCase();
   if (!ym) { wrap.innerHTML = '<div style="color:var(--text3);font-size:12px">月を選択してください</div>'; return; }
 
-  const daysInMonth = new Date(parseInt(ym.slice(0,4)), parseInt(ym.slice(4,6)), 0).getDate();
+  const daysInMonth = 30; // 月ブレ防止のため30日固定
 
   // この月にKWデータがある商品一覧
   const itemCodes = [...new Set(kwRows.filter(r => r.ym === ym).map(r => r.itemCode))];
