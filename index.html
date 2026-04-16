@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.368</span>
+    <span class="build-date">v1.369</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4390,7 +4390,20 @@ function openKwVolModal(itemCode) {
     </div>`;
   }).join('');
 
-  document.getElementById('kwVolModalBody').innerHTML = `<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">${tables}</div>`;
+  const itemNumber = cached.itemNumber || '—';
+  const imgSrc = cached.manualImg || cached.img || null;
+  const infoBar = `<div style="display:flex;align-items:center;gap:14px;padding:12px 16px 10px;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap">
+    ${imgSrc ? `<img src="${imgSrc}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">` : ''}
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <div style="font-size:14px;font-weight:700;color:var(--text)">${name}</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--text3)">商品番号：<span style="font-family:'DM Mono',monospace;color:var(--text2)">${itemNumber}</span></span>
+        <span style="font-size:11px;color:var(--text3)">商品管理番号：<span style="font-family:'DM Mono',monospace;color:var(--text2)">${itemCode}</span></span>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('kwVolModalBody').innerHTML = infoBar + `<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;padding:0 16px 16px">${tables}</div>`;
   document.getElementById('kwVolModal').style.display = 'flex';
 }
 
