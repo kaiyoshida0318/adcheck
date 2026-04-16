@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.344</span>
+    <span class="build-date">v1.345</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4640,8 +4640,7 @@ function openKwVolModal(itemCode) {
   const b2  = '2px solid #999';
 
   // ── ヘッダー行1：月名（colspan=5）× 月数、先頭にキーワード固定列 ──
-  const hRow1 = `<tr style="background:#f0f0f0">
-    <th colspan="5" style="border:${b1};border-right:${b2};padding:6px;text-align:center;font-size:10px;font-weight:700">全期間</th>` +
+  const hRow1 = `<tr style="background:#f0f0f0">` +
     months.map((ym, mi) => {
       const y = ym.slice(0,4), mo = ym.slice(4,6);
       const rBorder = mi < months.length-1 ? b2 : b1;
@@ -4657,7 +4656,6 @@ function openKwVolModal(itemCode) {
     <th style="border:${b1};border-right:${lastBorder};padding:5px 6px;font-size:9px;font-weight:700;color:#555;text-align:right;min-width:70px">計</th>`;
 
   const hRow2 = '<tr style="background:#f5f5f5">' +
-    subH(b2) +
     months.map((ym, mi) => subH(mi < months.length-1 ? b2 : b1)).join('') +
     '</tr>';
 
@@ -4710,7 +4708,7 @@ function openKwVolModal(itemCode) {
     };
 
     const bg = i%2===0 ? '#fff' : '#fafafa';
-    return [0,1,2].map(row => `<tr style="background:${bg}">${fixedCol(row)}${months.map((ym,mi) => monthCol(row,ym,mi)).join('')}</tr>`).join('');
+    return [0,1,2].map(row => `<tr style="background:${bg}">${months.map((ym,mi) => monthCol(row,ym,mi)).join('')}</tr>`).join('');
   }).join('');
 
   document.getElementById('kwVolModalBody').innerHTML = `
