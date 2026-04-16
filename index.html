@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.354</span>
+    <span class="build-date">v1.355</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2454,8 +2454,9 @@ function _renderKwByItem(itemCode, ym) {
             ${(() => {
               const tot = kwTotals[kw];
               if (!tot || tot.vol === 0) return '<span style="font-size:9px;color:var(--text3)">—</span>';
-              const adjVol = Math.round(tot.vol * (daysInMonth / dateDays));
-              const suffix = (dateDays < daysInMonth ? '<div style="font-size:8px;color:var(--text3)">' + daysInMonth + '/' + dateDays + '日</div>' : '') +
+              const kwDataDays = tot.volDays > 0 ? tot.volDays : dateDays;
+              const adjVol = Math.round(tot.vol * (daysInMonth / kwDataDays));
+              const suffix = (kwDataDays < daysInMonth ? '<div style="font-size:8px;color:var(--text3)">' + daysInMonth + '/' + kwDataDays + '日</div>' : '') +
                 (tot.usedDefault ? '<div style="font-size:8px;color:var(--text3)">CTR:2%</div>' : '');
               return '<span style="font-size:10px;font-weight:700;color:var(--text)">' + adjVol.toLocaleString() + '</span>' + suffix;
             })()}
