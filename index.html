@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.363</span>
+    <span class="build-date">v1.364</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -520,6 +520,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div style="padding:12px 16px">
       <div class="table-card">
         <div class="table-toolbar">
+          <input type="text" id="roasTrendSearch" placeholder="商品管理番号・商品番号・商品名で検索..." oninput="renderRoasTrend()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
           <div class="toolbar-right"></div>
         </div>
         <div id="roas-trend-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
@@ -4270,7 +4271,15 @@ function renderRoasTrend() {
   }
   // 直近6ヶ月
   const last6 = useMonths.slice(-6);
-  let products = Object.values(DB).filter(p => !productCache[p.id]?.retired);
+  const _roasQ = (document.getElementById('roasTrendSearch')?.value || '').toLowerCase();
+  let products = Object.values(DB).filter(p => {
+    if (productCache[p.id]?.retired) return false;
+    if (!_roasQ) return true;
+    const cached = productCache[p.id] || {};
+    const name   = (cached.manualName || cached.name || '').toLowerCase();
+    const itemNum = (cached.itemNumber || '').toLowerCase();
+    return p.id.toLowerCase().includes(_roasQ) || name.includes(_roasQ) || itemNum.includes(_roasQ);
+  });
   const calcGross = (p, m) => {
     const s = getStats(p, m);
     const totS = salesRows.filter(r => r.ym === m && r.itemCode === p.id).reduce((a,r)=>a+r.sales,0);
