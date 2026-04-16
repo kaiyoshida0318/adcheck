@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.343</span>
+    <span class="build-date">v1.344</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4572,8 +4572,11 @@ function openKwVolModal(itemCode) {
   document.getElementById('kwVolModalTitle').textContent = name;
 
   const itemKwRows = kwRows.filter(r => r.itemCode === itemCode);
-  // 過去3ヶ月（古い順）
-  const months = [...new Set(kwRows.map(r => r.ym))].sort().reverse().slice(0, 3).reverse();
+
+  // 最新から4ヶ月（古い順で表示）
+  const allYms = [...new Set(itemKwRows.map(r => r.ym))].sort();
+  const months = allYms.slice(-4); // 直近4ヶ月、古い順
+
   const kws = [...new Set(itemKwRows.map(r => r.kw))];
 
   if (kws.length === 0) {
@@ -4582,120 +4585,132 @@ function openKwVolModal(itemCode) {
     return;
   }
 
+  // ── 月別集計関数（日別データを合算）──
+  const getMonthAgg = (kw, ym) => {
+    const rows = itemKwRows.filter(r => r.kw === kw && r.ym === ym);
+    if (rows.length === 0) return null;
+    const spend  = rows.reduce((s,r) => s+(r.spend||0), 0);
+    const sales  = rows.reduce((s,r) => s+(r.sales||0), 0);
+    const cl     = rows.reduce((s,r) => s+(r.cl||0), 0);
+    // 予測vol: クリック数 ÷ 平均CTR（CTRは%単位）
+    const ctrRows = rows.filter(r => r.ctr > 0 && r.cl > 0);
+    const avgCtr = ctrRows.length > 0
+      ? ctrRows.reduce((s,r) => s + r.ctr, 0) / ctrRows.length
+      : 2; // デフォルト2%
+    const vol = cl > 0 ? Math.round(cl / (avgCtr / 100)) : 0;
+    return { spend, sales, cl, vol };
+  };
+
+  // 全期間集計（固定列用）
+  const getTotal = (kw) => {
+    const rows = itemKwRows.filter(r => r.kw === kw);
+    const spend = rows.reduce((s,r) => s+(r.spend||0), 0);
+    const sales = rows.reduce((s,r) => s+(r.sales||0), 0);
+    const cl    = rows.reduce((s,r) => s+(r.cl||0), 0);
+    const ctrRows = rows.filter(r => r.ctr > 0 && r.cl > 0);
+    const avgCtr  = ctrRows.length > 0 ? ctrRows.reduce((s,r)=>s+r.ctr,0)/ctrRows.length : 2;
+    const vol = cl > 0 ? Math.round(cl / (avgCtr / 100)) : 0;
+    return { spend, sales, cl, vol };
+  };
+
   // KWをspend合計降順でソート
   const kwList = kws.map(kw => {
-    const totalSpend = itemKwRows.filter(r => r.kw === kw).reduce((s,r) => s+(r.spend||0), 0);
-    const totalCl    = itemKwRows.filter(r => r.kw === kw).reduce((s,r) => s+(r.cl||0), 0);
-    return { kw, totalSpend, totalCl };
-  }).sort((a,b) => b.totalSpend - a.totalSpend);
+    const t = getTotal(kw);
+    return { kw, ...t };
+  }).sort((a,b) => b.spend - a.spend);
+
+  // 月ごとの全KW合計クリック（KWシェア計算用）
+  const totalClByYm = {};
+  months.forEach(ym => {
+    totalClByYm[ym] = itemKwRows.filter(r => r.ym === ym).reduce((s,r) => s+(r.cl||0), 0);
+  });
+
+  // 月の日数
+  const daysInMonth = ym => new Date(parseInt(ym.slice(0,4)), parseInt(ym.slice(4,6)), 0).getDate();
 
   const KW_COLORS = [
     '#1565C0','#C62828','#2E7D32','#E65100','#6A1B9A',
     '#00838F','#AD1457','#558B2F','#4527A0','#F57F17',
   ];
 
-  const M  = "font-family:'DM Mono',monospace;font-size:10px";
-  const rc = v => v>=500?'var(--green)':v>=300?'var(--amber)':v>0?'var(--danger)':'#bbb';
-  const fmt = v => v > 0 ? Math.round(v).toLocaleString() : '—';
+  const M   = "font-family:'DM Mono',monospace;font-size:10px";
+  const rc  = v => v>=500?'var(--green)':v>=300?'var(--amber)':v>0?'var(--danger)':'#bbb';
   const fmtY = v => v > 0 ? '¥'+Math.round(v).toLocaleString() : '—';
+  const b1  = '1px solid #ccc';
+  const b2  = '2px solid #999';
 
-  // 月ごとの予測vol計算（cl ÷ (ctr/100)）とシェア用合計
-  const getMonthData = (kw, ym) => {
-    const r = itemKwRows.find(r => r.kw === kw && r.ym === ym);
-    if (!r) return null;
-    const ctrVal = r.ctr > 0 ? r.ctr : 2;
-    const vol = r.cl > 0 ? Math.round(r.cl / (ctrVal/100)) : 0;
-    return { spend: r.spend||0, sales: r.sales||0, cl: r.cl||0, vol };
-  };
-
-  // 月ごとの全KW合計クリック（シェア計算用）
-  const totalClByYm = {};
-  months.forEach(ym => {
-    totalClByYm[ym] = itemKwRows.filter(r => r.ym === ym).reduce((s,r) => s+(r.cl||0), 0);
-  });
-
-  // 列幅：キーワード140px + 予測vol60px + 月間推計60px + 指標44px + 計58px
-  const fixedW = '140px 60px 60px 44px 58px';
-  const border1 = '1px solid #ccc';
-  const border2 = '2px solid #999';
-
-  // ヘッダー行1：月名（colspan=5）× 月数
-  const hRow1 = `<tr style="background:#f5f5f5">
-    <th colspan="5" style="border:${border1};padding:6px;text-align:center;font-size:10px;font-weight:700;border-right:${border2}">キーワード</th>` +
+  // ── ヘッダー行1：月名（colspan=5）× 月数、先頭にキーワード固定列 ──
+  const hRow1 = `<tr style="background:#f0f0f0">
+    <th colspan="5" style="border:${b1};border-right:${b2};padding:6px;text-align:center;font-size:10px;font-weight:700">全期間</th>` +
     months.map((ym, mi) => {
       const y = ym.slice(0,4), mo = ym.slice(4,6);
-      const sep = mi < months.length-1 ? border2 : border1;
-      return `<th colspan="5" style="border:${border1};border-right:${sep};padding:6px;text-align:center;font-size:10px;font-weight:700">${y}年${mo}月</th>`;
+      const rBorder = mi < months.length-1 ? b2 : b1;
+      return `<th colspan="5" style="border:${b1};border-right:${rBorder};padding:6px;text-align:center;font-size:10px;font-weight:700">${y}年${mo}月</th>`;
     }).join('') + '</tr>';
 
-  // ヘッダー行2：固定列ヘッダー + 月ごとのKW/予測vol/月間推計/指標/計
-  const fixedHeader = `<th style="border:${border1};padding:5px 8px;font-size:9px;font-weight:700;color:#666;text-align:left;min-width:140px">KW</th>
-    <th style="border:${border1};padding:5px 4px;font-size:9px;font-weight:700;color:#666;text-align:center">予測vol</th>
-    <th style="border:${border1};padding:5px 4px;font-size:9px;font-weight:700;color:#666;text-align:center">月間推計</th>
-    <th style="border:${border1};border-right:${border2};padding:5px 4px;font-size:9px;font-weight:700;color:#666;text-align:center">指標</th>
-    <th style="border:${border1};border-right:${border2};padding:5px 6px;font-size:9px;font-weight:700;color:#666;text-align:right">計</th>`;
-  const monthHeader = months.map((ym, mi) => {
-    const sep = mi < months.length-1 ? border2 : border1;
-    return `<th style="border:${border1};padding:5px 8px;font-size:9px;font-weight:700;color:#666;text-align:left;min-width:140px">KW</th>
-      <th style="border:${border1};padding:5px 4px;font-size:9px;font-weight:700;color:#666;text-align:center">予測vol</th>
-      <th style="border:${border1};padding:5px 4px;font-size:9px;font-weight:700;color:#666;text-align:center">月間推計</th>
-      <th style="border:${border1};border-right:${border2};padding:5px 4px;font-size:9px;font-weight:700;color:#666;text-align:center">指標</th>
-      <th style="border:${border1};border-right:${sep};padding:5px 6px;font-size:9px;font-weight:700;color:#666;text-align:right">計</th>`;
-  }).join('');
-  const hRow2 = `<tr style="background:#f5f5f5">${fixedHeader}${monthHeader}</tr>`;
+  // ── ヘッダー行2：各グループのサブヘッダー ──
+  const subH = (lastBorder) => `
+    <th style="border:${b1};padding:5px 8px;font-size:9px;font-weight:700;color:#555;text-align:left;min-width:130px">KW</th>
+    <th style="border:${b1};padding:5px 4px;font-size:9px;font-weight:700;color:#555;text-align:center;min-width:55px">予測vol</th>
+    <th style="border:${b1};padding:5px 4px;font-size:9px;font-weight:700;color:#555;text-align:center;min-width:55px">月間推計</th>
+    <th style="border:${b1};padding:5px 4px;font-size:9px;font-weight:700;color:#555;text-align:center;min-width:40px">指標</th>
+    <th style="border:${b1};border-right:${lastBorder};padding:5px 6px;font-size:9px;font-weight:700;color:#555;text-align:right;min-width:70px">計</th>`;
 
-  // データ行：KWごとに3行（実績/売上/ROAS）
-  const dataRows = kwList.map(({ kw, totalSpend, totalCl }, i) => {
-    const color = KW_COLORS[i % KW_COLORS.length];
-    const badge = `<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:${color};color:#fff;font-size:8px;font-weight:700;margin-right:4px;flex-shrink:0">${i+1}</span>`;
+  const hRow2 = '<tr style="background:#f5f5f5">' +
+    subH(b2) +
+    months.map((ym, mi) => subH(mi < months.length-1 ? b2 : b1)).join('') +
+    '</tr>';
 
-    // 固定列（全期間合計）の予測vol・月間推計
-    const totalVol = itemKwRows.filter(r => r.kw === kw).reduce((s,r) => {
-      if (r.cl > 0) { const ctr = r.ctr > 0 ? r.ctr : 2; return s + r.cl/(ctr/100); }
-      return s;
-    }, 0);
-    const days = itemKwRows.filter(r => r.kw === kw && r.cl > 0).length;
-    const monthlyEst = days > 0 ? Math.round(totalVol / days * 30) : 0;
-    const totS = itemKwRows.filter(r => r.kw === kw).reduce((s,r)=>s+(r.spend||0),0);
-    const totA = itemKwRows.filter(r => r.kw === kw).reduce((s,r)=>s+(r.sales||0),0);
-    const totR = totS > 0 ? Math.round(totA/totS*100) : 0;
+  // ── データ行 ──
+  const dataRows = kwList.map(({ kw, spend: totSpend, sales: totSales, cl: totCl, vol: totVol }, i) => {
+    const color  = KW_COLORS[i % KW_COLORS.length];
+    const badge  = `<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:${color};color:#fff;font-size:8px;font-weight:700;margin-right:4px;flex-shrink:0">${i+1}</span>`;
+    const kwSpan = `<div style="display:flex;align-items:center;color:${color};font-weight:600;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:126px" title="${kw}">${badge}${kw}</div>`;
+    const totRoas = totSpend > 0 ? Math.round(totSales/totSpend*100) : 0;
 
-    const fixedCells = (row) => {
-      if (row===0) return `<td style="border:${border1};padding:4px 8px;vertical-align:middle" rowspan="3">
-          <div style="display:flex;align-items:center;font-size:10px;font-weight:600;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:136px" title="${kw}">${badge}${kw}</div>
-        </td>
-        <td style="border:${border1};padding:4px 6px;text-align:right;vertical-align:middle;${M}" rowspan="3">${totalVol>0?Math.round(totalVol).toLocaleString():'—'}</td>
-        <td style="border:${border1};border-right:${border2};padding:4px 6px;text-align:right;vertical-align:middle;${M}" rowspan="3">${monthlyEst>0?monthlyEst.toLocaleString()+'/月':'—'}</td>
-        <td style="border:${border1};border-right:${border2};padding:3px 4px;text-align:center;font-size:9px;color:#888">実績</td>
-        <td style="border:${border1};border-right:${border2};padding:3px 6px;text-align:right;${M}">${fmtY(totS)}</td>`;
-      if (row===1) return `<td style="border:${border1};border-right:${border2};padding:3px 4px;text-align:center;font-size:9px;color:#888">売上</td>
-        <td style="border:${border1};border-right:${border2};padding:3px 6px;text-align:right;${M}">${fmtY(totA)}</td>`;
-      return `<td style="border:${border1};border-right:${border2};padding:3px 4px;text-align:center;font-size:9px;color:#888">ROAS</td>
-        <td style="border:${border1};border-right:${border2};padding:3px 6px;text-align:right;font-weight:700;${M};color:${rc(totR)}">${totR>0?totR+'%':'—'}</td>`;
+    // 全期間固定列（3行）
+    const fixedCol = (row) => {
+      if (row === 0) return `
+        <td style="border:${b1};padding:4px 8px;vertical-align:middle" rowspan="3">${kwSpan}</td>
+        <td style="border:${b1};padding:4px 6px;text-align:right;vertical-align:middle;${M}" rowspan="3">${totVol > 0 ? totVol.toLocaleString() : '—'}</td>
+        <td style="border:${b1};padding:4px 6px;text-align:right;vertical-align:middle;${M}" rowspan="3">—</td>
+        <td style="border:${b1};padding:3px 4px;text-align:center;font-size:9px;color:#888;border-right:${b1}">実績</td>
+        <td style="border:${b1};border-right:${b2};padding:3px 6px;text-align:right;${M}">${fmtY(totSpend)}</td>`;
+      if (row === 1) return `
+        <td style="border:${b1};padding:3px 4px;text-align:center;font-size:9px;color:#888">売上</td>
+        <td style="border:${b1};border-right:${b2};padding:3px 6px;text-align:right;${M}">${fmtY(totSales)}</td>`;
+      return `
+        <td style="border:${b1};padding:3px 4px;text-align:center;font-size:9px;color:#888">ROAS</td>
+        <td style="border:${b1};border-right:${b2};padding:3px 6px;text-align:right;font-weight:700;${M};color:${rc(totRoas)}">${totRoas > 0 ? totRoas+'%' : '—'}</td>`;
     };
 
-    const monthCells = (row) => months.map((ym, mi) => {
-      const d = getMonthData(kw, ym);
-      const sep = mi < months.length-1 ? border2 : border1;
+    // 月別列（3行）
+    const monthCol = (row, ym, mi) => {
+      const d = getMonthAgg(kw, ym);
+      const rBorder = mi < months.length-1 ? b2 : b1;
       const totalCl2 = totalClByYm[ym] || 0;
-      const share = d && d.cl>0 && totalCl2>0 ? (d.cl/totalCl2*100).toFixed(1)+'%' : '—';
-      const vol    = d?.vol || 0;
-      const monthlyEstM = vol > 0 ? Math.round(vol * 30 / (new Date(new Date(ym.slice(0,4), parseInt(ym.slice(4,6)), 0).getDate())) ) : 0;
+      const share    = d && d.cl > 0 && totalCl2 > 0 ? (d.cl/totalCl2*100).toFixed(1)+'%' : '—';
+      const volTxt   = d && d.vol > 0 ? d.vol.toLocaleString() : '—';
+      // 月間推計 = 予測vol ÷ 月日数 × 30（月平均を出す）
+      const days = daysInMonth(ym);
+      const roas = d && d.spend > 0 ? Math.round(d.sales/d.spend*100) : 0;
 
-      if (row===0) return `<td style="border:${border1};padding:3px 8px;font-size:10px;font-weight:600;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:136px" rowspan="3" title="${kw}">${badge}${kw}</td>
-          <td style="border:${border1};padding:3px 6px;text-align:right;${M}" rowspan="3">${d&&vol>0?vol.toLocaleString():'—'}</td>
-          <td style="border:${border1};border-right:${border2};padding:3px 6px;text-align:right;${M}" rowspan="3">${share}</td>
-          <td style="border:${border1};border-right:${border2};padding:3px 4px;text-align:center;font-size:9px;color:#888">実績</td>
-          <td style="border:${border1};border-right:${sep};padding:3px 6px;text-align:right;${M}">${d?fmtY(d.spend):'—'}</td>`;
-      if (row===1) return `<td style="border:${border1};border-right:${border2};padding:3px 4px;text-align:center;font-size:9px;color:#888">売上</td>
-          <td style="border:${border1};border-right:${sep};padding:3px 6px;text-align:right;${M}">${d?fmtY(d.sales):'—'}</td>`;
-      const roas = d && d.spend>0 ? Math.round(d.sales/d.spend*100) : 0;
-      return `<td style="border:${border1};border-right:${border2};padding:3px 4px;text-align:center;font-size:9px;color:#888">ROAS</td>
-          <td style="border:${border1};border-right:${sep};padding:3px 6px;text-align:right;font-weight:700;${M};color:${rc(roas)}">${roas>0?roas+'%':'—'}</td>`;
-    }).join('');
+      if (row === 0) return `
+        <td style="border:${b1};padding:4px 8px;vertical-align:middle;font-size:10px;font-weight:600;color:${color};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:126px" rowspan="3" title="${kw}">${kwSpan}</td>
+        <td style="border:${b1};padding:4px 6px;text-align:right;vertical-align:middle;${M}" rowspan="3">${volTxt}</td>
+        <td style="border:${b1};padding:4px 6px;text-align:right;vertical-align:middle;${M}" rowspan="3">${share}</td>
+        <td style="border:${b1};padding:3px 4px;text-align:center;font-size:9px;color:#888">実績</td>
+        <td style="border:${b1};border-right:${rBorder};padding:3px 6px;text-align:right;${M}">${d ? fmtY(d.spend) : '—'}</td>`;
+      if (row === 1) return `
+        <td style="border:${b1};padding:3px 4px;text-align:center;font-size:9px;color:#888">売上</td>
+        <td style="border:${b1};border-right:${rBorder};padding:3px 6px;text-align:right;${M}">${d ? fmtY(d.sales) : '—'}</td>`;
+      return `
+        <td style="border:${b1};padding:3px 4px;text-align:center;font-size:9px;color:#888">ROAS</td>
+        <td style="border:${b1};border-right:${rBorder};padding:3px 6px;text-align:right;font-weight:700;${M};color:${rc(roas)}">${roas > 0 ? roas+'%' : '—'}</td>`;
+    };
 
     const bg = i%2===0 ? '#fff' : '#fafafa';
-    return [0,1,2].map(row => `<tr style="background:${bg}">${fixedCells(row)}${monthCells(row)}</tr>`).join('');
+    return [0,1,2].map(row => `<tr style="background:${bg}">${fixedCol(row)}${months.map((ym,mi) => monthCol(row,ym,mi)).join('')}</tr>`).join('');
   }).join('');
 
   document.getElementById('kwVolModalBody').innerHTML = `
