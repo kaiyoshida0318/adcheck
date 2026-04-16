@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.346</span>
+    <span class="build-date">v1.347</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4628,7 +4628,11 @@ function openKwVolModal(itemCode) {
   const kwList = kws.map(kw => {
     const t = getTotal(kw);
     return { kw, ...t };
-  }).sort((a,b) => b.spend - a.spend);
+  }).sort((a,b) => {
+    const volA = months.reduce((s,ym) => { const d=getMonthAgg(a.kw,ym); return s+(d?.vol||0); }, 0);
+    const volB = months.reduce((s,ym) => { const d=getMonthAgg(b.kw,ym); return s+(d?.vol||0); }, 0);
+    return volB - volA;
+  });
 
   // 月ごとの全KW合計クリック（KWシェア計算用）
   const totalClByYm = {};
@@ -4673,8 +4677,7 @@ function openKwVolModal(itemCode) {
   // ── データ行 ──
   const dataRows = kwList.map(({ kw, spend: totSpend, sales: totSales, cl: totCl, vol: totVol }, i) => {
     const color  = KW_COLORS[i % KW_COLORS.length];
-    const badge  = `<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:${color};color:#fff;font-size:8px;font-weight:700;margin-right:4px;flex-shrink:0">${i+1}</span>`;
-    const kwSpan = `<div style="display:flex;align-items:center;color:${color};font-weight:600;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:126px" title="${kw}">${badge}${kw}</div>`;
+    const kwSpan = `<div style="display:flex;align-items:center;gap:5px;color:${color};font-weight:600;font-size:10px;white-space:normal;word-break:break-all;line-height:1.4"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></span>${kw}</div>`;
     const totRoas = totSpend > 0 ? Math.round(totSales/totSpend*100) : 0;
 
     // 全期間固定列（3行）
@@ -4705,7 +4708,7 @@ function openKwVolModal(itemCode) {
       const roas = d && d.spend > 0 ? Math.round(d.sales/d.spend*100) : 0;
 
       if (row === 0) return `
-        <td style="border:${b1};padding:4px 8px;vertical-align:middle;font-size:10px;font-weight:600;color:${color};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:126px" rowspan="3" title="${kw}">${kwSpan}</td>
+        <td style="border:${b1};padding:4px 8px;vertical-align:middle;min-width:130px;max-width:200px" rowspan="3">${kwSpan}</td>
         <td style="border:${b1};padding:4px 6px;text-align:right;vertical-align:middle;${M}" rowspan="3">${volTxt}</td>
         <td style="border:${b1};padding:4px 6px;text-align:right;vertical-align:middle;${M}" rowspan="3">${share}</td>
         <td style="border:${b1};padding:3px 4px;text-align:center;font-size:9px;color:#888">実績</td>
