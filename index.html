@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.321</span>
+    <span class="build-date">v1.322</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4241,10 +4241,21 @@ function renderRoasTrend() {
   }
   // 直近6ヶ月
   const last6 = months.slice(-6);
-  const products = Object.values(DB).filter(p => !productCache[p.id]?.retired);
+  let products = Object.values(DB).filter(p => !productCache[p.id]?.retired);
+  if (_roasTrendSortKey === 'diff') {
+    products = products.slice().sort((a,b) => {
+      const calcDiff = p => {
+        const vals = last6.map(m => getStats(p,m).avgRoas);
+        const latest = vals[vals.length-1];
+        const avg = vals.slice(0,-1).filter(v=>v>0).reduce((s,v,_,arr)=>s+v/arr.length,0);
+        return (latest>0&&avg>0) ? latest-avg : -9999;
+      };
+      return _roasTrendSortDir === 'desc' ? calcDiff(b)-calcDiff(a) : calcDiff(a)-calcDiff(b);
+    });
+  }
 
   // ヘッダー
-  const colW = `90px 80px minmax(0,1fr) ${last6.map(()=>'70px').join(' ')} minmax(0,160px) 110px 70px`;
+  const colW = `90px 80px minmax(0,1fr) ${last6.map(()=>'70px').join(' ')} 70px minmax(0,160px) 110px 70px`;
   const headerCells = last6.map(m => {
     const [y, mo] = m.split('-');
     return `<div class="ch r" style="background:#fdf0e8">${mo}月<br><span style="font-size:9px;color:var(--text3)">${y}</span></div>`;
@@ -4255,6 +4266,7 @@ function renderRoasTrend() {
     <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('itemid')">商品管理番号</div>
     <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('name')">商品</div>
     ${headerCells}
+    <div class="ch r" style="background:#f3e8ff;cursor:pointer" onclick="sortRoasTrend('diff')">最新月<br><span style="font-size:9px">差分</span></div>
     <div class="ch">記入欄</div>
     <div class="ch" style="text-align:center;font-size:10px">区分</div>
     <div class="ch" style="text-align:center;font-size:10px">SS</div>
@@ -4266,8 +4278,8 @@ function renderRoasTrend() {
     const name = cached.manualName || cached.name || p.id;
     const imgSrc = cached.manualImg || cached.img || null;
     const imgEl = imgSrc
-      ? `<img src="${imgSrc}" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">`
-      : `<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0"></div>`;
+      ? `<img src="${imgSrc}" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集">`
+      : `<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集"></div>`;
 
     const rcolorFn = v => v >= 500 ? 'var(--green)' : v >= 300 ? 'var(--amber)' : v > 0 ? 'var(--danger)' : 'var(--text3)';
     const roacells = last6.map(m => {
@@ -4276,10 +4288,18 @@ function renderRoasTrend() {
       return `<div class="cell r mono" style="background:#fdf0e8;font-size:11px;font-weight:700;color:${rcolorFn(roas)}">${roas > 0 ? Math.round(roas) + '%' : '—'}</div>`;
     }).join('');
 
+    // 最新月差分（最新月ROAS - 前5か月平均ROAS）
+    const roasVals = last6.map(m => getStats(p,m).avgRoas);
+    const latestRoas = roasVals[roasVals.length-1];
+    const prev5avg = roasVals.slice(0,-1).filter(v=>v>0).reduce((s,v,_,a)=>s+v/a.length,0);
+    const diff = (latestRoas > 0 && prev5avg > 0) ? Math.round(latestRoas - prev5avg) : null;
+    const diffColor = diff === null ? 'var(--text3)' : diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--danger)' : 'var(--text2)';
+    const diffCell = `<div class="cell r mono" style="background:#f3e8ff;font-size:11px;font-weight:700;color:${diffColor}">${diff === null ? '—' : (diff > 0 ? '+' : '') + diff + '%'}</div>`;
+
     // 記入欄
     const memo = cached.memo || '';
     const memoPreview = memo.split('\n').slice(0, 8).join('\n');
-    const memoCell = `<div class="cell" style="padding:4px 8px;cursor:pointer;font-size:10px;color:var(--text2);white-space:pre-wrap;line-height:1.4;overflow:hidden" onclick="openMemoModal('${p.id}')" title="クリックで編集">${memoPreview || '<span style="color:var(--text3)">クリックで記入</span>'}</div>`;
+    const memoCell = `<div class="cell" style="padding:4px 8px;cursor:pointer;font-size:10px;color:var(--text2);white-space:pre-wrap;line-height:1.4;overflow:hidden" onclick="event.stopPropagation();openMemoModal('${p.id}')" title="クリックで編集">${memoPreview || '<span style="color:var(--text3)">クリックで記入</span>'}</div>`;
 
     // 区分
     const statusVal = cached.status || 'unset';
@@ -4309,6 +4329,7 @@ function renderRoasTrend() {
         <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.id}</div>
         <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;overflow:hidden">${imgEl}<span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span></div>
         ${roacells}
+        ${diffCell}
         ${memoCell}
         ${statusSel}
         ${ssCell}
@@ -4357,10 +4378,18 @@ function saveMemo() {
   productCache[_memoEditCode].memo = document.getElementById('memoModalText').value;
   saveProductCache(); saveToGitHub();
   closeMemoModal();
-  renderRoasTrend();
+  if (_currentTab === 'roas-trend') renderRoasTrend();
+  else if (_currentTab === 'sales-trend') renderSalesTrend();
+  else if (_currentTab === 'month-compare') renderMonthCompare();
 }
 
-function sortRoasTrend(key) { renderRoasTrend(); } // 将来拡張用
+let _roasTrendSortKey = null;
+let _roasTrendSortDir = 'desc';
+function sortRoasTrend(key) {
+  if (_roasTrendSortKey === key) _roasTrendSortDir = _roasTrendSortDir === 'desc' ? 'asc' : 'desc';
+  else { _roasTrendSortKey = key; _roasTrendSortDir = 'desc'; }
+  renderRoasTrend();
+}
 
 // ── 売上ROAS推移-直近半年 ──
 // ── 直近2か月比較 ──
@@ -4390,7 +4419,7 @@ function renderMonthCompare() {
   const rcolorFn = v => v >= 500 ? 'var(--green)' : v >= 300 ? 'var(--amber)' : v > 0 ? 'var(--danger)' : 'var(--text3)';
 
   // 列幅: 管理番号 商品番号 画像+名 | ×12数値列 | メモ SS 区分
-  const colW = '80px 80px minmax(0,1fr) 75px 75px 70px 70px 70px 70px 60px 60px 75px 75px 70px 70px 60px 60px minmax(0,140px) 70px 110px';
+  const colW = '80px 80px 36px minmax(0,1fr) 75px 75px 70px 70px 70px 70px 60px 60px 75px 75px 70px 70px 60px 60px minmax(0,140px) 70px 110px';
 
   const bg02 = '#f0f4ff';
   const bg03 = '#fff8f0';
@@ -4398,6 +4427,7 @@ function renderMonthCompare() {
   const header = `<div class="col-header" style="grid-template-columns:${colW}">
     <div class="ch">商品管理番号</div>
     <div class="ch">商品番号</div>
+    <div class="ch"></div>
     <div class="ch">商品名</div>
     <div class="ch r" style="background:${bg02}">${lbl02}<br><span style="font-size:9px">楽天売上</span></div>
     <div class="ch r" style="background:${bg03}">${lbl03}<br><span style="font-size:9px">楽天売上</span></div>
@@ -4423,8 +4453,8 @@ function renderMonthCompare() {
     const name = cached.manualName || cached.name || p.id;
     const imgSrc = cached.manualImg || cached.img || null;
     const imgEl = imgSrc
-      ? `<img src="${imgSrc}" style="width:24px;height:24px;border-radius:4px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">`
-      : `<div style="width:24px;height:24px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0"></div>`;
+      ? `<img src="${imgSrc}" style="width:24px;height:24px;border-radius:4px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集">`
+      : `<div style="width:24px;height:24px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集"></div>`;
 
     const s02 = getStats(p, m02);
     const s03 = getStats(p, m03);
@@ -4458,7 +4488,7 @@ function renderMonthCompare() {
     // 対応-詳細メモ
     const memo = cached.memo || '';
     const memoPreview = memo.split('\n').slice(0,8).join('\n');
-    const memoCell = `<div class="cell" style="padding:4px 8px;cursor:pointer;font-size:10px;color:var(--text2);white-space:pre-wrap;line-height:1.4;overflow:hidden" onclick="openMemoModal('${p.id}')" title="クリックで編集">${memoPreview||'<span style="color:var(--text3)">クリックで記入</span>'}</div>`;
+    const memoCell = `<div class="cell" style="padding:4px 8px;cursor:pointer;font-size:10px;color:var(--text2);white-space:pre-wrap;line-height:1.4;overflow:hidden" onclick="event.stopPropagation();openMemoModal('${p.id}')" title="クリックで編集">${memoPreview||'<span style="color:var(--text3)">クリックで記入</span>'}</div>`;
 
     // SS
     const ssCell = `<div class="status-cell" style="padding:3px;display:grid;grid-template-columns:1fr 1fr;gap:2px" onclick="event.stopPropagation()">
@@ -4488,7 +4518,8 @@ function renderMonthCompare() {
       <div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:48px;background:var(--surface)">
         <div style="padding:6px 8px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.id}</div>
         <div style="padding:6px 8px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cached.itemNumber||'—'}</div>
-        <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;overflow:hidden">${imgEl}<span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span></div>
+        <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
+        <div style="padding:6px 8px;display:flex;align-items:center;overflow:hidden"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span></div>
         ${cell(fmtY(tot02), bg02)}
         ${cell(fmtY(tot03), bg03)}
         ${cell(fmtY(s02.sales720), bg02)}
@@ -4547,8 +4578,8 @@ function renderSalesTrend() {
     const name = cached.manualName || cached.name || p.id;
     const imgSrc = cached.manualImg || cached.img || null;
     const imgEl = imgSrc
-      ? `<img src="${imgSrc}" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">`
-      : `<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0"></div>`;
+      ? `<img src="${imgSrc}" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集">`
+      : `<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集"></div>`;
 
     // 売上ROAS★ = 総売上(salesRows) / 実績額(spend) × 100
     const roacells = last6.map(m => {
@@ -4561,7 +4592,7 @@ function renderSalesTrend() {
     // 記入欄（memoキーを共有）
     const memo = cached.memo || '';
     const memoPreview = memo.split('\n').slice(0, 8).join('\n');
-    const memoCell = `<div class="cell" style="padding:4px 8px;cursor:pointer;font-size:10px;color:var(--text2);white-space:pre-wrap;line-height:1.4;overflow:hidden" onclick="openMemoModal('${p.id}')" title="クリックで編集">${memoPreview || '<span style="color:var(--text3)">クリックで記入</span>'}</div>`;
+    const memoCell = `<div class="cell" style="padding:4px 8px;cursor:pointer;font-size:10px;color:var(--text2);white-space:pre-wrap;line-height:1.4;overflow:hidden" onclick="event.stopPropagation();openMemoModal('${p.id}')" title="クリックで編集">${memoPreview || '<span style="color:var(--text3)">クリックで記入</span>'}</div>`;
 
     // 区分
     const statusVal = cached.status || 'unset';
@@ -5852,26 +5883,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   </div>
 </div>
 <div id="changeLogModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9000;align-items:center;justify-content:center">
-
-<!-- メモ編集モーダル -->
-<div id="memoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9001;align-items:center;justify-content:center">
-  <div style="background:var(--surface);border-radius:12px;width:520px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
-    <div style="padding:18px 24px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
-      <div>
-        <div style="font-weight:700;font-size:15px">📝 記入欄</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px" id="memoModalTitle"></div>
-      </div>
-      <button onclick="closeMemoModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--text3)">✕</button>
-    </div>
-    <div style="padding:16px 24px;flex:1;overflow-y:auto">
-      <textarea id="memoModalText" placeholder="メモを入力..." style="width:100%;height:240px;padding:10px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);resize:vertical;outline:none;box-sizing:border-box;line-height:1.6"></textarea>
-    </div>
-    <div style="padding:14px 24px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0">
-      <button onclick="closeMemoModal()" style="padding:9px 22px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">キャンセル</button>
-      <button onclick="saveMemo()" style="padding:9px 22px;border-radius:7px;border:none;background:#f97316;color:#fff;font-size:13px;cursor:pointer;font-weight:700;box-shadow:0 2px 8px rgba(249,115,22,0.4)">💾 保存</button>
-    </div>
-  </div>
-</div>
   <div style="background:var(--surface);border-radius:12px;width:480px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
     <!-- ヘッダー（固定） -->
     <div style="padding:20px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
@@ -5892,6 +5903,26 @@ window.addEventListener('DOMContentLoaded', async () => {
     <div style="padding:14px 24px 20px;border-top:2px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;background:var(--surface);border-radius:0 0 12px 12px">
       <button onclick="closeChangeLog()" style="padding:9px 22px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">キャンセル</button>
       <button onclick="saveChangeLog()" style="padding:9px 22px;border-radius:7px;border:none;background:#f97316;color:#fff;font-size:13px;cursor:pointer;font-weight:700;box-shadow:0 2px 8px rgba(249,115,22,0.4)">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- メモ編集モーダル -->
+<div id="memoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9100;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:12px;width:520px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
+    <div style="padding:18px 24px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div>
+        <div style="font-weight:700;font-size:15px">📝 記入欄</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px" id="memoModalTitle"></div>
+      </div>
+      <button onclick="closeMemoModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--text3)">✕</button>
+    </div>
+    <div style="padding:16px 24px;flex:1;overflow-y:auto">
+      <textarea id="memoModalText" placeholder="メモを入力..." style="width:100%;height:240px;padding:10px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);resize:vertical;outline:none;box-sizing:border-box;line-height:1.6"></textarea>
+    </div>
+    <div style="padding:14px 24px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0">
+      <button onclick="closeMemoModal()" style="padding:9px 22px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">キャンセル</button>
+      <button onclick="saveMemo()" style="padding:9px 22px;border-radius:7px;border:none;background:#f97316;color:#fff;font-size:13px;cursor:pointer;font-weight:700;box-shadow:0 2px 8px rgba(249,115,22,0.4)">💾 保存</button>
     </div>
   </div>
 </div>
