@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.366</span>
+    <span class="build-date">v1.367</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -723,12 +723,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
       <div class="table-card">
         <div class="table-toolbar">
-          <select class="toolbar-month" id="monthlyMonthSel" onchange="renderMonthly()" style="font-size:12px;padding:4px 8px"></select>
+          <span id="monthly-run-status" style="font-size:11px;color:var(--text3)"></span>
           <div class="toolbar-right">
             <button class="summary-toggle-btn" id="monthlySummaryBarBtn" onclick="toggleSummaryBar('monthlySummaryBarInner','monthlySummaryBarBtn')">▼ 開く</button>
           </div>
         </div>
-        <div id="monthly-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
+        <div id="monthly-col-header"></div>
+        <div id="monthly-table-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
       </div>
     </div>
   </div>
@@ -742,11 +743,18 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         </div>
       </div>
       <div class="table-card">
-        <div class="table-toolbar">
-          <select class="toolbar-month" id="dailyMonthSel" onchange="renderDaily()" style="font-size:12px;padding:4px 8px"></select>
+        <div class="table-toolbar" style="flex-wrap:wrap;gap:6px">
+          <span id="daily-run-status" style="font-size:11px;color:var(--text3)"></span>
+          <div id="dailyMonthBtns" style="display:flex;flex-wrap:wrap;gap:3px;align-items:center"></div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="date" id="dailyDateFrom" class="toolbar-month" onchange="renderDailyFiltered()" style="font-size:12px;padding:4px 8px">
+            <span style="font-size:12px;color:var(--text3)">〜</span>
+            <input type="date" id="dailyDateTo" class="toolbar-month" onchange="renderDailyFiltered()" style="font-size:12px;padding:4px 8px">
+          </div>
           <div class="toolbar-right"></div>
         </div>
-        <div id="daily-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
+        <div id="daily-col-header"></div>
+        <div id="daily-table-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
       </div>
     </div>
   </div>
@@ -762,6 +770,37 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
     </div>
   </div>
+
+  <!-- 商品-月別データ -->
+  <div class="tab-panel" id="tab-monthly-item">
+    <div style="padding:12px 16px">
+      <div class="table-card">
+        <div class="table-toolbar" style="flex-wrap:wrap;gap:6px">
+          <div id="monthlyItemYmBtns" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center"></div>
+          <div class="toolbar-right"></div>
+        </div>
+        <div id="monthly-item-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 【状態】サブタブ -->
+  <div class="tab-panel" id="tab-monthly-all"></div>
+  <div class="tab-panel" id="tab-monthly-g1"></div>
+  <div class="tab-panel" id="tab-monthly-g2"></div>
+  <div class="tab-panel" id="tab-monthly-g3"></div>
+  <div class="tab-panel" id="tab-monthly-new"></div>
+  <div class="tab-panel" id="tab-monthly-mid"></div>
+  <div class="tab-panel" id="tab-monthly-mid2"></div>
+  <div class="tab-panel" id="tab-monthly-warn"></div>
+  <div class="tab-panel" id="tab-monthly-out"></div>
+  <div class="tab-panel" id="tab-monthly-active"></div>
+
+  <!-- SSタブ -->
+  <div class="tab-panel" id="tab-ss-mar"></div>
+  <div class="tab-panel" id="tab-ss-jun"></div>
+  <div class="tab-panel" id="tab-ss-sep"></div>
+  <div class="tab-panel" id="tab-ss-dec"></div>
 
 <!-- カレンダー設定ページ -->
 <div id="calendarSettingsPage">
@@ -4852,6 +4891,8 @@ function switchTab(tab) {
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'formula') { _initFormulaMonthSel(); renderFormulaBrowser(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
+  if (tab === 'monthly') { _renderTable('monthly', nichinichiRows); }
+  if (tab === 'daily') { renderDailyFiltered(); }
   renderMonthlySubTab(tab);
 }
 
