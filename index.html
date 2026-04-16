@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.361</span>
+    <span class="build-date">v1.362</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -435,7 +435,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <nav class="tab-sub-row tab-sub-row-2">
   <span class="tab-row-label" style="color:#7B3FA0">【対応検討】</span>
   <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近半年</button>
-  <button class="tab-btn" id="tab-btn-cvr-trend" onclick="switchTab('cvr-trend')">CVR推移-直近半年</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3">
   <span class="tab-row-label red">【状態】</span>
@@ -529,207 +528,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
     </div>
   </div>
-  <div class="tab-panel" id="tab-cvr-trend">
-    <div style="padding:12px 16px">
-      <div class="table-card">
-        <div class="table-toolbar"><div class="toolbar-right"></div></div>
-        <div id="cvr-trend-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
-          <div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── 全-月別データ サブタブ（2行目・3行目）── -->
-  <div class="tab-panel" id="tab-monthly-all"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">全体</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-monthly-g1"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">健常◎</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-monthly-g2"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">健常-要注意◯</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-monthly-g3"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">健常-広告無し</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-monthly-new"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">新商品</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-monthly-mid"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">中立□</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-monthly-mid2"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">中立-広告無し</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-monthly-warn"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">撤退検討▲</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-monthly-out"><div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">撤退■</div><div style="color:var(--text3);font-size:13px">準備中</div></div></div>
-  <div class="tab-panel" id="tab-monthly-active" style="display:none"></div>
-  <div class="tab-panel" id="tab-ss-mar"></div>
-  <div class="tab-panel" id="tab-ss-jun"></div>
-  <div class="tab-panel" id="tab-ss-sep"></div>
-  <div class="tab-panel" id="tab-ss-dec"></div>
-
-  <!-- ── 月別データタブ ── -->
-  <div class="tab-panel" id="tab-formula">
-    <div style="padding:20px 24px;max-width:860px">
-      <div style="font-size:18px;font-weight:700;margin-bottom:20px">📐 全-計算式</div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;border-bottom:2px solid var(--border);padding-bottom:8px">予測vol（月間推計）</div>
-        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">使用データ（RPP KWレポート・日別）</div>
-        <div style="display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:12px;margin-bottom:16px">
-          <div style="color:var(--text3);font-weight:600">クリック数 (cl)</div><div>RPPレポート「クリック数(合計)」列</div>
-          <div style="color:var(--text3);font-weight:600">CTR (%)</div><div>RPPレポート「CTR(%)」列（取得できない場合はデフォルト 2% を使用）</div>
-          <div style="color:var(--text3);font-weight:600">データ日数</div><div>そのKWでデータが存在する日数（cl &gt; 0 の日数）</div>
-          <div style="color:var(--text3);font-weight:600">月日数</div><div>30日固定（月によるブレを防ぐため統一）</div>
-        </div>
-        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">計算式</div>
-        <div style="background:var(--surface2);border-radius:8px;padding:14px 18px;font-family:'DM Mono',monospace;font-size:12px;line-height:2">
-          <div><span style="color:var(--text3)">① 1日分の検索vol（日別）</span></div>
-          <div style="margin-left:16px;font-weight:700">日別vol = cl ÷ (CTR ÷ 100)</div>
-          <div style="margin-top:8px"><span style="color:var(--text3)">② 月間推計vol</span></div>
-          <div style="margin-left:16px;font-weight:700">予測vol = Σ(日別vol) × (月日数 ÷ データ日数)</div>
-        </div>
-        <div style="margin-top:12px;font-size:11px;color:var(--text3);line-height:1.8">
-          <div>・日別volを全データ日で合算し、月全体に外挿した推計値です。</div>
-          <div>・月日数は30日固定（28〜31日の月ブレを排除）。データ日数が30日より少ない場合は外挿補正されます。</div>
-          <div>・補正が入った場合は数値の下に <span style="font-family:monospace;background:var(--surface2);padding:1px 4px;border-radius:3px">31/16日</span> のように表示されます。</div>
-          <div>・CTRが取得できなかった日は 2% を仮定して計算しています（数値の下に CTR:2% と表示）。</div>
-        </div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;border-bottom:2px solid var(--border);padding-bottom:8px">KWシェア</div>
-        <div style="background:var(--surface2);border-radius:8px;padding:14px 18px;font-family:'DM Mono',monospace;font-size:12px;line-height:2">
-          <div style="font-weight:700">KWシェア(%) = そのKWのcl合計 ÷ 商品全KWのcl合計 × 100</div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text3)">・その月における、その商品の全KWクリック数に占める割合です。</div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;border-bottom:2px solid var(--border);padding-bottom:8px">粗広告利益</div>
-        <div style="background:var(--surface2);border-radius:8px;padding:14px 18px;font-family:'DM Mono',monospace;font-size:12px;line-height:2">
-          <div style="font-weight:700">粗広告利益 = 総売上 × 45% − 実績額（広告費）</div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text3)">・総売上は楽天売上データ（salesRows）から取得。取得できない場合は広告売上で代替します。</div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;border-bottom:2px solid var(--border);padding-bottom:8px">ROAS</div>
-        <div style="background:var(--surface2);border-radius:8px;padding:14px 18px;font-family:'DM Mono',monospace;font-size:12px;line-height:2">
-          <div style="font-weight:700">ROAS(%) = 売上金額(720時間) ÷ 実績額 × 100</div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text3)">・色分け：<span style="color:var(--green);font-weight:700">緑 ≥ 500%</span>　<span style="color:var(--amber);font-weight:700">橙 ≥ 300%</span>　<span style="color:var(--danger);font-weight:700">赤 &lt; 300%</span></div>
-      </div>
-
-      <!-- 月別・商品別 途中式ビューア -->
-      <div style="margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;border-bottom:2px solid var(--border);padding-bottom:8px">🔍 月別・商品別 予測vol途中式</div>
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-          <select id="formulaMonthSel" onchange="renderFormulaBrowser()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text)"></select>
-          <input type="text" id="formulaSearch" placeholder="商品名・商品番号で検索..." oninput="renderFormulaBrowser()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);width:240px">
-          <span id="formulaCount" style="font-size:11px;color:var(--text3)"></span>
-        </div>
-        <div id="formulaBrowserList"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="tab-panel" id="tab-monthly">
-    <div class="container" style="max-width:1400px">
-      <div class="summary-bar-wrap" id="monthlySummaryBarWrap">
-        <div class="summary-bar-inner collapsed" id="monthlySummaryBarInner">
-          <div class="summary-bar" id="monthly-summary-bar" style="display:none"></div>
-        </div>
-      </div>
-      <div class="table-card">
-        <div class="table-toolbar">
-          <div style="font-size:12px;color:var(--text3)">右上「＋レポート追加」から rpp_reports・rpp_keyword_reports を追加</div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
-            <span style="color:#1565C0;font-weight:700">● 上位10%</span>
-            <span style="color:#2E7D32;font-weight:600">● 上位20%</span>
-            <span style="color:var(--text);font-weight:400">● 中間60%</span>
-            <span style="color:#E65100;font-weight:600">● 下位20%</span>
-            <span style="color:#C62828;font-weight:700">● 下位10%</span>
-          </div>
-          <div class="toolbar-right">
-            <button class="summary-toggle-btn" id="monthlySummaryBarBtn" onclick="toggleSummaryBar('monthlySummaryBarInner','monthlySummaryBarBtn')" style="display:none">▼ 開く</button>
-            <button class="tbtn" onclick="monthlyClear()">クリア</button>
-            <span id="monthly-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
-          </div>
-        </div>
-        <div id="monthly-col-header" style="display:none"></div>
-        <div id="monthly-table-wrap">
-          <div class="empty-state" style="padding:60px 24px">
-            <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg></div>
-            <h3>月別データ</h3>
-            <p>右上「＋ レポート追加」から<br>rpp_reports（CSV）と rpp_keyword_reports（ZIP）を追加してください</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── 月別/商品個別タブ ── -->
-  <div class="tab-panel" id="tab-retired">
-    <div class="container" style="max-width:1400px">
-      <div class="table-card">
-        <div class="table-toolbar">
-          <div style="font-size:12px;color:var(--text3)">引退商品一覧</div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px">
-            <input type="text" id="retiredSearchBox" placeholder="商品名・番号で検索..."
-              style="padding:5px 10px;border:1px solid var(--border);border-radius:5px;font-size:11px;width:180px;background:var(--surface);color:var(--text)"
-              oninput="renderRetired()">
-          </div>
-        </div>
-        <div id="retiredList" style="padding:8px 0"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="tab-panel" id="tab-monthly-item">
-    <div class="container" style="max-width:1400px">
-      <div class="table-card">
-        <div class="table-toolbar" style="flex-wrap:wrap;gap:8px">
-          <div id="monthlyItemYmBtns" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-            <span style="font-size:11px;color:var(--text3);white-space:nowrap">月選択：</span>
-          </div>
-          <input type="text" id="monthlyItemSearch" class="toolbar-search" placeholder="商品管理番号 or 商品番号で絞り込み..." oninput="renderMonthlyItem()" style="max-width:280px">
-        </div>
-        <div id="monthly-item-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── 日別データタブ ── -->
-  <div class="tab-panel" id="tab-daily">
-    <div class="container" style="max-width:1400px">
-      <div class="summary-bar-wrap" id="dailySummaryBarWrap">
-        <div class="summary-bar-inner collapsed" id="dailySummaryBarInner">
-          <div class="summary-bar" id="daily-summary-bar" style="display:none"></div>
-        </div>
-      </div>
-      <div class="table-card">
-        <div class="table-toolbar">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <input type="date" id="dailyDateFrom" class="toolbar-month" style="width:130px;font-size:11px;padding:4px 6px" onchange="renderDailyFiltered()">
-            <span style="font-size:11px;color:var(--text3)">〜</span>
-            <input type="date" id="dailyDateTo" class="toolbar-month" style="width:130px;font-size:11px;padding:4px 6px" onchange="renderDailyFiltered()">
-            <div id="dailyMonthBtns" style="display:flex;flex-direction:column;gap:4px;margin-left:8px"></div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:11px;flex:1;justify-content:flex-end;padding-right:12px;flex-wrap:wrap">
-            <span style="color:#1565C0;font-weight:700">● 上位10%</span>
-            <span style="color:#2E7D32;font-weight:600">● 上位20%</span>
-            <span style="color:var(--text);font-weight:400">● 中間60%</span>
-            <span style="color:#E65100;font-weight:600">● 下位20%</span>
-            <span style="color:#C62828;font-weight:700">● 下位10%</span>
-          </div>
-          <div class="toolbar-right">
-            <button class="summary-toggle-btn" id="dailySummaryBarBtn" onclick="toggleSummaryBar('dailySummaryBarInner','dailySummaryBarBtn')" style="display:none">▼ 開く</button>
-            <button class="tbtn" onclick="dailyClear()">クリア</button>
-            <span id="daily-run-status" style="font-size:11px;color:var(--text3);padding:0 4px"></span>
-          </div>
-        </div>
-        <div id="daily-col-header" style="display:none"></div>
-        <div id="daily-table-wrap">
-          <div class="empty-state" style="padding:60px 24px">
-            <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#BF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg></div>
-            <h3>日別データ</h3>
-            <p>右上「＋ レポート追加」から<br>rpp_reports（CSV）と rpp_keyword_reports（ZIP）を追加してください</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── KW別データタブ ── -->
   <div class="tab-panel" id="tab-kw">
     <div class="container" style="max-width:1400px">
       <div class="table-card">
@@ -4391,17 +4189,25 @@ function renderRoasTrend() {
     const totS = salesRows.filter(r => r.ym === m && r.itemCode === p.id).reduce((a,r)=>a+r.sales,0);
     return totS > 0 ? Math.round(totS * 0.45 - s.spend) : (s.spend > 0 ? Math.round(s.sales720 * 0.45 - s.spend) : null);
   };
-  if (_roasTrendSortKey === 'diff') {
+  if (_roasTrendSortKey) {
     products = products.slice().sort((a,b) => {
-      const calcDiff = p => {
-        const vals = last6.map(m => calcGross(p,m));
-        const latest = vals[vals.length-1];
-        const prev = vals.slice(0,-1).filter(v=>v!==null);
-        if (latest===null || prev.length===0) return -9999999;
-        const avg = prev.reduce((s,v)=>s+v,0)/prev.length;
-        return latest - avg;
-      };
-      return _roasTrendSortDir === 'desc' ? calcDiff(b)-calcDiff(a) : calcDiff(a)-calcDiff(b);
+      let vA, vB;
+      if (_roasTrendSortKey === 'diff') {
+        const calcDiff = p => {
+          const vals = last6.map(m => calcGross(p,m));
+          const latest = vals[vals.length-1];
+          const prev = vals.slice(0,-1).filter(v=>v!==null);
+          if (latest===null || prev.length===0) return -9999999;
+          return latest - prev.reduce((s,v)=>s+v,0)/prev.length;
+        };
+        vA = calcDiff(a); vB = calcDiff(b);
+      } else if (last6.includes(_roasTrendSortKey)) {
+        vA = calcGross(a, _roasTrendSortKey) ?? -9999999;
+        vB = calcGross(b, _roasTrendSortKey) ?? -9999999;
+      } else {
+        return 0;
+      }
+      return _roasTrendSortDir === 'desc' ? vB - vA : vA - vB;
     });
   }
 
@@ -4409,7 +4215,9 @@ function renderRoasTrend() {
   const colW = `90px 80px minmax(0,1fr) ${last6.map(()=>'90px').join(' ')} 90px 90px minmax(0,160px) 110px 70px`;
   const headerCells = last6.map(m => {
     const [y, mo] = m.split('-');
-    return `<div class="ch r" style="background:#e8f5e9">${mo}月<br><span style="font-size:9px;color:var(--text3)">${y}</span></div>`;
+    const isActive = _roasTrendSortKey === m;
+    const arrow = isActive ? (_roasTrendSortDir === 'desc' ? ' ▼' : ' ▲') : '';
+    return `<div class="ch r" style="background:#e8f5e9;cursor:pointer" onclick="sortRoasTrend('${m}')">${mo}月${arrow}<br><span style="font-size:9px;color:var(--text3)">${y}</span></div>`;
   }).join('');
 
   const header = `<div class="col-header" style="grid-template-columns:${colW}">
@@ -4539,7 +4347,6 @@ function saveMemo() {
   saveProductCache(); saveToGitHub();
   closeMemoModal();
   if (_currentTab === 'roas-trend') renderRoasTrend();
-  else if (_currentTab === 'cvr-trend') renderCvrTrend();
 }
 
 let _roasTrendSortKey = null;
@@ -4547,344 +4354,7 @@ let _roasTrendSortDir = 'desc';
 function sortRoasTrend(key) {
   if (_roasTrendSortKey === key) _roasTrendSortDir = _roasTrendSortDir === 'desc' ? 'asc' : 'desc';
   else { _roasTrendSortKey = key; _roasTrendSortDir = 'desc'; }
-  if (_currentTab === 'cvr-trend') renderCvrTrend();
-  else renderRoasTrend();
-}
-
-// ── CVR推移-直近半年 ──
-function renderCvrTrend() {
-  const wrap = document.getElementById('cvr-trend-list');
-  if (!wrap) return;
-  if (kwRows.length === 0 && Object.keys(DB).length === 0) {
-    wrap.innerHTML = '<div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>';
-    return;
-  }
-
-  const products = Object.values(DB).filter(p => !productCache[p.id]?.retired);
-  if (products.length === 0) {
-    wrap.innerHTML = '<div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:13px;color:var(--text3)">商品データがありません</div></div>';
-    return;
-  }
-
-  const colW = '90px 80px 36px minmax(0,1fr) 90px minmax(0,160px) 110px 70px';
-
-  const header = `<div class="col-header" style="grid-template-columns:${colW}">
-    <div class="ch">商品番号</div>
-    <div class="ch">商品管理番号</div>
-    <div class="ch"></div>
-    <div class="ch">商品名</div>
-    <div class="ch" style="text-align:center">KW_vol順</div>
-    <div class="ch">記入欄</div>
-    <div class="ch" style="text-align:center;font-size:10px">区分</div>
-    <div class="ch" style="text-align:center;font-size:10px">SS</div>
-  </div>`;
-
-  const rows = products.map(p => {
-    const cached = productCache[p.id] || {};
-    const name = cached.manualName || cached.name || p.id;
-    const imgSrc = cached.manualImg || cached.img || null;
-    const imgEl = imgSrc
-      ? `<img src="${imgSrc}" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集">`
-      : `<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集"></div>`;
-
-    // KWデータ件数
-    const kwCount = [...new Set(kwRows.filter(r => r.itemCode === p.id).map(r => r.kw))].length;
-    const kwBtn = `<div style="display:flex;align-items:center;justify-content:center;padding:4px" onclick="event.stopPropagation()">
-      <button onclick="openKwVolModal('${p.id}')"
-        style="font-size:11px;padding:4px 10px;border-radius:5px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);cursor:pointer;font-weight:600;white-space:nowrap">
-        📊 KW ${kwCount > 0 ? '(' + kwCount + ')' : '—'}
-      </button>
-    </div>`;
-
-    const memo = cached.memo || '';
-    const memoPreview = memo.split('\n').slice(0,8).join('\n');
-    const memoCell = `<div class="cell" style="padding:4px 8px;cursor:pointer;font-size:10px;color:var(--text2);white-space:pre-wrap;line-height:1.4;overflow:hidden" onclick="event.stopPropagation();openMemoModal('${p.id}')" title="クリックで編集">${memoPreview || '<span style="color:var(--text3)">クリックで記入</span>'}</div>`;
-
-    const statusVal = cached.status || 'unset';
-    const statusColor = STATUS_COLORS[statusVal] || '';
-    const statusSel = `<div class="status-cell" onclick="event.stopPropagation()">
-      <select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">
-        ${['unset','g1','g2','g3','new','mid','mid2','warn','out'].map(v => {
-          const labels={unset:'選択前■',g1:'健常◎',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',mid2:'中立-広告無し',warn:'撤退検討▲',out:'撤退■'};
-          const colors={unset:'',g1:'#1565C0',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',mid2:'#E65100',warn:'#C62828',out:'#6D1111'};
-          return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;
-        }).join('')}
-      </select>
-    </div>`;
-
-    const ssCell = `<div class="status-cell" style="padding:3px;display:grid;grid-template-columns:1fr 1fr;gap:2px" onclick="event.stopPropagation()">
-      ${['03','06','09','12'].map(m => {
-        const active = (cached.ss||[]).includes(m);
-        const lbl = {'03':'3月','06':'6月','09':'9月','12':'12月'}[m];
-        return `<button onclick="_toggleRoasTrendSS('${p.id}','${m}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;text-align:center">${lbl}</button>`;
-      }).join('')}
-    </div>`;
-
-    return `<div class="item-row">
-      <div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:48px;background:var(--surface)">
-        <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cached.itemNumber||'—'}</div>
-        <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.id}</div>
-        <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
-        <div style="padding:6px 8px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div>
-        ${kwBtn}
-        ${memoCell}
-        ${statusSel}
-        ${ssCell}
-      </div>
-    </div>`;
-  }).join('');
-
-  wrap.innerHTML = header + `<div>${rows}</div>`;
-}
-
-// ── KW vol順モーダル ──
-let _kwVolCode = null;
-function openKwVolModal(itemCode) {
-  _kwVolCode = itemCode;
-  const cached = productCache[itemCode] || {};
-  const name = cached.manualName || cached.name || itemCode;
-  document.getElementById('kwVolModalTitle').textContent = name;
-
-  const itemKwRows = kwRows.filter(r => r.itemCode === itemCode);
-  const allYms = [...new Set(itemKwRows.map(r => r.ym))].sort();
-  const months = allYms.slice(-3);
-  const kws = [...new Set(itemKwRows.map(r => r.kw))];
-
-  if (kws.length === 0) {
-    document.getElementById('kwVolModalBody').innerHTML = '<div style="padding:20px;color:var(--text3);text-align:center">KWデータがありません</div>';
-    document.getElementById('kwVolModal').style.display = 'flex';
-    return;
-  }
-
-  // KWに色を固定割り当て（順位ではなくKW名で決まる）
-  const KW_COLORS = [
-    '#1565C0','#C62828','#2E7D32','#E65100','#6A1B9A',
-    '#00838F','#AD1457','#558B2F','#4527A0','#F57F17',
-    '#00695C','#283593','#BF360C','#1B5E20','#4A148C',
-  ];
-  const kwColorMap = {};
-  kws.forEach((kw, i) => { kwColorMap[kw] = KW_COLORS[i % KW_COLORS.length]; });
-
-  // 月別集計（_renderKwByItemと完全同一ロジック）
-  const getMonthAgg = (kw, ym) => {
-    const rows = itemKwRows.filter(r => r.kw === kw && r.ym === ym);
-    if (rows.length === 0) return null;
-    const spend = rows.reduce((s,r) => s+(r.spend||0), 0);
-    const sales = rows.reduce((s,r) => s+(r.sales||0), 0);
-    const cl    = rows.reduce((s,r) => s+(r.cl||0), 0);
-    // 予測vol: 日別 cl÷(ctr/100) を合算 → データ日数で補正して月間推計
-    let volSum = 0;
-    rows.forEach(r => {
-      if (r.cl > 0) {
-        const ctrVal = r.ctr > 0 ? r.ctr : 2;
-        volSum += r.cl / (ctrVal / 100);
-      }
-    });
-    // dateDays = このKW×月のデータがある日数
-    const dateDays = [...new Set(rows.map(r => r.date))].length;
-    const daysInMonth = 30; // 月ブレ防止のため30日固定
-    const vol = dateDays > 0 ? Math.round(volSum * (daysInMonth / dateDays)) : 0;
-    return { spend, sales, cl, vol, dateDays, daysInMonth };
-  };
-
-  const totalClByYm = {};
-  months.forEach(ym => {
-    totalClByYm[ym] = itemKwRows.filter(r => r.ym === ym).reduce((s,r) => s+(r.cl||0), 0);
-  });
-
-  const M    = "font-family:'DM Mono',monospace;font-size:11px";
-  const rc   = v => v>=500?'#2E7D32':v>=300?'#E65100':v>0?'#C62828':'#bbb';
-  const fmtY = v => v > 0 ? '¥'+Math.round(v).toLocaleString() : '—';
-  const b1   = '1px solid #d0d0d0';
-  const b2   = '2px solid #999';
-  const thS  = `border:${b1};padding:6px 8px;font-size:10px;font-weight:700;color:#555;background:#f0f0f0;white-space:nowrap`;
-
-  // 月ごとに独立した表
-  const tables = months.map(ym => {
-    const y = ym.slice(0,4), mo = ym.slice(4,6);
-    const totalCl = totalClByYm[ym] || 0;
-
-    // この月のvol降順でKWをソート
-    const kwSorted = kws.map(kw => {
-      const d = getMonthAgg(kw, ym);
-      return { kw, d, vol: d?.vol || 0 };
-    }).sort((a,b) => b.vol - a.vol);
-
-    const rows = kwSorted.map(({ kw, d, vol }) => {
-      const color  = kwColorMap[kw];
-      const share  = d && d.cl > 0 && totalCl > 0 ? (d.cl/totalCl*100).toFixed(1)+'%' : '—';
-      const volTxt = vol > 0
-        ? vol.toLocaleString() + (d.dateDays < d.daysInMonth ? `<div style="font-size:8px;color:#aaa">${d.daysInMonth}/${d.dateDays}日</div>` : '')
-        : '—';
-      const roas   = d && d.spend > 0 ? Math.round(d.sales/d.spend*100) : 0;
-      const bg     = '#fff';
-      return `
-        <tr style="background:${bg}">
-          <td rowspan="3" style="border:${b1};padding:6px 8px;vertical-align:middle;width:160px;max-width:160px">
-            <div style="color:${color};font-weight:600;font-size:11px;white-space:normal;word-break:break-all;line-height:1.5">${kw}</div>
-          </td>
-          <td rowspan="3" style="border:${b1};padding:6px 8px;text-align:right;vertical-align:middle;width:70px;${M}"><div>${volTxt}</div></td>
-          <td rowspan="3" style="border:${b1};padding:6px 8px;text-align:right;vertical-align:middle;width:60px;${M}">${share}</td>
-          <td style="border:${b1};padding:4px 6px;text-align:center;font-size:10px;color:#888;width:36px">実績</td>
-          <td style="border:${b1};padding:4px 10px;text-align:right;width:90px;${M}">${fmtY(d?.spend||0)}</td>
-        </tr>
-        <tr style="background:${bg}">
-          <td style="border:${b1};padding:4px 6px;text-align:center;font-size:10px;color:#888">売上</td>
-          <td style="border:${b1};padding:4px 10px;text-align:right;${M}">${fmtY(d?.sales||0)}</td>
-        </tr>
-        <tr style="background:${bg}">
-          <td style="border:${b1};padding:4px 6px;text-align:center;font-size:10px;color:#888">ROAS</td>
-          <td style="border:${b1};padding:4px 10px;text-align:right;font-weight:700;${M};color:${rc(roas)}">${roas>0?roas+'%':'—'}</td>
-        </tr>`;
-    }).join('');
-
-    return `<div style="flex:0 0 auto">
-      <div style="font-weight:700;font-size:13px;padding:4px 2px 6px;color:var(--text);border-bottom:2px solid #999;margin-bottom:4px">${y}年${mo}月</div>
-      <table style="border-collapse:collapse;table-layout:fixed;width:420px">
-        <colgroup>
-          <col style="width:160px"><col style="width:70px"><col style="width:60px"><col style="width:36px"><col style="width:90px">
-        </colgroup>
-        <thead>
-          <tr>
-            <th style="${thS};text-align:left">KW</th>
-            <th style="${thS};text-align:right">予測vol</th>
-            <th style="${thS};text-align:right">KWシェア</th>
-            <th style="${thS};text-align:center">指標</th>
-            <th style="${thS};text-align:right">計</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
-  }).join('');
-
-  document.getElementById('kwVolModalBody').innerHTML =
-    `<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">${tables}</div>`;
-  document.getElementById('kwVolModal').style.display = 'flex';
-}
-
-function closeKwVolModal() {
-  document.getElementById('kwVolModal').style.display = 'none';
-}
-
-
-// ── 全-計算式 月別ビューア ──
-const _formulaExpanded = new Set();
-
-function _initFormulaMonthSel() {
-  const sel = document.getElementById('formulaMonthSel');
-  if (!sel) return;
-  const months = [...new Set(kwRows.map(r => r.ym))].sort().reverse();
-  sel.innerHTML = months.map(m => `<option value="${m}">${m.slice(0,4)}年${m.slice(4,6)}月</option>`).join('');
-}
-
-function renderFormulaBrowser() {
-  const sel   = document.getElementById('formulaMonthSel');
-  const wrap  = document.getElementById('formulaBrowserList');
-  const count = document.getElementById('formulaCount');
-  if (!sel || !wrap) return;
-  const ym  = sel.value;
-  const q   = (document.getElementById('formulaSearch')?.value || '').toLowerCase();
-  if (!ym) { wrap.innerHTML = '<div style="color:var(--text3);font-size:12px">月を選択してください</div>'; return; }
-
-  const daysInMonth = 30; // 月ブレ防止のため30日固定
-
-  // この月にKWデータがある商品一覧
-  const itemCodes = [...new Set(kwRows.filter(r => r.ym === ym).map(r => r.itemCode))];
-  const filtered  = itemCodes.filter(code => {
-    if (!q) return true;
-    const cached = productCache[code] || {};
-    const name   = (cached.manualName || cached.name || '').toLowerCase();
-    const num    = (cached.itemNumber || '').toLowerCase();
-    return code.toLowerCase().includes(q) || name.includes(q) || num.includes(q);
-  });
-
-  if (count) count.textContent = `${filtered.length}商品`;
-  if (filtered.length === 0) { wrap.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:12px 0">該当商品なし</div>'; return; }
-
-  wrap.innerHTML = filtered.map(code => {
-    const cached = productCache[code] || {};
-    const name   = cached.manualName || cached.name || code;
-    const kwData = kwRows.filter(r => r.itemCode === code && r.ym === ym);
-    const kws    = [...new Set(kwData.map(r => r.kw))];
-    const expanded = _formulaExpanded.has(code + '_' + ym);
-
-    // 商品全KWのcl合計（KWシェア用）
-    const totalCl = kwData.reduce((s,r) => s+(r.cl||0), 0);
-
-    const detail = expanded ? (() => {
-      return kws.map(kw => {
-        const rows    = kwData.filter(r => r.kw === kw).sort((a,b) => a.date.localeCompare(b.date));
-        const dateDays = [...new Set(rows.map(r => r.date))].length;
-        let volSum = 0;
-        const dayRows = rows.map(r => {
-          const ctrVal  = r.ctr > 0 ? r.ctr : 2;
-          const dayVol  = r.cl > 0 ? r.cl / (ctrVal / 100) : 0;
-          if (r.cl > 0) volSum += dayVol;
-          const ctrDisp = r.ctr > 0 ? (r.ctr % 1 === 0 ? r.ctr.toString() : r.ctr.toFixed(3).replace(/0+$/, '')) : '2*';
-          return { date: r.date, cl: r.cl, ctr: ctrVal, ctrDisp, ctrDefault: r.ctr === 0, dayVol: Math.round(dayVol) };
-        });
-        const adjVol   = dateDays > 0 ? Math.round(volSum * (daysInMonth / dateDays)) : 0;
-        const kwCl     = rows.reduce((s,r) => s+(r.cl||0), 0);
-        const kwShare  = totalCl > 0 && kwCl > 0 ? (kwCl/totalCl*100).toFixed(1)+'%' : '—';
-        const spend    = rows.reduce((s,r) => s+(r.spend||0), 0);
-        const sales    = rows.reduce((s,r) => s+(r.sales||0), 0);
-        const roas     = spend > 0 ? Math.round(sales/spend*100) : 0;
-        const roasColor= roas>=500?'var(--green)':roas>=300?'var(--amber)':roas>0?'var(--danger)':'var(--text3)';
-
-        const dayTable = `<table style="border-collapse:collapse;font-size:10px;margin-top:6px;width:100%">
-          <thead><tr style="background:#f5f5f5">
-            <th style="border:1px solid #ddd;padding:3px 6px;text-align:left">日付</th>
-            <th style="border:1px solid #ddd;padding:3px 6px;text-align:right">cl</th>
-            <th style="border:1px solid #ddd;padding:3px 6px;text-align:right">CTR(%)</th>
-            <th style="border:1px solid #ddd;padding:3px 6px;text-align:right">日別vol = cl÷(CTR÷100)</th>
-          </tr></thead>
-          <tbody>
-            ${dayRows.map(d => `<tr>
-              <td style="border:1px solid #ddd;padding:3px 6px;color:var(--text2)">${d.date.slice(5)}</td>
-              <td style="border:1px solid #ddd;padding:3px 6px;text-align:right;font-family:'DM Mono',monospace">${d.cl > 0 ? d.cl : '—'}</td>
-              <td style="border:1px solid #ddd;padding:3px 6px;text-align:right;font-family:'DM Mono',monospace${d.ctrDefault ? ';color:var(--amber)' : ''}">${d.cl > 0 ? d.ctrDisp : '—'}</td>
-              <td style="border:1px solid #ddd;padding:3px 6px;text-align:right;font-family:'DM Mono',monospace;font-weight:${d.dayVol>0?'600':'400'}">${d.dayVol > 0 ? d.dayVol.toLocaleString() : '—'}</td>
-            </tr>`).join('')}
-            <tr style="background:#f0f4ff;font-weight:700">
-              <td style="border:1px solid #ddd;padding:4px 6px" colspan="2">合計 Σ(日別vol) = ${Math.round(volSum).toLocaleString()}</td>
-              <td style="border:1px solid #ddd;padding:4px 6px;font-size:10px;color:var(--text3)">データ日数: ${dateDays}日 / 月: ${daysInMonth}日</td>
-              <td style="border:1px solid #ddd;padding:4px 6px;text-align:right;color:var(--accent)">予測vol = ${Math.round(volSum).toLocaleString()} × (${daysInMonth}÷${dateDays}) = <span style="font-size:12px">${adjVol.toLocaleString()}</span></td>
-            </tr>
-          </tbody>
-        </table>`;
-
-        return `<div style="margin-bottom:12px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
-          <div style="background:var(--surface2);padding:7px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <span style="font-size:11px;font-weight:700;color:var(--text)">${kw}</span>
-            <span style="font-size:10px;color:var(--text3)">予測vol: <strong style="color:var(--accent)">${adjVol.toLocaleString()}</strong></span>
-            <span style="font-size:10px;color:var(--text3)">KWシェア: <strong>${kwShare}</strong></span>
-            <span style="font-size:10px;color:var(--text3)">実績: <strong>¥${Math.round(spend).toLocaleString()}</strong></span>
-            <span style="font-size:10px;color:var(--text3)">売上: <strong>¥${Math.round(sales).toLocaleString()}</strong></span>
-            <span style="font-size:10px;color:var(--text3)">ROAS: <strong style="color:${roasColor}">${roas > 0 ? roas+'%' : '—'}</strong></span>
-          </div>
-          <div style="padding:8px 12px">${dayTable}</div>
-        </div>`;
-      }).join('');
-    })() : '';
-
-    return `<div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden">
-      <div onclick="toggleFormulaItem('${code}','${ym}')" style="padding:10px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;background:${expanded?'var(--surface2)':'var(--surface)'}">
-        <span style="font-size:13px;font-weight:600">${name}</span>
-        <span style="font-size:10px;color:var(--text3)">${code}</span>
-        <span style="font-size:10px;color:var(--text3)">${kws.length}KW</span>
-        <span style="margin-left:auto;font-size:12px;color:var(--text3)">${expanded ? '▲' : '▼'}</span>
-      </div>
-      ${expanded ? `<div style="padding:12px 16px;border-top:1px solid var(--border)">${detail}</div>` : ''}
-    </div>`;
-  }).join('');
-}
-
-function toggleFormulaItem(code, ym) {
-  const key = code + '_' + ym;
-  if (_formulaExpanded.has(key)) _formulaExpanded.delete(key);
-  else _formulaExpanded.add(key);
-  renderFormulaBrowser();
+  renderRoasTrend();
 }
 
 function renderRetired() {
@@ -5161,7 +4631,6 @@ function switchTab(tab) {
   if (tab === 'monthly-item') renderMonthlyItem();
   if (tab === 'retired') renderRetired();
   if (tab === 'roas-trend') renderRoasTrend();
-  if (tab === 'cvr-trend') renderCvrTrend();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'formula') { _initFormulaMonthSel(); renderFormulaBrowser(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
