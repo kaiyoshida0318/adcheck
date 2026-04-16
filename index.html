@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.345</span>
+    <span class="build-date">v1.346</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4589,27 +4589,38 @@ function openKwVolModal(itemCode) {
   const getMonthAgg = (kw, ym) => {
     const rows = itemKwRows.filter(r => r.kw === kw && r.ym === ym);
     if (rows.length === 0) return null;
-    const spend  = rows.reduce((s,r) => s+(r.spend||0), 0);
-    const sales  = rows.reduce((s,r) => s+(r.sales||0), 0);
-    const cl     = rows.reduce((s,r) => s+(r.cl||0), 0);
-    // 予測vol: クリック数 ÷ 平均CTR（CTRは%単位）
-    const ctrRows = rows.filter(r => r.ctr > 0 && r.cl > 0);
-    const avgCtr = ctrRows.length > 0
-      ? ctrRows.reduce((s,r) => s + r.ctr, 0) / ctrRows.length
-      : 2; // デフォルト2%
-    const vol = cl > 0 ? Math.round(cl / (avgCtr / 100)) : 0;
+    const spend = rows.reduce((s,r) => s+(r.spend||0), 0);
+    const sales = rows.reduce((s,r) => s+(r.sales||0), 0);
+    const cl    = rows.reduce((s,r) => s+(r.cl||0), 0);
+    // 予測vol: 日ごとに cl÷(ctr/100) を積み上げ → 日平均 → 月日数倍
+    let volSum = 0, volDays = 0;
+    rows.forEach(r => {
+      if (r.cl > 0) {
+        const ctrVal = r.ctr > 0 ? r.ctr : 2;
+        volSum += r.cl / (ctrVal / 100);
+        volDays++;
+      }
+    });
+    const days = new Date(parseInt(ym.slice(0,4)), parseInt(ym.slice(4,6)), 0).getDate();
+    const vol = volDays > 0 ? Math.round(volSum / volDays * days) : 0;
     return { spend, sales, cl, vol };
   };
 
-  // 全期間集計（固定列用）
+  // 全期間集計（KWソート用）
   const getTotal = (kw) => {
     const rows = itemKwRows.filter(r => r.kw === kw);
     const spend = rows.reduce((s,r) => s+(r.spend||0), 0);
     const sales = rows.reduce((s,r) => s+(r.sales||0), 0);
     const cl    = rows.reduce((s,r) => s+(r.cl||0), 0);
-    const ctrRows = rows.filter(r => r.ctr > 0 && r.cl > 0);
-    const avgCtr  = ctrRows.length > 0 ? ctrRows.reduce((s,r)=>s+r.ctr,0)/ctrRows.length : 2;
-    const vol = cl > 0 ? Math.round(cl / (avgCtr / 100)) : 0;
+    let volSum = 0, volDays = 0;
+    rows.forEach(r => {
+      if (r.cl > 0) {
+        const ctrVal = r.ctr > 0 ? r.ctr : 2;
+        volSum += r.cl / (ctrVal / 100);
+        volDays++;
+      }
+    });
+    const vol = volDays > 0 ? Math.round(volSum / volDays) : 0; // 1日平均vol
     return { spend, sales, cl, vol };
   };
 
