@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.340</span>
+    <span class="build-date">v1.341</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4571,88 +4571,97 @@ function openKwVolModal(itemCode) {
   const name = cached.manualName || cached.name || itemCode;
   document.getElementById('kwVolModalTitle').textContent = name;
 
-  // この商品のKWデータのみ・過去5ヶ月
   const itemKwRows = kwRows.filter(r => r.itemCode === itemCode);
-  const months = [...new Set(kwRows.map(r => r.ym))].sort().reverse().slice(0, 5);
+  const months = [...new Set(kwRows.map(r => r.ym))].sort().reverse().slice(0, 5).reverse(); // 古い順
   const kws = [...new Set(itemKwRows.map(r => r.kw))];
 
   // KWを全期間vol合計降順でソート
-  const kwWithVol = kws.map(kw => {
+  const kwSorted = kws.map(kw => {
     const totalCl = itemKwRows.filter(r => r.kw === kw).reduce((s,r) => s+(r.cl||0), 0);
     return { kw, totalCl };
   }).sort((a,b) => b.totalCl - a.totalCl);
 
-  if (kwWithVol.length === 0) {
+  if (kwSorted.length === 0) {
     document.getElementById('kwVolModalBody').innerHTML = '<div style="padding:20px;color:var(--text3);text-align:center">KWデータがありません<br><small>rpp_keyword_reportsをアップロードしてください</small></div>';
     document.getElementById('kwVolModal').style.display = 'flex';
     return;
   }
 
-  // 月ごとの全KW合計クリック数（シェア計算用）
-  const totalClByYm = {};
-  months.forEach(ym => {
-    totalClByYm[ym] = itemKwRows.filter(r => r.ym === ym).reduce((s,r) => s+(r.cl||0), 0);
-  });
-
-  // KWカラーパレット（視覚的に識別しやすい10色）
   const KW_COLORS = [
     '#1565C0','#C62828','#2E7D32','#E65100','#6A1B9A',
     '#00838F','#AD1457','#558B2F','#4527A0','#F57F17',
   ];
 
-  const thBase = 'padding:7px 10px;font-size:10px;font-weight:700;color:var(--text3);border-bottom:2px solid var(--border);white-space:nowrap;text-align:right;background:var(--surface2)';
-  const monthHeaders = months.map(m => {
+  // スタイル定数
+  const border = '1px solid #ccc';
+  const borderB = '2px solid #999';
+  const thStyle = `border:${border};padding:5px 8px;text-align:center;font-size:10px;font-weight:700;background:#f5f5f5;white-space:nowrap`;
+  const tdBase  = `border:${border};padding:4px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap`;
+  const tdLeft  = `border:${border};padding:4px 8px;font-size:11px;text-align:left;white-space:nowrap`;
+
+  const fmtY = v => v > 0 ? '¥'+Math.round(v).toLocaleString() : '';
+  const fmtR = (s,a) => s>0&&a>0 ? Math.round(a/s*100)+'%' : '';
+
+  // ヘッダー行1: 月（colspan=6）
+  const hRow1 = months.map(m => {
     const y = m.slice(0,4), mo = m.slice(4,6);
-    return `<th colspan="2" style="${thBase};text-align:center;border-left:2px solid var(--border2)">${y}/${mo}</th>`;
-  }).join('');
-  const subHeaders = months.map(ym => {
-    const total = totalClByYm[ym] || 0;
-    return `<th style="${thBase};border-left:2px solid var(--border2)">vol</th><th style="${thBase}">シェア</th>`;
+    return `<th colspan="6" style="${thStyle};border-left:${borderB}">${y}年${mo}月</th>`;
   }).join('');
 
-  const dataRows = kwWithVol.map(({ kw, totalCl }, i) => {
+  // ヘッダー行2: KW / 予測vol / KWシェア / 実績 / 売上 / ROAS × 月数
+  const hRow2 = months.map(() =>
+    `<th style="${thStyle};border-left:${borderB}">KW</th>
+     <th style="${thStyle}">予測vol</th>
+     <th style="${thStyle}">KWシェア</th>
+     <th style="${thStyle}">実績</th>
+     <th style="${thStyle}">売上</th>
+     <th style="${thStyle}">ROAS</th>`
+  ).join('');
+
+  // 月ごとの全KWクリック合計（シェア計算用）
+  const totalClByYm = {};
+  months.forEach(ym => {
+    totalClByYm[ym] = itemKwRows.filter(r => r.ym === ym).reduce((s,r) => s+(r.cl||0), 0);
+  });
+
+  // データ行：KWごとに1行、月ごとにKW名・vol・シェア・実績・売上・ROAS
+  const dataRows = kwSorted.map(({ kw, totalCl }, i) => {
     const color = KW_COLORS[i % KW_COLORS.length];
-    const rankBadge = `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${color};color:#fff;font-size:9px;font-weight:700;flex-shrink:0;margin-right:6px">${i+1}</span>`;
+    const kwLabel = `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${kw}`;
 
     const cells = months.map(ym => {
       const r = itemKwRows.find(r => r.kw === kw && r.ym === ym);
-      const cl = r?.cl || 0;
+      const cl    = r?.cl    || 0;
+      const spend = r?.spend || 0;
+      const sales = r?.sales || 0;
       const total = totalClByYm[ym] || 0;
-      const share = (total > 0 && cl > 0) ? (cl/total*100).toFixed(1)+'%' : '—';
-      const volTxt = cl > 0 ? cl.toLocaleString() : '—';
-      return `<td style="padding:6px 10px;text-align:right;font-size:11px;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);color:${cl>0?color:'var(--text3)'};font-weight:${cl>0?'700':'400'}">${volTxt}</td>
-              <td style="padding:6px 10px;text-align:right;font-size:11px;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);color:${cl>0?color:'var(--text3)'}">${share}</td>`;
+      const share = (total > 0 && cl > 0) ? (cl/total*100).toFixed(1)+'%' : '';
+      const roas  = fmtR(spend, sales);
+      const roasColor = roas ? (parseInt(roas)>=500?'#2E7D32':parseInt(roas)>=300?'#E65100':'#C62828') : '';
+      return `<td style="${tdLeft};border-left:${borderB};color:${color};font-weight:600;max-width:140px;overflow:hidden;text-overflow:ellipsis" title="${kw}">${kwLabel}</td>
+              <td style="${tdBase}">${cl > 0 ? cl.toLocaleString() : ''}</td>
+              <td style="${tdBase}">${share}</td>
+              <td style="${tdBase}">${fmtY(spend)}</td>
+              <td style="${tdBase}">${fmtY(sales)}</td>
+              <td style="${tdBase};color:${roasColor};font-weight:${roas?'700':'400'}">${roas}</td>`;
     }).join('');
 
-    return `<tr>
-      <td style="padding:6px 12px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;border-left:3px solid ${color}" title="${kw}">
-        ${rankBadge}${kw}
-      </td>
-      <td style="padding:6px 10px;text-align:right;font-size:11px;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);color:var(--text3)">${totalCl.toLocaleString()}</td>
-      ${cells}
-    </tr>`;
+    return `<tr>${cells}</tr>`;
   }).join('');
 
   document.getElementById('kwVolModalBody').innerHTML = `
     <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <table style="border-collapse:collapse;font-size:11px;min-width:max-content">
         <thead>
-          <tr>
-            <th style="${thBase};text-align:left;min-width:180px">KW</th>
-            <th style="${thBase}">総vol</th>
-            ${monthHeaders}
-          </tr>
-          <tr>
-            <th style="${thBase};text-align:left"></th>
-            <th style="${thBase}"></th>
-            ${subHeaders}
-          </tr>
+          <tr>${hRow1}</tr>
+          <tr>${hRow2}</tr>
         </thead>
         <tbody>${dataRows}</tbody>
       </table>
     </div>`;
   document.getElementById('kwVolModal').style.display = 'flex';
 }
+
 function closeKwVolModal() {
   document.getElementById('kwVolModal').style.display = 'none';
 }
