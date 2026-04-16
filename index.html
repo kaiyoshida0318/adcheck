@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.372</span>
+    <span class="build-date">v1.373</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3818,8 +3818,8 @@ function _renderItemGraphTable(displayLabels, labels, dataMap, metric) {
     return [{ label: '値', fn: r => JSON.stringify(r) }];
   })();
 
-  const thS = 'padding:6px 10px;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)';
-  const tdS = 'padding:6px 10px;font-size:11px;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);white-space:nowrap;text-align:right';
+  const thS = 'padding:6px 12px;font-size:10px;font-weight:700;color:var(--text3);border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);text-align:right';
+  const tdS = 'padding:6px 12px;font-size:11px;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);white-space:nowrap;text-align:right';
 
   const header = `<tr>
     <th style="${thS};text-align:left">${isPeriodDaily ? '日付' : '月'}</th>
@@ -3835,7 +3835,7 @@ function _renderItemGraphTable(displayLabels, labels, dataMap, metric) {
     </tr>`;
   }).join('');
 
-  wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--surface)">
+  wrap.innerHTML = `<table style="border-collapse:collapse;font-size:11px;background:var(--surface);min-width:320px">
     <thead>${header}</thead>
     <tbody>${rows}</tbody>
   </table>`;
