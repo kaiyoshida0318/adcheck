@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.328</span>
+    <span class="build-date">v1.329</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -798,6 +798,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div id="graphEmpty" style="display:none;text-align:center;padding:60px;color:var(--text3);font-size:13px">
           データがありません。月別データをアップロードしてください。
         </div>
+        <div id="graphDataTable" style="margin-top:20px;overflow-x:auto"></div>
       </div>
     </div>
   </div>
@@ -3873,6 +3874,37 @@ function setGraphPeriod(period) {
   renderGraph();
 }
 
+function _renderGraphTable(labels, datasets) {
+  const wrap = document.getElementById('graphDataTable');
+  if (!wrap) return;
+  if (!labels || labels.length === 0) { wrap.innerHTML = ''; return; }
+
+  const fmtVal = (v, ds) => {
+    if (v === null || v === undefined || v === 0) return '<span style="color:var(--text3)">—</span>';
+    const lbl = ds.label || '';
+    if (lbl.includes('ROAS') || lbl.includes('CVR') || lbl.includes('割合') || lbl.includes('%')) return Math.round(v * 10) / 10 + '%';
+    return '¥' + Math.round(v).toLocaleString();
+  };
+
+  const thStyle = 'padding:6px 10px;text-align:right;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)';
+  const tdStyle = 'padding:6px 10px;text-align:right;font-size:11px;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);white-space:nowrap';
+
+  const headerRow = `<tr>
+    <th style="${thStyle};text-align:left;background:var(--surface2)">${_graphPeriod === 'daily' ? '日付' : '月'}</th>
+    ${datasets.map(ds => `<th style="${thStyle};color:${ds.borderColor||'var(--text3)'}">${ds.label}</th>`).join('')}
+  </tr>`;
+
+  const dataRows = labels.map((lbl, i) => `<tr>
+    <td style="${tdStyle};text-align:left;font-weight:500;color:var(--text)">${lbl}</td>
+    ${datasets.map(ds => `<td style="${tdStyle}">${fmtVal(ds.data[i], ds)}</td>`).join('')}
+  </tr>`).join('');
+
+  wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--surface)">
+    <thead>${headerRow}</thead>
+    <tbody>${dataRows}</tbody>
+  </table>`;
+}
+
 function renderGraph() {
   const metric = document.getElementById('graphMetricSel')?.value || 'spend';
   const canvas = document.getElementById('graphCanvas');
@@ -3972,6 +4004,7 @@ function renderGraph() {
       }
     });
     _applyGlobalClLines(_chartInstance, labels);
+    _renderGraphTable(labels, _chartInstance.data.datasets);
     return;
   }
 
@@ -4058,6 +4091,7 @@ function renderGraph() {
       }
     });
     _applyGlobalClLines(_chartInstance, labels);
+    _renderGraphTable(labels, _chartInstance.data.datasets);
     return;
   }
 
@@ -4135,6 +4169,7 @@ function renderGraph() {
       }
     });
     _applyGlobalClLines(_chartInstance, labels);
+    _renderGraphTable(labels, _chartInstance.data.datasets);
     return;
   }
 
@@ -4203,6 +4238,7 @@ function renderGraph() {
       }
     });
     _applyGlobalClLines(_chartInstance, labels);
+    _renderGraphTable(labels, _chartInstance.data.datasets);
     return;
   }
 
@@ -4263,13 +4299,13 @@ function renderGraph() {
       }
     });
     _applyGlobalClLines(_chartInstance, labels);
+    _renderGraphTable(labels, _chartInstance.data.datasets);
     return;
   }
 
   _applyGlobalClLines(_chartInstance, labels);
+  _renderGraphTable(labels, _chartInstance.data.datasets);
 }
-
-// ── 粗広告利益-直近半年 ──
 let _memoEditCode = null;
 
 function renderRoasTrend() {
