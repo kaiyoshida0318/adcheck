@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.332</span>
+    <span class="build-date">v1.333</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -434,8 +434,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <nav class="tab-sub-row tab-sub-row-2">
   <span class="tab-row-label" style="color:#7B3FA0">【対応検討】</span>
   <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近半年</button>
-  <button class="tab-btn" id="tab-btn-sales-trend" onclick="switchTab('sales-trend')">売上ROAS推移-直近半年</button>
-  <button class="tab-btn" id="tab-btn-month-compare" onclick="switchTab('month-compare')">直近2か月比較</button>
+  <button class="tab-btn" id="tab-btn-cvr-trend" onclick="switchTab('cvr-trend')">CVR推移-直近半年</button>
   <button class="tab-btn" id="tab-btn-kw-adjust" onclick="switchTab('kw-adjust')">KW調整-直近4か月vol順</button>
   <button class="tab-btn" id="tab-btn-title-adjust" onclick="switchTab('title-adjust')">タイトル調整-直近4か月vol順</button>
 </nav>
@@ -531,23 +530,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
     </div>
   </div>
-  <div class="tab-panel" id="tab-sales-trend">
+  <div class="tab-panel" id="tab-cvr-trend">
     <div style="padding:12px 16px">
       <div class="table-card">
-        <div class="table-toolbar">
-          <div class="toolbar-right"></div>
-        </div>
-        <div id="sales-trend-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
-          <div class="tab-coming-soon"><div class="icon">📈</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="tab-panel" id="tab-month-compare">
-    <div style="padding:12px 16px">
-      <div class="table-card">
-        <div id="month-compare-toolbar" class="table-toolbar"><div class="toolbar-right"></div></div>
-        <div id="month-compare-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
+        <div class="table-toolbar"><div class="toolbar-right"></div></div>
+        <div id="cvr-trend-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>
         </div>
       </div>
@@ -3731,7 +3718,7 @@ function renderItemGraph() {
         { label: 'KW実績',  data: dataKw, backgroundColor:'#60a5fa88', borderColor:'#60a5fa', borderWidth:1, borderRadius:4, stack:'s',
           onClick: undefined }
       ]},
-      options: { interaction: { mode: 'index', intersect: false }, responsive:true, maintainAspectRatio:false,
+      options: { animation: false, interaction: { mode: 'index', intersect: false }, responsive:true, maintainAspectRatio:false,
         plugins: { legend:{ display:true, position:'top', labels:{color:textColor,font:{size:12},usePointStyle:true},
           onClick:(e,li,leg)=>{ const chart=leg.chart; const other=li.datasetIndex===0?1:0; const meta=chart.getDatasetMeta(other); meta.hidden=!meta.hidden; chart.update(); }
         }, tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ¥${Math.round(ctx.raw).toLocaleString()}`}}},
@@ -3744,7 +3731,7 @@ function renderItemGraph() {
     const data20R = labels.map(l => { const sp=dataMap[l]?.spend||0; const sk=dataMap[l]?.spendKw||0; const s20=Math.max(0,sp-sk); return sp?Math.round(s20/sp*1000)/10:0; });
     _itemChartInstance = new Chart(canvas, {
       type:'line', data:{labels:displayLabels, datasets:[lineDs('KW実績 割合',dataKwR,'#60a5fa'),lineDs('20円実績 割合',data20R,'#f97316')]},
-      options:{interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
+      options:{animation:false,interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
         scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{min:0,max:100,grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
       }
@@ -3755,7 +3742,7 @@ function renderItemGraph() {
     const dataR20 = labels.map(l => { const sp=dataMap[l]?.spend||0,sk=dataMap[l]?.spendKw||0,sl=dataMap[l]?.sales||0,slk=dataMap[l]?.salesKw||0; const s20=Math.max(0,sp-sk),sl20=Math.max(0,sl-slk); return s20?Math.round(sl20/s20*10000)/100:0; });
     _itemChartInstance = new Chart(canvas, {
       type:'line', data:{labels:displayLabels, datasets:[lineDs('ROAS■ (全体)',dataR,'#fbbf24'),lineDs('KW ROAS',dataRKw,'#60a5fa'),lineDs('20円 ROAS',dataR20,'#f97316')]},
-      options:{interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
+      options:{animation:false,interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
         scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
       }
@@ -3766,7 +3753,7 @@ function renderItemGraph() {
     const dataCvr20= labels.map(l => { const cl=dataMap[l]?.cl||0,clk=dataMap[l]?.clKw||0,ord=dataMap[l]?.orders||0,ork=dataMap[l]?.ordersKw||0; const cl20=Math.max(0,cl-clk),or20=Math.max(0,ord-ork); return cl20?Math.round(or20/cl20*10000)/100:0; });
     _itemChartInstance = new Chart(canvas, {
       type:'line', data:{labels:displayLabels, datasets:[lineDs('CVR■ (全体)',dataCvr,'#a78bfa'),lineDs('KW CVR',dataCKw,'#60a5fa'),lineDs('20円 CVR',dataCvr20,'#f97316')]},
-      options:{interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
+      options:{animation:false,interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
         scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
       }
@@ -3808,7 +3795,7 @@ function renderItemGraph() {
         lineDs2('KW商品売上', dataKwS, '#60a5fa'),
         lineDs2('20円売上', data20S, '#f97316'),
       ]},
-      options: { interaction: { mode: 'index', intersect: false }, responsive:true, maintainAspectRatio:false,
+      options: { animation: false, interaction: { mode: 'index', intersect: false }, responsive:true, maintainAspectRatio:false,
         plugins: { legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},
           tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ¥${Math.round(ctx.raw).toLocaleString()}`}}},
         scales: {
@@ -3996,6 +3983,7 @@ function renderGraph() {
         { label: '実績額',  data: dataSpend, borderColor: '#ef4444', backgroundColor: '#ef444422', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false, borderDash: [5,3] },
       ]},
       options: {
+        animation: false,
         responsive: true, maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: { legend: { labels: { color: textColor, font: { size: 12 } } }, tooltip: {
@@ -4481,8 +4469,7 @@ function saveMemo() {
   saveProductCache(); saveToGitHub();
   closeMemoModal();
   if (_currentTab === 'roas-trend') renderRoasTrend();
-  else if (_currentTab === 'sales-trend') renderSalesTrend();
-  else if (_currentTab === 'month-compare') renderMonthCompare();
+  else if (_currentTab === 'cvr-trend') renderCvrTrend();
 }
 
 let _roasTrendSortKey = null;
@@ -4493,187 +4480,56 @@ function sortRoasTrend(key) {
   renderRoasTrend();
 }
 
-// ── 売上ROAS推移-直近半年 ──
-// ── 直近2か月比較 ──
-function renderMonthCompare() {
-  const wrap = document.getElementById('month-compare-list');
-  const toolbar = document.getElementById('month-compare-toolbar');
-  if (!wrap) return;
-  const months = getMonths();
-  if (months.length < 2) {
-    wrap.innerHTML = '<div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:13px;color:var(--text3)">2ヶ月以上のデータが必要です</div></div>';
-    return;
-  }
-  const m02 = months[months.length - 2]; // 前月
-  const m03 = months[months.length - 1]; // 最新月
-  const lbl02 = m02.replace('-','年') + '月';
-  const lbl03 = m03.replace('-','年') + '月';
-
-  // ツールバー
-  if (toolbar) toolbar.innerHTML = `<div class="table-toolbar" style="font-size:12px;color:var(--text3);gap:16px">
-    <span style="font-weight:700">前月：<span style="color:var(--text)">${lbl02}</span></span>
-    <span style="font-weight:700">最新月：<span style="color:var(--red)">${lbl03}</span></span>
-  </div>`;
-
-  const products = Object.values(DB).filter(p => !productCache[p.id]?.retired);
-  const fmtY = v => v > 0 ? '¥' + Math.round(v).toLocaleString() : '—';
-  const fmtP = v => v > 0 ? Math.round(v) + '%' : '—';
-  const rcolorFn = v => v >= 500 ? 'var(--green)' : v >= 300 ? 'var(--amber)' : v > 0 ? 'var(--danger)' : 'var(--text3)';
-
-  // 列幅: 管理番号 商品番号 画像+名 | ×12数値列 | メモ SS 区分
-  const colW = '80px 80px 36px minmax(0,1fr) 75px 75px 70px 70px 70px 70px 60px 60px 75px 75px 70px 70px 60px 60px minmax(0,140px) 70px 110px';
-
-  const bg02 = '#f0f4ff';
-  const bg03 = '#fff8f0';
-
-  const header = `<div class="col-header" style="grid-template-columns:${colW}">
-    <div class="ch">商品管理番号</div>
-    <div class="ch">商品番号</div>
-    <div class="ch"></div>
-    <div class="ch">商品名</div>
-    <div class="ch r" style="background:${bg02}">${lbl02}<br><span style="font-size:9px">楽天売上</span></div>
-    <div class="ch r" style="background:${bg03}">${lbl03}<br><span style="font-size:9px">楽天売上</span></div>
-    <div class="ch r" style="background:${bg02}">${lbl02}<br><span style="font-size:9px">広告売上</span></div>
-    <div class="ch r" style="background:${bg03}">${lbl03}<br><span style="font-size:9px">広告売上</span></div>
-    <div class="ch r" style="background:${bg02}">${lbl02}<br><span style="font-size:9px">実績額</span></div>
-    <div class="ch r" style="background:${bg03}">${lbl03}<br><span style="font-size:9px">実績額</span></div>
-    <div class="ch r" style="background:${bg02}">${lbl02}<br><span style="font-size:9px">CVR</span></div>
-    <div class="ch r" style="background:${bg03}">${lbl03}<br><span style="font-size:9px">CVR</span></div>
-    <div class="ch r" style="background:${bg02}">${lbl02}<br><span style="font-size:9px">ROAS■</span></div>
-    <div class="ch r" style="background:${bg03}">${lbl03}<br><span style="font-size:9px">ROAS■</span></div>
-    <div class="ch r" style="background:${bg02}">${lbl02}<br><span style="font-size:9px">獲得単価</span></div>
-    <div class="ch r" style="background:${bg03}">${lbl03}<br><span style="font-size:9px">獲得単価</span></div>
-    <div class="ch r" style="background:${bg02}">${lbl02}<br><span style="font-size:9px">CPC</span></div>
-    <div class="ch r" style="background:${bg03}">${lbl03}<br><span style="font-size:9px">CPC</span></div>
-    <div class="ch">対応-詳細</div>
-    <div class="ch" style="text-align:center;font-size:10px">SS</div>
-    <div class="ch" style="text-align:center;font-size:10px">最新の状態</div>
-  </div>`;
-
-  const rows = products.map(p => {
-    const cached = productCache[p.id] || {};
-    const name = cached.manualName || cached.name || p.id;
-    const imgSrc = cached.manualImg || cached.img || null;
-    const imgEl = imgSrc
-      ? `<img src="${imgSrc}" style="width:24px;height:24px;border-radius:4px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集">`
-      : `<div style="width:24px;height:24px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集"></div>`;
-
-    const s02 = getStats(p, m02);
-    const s03 = getStats(p, m03);
-
-    // 楽天売上（salesRows総売上）
-    const tot02 = salesRows.filter(r => r.ym === m02.replace('-','') && r.itemCode === p.id).reduce((a, r) => a + r.sales, 0);
-    const tot03 = salesRows.filter(r => r.ym === m03.replace('-','') && r.itemCode === p.id).reduce((a, r) => a + r.sales, 0);
-
-    // CVR = orders720 / clicks × 100
-    const days02 = getDatesForMonth(m02).map(d => p.days[d]).filter(Boolean);
-    const days03 = getDatesForMonth(m03).map(d => p.days[d]).filter(Boolean);
-    const ord02 = days02.reduce((s,d)=>s+(d.orders720||0),0);
-    const ord03 = days03.reduce((s,d)=>s+(d.orders720||0),0);
-    const cl02  = days02.reduce((s,d)=>s+(d.clicks||0),0);
-    const cl03  = days03.reduce((s,d)=>s+(d.clicks||0),0);
-    const cvr02 = cl02 > 0 ? (ord02/cl02*100).toFixed(2)+'%' : '—';
-    const cvr03 = cl03 > 0 ? (ord03/cl03*100).toFixed(2)+'%' : '—';
-
-    // ROAS■ = sales720 / spend × 100
-    const roas02 = s02.avgRoas;
-    const roas03 = s03.avgRoas;
-
-    // 獲得単価 = spend / orders720
-    const cpa02 = ord02 > 0 ? Math.round(s02.spend / ord02) : 0;
-    const cpa03 = ord03 > 0 ? Math.round(s03.spend / ord03) : 0;
-
-    // CPC
-    const cpc02 = cl02 > 0 ? Math.round(s02.spend / cl02) : 0;
-    const cpc03 = cl03 > 0 ? Math.round(s03.spend / cl03) : 0;
-
-    // 対応-詳細メモ
-    const memo = cached.memo || '';
-    const memoPreview = memo.split('\n').slice(0,8).join('\n');
-    const memoCell = `<div class="cell" style="padding:4px 8px;cursor:pointer;font-size:10px;color:var(--text2);white-space:pre-wrap;line-height:1.4;overflow:hidden" onclick="event.stopPropagation();openMemoModal('${p.id}')" title="クリックで編集">${memoPreview||'<span style="color:var(--text3)">クリックで記入</span>'}</div>`;
-
-    // SS
-    const ssCell = `<div class="status-cell" style="padding:3px;display:grid;grid-template-columns:1fr 1fr;gap:2px" onclick="event.stopPropagation()">
-      ${['03','06','09','12'].map(m => {
-        const active = (cached.ss||[]).includes(m);
-        const lbl = {'03':'3月','06':'6月','09':'9月','12':'12月'}[m];
-        return `<button onclick="_toggleRoasTrendSS('${p.id}','${m}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;text-align:center">${lbl}</button>`;
-      }).join('')}
-    </div>`;
-
-    // 最新の状態（区分）
-    const statusVal = cached.status || 'unset';
-    const statusColor = STATUS_COLORS[statusVal] || '';
-    const statusSel = `<div class="status-cell" onclick="event.stopPropagation()">
-      <select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">
-        ${['unset','g1','g2','g3','new','mid','mid2','warn','out'].map(v => {
-          const labels={unset:'選択前■',g1:'健常◎',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',mid2:'中立-広告無し',warn:'撤退検討▲',out:'撤退■'};
-          const colors={unset:'',g1:'#1565C0',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',mid2:'#E65100',warn:'#C62828',out:'#6D1111'};
-          return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;
-        }).join('')}
-      </select>
-    </div>`;
-
-    const cell = (val, bg, color='') => `<div class="cell r mono" style="background:${bg};font-size:11px${color?';color:'+color:''}">${val}</div>`;
-
-    return `<div class="item-row">
-      <div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:48px;background:var(--surface)">
-        <div style="padding:6px 8px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.id}</div>
-        <div style="padding:6px 8px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cached.itemNumber||'—'}</div>
-        <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
-        <div style="padding:6px 8px;display:flex;align-items:center;overflow:hidden"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span></div>
-        ${cell(fmtY(tot02), bg02)}
-        ${cell(fmtY(tot03), bg03)}
-        ${cell(fmtY(s02.sales720), bg02)}
-        ${cell(fmtY(s03.sales720), bg03)}
-        ${cell(fmtY(s02.spend), bg02)}
-        ${cell(fmtY(s03.spend), bg03)}
-        ${cell(cvr02, bg02)}
-        ${cell(cvr03, bg03)}
-        ${cell(roas02>0?Math.round(roas02)+'%':'—', bg02, rcolorFn(roas02))}
-        ${cell(roas03>0?Math.round(roas03)+'%':'—', bg03, rcolorFn(roas03))}
-        ${cell(cpa02>0?fmtY(cpa02):'—', bg02)}
-        ${cell(cpa03>0?fmtY(cpa03):'—', bg03)}
-        ${cell(cpc02>0?fmtY(cpc02):'—', bg02)}
-        ${cell(cpc03>0?fmtY(cpc03):'—', bg03)}
-        ${memoCell}
-        ${ssCell}
-        ${statusSel}
-      </div>
-    </div>`;
-  }).join('');
-
-  wrap.innerHTML = header + `<div>${rows}</div>`;
-}
-
-function renderSalesTrend() {
-  const wrap = document.getElementById('sales-trend-list');
+// ── CVR推移-直近半年 ──
+function renderCvrTrend() {
+  const wrap = document.getElementById('cvr-trend-list');
   if (!wrap) return;
   const months = getMonths();
   if (months.length === 0) {
-    wrap.innerHTML = '<div class="tab-coming-soon"><div class="icon">📈</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>';
+    wrap.innerHTML = '<div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>';
     return;
   }
   const last6 = months.slice(-6);
-  const products = Object.values(DB).filter(p => !productCache[p.id]?.retired);
+  let products = Object.values(DB).filter(p => !productCache[p.id]?.retired);
 
-  const colW = `90px 80px minmax(0,1fr) ${last6.map(()=>'70px').join(' ')} minmax(0,160px) 110px 70px`;
+  const calcCvr = (p, m) => {
+    const days = getDatesForMonth(m).map(d => p.days[d]).filter(Boolean);
+    const clicks = days.reduce((s,d)=>s+(d.clicks||0),0);
+    const orders = days.reduce((s,d)=>s+(d.orders720||0),0);
+    return clicks > 0 ? Math.round(orders/clicks*10000)/100 : null;
+  };
+
+  if (_roasTrendSortKey === 'diff') {
+    products = products.slice().sort((a,b) => {
+      const calcDiff = p => {
+        const vals = last6.map(m => calcCvr(p,m));
+        const latest = vals[vals.length-1];
+        const prev = vals.slice(0,-1).filter(v=>v!==null);
+        if (latest===null || prev.length===0) return -9999;
+        return latest - prev.reduce((s,v)=>s+v,0)/prev.length;
+      };
+      return _roasTrendSortDir === 'desc' ? calcDiff(b)-calcDiff(a) : calcDiff(a)-calcDiff(b);
+    });
+  }
+
+  const colW = `90px 80px minmax(0,1fr) ${last6.map(()=>'80px').join(' ')} 80px minmax(0,160px) 110px 70px`;
   const headerCells = last6.map(m => {
     const [y, mo] = m.split('-');
-    return `<div class="ch r" style="background:#eef4fb">${mo}月<br><span style="font-size:9px;color:var(--text3)">${y}</span></div>`;
+    return `<div class="ch r" style="background:#e3f2fd">${mo}月<br><span style="font-size:9px;color:var(--text3)">${y}</span></div>`;
   }).join('');
 
   const header = `<div class="col-header" style="grid-template-columns:${colW}">
-    <div class="ch">商品番号</div>
-    <div class="ch">商品管理番号</div>
-    <div class="ch">商品</div>
+    <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('itemnum')">商品番号</div>
+    <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('itemid')">商品管理番号</div>
+    <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('name')">商品</div>
     ${headerCells}
+    <div class="ch r" style="background:#f3e8ff;cursor:pointer" onclick="sortRoasTrend('diff')">最新月<br><span style="font-size:9px">差分</span></div>
     <div class="ch">記入欄</div>
     <div class="ch" style="text-align:center;font-size:10px">区分</div>
     <div class="ch" style="text-align:center;font-size:10px">SS</div>
   </div>`;
 
-  const rcolorFn = v => v >= 500 ? 'var(--green)' : v >= 300 ? 'var(--amber)' : v > 0 ? 'var(--danger)' : 'var(--text3)';
+  const cvrColorFn = v => v >= 1.5 ? 'var(--green)' : v >= 0.8 ? 'var(--amber)' : v > 0 ? 'var(--danger)' : 'var(--text3)';
 
   const rows = products.map(p => {
     const cached = productCache[p.id] || {};
@@ -4683,20 +4539,25 @@ function renderSalesTrend() {
       ? `<img src="${imgSrc}" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集">`
       : `<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集"></div>`;
 
-    // 売上ROAS★ = 総売上(salesRows) / 実績額(spend) × 100
-    const roacells = last6.map(m => {
-      const s = getStats(p, m);
-      const totSales = salesRows.filter(r => r.ym === m && r.itemCode === p.id).reduce((a, r) => a + r.sales, 0);
-      const sroas = s.spend > 0 && totSales > 0 ? Math.round(totSales / s.spend * 100) : 0;
-      return `<div class="cell r mono" style="background:#eef4fb;font-size:11px;font-weight:700;color:${rcolorFn(sroas)}">${sroas > 0 ? sroas + '%' : '—'}</div>`;
+    const cvrCells = last6.map(m => {
+      const cvr = calcCvr(p, m);
+      const color = cvr === null ? 'var(--text3)' : cvrColorFn(cvr);
+      return `<div class="cell r mono" style="background:#e3f2fd;font-size:11px;font-weight:700;color:${color}">${cvr !== null ? cvr + '%' : '—'}</div>`;
     }).join('');
 
-    // 記入欄（memoキーを共有）
+    const cvrVals = last6.map(m => calcCvr(p, m));
+    const latestCvr = cvrVals[cvrVals.length-1];
+    const prev5 = cvrVals.slice(0,-1).filter(v=>v!==null);
+    const prev5avg = prev5.length > 0 ? prev5.reduce((s,v)=>s+v,0)/prev5.length : null;
+    const diff = (latestCvr !== null && prev5avg !== null) ? Math.round((latestCvr - prev5avg)*100)/100 : null;
+    const diffColor = diff === null ? 'var(--text3)' : diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--danger)' : 'var(--text2)';
+    const diffTxt = diff === null ? '—' : (diff > 0 ? '+' : '') + diff + '%';
+    const diffCell = `<div class="cell r mono" style="background:#f3e8ff;font-size:11px;font-weight:700;color:${diffColor}">${diffTxt}</div>`;
+
     const memo = cached.memo || '';
-    const memoPreview = memo.split('\n').slice(0, 8).join('\n');
+    const memoPreview = memo.split('\n').slice(0,8).join('\n');
     const memoCell = `<div class="cell" style="padding:4px 8px;cursor:pointer;font-size:10px;color:var(--text2);white-space:pre-wrap;line-height:1.4;overflow:hidden" onclick="event.stopPropagation();openMemoModal('${p.id}')" title="クリックで編集">${memoPreview || '<span style="color:var(--text3)">クリックで記入</span>'}</div>`;
 
-    // 区分
     const statusVal = cached.status || 'unset';
     const statusColor = STATUS_COLORS[statusVal] || '';
     const statusSel = `<div class="status-cell" onclick="event.stopPropagation()">
@@ -4709,10 +4570,9 @@ function renderSalesTrend() {
       </select>
     </div>`;
 
-    // SS
     const ssCell = `<div class="status-cell" style="padding:3px;display:grid;grid-template-columns:1fr 1fr;gap:2px" onclick="event.stopPropagation()">
       ${['03','06','09','12'].map(m => {
-        const active = (cached.ss || []).includes(m);
+        const active = (cached.ss||[]).includes(m);
         const lbl = {'03':'3月','06':'6月','09':'9月','12':'12月'}[m];
         return `<button onclick="_toggleRoasTrendSS('${p.id}','${m}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;text-align:center">${lbl}</button>`;
       }).join('')}
@@ -4723,7 +4583,8 @@ function renderSalesTrend() {
         <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cached.itemNumber||'—'}</div>
         <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.id}</div>
         <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;overflow:hidden">${imgEl}<span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span></div>
-        ${roacells}
+        ${cvrCells}
+        ${diffCell}
         ${memoCell}
         ${statusSel}
         ${ssCell}
@@ -4733,6 +4594,7 @@ function renderSalesTrend() {
 
   wrap.innerHTML = header + `<div>${rows}</div>`;
 }
+
 
 function renderRetired() {
   const wrap = document.getElementById('retiredList');
@@ -5006,8 +4868,7 @@ function switchTab(tab) {
   if (tab === 'monthly-item') renderMonthlyItem();
   if (tab === 'retired') renderRetired();
   if (tab === 'roas-trend') renderRoasTrend();
-  if (tab === 'sales-trend') renderSalesTrend();
-  if (tab === 'month-compare') renderMonthCompare();
+  if (tab === 'cvr-trend') renderCvrTrend();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
   renderMonthlySubTab(tab);
