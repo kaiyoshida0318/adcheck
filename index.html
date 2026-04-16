@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.341</span>
+    <span class="build-date">v1.342</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4572,7 +4572,7 @@ function openKwVolModal(itemCode) {
   document.getElementById('kwVolModalTitle').textContent = name;
 
   const itemKwRows = kwRows.filter(r => r.itemCode === itemCode);
-  const months = [...new Set(kwRows.map(r => r.ym))].sort().reverse().slice(0, 5).reverse(); // 古い順
+  const months = [...new Set(kwRows.map(r => r.ym))].sort().reverse().slice(0, 3).reverse(); // 古い順
   const kws = [...new Set(itemKwRows.map(r => r.kw))];
 
   // KWを全期間vol合計降順でソート
@@ -5966,7 +5966,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 </div>
 <!-- KW vol順モーダル -->
 <div id="kwVolModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9100;align-items:center;justify-content:center">
-  <div style="background:var(--surface);border-radius:12px;width:90vw;max-width:1100px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
+  <div style="background:var(--surface);border-radius:12px;width:97vw;max-width:1600px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
     <div style="padding:16px 24px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
       <div>
         <div style="font-weight:700;font-size:15px">📊 KW_vol順</div>
