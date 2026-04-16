@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.353</span>
+    <span class="build-date">v1.354</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4591,24 +4591,26 @@ function openKwVolModal(itemCode) {
   const kwColorMap = {};
   kws.forEach((kw, i) => { kwColorMap[kw] = KW_COLORS[i % KW_COLORS.length]; });
 
-  // 月別集計
+  // 月別集計（_renderKwByItemと完全同一ロジック）
   const getMonthAgg = (kw, ym) => {
     const rows = itemKwRows.filter(r => r.kw === kw && r.ym === ym);
     if (rows.length === 0) return null;
     const spend = rows.reduce((s,r) => s+(r.spend||0), 0);
     const sales = rows.reduce((s,r) => s+(r.sales||0), 0);
     const cl    = rows.reduce((s,r) => s+(r.cl||0), 0);
-    let volSum = 0, volDays = 0;
+    // 予測vol: 日別 cl÷(ctr/100) を合算 → データ日数で補正して月間推計
+    let volSum = 0;
     rows.forEach(r => {
       if (r.cl > 0) {
         const ctrVal = r.ctr > 0 ? r.ctr : 2;
         volSum += r.cl / (ctrVal / 100);
-        volDays++;
       }
     });
-    const days = new Date(parseInt(ym.slice(0,4)), parseInt(ym.slice(4,6)), 0).getDate();
-    const vol  = volDays > 0 ? Math.round(volSum / volDays * days) : 0;
-    return { spend, sales, cl, vol };
+    // dateDays = このKW×月のデータがある日数
+    const dateDays = [...new Set(rows.map(r => r.date))].length;
+    const daysInMonth = new Date(parseInt(ym.slice(0,4)), parseInt(ym.slice(4,6)), 0).getDate();
+    const vol = dateDays > 0 ? Math.round(volSum * (daysInMonth / dateDays)) : 0;
+    return { spend, sales, cl, vol, dateDays, daysInMonth };
   };
 
   const totalClByYm = {};
@@ -4637,7 +4639,9 @@ function openKwVolModal(itemCode) {
     const rows = kwSorted.map(({ kw, d, vol }) => {
       const color  = kwColorMap[kw];
       const share  = d && d.cl > 0 && totalCl > 0 ? (d.cl/totalCl*100).toFixed(1)+'%' : '—';
-      const volTxt = vol > 0 ? vol.toLocaleString() : '—';
+      const volTxt = vol > 0
+        ? vol.toLocaleString() + (d.dateDays < d.daysInMonth ? `<div style="font-size:8px;color:#aaa">${d.daysInMonth}/${d.dateDays}日</div>` : '')
+        : '—';
       const roas   = d && d.spend > 0 ? Math.round(d.sales/d.spend*100) : 0;
       const bg     = '#fff';
       return `
@@ -4645,7 +4649,7 @@ function openKwVolModal(itemCode) {
           <td rowspan="3" style="border:${b1};padding:6px 8px;vertical-align:middle;width:160px;max-width:160px">
             <div style="color:${color};font-weight:600;font-size:11px;white-space:normal;word-break:break-all;line-height:1.5">${kw}</div>
           </td>
-          <td rowspan="3" style="border:${b1};padding:6px 8px;text-align:right;vertical-align:middle;width:70px;${M}">${volTxt}</td>
+          <td rowspan="3" style="border:${b1};padding:6px 8px;text-align:right;vertical-align:middle;width:70px;${M}"><div>${volTxt}</div></td>
           <td rowspan="3" style="border:${b1};padding:6px 8px;text-align:right;vertical-align:middle;width:60px;${M}">${share}</td>
           <td style="border:${b1};padding:4px 6px;text-align:center;font-size:10px;color:#888;width:36px">実績</td>
           <td style="border:${b1};padding:4px 10px;text-align:right;width:90px;${M}">${fmtY(d?.spend||0)}</td>
