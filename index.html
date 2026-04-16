@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.338</span>
+    <span class="build-date">v1.339</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4481,52 +4481,29 @@ function sortRoasTrend(key) {
 function renderCvrTrend() {
   const wrap = document.getElementById('cvr-trend-list');
   if (!wrap) return;
-  const months = getMonths();
-  if (months.length === 0) {
+  if (kwRows.length === 0 && Object.keys(DB).length === 0) {
     wrap.innerHTML = '<div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>';
     return;
   }
-  const last6 = months.slice(-6);
-  let products = Object.values(DB).filter(p => !productCache[p.id]?.retired);
 
-  const calcCvr = (p, m) => {
-    const days = getDatesForMonth(m).map(d => p.days[d]).filter(Boolean);
-    const clicks = days.reduce((s,d)=>s+(d.clicks||0),0);
-    const orders = days.reduce((s,d)=>s+(d.orders720||0),0);
-    return clicks > 0 ? Math.round(orders/clicks*10000)/100 : null;
-  };
-
-  if (_roasTrendSortKey === 'diff') {
-    products = products.slice().sort((a,b) => {
-      const calcDiff = p => {
-        const vals = last6.map(m => calcCvr(p,m));
-        const latest = vals[vals.length-1];
-        const prev = vals.slice(0,-1).filter(v=>v!==null);
-        if (latest===null || prev.length===0) return -9999;
-        return latest - prev.reduce((s,v)=>s+v,0)/prev.length;
-      };
-      return _roasTrendSortDir === 'desc' ? calcDiff(b)-calcDiff(a) : calcDiff(a)-calcDiff(b);
-    });
+  const products = Object.values(DB).filter(p => !productCache[p.id]?.retired);
+  if (products.length === 0) {
+    wrap.innerHTML = '<div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:13px;color:var(--text3)">商品データがありません</div></div>';
+    return;
   }
 
-  const colW = `90px 80px minmax(0,1fr) ${last6.map(()=>'80px').join(' ')} 80px minmax(0,160px) 110px 70px`;
-  const headerCells = last6.map(m => {
-    const [y, mo] = m.split('-');
-    return `<div class="ch r" style="background:#e3f2fd">${mo}月<br><span style="font-size:9px;color:var(--text3)">${y}</span></div>`;
-  }).join('');
+  const colW = '90px 80px 36px minmax(0,1fr) 90px minmax(0,160px) 110px 70px';
 
   const header = `<div class="col-header" style="grid-template-columns:${colW}">
-    <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('itemnum')">商品番号</div>
-    <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('itemid')">商品管理番号</div>
-    <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('name')">商品</div>
-    ${headerCells}
-    <div class="ch r" style="background:#f3e8ff;cursor:pointer" onclick="sortRoasTrend('diff')">最新月<br><span style="font-size:9px">差分</span></div>
+    <div class="ch">商品番号</div>
+    <div class="ch">商品管理番号</div>
+    <div class="ch"></div>
+    <div class="ch">商品名</div>
+    <div class="ch" style="text-align:center">KW_vol順</div>
     <div class="ch">記入欄</div>
     <div class="ch" style="text-align:center;font-size:10px">区分</div>
     <div class="ch" style="text-align:center;font-size:10px">SS</div>
   </div>`;
-
-  const cvrColorFn = v => v >= 1.5 ? 'var(--green)' : v >= 0.8 ? 'var(--amber)' : v > 0 ? 'var(--danger)' : 'var(--text3)';
 
   const rows = products.map(p => {
     const cached = productCache[p.id] || {};
@@ -4536,20 +4513,14 @@ function renderCvrTrend() {
       ? `<img src="${imgSrc}" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集">`
       : `<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集"></div>`;
 
-    const cvrCells = last6.map(m => {
-      const cvr = calcCvr(p, m);
-      const color = cvr === null ? 'var(--text3)' : cvrColorFn(cvr);
-      return `<div class="cell r mono" style="background:#e3f2fd;font-size:11px;font-weight:700;color:${color}">${cvr !== null ? cvr + '%' : '—'}</div>`;
-    }).join('');
-
-    const cvrVals = last6.map(m => calcCvr(p, m));
-    const latestCvr = cvrVals[cvrVals.length-1];
-    const prev5 = cvrVals.slice(0,-1).filter(v=>v!==null);
-    const prev5avg = prev5.length > 0 ? prev5.reduce((s,v)=>s+v,0)/prev5.length : null;
-    const diff = (latestCvr !== null && prev5avg !== null) ? Math.round((latestCvr - prev5avg)*100)/100 : null;
-    const diffColor = diff === null ? 'var(--text3)' : diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--danger)' : 'var(--text2)';
-    const diffTxt = diff === null ? '—' : (diff > 0 ? '+' : '') + diff + '%';
-    const diffCell = `<div class="cell r mono" style="background:#f3e8ff;font-size:11px;font-weight:700;color:${diffColor}">${diffTxt}</div>`;
+    // KWデータ件数
+    const kwCount = [...new Set(kwRows.filter(r => r.itemCode === p.id).map(r => r.kw))].length;
+    const kwBtn = `<div style="display:flex;align-items:center;justify-content:center;padding:4px" onclick="event.stopPropagation()">
+      <button onclick="openKwVolModal('${p.id}')"
+        style="font-size:11px;padding:4px 10px;border-radius:5px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);cursor:pointer;font-weight:600;white-space:nowrap">
+        📊 KW ${kwCount > 0 ? '(' + kwCount + ')' : '—'}
+      </button>
+    </div>`;
 
     const memo = cached.memo || '';
     const memoPreview = memo.split('\n').slice(0,8).join('\n');
@@ -4579,9 +4550,9 @@ function renderCvrTrend() {
       <div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:48px;background:var(--surface)">
         <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cached.itemNumber||'—'}</div>
         <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.id}</div>
-        <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;overflow:hidden">${imgEl}<span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span></div>
-        ${cvrCells}
-        ${diffCell}
+        <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
+        <div style="padding:6px 8px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div>
+        ${kwBtn}
         ${memoCell}
         ${statusSel}
         ${ssCell}
@@ -4590,6 +4561,90 @@ function renderCvrTrend() {
   }).join('');
 
   wrap.innerHTML = header + `<div>${rows}</div>`;
+}
+
+// ── KW vol順モーダル ──
+let _kwVolCode = null;
+function openKwVolModal(itemCode) {
+  _kwVolCode = itemCode;
+  const cached = productCache[itemCode] || {};
+  const name = cached.manualName || cached.name || itemCode;
+  document.getElementById('kwVolModalTitle').textContent = name;
+
+  const months = [...new Set(kwRows.map(r => r.ym))].sort().reverse().slice(0, 5);
+  const kws = [...new Set(kwRows.filter(r => r.itemCode === itemCode).map(r => r.kw))];
+
+  // KWをvol（クリック数合計）降順でソート
+  const kwWithVol = kws.map(kw => {
+    const rows = kwRows.filter(r => r.itemCode === itemCode && r.kw === kw);
+    const totalCl = rows.reduce((s,r) => s+(r.cl||0), 0);
+    return { kw, totalCl, rows };
+  }).sort((a,b) => b.totalCl - a.totalCl);
+
+  if (kwWithVol.length === 0) {
+    document.getElementById('kwVolModalBody').innerHTML = '<div style="padding:20px;color:var(--text3);text-align:center">KWデータがありません</div>';
+    document.getElementById('kwVolModal').style.display = 'flex';
+    return;
+  }
+
+  const thBase = 'padding:7px 10px;font-size:10px;font-weight:700;color:var(--text3);border-bottom:2px solid var(--border);white-space:nowrap;text-align:right;background:var(--surface2)';
+  const monthHeaders = months.map(m => {
+    const y = m.slice(0,4), mo = m.slice(4,6);
+    return `<th colspan="3" style="${thBase};text-align:center;border-left:2px solid var(--border2)">${y}/${mo}</th>`;
+  }).join('');
+  const subHeaders = months.map(() =>
+    `<th style="${thBase};border-left:2px solid var(--border2)">実績</th><th style="${thBase}">売上</th><th style="${thBase}">ROAS</th>`
+  ).join('');
+
+  const fmtY = v => v > 0 ? '¥'+Math.round(v).toLocaleString() : '—';
+  const fmtR = (s,a) => s>0&&a>0 ? Math.round(a/s*100)+'%' : '—';
+  const rColor = v => {
+    const n = parseInt(v);
+    if (isNaN(n)) return 'var(--text3)';
+    return n>=500?'var(--green)':n>=300?'var(--amber)':'var(--danger)';
+  };
+
+  const dataRows = kwWithVol.map((kwd, i) => {
+    const cells = months.map(ym => {
+      const r = kwRows.find(r => r.itemCode === itemCode && r.kw === kwd.kw && r.ym === ym);
+      const spend = r?.spend || 0;
+      const sales = r?.sales || 0;
+      const roas = fmtR(spend, sales);
+      return `<td style="padding:6px 10px;text-align:right;font-size:11px;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);border-left:2px solid var(--border2)">${fmtY(spend)}</td>
+              <td style="padding:6px 10px;text-align:right;font-size:11px;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border)">${fmtY(sales)}</td>
+              <td style="padding:6px 10px;text-align:right;font-size:11px;font-weight:700;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);color:${rColor(roas)}">${roas}</td>`;
+    }).join('');
+    const bg = i%2===0 ? 'var(--surface)' : 'var(--surface2)';
+    return `<tr style="background:${bg}">
+      <td style="padding:6px 12px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${kwd.kw}">${kwd.kw}</td>
+      <td style="padding:6px 10px;text-align:right;font-size:11px;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);color:var(--text3)">${kwd.totalCl.toLocaleString()}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  document.getElementById('kwVolModalBody').innerHTML = `
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr>
+            <th style="${thBase};text-align:left;min-width:150px">KW</th>
+            <th style="${thBase}">総vol</th>
+            ${monthHeaders}
+          </tr>
+          <tr>
+            <th style="${thBase};text-align:left"></th>
+            <th style="${thBase}"></th>
+            ${subHeaders}
+          </tr>
+        </thead>
+        <tbody>${dataRows}</tbody>
+      </table>
+    </div>`;
+  document.getElementById('kwVolModal').style.display = 'flex';
+}
+
+function closeKwVolModal() {
+  document.getElementById('kwVolModal').style.display = 'none';
 }
 
 
@@ -5890,5 +5945,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     </div>
   </div>
 </div>
+<!-- KW vol順モーダル -->
+<div id="kwVolModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9100;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:12px;width:90vw;max-width:1100px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
+    <div style="padding:16px 24px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div>
+        <div style="font-weight:700;font-size:15px">📊 KW_vol順</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px" id="kwVolModalTitle"></div>
+      </div>
+      <button onclick="closeKwVolModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--text3)">✕</button>
+    </div>
+    <div id="kwVolModalBody" style="padding:16px;overflow:auto;flex:1"></div>
+  </div>
+</div>
+
 </body>
 </html>
