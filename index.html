@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.371</span>
+    <span class="build-date">v1.372</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -658,49 +658,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="tab-panel" id="tab-formula">
     <div style="padding:20px 24px;max-width:860px">
       <div style="font-size:18px;font-weight:700;margin-bottom:20px">📐 全-計算式</div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;border-bottom:2px solid var(--border);padding-bottom:8px">予測vol（月間推計）</div>
-        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">使用データ（RPP KWレポート・日別）</div>
-        <div style="display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:12px;margin-bottom:16px">
-          <div style="color:var(--text3);font-weight:600">クリック数 (cl)</div><div>RPPレポート「クリック数(合計)」列</div>
-          <div style="color:var(--text3);font-weight:600">CTR (%)</div><div>RPPレポート「CTR(%)」列（取得できない場合はデフォルト 2% を使用）</div>
-          <div style="color:var(--text3);font-weight:600">データ日数</div><div>そのKWでデータが存在する日数</div>
-          <div style="color:var(--text3);font-weight:600">月日数</div><div>30日固定（月によるブレを防ぐため統一）</div>
-        </div>
-        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">計算式</div>
-        <div style="background:var(--surface2);border-radius:8px;padding:14px 18px;font-family:'DM Mono',monospace;font-size:12px;line-height:2">
-          <div><span style="color:var(--text3)">① 1日分の検索vol（日別）</span></div>
-          <div style="margin-left:16px;font-weight:700">日別vol = cl ÷ (CTR ÷ 100)</div>
-          <div style="margin-top:8px"><span style="color:var(--text3)">② 月間推計vol</span></div>
-          <div style="margin-left:16px;font-weight:700">予測vol = Σ(日別vol) × (30 ÷ データ日数)</div>
-        </div>
-        <div style="margin-top:12px;font-size:11px;color:var(--text3);line-height:1.8">
-          <div>・月日数は30日固定（28〜31日の月ブレを排除）。データ日数が30日より少ない場合は外挿補正されます。</div>
-          <div>・補正が入った場合は数値の下に <span style="font-family:monospace;background:var(--surface2);padding:1px 4px;border-radius:3px">30/16日</span> のように表示されます。</div>
-          <div>・CTRが取得できなかった日は 2% を仮定して計算しています（数値の下に CTR:2% と表示）。</div>
-        </div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;border-bottom:2px solid var(--border);padding-bottom:8px">KWシェア</div>
-        <div style="background:var(--surface2);border-radius:8px;padding:14px 18px;font-family:'DM Mono',monospace;font-size:12px;line-height:2">
-          <div style="font-weight:700">KWシェア(%) = そのKWのcl合計 ÷ 商品全KWのcl合計 × 100</div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text3)">・その月における、その商品の全KWクリック数に占める割合です。</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;border-bottom:2px solid var(--border);padding-bottom:8px">粗広告利益</div>
-        <div style="background:var(--surface2);border-radius:8px;padding:14px 18px;font-family:'DM Mono',monospace;font-size:12px;line-height:2">
-          <div style="font-weight:700">粗広告利益 = 総売上 × 45% − 実績額（広告費）</div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text3)">・総売上は楽天売上データ（salesRows）から取得。取得できない場合は広告売上で代替します。</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:24px">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;border-bottom:2px solid var(--border);padding-bottom:8px">ROAS</div>
-        <div style="background:var(--surface2);border-radius:8px;padding:14px 18px;font-family:'DM Mono',monospace;font-size:12px;line-height:2">
-          <div style="font-weight:700">ROAS(%) = 売上金額(720時間) ÷ 実績額 × 100</div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text3)">・色分け：<span style="color:var(--green);font-weight:700">緑 ≥ 500%</span>　<span style="color:var(--amber);font-weight:700">橙 ≥ 300%</span>　<span style="color:var(--danger);font-weight:700">赤 &lt; 300%</span></div>
-      </div>
       <!-- 月別・商品別 途中式ビューア -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px">
         <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;border-bottom:2px solid var(--border);padding-bottom:8px">🔍 月別・商品別 予測vol途中式</div>
