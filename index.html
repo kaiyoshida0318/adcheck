@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.347</span>
+    <span class="build-date">v1.348</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4677,7 +4677,7 @@ function openKwVolModal(itemCode) {
   // ── データ行 ──
   const dataRows = kwList.map(({ kw, spend: totSpend, sales: totSales, cl: totCl, vol: totVol }, i) => {
     const color  = KW_COLORS[i % KW_COLORS.length];
-    const kwSpan = `<div style="display:flex;align-items:center;gap:5px;color:${color};font-weight:600;font-size:10px;white-space:normal;word-break:break-all;line-height:1.4"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></span>${kw}</div>`;
+    const kwSpan = `<div style="color:${color};font-weight:600;font-size:10px;white-space:normal;word-break:break-all;line-height:1.4">${kw}</div>`;
     const totRoas = totSpend > 0 ? Math.round(totSales/totSpend*100) : 0;
 
     // 全期間固定列（3行）
