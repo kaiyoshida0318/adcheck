@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.358</span>
+    <span class="build-date">v1.359</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4814,7 +4814,8 @@ function renderFormulaBrowser() {
           const ctrVal  = r.ctr > 0 ? r.ctr : 2;
           const dayVol  = r.cl > 0 ? r.cl / (ctrVal / 100) : 0;
           if (r.cl > 0) volSum += dayVol;
-          return { date: r.date, cl: r.cl, ctr: ctrVal, ctrDefault: r.ctr === 0, dayVol: Math.round(dayVol) };
+          const ctrDisp = r.ctr > 0 ? (r.ctr % 1 === 0 ? r.ctr.toString() : r.ctr.toFixed(3).replace(/0+$/, '')) : '2*';
+          return { date: r.date, cl: r.cl, ctr: ctrVal, ctrDisp, ctrDefault: r.ctr === 0, dayVol: Math.round(dayVol) };
         });
         const adjVol   = dateDays > 0 ? Math.round(volSum * (daysInMonth / dateDays)) : 0;
         const kwCl     = rows.reduce((s,r) => s+(r.cl||0), 0);
@@ -4835,7 +4836,7 @@ function renderFormulaBrowser() {
             ${dayRows.map(d => `<tr>
               <td style="border:1px solid #ddd;padding:3px 6px;color:var(--text2)">${d.date.slice(5)}</td>
               <td style="border:1px solid #ddd;padding:3px 6px;text-align:right;font-family:'DM Mono',monospace">${d.cl > 0 ? d.cl : '—'}</td>
-              <td style="border:1px solid #ddd;padding:3px 6px;text-align:right;font-family:'DM Mono',monospace${d.ctrDefault ? ';color:var(--amber)' : ''}">${d.cl > 0 ? d.ctr + (d.ctrDefault ? '*' : '') : '—'}</td>
+              <td style="border:1px solid #ddd;padding:3px 6px;text-align:right;font-family:'DM Mono',monospace${d.ctrDefault ? ';color:var(--amber)' : ''}">${d.cl > 0 ? d.ctrDisp : '—'}</td>
               <td style="border:1px solid #ddd;padding:3px 6px;text-align:right;font-family:'DM Mono',monospace;font-weight:${d.dayVol>0?'600':'400'}">${d.dayVol > 0 ? d.dayVol.toLocaleString() : '—'}</td>
             </tr>`).join('')}
             <tr style="background:#f0f4ff;font-weight:700">
