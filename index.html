@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.364</span>
+    <span class="build-date">v1.365</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4297,6 +4297,13 @@ function renderRoasTrend() {
           return latest - prev.reduce((s,v)=>s+v,0)/prev.length;
         };
         vA = calcDiff(a); vB = calcDiff(b);
+      } else if (_roasTrendSortKey === 'avg') {
+        const getAvg = p => {
+          const vals = last6.map(m => calcGross(p,m));
+          const prev = vals.slice(0,-1).filter(v=>v!==null);
+          return prev.length > 0 ? prev.reduce((s,v)=>s+v,0)/prev.length : -9999999;
+        };
+        vA = getAvg(a); vB = getAvg(b);
       } else if (last6.includes(_roasTrendSortKey)) {
         vA = calcGross(a, _roasTrendSortKey) ?? -9999999;
         vB = calcGross(b, _roasTrendSortKey) ?? -9999999;
@@ -4308,7 +4315,7 @@ function renderRoasTrend() {
   }
 
   // ヘッダー
-  const colW = `90px 80px minmax(0,1fr) ${last6.map(()=>'90px').join(' ')} 90px 90px minmax(0,160px) 110px 70px`;
+  const colW = `90px 80px minmax(0,1fr) ${last6.map(()=>'90px').join(' ')} 90px 90px 90px minmax(0,160px) 110px 70px`;
   const headerCells = last6.map(m => {
     const [y, mo] = m.split('-');
     const isActive = _roasTrendSortKey === m;
@@ -4321,6 +4328,7 @@ function renderRoasTrend() {
     <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('itemid')">商品管理番号</div>
     <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('name')">商品</div>
     ${headerCells}
+    <div class="ch r" style="background:#e8f5e9;cursor:pointer" onclick="sortRoasTrend('avg')">直近半年<br><span style="font-size:9px">平均</span></div>
     <div class="ch r" style="background:#f3e8ff;cursor:pointer" onclick="sortRoasTrend('diff')">最新月<br><span style="font-size:9px">差分</span></div>
     <div class="ch" style="text-align:center;font-size:10px">KW_vol順</div>
     <div class="ch">記入欄</div>
@@ -4353,6 +4361,9 @@ function renderRoasTrend() {
     const diffColor = diff === null ? 'var(--text3)' : diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--danger)' : 'var(--text2)';
     const diffTxt = diff === null ? '—' : (diff > 0 ? '+' : '') + '¥' + Math.abs(diff).toLocaleString();
     const diffCell = `<div class="cell r mono" style="background:#f3e8ff;font-size:11px;font-weight:700;color:${diffColor}">${diffTxt}</div>`;
+    const avgTxt = prev5avg !== null ? (prev5avg >= 0 ? '+' : '') + '¥' + Math.abs(Math.round(prev5avg)).toLocaleString() : '—';
+    const avgColor = prev5avg === null ? 'var(--text3)' : prev5avg >= 0 ? 'var(--green)' : 'var(--danger)';
+    const avgCell = `<div class="cell r mono" style="background:#e8f5e9;font-size:11px;font-weight:600;color:${avgColor}">${avgTxt}</div>`;
 
     // 記入欄
     const memo = cached.memo || '';
@@ -4387,6 +4398,7 @@ function renderRoasTrend() {
         <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.id}</div>
         <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;overflow:hidden">${imgEl}<span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span></div>
         ${grossCells}
+        ${avgCell}
         ${diffCell}
         <div style="display:flex;align-items:center;justify-content:center;padding:4px" onclick="event.stopPropagation()">
           <button onclick="openKwVolModal('${p.id}')"
