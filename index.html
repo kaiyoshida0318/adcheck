@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.374</span>
+    <span class="build-date">v1.375</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -447,6 +447,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn" id="tab-btn-monthly-mid2" onclick="switchTab('monthly-mid2')">中立-広告無し</button>
   <button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退検討▲</button>
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退■</button>
+  <button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■</button>
   <span class="tab-row-label blue" style="padding-left:16px">【SS】</span>
   <button class="tab-btn" id="tab-btn-ss-mar" onclick="switchTab('ss-mar')">3月</button>
   <button class="tab-btn" id="tab-btn-ss-jun" onclick="switchTab('ss-jun')">6月</button>
@@ -752,6 +753,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="tab-panel" id="tab-monthly-mid2"></div>
   <div class="tab-panel" id="tab-monthly-warn"></div>
   <div class="tab-panel" id="tab-monthly-out"></div>
+  <div class="tab-panel" id="tab-monthly-unset"></div>
   <div class="tab-panel" id="tab-monthly-active"></div>
 
   <!-- SSタブ -->
@@ -4953,6 +4955,7 @@ const SUB_TAB_STATUS = {
   'monthly-mid2': 'mid2',
   'monthly-warn': 'warn',
   'monthly-out':  'out',
+  'monthly-unset': 'unset',
 };
 // 現在サブタブで絞り込み中のstatusVal（nullなら通常表示）
 let _subTabFilter = null;
@@ -5046,7 +5049,7 @@ function switchTab(tab) {
   // 全ボタンのactive解除
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   // 2・3行目サブタブの場合は1行目のmonthlyも光らせる
-  const monthlySubTabs = ['monthly-all','monthly-g1','monthly-g2','monthly-g3','monthly-new','monthly-mid','monthly-mid2','monthly-warn','monthly-out','monthly-active'];
+  const monthlySubTabs = ['monthly-all','monthly-g1','monthly-g2','monthly-g3','monthly-new','monthly-mid','monthly-mid2','monthly-warn','monthly-out','monthly-unset','monthly-active'];
   if (monthlySubTabs.includes(tab)) {
     document.getElementById('tab-btn-monthly')?.classList.add('active');
   }
