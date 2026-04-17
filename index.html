@@ -400,7 +400,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.393</span>
+    <span class="build-date">v1.394</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1234,27 +1234,12 @@ function saveEditItem() {
   document.getElementById('editModalStatus').textContent = '保存中...';
   document.getElementById('editModalStatus').className = 'modal-status ok';
 
-  // productCacheのみ変更なので軽量保存（GH_FILEのみ）
-  const _saveProductOnly = async () => {
-    const pat = localStorage.getItem('github_pat');
-    if (!pat) return;
-    const headers = { 'Authorization': `token ${pat}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' };
-    const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, { headers });
-    const sha = getRes.ok ? (await getRes.json()).sha : null;
-    const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ productCache, calEvents, nichinichiRows, dailyRows, salesRows }))));
-    const body = { message: 'Update productCache', content: base64 };
-    if (sha) body.sha = sha;
-    const putRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, { method: 'PUT', headers, body: JSON.stringify(body) });
-    if (!putRes.ok) { const e = await putRes.json(); throw new Error(e.message || putRes.status); }
-  };
-
-  _saveProductOnly().then(() => {
+  saveProductCacheToGitHub().then(() => {
     document.getElementById('editModalStatus').textContent = '保存しました ✅';
     setTimeout(closeEditModal, 800);
   }).catch(err => {
     document.getElementById('editModalStatus').textContent = `❌ 保存失敗: ${err.message}`;
     document.getElementById('editModalStatus').className = 'modal-status err';
-    // ローカルには保存済みなので閉じる
     setTimeout(closeEditModal, 2000);
   });
 }
@@ -1306,6 +1291,28 @@ const GH_REPO = 'adcheck';
 const GH_FILE = 'data/rpp_data.json'
 const GH_KW_FILE = 'data/rpp_kw.json';
 const GH_ITEM_FILE = 'data/rpp_item.json';
+
+async function saveProductCacheToGitHub() {
+  const pat = localStorage.getItem('github_pat');
+  if (!pat) return;
+  const headers = {
+    'Authorization': `token ${pat}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json'
+  };
+  const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, { headers });
+  const sha = getRes.ok ? (await getRes.json()).sha : null;
+  const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ productCache, calEvents, nichinichiRows, dailyRows, salesRows }))));
+  const body = { message: 'Update productCache', content: base64 };
+  if (sha) body.sha = sha;
+  const putRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, {
+    method: 'PUT', headers, body: JSON.stringify(body)
+  });
+  if (!putRes.ok) {
+    const e = await putRes.json();
+    throw new Error(e.message || putRes.status);
+  }
+}
 
 async function saveToGitHub() {
   const pat = localStorage.getItem('github_pat');
@@ -4951,7 +4958,7 @@ function applyAllStatusUpdates() {
     btn.style.background = '#888';
     btn.disabled = true;
     saveProductCache();
-    saveToGitHub().then(() => {
+    saveProductCacheToGitHub().then(() => {
       btn.innerHTML = '✅ 反映完了';
       btn.style.background = '#16a34a';
       setTimeout(() => {
