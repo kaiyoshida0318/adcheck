@@ -400,7 +400,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.383</span>
+    <span class="build-date">v1.384</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6018,30 +6018,21 @@ function renderCalendar(p, ym) {
 }
 
 function toggleRow(id, ym) {
+  if (expandedSet.has(id)) expandedSet.delete(id);
+  else expandedSet.add(id);
+
+  // 【状態】サブタブでは renderPage() で再描画（DOM書き換え型のため）
+  if (_subTabFilter) {
+    renderPage();
+    return;
+  }
+
+  // 【基本】タブではDOMアニメーション
   const panel = document.getElementById(`dp-${id}`);
-  if (!panel) return;
+  if (!panel) { renderPage(); return; }
   const isOpen = expandedSet.has(id);
 
   if (isOpen) {
-    // 閉じる：現在の高さから0へアニメーション
-    expandedSet.delete(id);
-    const h = panel.scrollHeight;
-    panel.style.height = h + 'px';
-    panel.style.overflow = 'hidden';
-    panel.style.transition = 'height 0.22s ease';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      panel.style.height = '0';
-      panel.addEventListener('transitionend', () => {
-        panel.classList.remove('open');
-        panel.style.height = '';
-        panel.style.overflow = '';
-        panel.style.transition = '';
-        panel.innerHTML = '';
-      }, { once: true });
-    }));
-  } else {
-    // 開く：0から実高さへアニメーション
-    expandedSet.add(id);
     if (DB[id]) panel.innerHTML = renderCalendar(DB[id], ym);
     panel.classList.add('open');
     const h = panel.scrollHeight;
@@ -6056,15 +6047,28 @@ function toggleRow(id, ym) {
         panel.style.transition = '';
       }, { once: true });
     }));
+  } else {
+    const h = panel.scrollHeight;
+    panel.style.height = h + 'px';
+    panel.style.overflow = 'hidden';
+    panel.style.transition = 'height 0.22s ease';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      panel.style.height = '0';
+      panel.addEventListener('transitionend', () => {
+        panel.classList.remove('open');
+        panel.style.height = '';
+        panel.style.overflow = '';
+        panel.style.transition = '';
+        panel.innerHTML = '';
+      }, { once: true });
+    }));
   }
 
-  // item-basic の expanded クラスと toggle-icon を更新
   const basic = panel.previousElementSibling;
   if (basic) {
-    const withStatus = basic.classList.contains('with-status');
-    basic.className = `item-basic${expandedSet.has(id) ? ' expanded' : ''}${withStatus ? ' with-status' : ''}`;
+    basic.className = `item-basic${isOpen ? ' expanded' : ''}`;
     const icon = basic.querySelector('.toggle-icon');
-    if (icon) icon.className = `toggle-icon${expandedSet.has(id) ? ' open' : ''}`;
+    if (icon) icon.className = `toggle-icon${isOpen ? ' open' : ''}`;
   }
 }
 function expandAll() { expandedSet = new Set(getProducts().map(p=>p.id)); renderPage(); }
