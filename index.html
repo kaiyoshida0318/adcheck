@@ -400,7 +400,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.390</span>
+    <span class="build-date">v1.391</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4947,12 +4947,12 @@ function applyAllStatusUpdates() {
   if (btn) {
     const orig = btn.innerHTML;
     const origBg = btn.style.background || '#f97316';
-    btn.innerHTML = '⏳ 更新中…';
+    btn.innerHTML = '⏳ 反映中…';
     btn.style.background = '#888';
     btn.disabled = true;
     saveProductCache();
     saveToGitHub().then(() => {
-      btn.innerHTML = '✅ 保存しました';
+      btn.innerHTML = '✅ 反映完了';
       btn.style.background = '#16a34a';
       setTimeout(() => {
         btn.innerHTML = orig;
@@ -4960,7 +4960,7 @@ function applyAllStatusUpdates() {
         btn.disabled = false;
       }, 2000);
     }).catch(() => {
-      btn.innerHTML = '❌ エラー';
+      btn.innerHTML = '❌ 反映失敗';
       btn.style.background = '#c62828';
       setTimeout(() => {
         btn.innerHTML = orig;
@@ -5068,7 +5068,7 @@ function _subTabToolbar(tab, currentYm) {
   const isStatus = tab in SUB_TAB_STATUS;
   const isSS = tab in SS_TABS;
   const updateBtn = (isStatus || isSS)
-    ? `<button onclick="applyAllStatusUpdates()" style="padding:5px 16px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(249,115,22,0.35)">💾 更新</button>`
+    ? `<button onclick="applyAllStatusUpdates()" style="padding:5px 16px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(249,115,22,0.35)">💾 反映</button>`
     : '';
   return `<div class="table-toolbar">
     <select class="toolbar-month" id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)">${monthOpts}</select>
