@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.375</span>
+    <span class="build-date">v1.376</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5610,6 +5610,14 @@ function getSorted(ym) {
     }
     return 0;
   });
+  // 【状態】サブタブではデフォルト（ソートキー未指定か spend）を商品番号昇順に
+  if (_subTabFilter && (_sortKey === 'spend' || !_sortKey)) {
+    products.sort((a, b) => {
+      const an = productCache[a.id]?.itemNumber || a.id;
+      const bn = productCache[b.id]?.itemNumber || b.id;
+      return an.localeCompare(bn, 'ja', { numeric: true });
+    });
+  }
   return products;
 }
 
