@@ -400,7 +400,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.391</span>
+    <span class="build-date">v1.392</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6103,15 +6103,9 @@ function toggleRow(id, ym) {
   if (expandedSet.has(id)) expandedSet.delete(id);
   else expandedSet.add(id);
 
-  // 【状態】サブタブでは renderPage() で再描画（DOM書き換え型のため）
-  if (_subTabFilter) {
-    renderPage();
-    return;
-  }
-
-  // 【基本】タブではDOMアニメーション
+  // 【状態】・【基本】共通：DOMアニメーションのみ（renderPage不要）
   const panel = document.getElementById(`dp-${id}`);
-  if (!panel) { renderPage(); return; }
+  if (!panel) return;
   const isOpen = expandedSet.has(id);
 
   if (isOpen) {
