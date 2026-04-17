@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.373</span>
+    <span class="build-date">v1.374</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1628,6 +1628,7 @@ function readFiles(files) {
     afterLoad(); // afterLoad内でsaveToGitHubが呼ばれitemDailyDataも保存される
     // 商品別データ更新時も日別・月別データのキャッシュファイルがあれば再描画
     if (_nichinichiFiles.length > 0) monthlyRun();
+    else _unlockUI();
   })();
 }
 
@@ -3285,7 +3286,12 @@ async function monthlyRun() {
   renderDailyFiltered();
   populateKwMonthSel();
   renderKwFiltered();
+  populateMonthSel(); renderAll();
+  _initFormulaMonthSel();
   saveToGitHub();
+  _unlockUI();
+  document.getElementById('monthly-run-status').textContent = `完了 (月別:${nichinichiRows.length}件 / 日別:${dailyRows.length}件)`;
+  document.getElementById('daily-run-status').textContent = '';
   if (newMonthly.length > 0) switchTab('monthly');
   else if (newDaily.length > 0) switchTab('daily');
 }
@@ -4875,26 +4881,40 @@ function applyAllStatusUpdates() {
     productCache[code].ss = next;
   });
   // フィードバック：更新中 → 保存しました
-  const btn = document.querySelector('#tab-' + _currentTab + ' .table-toolbar button[onclick="applyAllStatusUpdates()"]');
+  const btn = document.querySelector('#tab-' + _currentTab + ' button[onclick="applyAllStatusUpdates()"]');
   if (btn) {
     const orig = btn.innerHTML;
+    const origBg = btn.style.background || '#f97316';
     btn.innerHTML = '⏳ 更新中…';
     btn.style.background = '#888';
     btn.disabled = true;
     saveProductCache();
-    saveToGitHub();
-    setTimeout(() => {
+    saveToGitHub().then(() => {
       btn.innerHTML = '✅ 保存しました';
       btn.style.background = '#16a34a';
       setTimeout(() => {
         btn.innerHTML = orig;
-        btn.style.background = '#f97316';
+        btn.style.background = origBg;
         btn.disabled = false;
-      }, 1500);
-    }, 400);
+      }, 2000);
+    }).catch(() => {
+      btn.innerHTML = '❌ エラー';
+      btn.style.background = '#c62828';
+      setTimeout(() => {
+        btn.innerHTML = orig;
+        btn.style.background = origBg;
+        btn.disabled = false;
+      }, 2000);
+    });
   } else {
     saveProductCache();
     saveToGitHub();
+    // ボタンが見つからない場合はトースト表示
+    const toast = document.createElement('div');
+    toast.textContent = '✅ 保存しました';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#16a34a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
   }
   renderMonthlySubTab(_currentTab);
 }
