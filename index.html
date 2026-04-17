@@ -400,7 +400,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.379</span>
+    <span class="build-date">v1.380</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1228,11 +1228,18 @@ function saveEditItem() {
   productCache[_editItemId].changeLog = clLogs;
 
   saveProductCache();
-  saveToGitHub();  // 全PC共通化のためGitHubにも保存
   renderPage();    // 画面を即更新
-  document.getElementById('editModalStatus').textContent = '保存しました';
+  renderAll();     // 商品基本データも更新
+  _updateStatusCounts(); // タブカウント更新
+  document.getElementById('editModalStatus').textContent = '保存中...';
   document.getElementById('editModalStatus').className = 'modal-status ok';
-  setTimeout(closeEditModal, 800);
+  saveToGitHub().then(() => {
+    document.getElementById('editModalStatus').textContent = '保存しました ✅';
+    setTimeout(closeEditModal, 800);
+  }).catch(() => {
+    document.getElementById('editModalStatus').textContent = '保存しました（ローカル）';
+    setTimeout(closeEditModal, 800);
+  });
 }
 
 // 編集モーダル内の変更記録ヘルパー
