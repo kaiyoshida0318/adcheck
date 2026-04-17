@@ -399,7 +399,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.377</span>
+    <span class="build-date">v1.378</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -438,21 +438,21 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 </nav>
 <nav class="tab-sub-row tab-sub-row-3">
   <span class="tab-row-label red">【状態】</span>
-  <button class="tab-btn" id="tab-btn-monthly-all" onclick="switchTab('monthly-all')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-monthly-all"></span><span>全体</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-g1" onclick="switchTab('monthly-g1')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-monthly-g1"></span><span>健常◎</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-g2" onclick="switchTab('monthly-g2')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-monthly-g2"></span><span>健常-要注意◯</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-g3" onclick="switchTab('monthly-g3')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-monthly-g3"></span><span>健常-広告無し</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-new" onclick="switchTab('monthly-new')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-monthly-new"></span><span>新商品</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-mid" onclick="switchTab('monthly-mid')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-monthly-mid"></span><span>中立□</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-mid2" onclick="switchTab('monthly-mid2')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-monthly-mid2"></span><span>中立-広告無し</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-monthly-warn"></span><span>撤退検討▲</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-monthly-out"></span><span>撤退■</span></button>
-  <button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-monthly-unset"></span><span>選択前■</span></button>
+  <button class="tab-btn" id="tab-btn-monthly-all" onclick="switchTab('monthly-all')">全体<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-all"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-g1" onclick="switchTab('monthly-g1')">健常◎<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-g1"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-g2" onclick="switchTab('monthly-g2')">健常-要注意◯<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-g2"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-g3" onclick="switchTab('monthly-g3')">健常-広告無し<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-g3"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-new" onclick="switchTab('monthly-new')">新商品<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-new"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-mid" onclick="switchTab('monthly-mid')">中立□<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-mid"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-mid2" onclick="switchTab('monthly-mid2')">中立-広告無し<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-mid2"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退検討▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warn"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-out"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-unset"></span></button>
   <span class="tab-row-label blue" style="padding-left:16px">【SS】</span>
-  <button class="tab-btn" id="tab-btn-ss-mar" onclick="switchTab('ss-mar')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-ss-mar"></span><span>3月</span></button>
-  <button class="tab-btn" id="tab-btn-ss-jun" onclick="switchTab('ss-jun')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-ss-jun"></span><span>6月</span></button>
-  <button class="tab-btn" id="tab-btn-ss-sep" onclick="switchTab('ss-sep')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-ss-sep"></span><span>9月</span></button>
-  <button class="tab-btn" id="tab-btn-ss-dec" onclick="switchTab('ss-dec')" style="flex-direction:column;padding:4px 10px;gap:1px"><span style="font-size:9px;color:var(--text3);font-weight:400;line-height:1" id="cnt-ss-dec"></span><span>12月</span></button>
+  <button class="tab-btn" id="tab-btn-ss-mar" onclick="switchTab('ss-mar')">3月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-mar"></span></button>
+  <button class="tab-btn" id="tab-btn-ss-jun" onclick="switchTab('ss-jun')">6月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-jun"></span></button>
+  <button class="tab-btn" id="tab-btn-ss-sep" onclick="switchTab('ss-sep')">9月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-sep"></span></button>
+  <button class="tab-btn" id="tab-btn-ss-dec" onclick="switchTab('ss-dec')">12月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-dec"></span></button>
   <div style="flex:1"></div>
 </nav>
 
@@ -5446,7 +5446,7 @@ function _updateStatusCounts() {
 
   const set = (id, n) => {
     const el = document.getElementById('cnt-' + id);
-    if (el) el.textContent = n > 0 ? n : '';
+    if (el) el.textContent = n > 0 ? `(${n})` : '';
   };
 
   set('monthly-all',   total);
