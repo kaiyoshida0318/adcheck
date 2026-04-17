@@ -135,8 +135,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .toggle-icon.open { transform: rotate(90deg); color: var(--red); border-color: var(--red); }
 
 /* ── Daily Panel ── */
-.daily-panel { overflow: hidden; max-height: 0; transition: max-height 0.25s ease; border-top: 0px solid var(--border); background: #fafaf9; }
-.daily-panel.open { max-height: 4000px; border-top: 1px solid var(--border); }
+.daily-panel { display: none; border-top: 1px solid var(--border); background: #fafaf9; overflow: hidden; }
+.daily-panel.open { display: block; }
 .daily-inner { padding: 14px 16px; }
 .detail-meta { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
 .meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; text-align: center; }
@@ -400,7 +400,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.382</span>
+    <span class="build-date">v1.383</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6023,17 +6023,39 @@ function toggleRow(id, ym) {
   const isOpen = expandedSet.has(id);
 
   if (isOpen) {
-    // 閉じる：クラスを外してトランジション後にinnerHTMLをクリア
+    // 閉じる：現在の高さから0へアニメーション
     expandedSet.delete(id);
-    panel.classList.remove('open');
-    panel.addEventListener('transitionend', () => {
-      if (!expandedSet.has(id)) panel.innerHTML = '';
-    }, { once: true });
+    const h = panel.scrollHeight;
+    panel.style.height = h + 'px';
+    panel.style.overflow = 'hidden';
+    panel.style.transition = 'height 0.22s ease';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      panel.style.height = '0';
+      panel.addEventListener('transitionend', () => {
+        panel.classList.remove('open');
+        panel.style.height = '';
+        panel.style.overflow = '';
+        panel.style.transition = '';
+        panel.innerHTML = '';
+      }, { once: true });
+    }));
   } else {
-    // 開く：innerHTML を先にセットしてからクラスを付ける
+    // 開く：0から実高さへアニメーション
     expandedSet.add(id);
-    panel.innerHTML = renderCalendar(DB[id], ym);
-    requestAnimationFrame(() => panel.classList.add('open'));
+    if (DB[id]) panel.innerHTML = renderCalendar(DB[id], ym);
+    panel.classList.add('open');
+    const h = panel.scrollHeight;
+    panel.style.height = '0';
+    panel.style.overflow = 'hidden';
+    panel.style.transition = 'height 0.22s ease';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      panel.style.height = h + 'px';
+      panel.addEventListener('transitionend', () => {
+        panel.style.height = '';
+        panel.style.overflow = '';
+        panel.style.transition = '';
+      }, { once: true });
+    }));
   }
 
   // item-basic の expanded クラスと toggle-icon を更新
