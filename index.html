@@ -400,7 +400,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.389</span>
+    <span class="build-date">v1.390</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1344,8 +1344,6 @@ async function saveToGitHub() {
   } catch(e) {
     console.error('[ADcheck] GitHub save exception:', e);
     throw e; // 呼び出し側でcatchできるよう再throw
-  } finally {
-    _unlockUI();
   }
 }
 
@@ -1359,9 +1357,13 @@ async function loadFromGitHub() {
     if (data && (data.productCache || data.dailyRows || data.nichinichiRows)) {
       Object.assign(DB, data.DB);
       if (data.productCache) {
+        // ローカル（localStorage）の値を最優先。GitHubはローカルにないキーのみ補完
+        const localCache = {};
+        try { const raw = localStorage.getItem(CACHE_KEY); if (raw) Object.assign(localCache, JSON.parse(raw)); } catch(e) {}
+        // GitHubデータを先にベースとして適用し、その後ローカルで上書き
         Object.assign(productCache, data.productCache);
-        saveProductCache(); // 他のPCでもlocalStorageに書き戻して次回即表示
-        // globalChangeLogsを復元
+        Object.assign(productCache, localCache); // ローカルが最優先
+        saveProductCache();
         if (productCache['__global__']?.changeLogs) {
           globalChangeLogs = productCache['__global__'].changeLogs;
         }
