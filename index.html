@@ -287,15 +287,15 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .item-basic > div:nth-child(11) { background: rgba(245,200,0,0.04); }
 
 /* ── Tab Navigation ── */
-.tab-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; top: 52px; z-index: 99; }
+.tab-bar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; top: 52px; z-index: 199; }
 .tab-btn { font-size: 13px; font-weight: 500; padding: 12px 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
 .tab-sub-row-3 .tab-btn { padding: 8px 10px; font-size: 12px; }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
-/* sub-tab rows (2nd and 3rd row) */
-.tab-sub-row { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; z-index: 98; }
-.tab-sub-row-2 { top: calc(52px + 46px); }
-.tab-sub-row-3 { top: calc(52px + 46px + 46px); }
+/* sub-tab rows (2nd and 3rd row) — 後ろのテーブル色付きヘッダーが透けないよう不透明白で確実に塗る */
+.tab-sub-row { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; z-index: 198; }
+.tab-sub-row-2 { top: calc(52px + 46px); background: #ffffff; z-index: 198; }
+.tab-sub-row-3 { top: calc(52px + 46px + 46px); background: #ffffff; z-index: 198; }
 .tab-row-label { font-size: 12px; font-weight: 700; padding: 0 10px 14px 4px; white-space: nowrap; align-self: flex-end; letter-spacing: 0.3px; }
 .tab-row-label.red { color: var(--red); }
 .tab-row-label.blue { color: #1565C0; }
@@ -400,7 +400,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.398</span>
+    <span class="build-date">v1.400</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -421,7 +421,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <input type="file" id="fileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
 
 <!-- タブバー -->
-<nav class="tab-bar tab-sub-row" style="position:sticky;top:52px;z-index:99;border-bottom:1px solid var(--border)">
+<nav class="tab-bar tab-sub-row" style="position:sticky;top:52px;z-index:199;background:#ffffff;border-bottom:1px solid var(--border)">
   <span class="tab-row-label" style="color:#5C6BC0">【基本】</span>
   <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">📊 商品-基本データ</button>
   <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">📊 商品-月別データ</button>
@@ -640,7 +640,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           </div>
           <!-- クイック期間ボタン -->
           <div id="graphQuickBtns" style="display:flex;gap:3px;margin-left:6px">
-            <button onclick="setGraphQuickRange('lastMonth')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap" title="先月分">先月</button>
+            <button onclick="setGraphQuickRange('lastMonth')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap" title="先月初日〜今日">先月〜今月</button>
             <button onclick="setGraphQuickRange('thisMonth')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap" title="今月分">今月</button>
             <button onclick="setGraphQuickRange('thisYear')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap" title="今年(1月〜現在)">今年</button>
             <button onclick="setGraphQuickRange('1year')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap" title="直近1年">1年</button>
@@ -4018,7 +4018,7 @@ function setGraphQuickRange(kind) {
   let fromDate, toDate; // Date オブジェクト
   if (kind === 'lastMonth') {
     fromDate = new Date(y, m - 1, 1);
-    toDate   = new Date(y, m, 0); // 先月末日
+    toDate   = today; // 先月初日〜今日まで（先月+今月をカバー）
   } else if (kind === 'thisMonth') {
     fromDate = new Date(y, m, 1);
     toDate   = new Date(y, m + 1, 0); // 今月末日(月別表示用)
