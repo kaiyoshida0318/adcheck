@@ -287,15 +287,38 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .item-basic > div:nth-child(11) { background: rgba(245,200,0,0.04); }
 
 /* ── Tab Navigation ── */
-.tab-bar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; top: 52px; z-index: 199; }
+/* ズーム時に sticky の top がCSS指定値ピッタリ計算されないため、JSから --z-tab*-top をズーム倍率補正で注入する */
+.tab-bar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; top: var(--z-tab1-top, 52px); z-index: 199; min-height: 46px; box-sizing: border-box; }
 .tab-btn { font-size: 13px; font-weight: 500; padding: 12px 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
 .tab-sub-row-3 .tab-btn { padding: 8px 10px; font-size: 12px; }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
-/* sub-tab rows (2nd and 3rd row) — 後ろのテーブル色付きヘッダーが透けないよう不透明白で確実に塗る */
-.tab-sub-row { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; z-index: 198; }
-.tab-sub-row-2 { top: calc(52px + 46px); background: #ffffff; z-index: 198; }
-.tab-sub-row-3 { top: calc(52px + 46px + 46px); background: #ffffff; z-index: 198; }
+/* sub-tab rows (2nd and 3rd row) — 不透明白で塗り、隙間ができないよう疑似要素でも上下を白に */
+.tab-sub-row { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; z-index: 198; min-height: 46px; box-sizing: border-box; }
+.tab-sub-row-2 { top: var(--z-tab2-top, calc(52px + 46px)); background: #ffffff; z-index: 198; }
+.tab-sub-row-3 { top: var(--z-tab3-top, calc(52px + 46px + 46px)); background: #ffffff; z-index: 198; }
+/* stickyナビの隙間に色付きヘッダーが覗くのを防ぐため、各ナビの上端外に白いカバーを配置 */
+.tab-bar::before, .tab-sub-row::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: -2px;       /* 上に2px はみ出す */
+  height: 2px;
+  background: #ffffff;
+  pointer-events: none;
+}
+.tab-bar::after, .tab-sub-row::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -2px;    /* 下に2px はみ出す */
+  height: 2px;
+  background: #ffffff;
+  pointer-events: none;
+}
+.tab-bar, .tab-sub-row { /* ::before/::after の絶対配置基準 */
+  /* position: sticky は既に指定済み。sticky自体がpositioning contextを作る */
+}
 .tab-row-label { font-size: 12px; font-weight: 700; padding: 0 10px 14px 4px; white-space: nowrap; align-self: flex-end; letter-spacing: 0.3px; }
 .tab-row-label.red { color: var(--red); }
 .tab-row-label.blue { color: #1565C0; }
@@ -400,7 +423,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.400</span>
+    <span class="build-date">v1.402</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -421,7 +444,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <input type="file" id="fileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
 
 <!-- タブバー -->
-<nav class="tab-bar tab-sub-row" style="position:sticky;top:52px;z-index:199;background:#ffffff;border-bottom:1px solid var(--border)">
+<nav class="tab-bar tab-sub-row" style="background:#ffffff;border-bottom:1px solid var(--border)">
   <span class="tab-row-label" style="color:#5C6BC0">【基本】</span>
   <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">📊 商品-基本データ</button>
   <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">📊 商品-月別データ</button>
@@ -1117,6 +1140,14 @@ function _applyZoom() {
   _zoom = Math.round(_zoom * 100) / 100;
   _zoom = Math.max(0.7, Math.min(1.5, _zoom));
   document.documentElement.style.zoom = _zoom;
+  // ズーム適用時、CSSのsticky topが実表示と合わなくなる(下に隙間ができる)ため
+  // CSS変数経由でtopをズーム倍率で補正する
+  const headerH = 52;
+  const tabH = 46;
+  document.documentElement.style.setProperty('--z-header-top', '0px');
+  document.documentElement.style.setProperty('--z-tab1-top',   (headerH / _zoom) + 'px');
+  document.documentElement.style.setProperty('--z-tab2-top',   ((headerH + tabH) / _zoom) + 'px');
+  document.documentElement.style.setProperty('--z-tab3-top',   ((headerH + tabH * 2) / _zoom) + 'px');
   const lbl = document.getElementById('zoomLabel');
   if (lbl) lbl.textContent = Math.round(_zoom * 100) + '%';
   localStorage.setItem(ZOOM_KEY, _zoom);
