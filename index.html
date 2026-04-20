@@ -400,7 +400,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.396</span>
+    <span class="build-date">v1.397</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -637,6 +637,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <input type="date" id="graphDateFrom" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px">
             <span style="font-size:12px;color:var(--text3)">〜</span>
             <input type="date" id="graphDateTo" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px">
+          </div>
+          <!-- クイック期間ボタン -->
+          <div id="graphQuickBtns" style="display:flex;gap:3px;margin-left:6px">
+            <button onclick="setGraphQuickRange('lastMonth')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap" title="先月分">先月</button>
+            <button onclick="setGraphQuickRange('thisMonth')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap" title="今月分">今月</button>
+            <button onclick="setGraphQuickRange('thisYear')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap" title="今年(1月〜現在)">今年</button>
+            <button onclick="setGraphQuickRange('1year')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap" title="直近1年">1年</button>
+            <button onclick="setGraphQuickRange('all')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap" title="全期間">全期間</button>
           </div>
           <button onclick="openGlobalChangeLog()"
             style="margin-left:auto;font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">
@@ -3999,6 +4007,69 @@ function setGraphPeriod(period) {
   renderGraph();
 }
 
+// クイック期間選択（先月/今月/今年/1年/全期間）
+function setGraphQuickRange(kind) {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = today.getMonth(); // 0始まり
+  const pad = n => String(n).padStart(2, '0');
+
+  // 月別/日別 共通でレンジを決定し、必要なら期間モードも切替
+  let fromDate, toDate; // Date オブジェクト
+  if (kind === 'lastMonth') {
+    fromDate = new Date(y, m - 1, 1);
+    toDate   = new Date(y, m, 0); // 先月末日
+  } else if (kind === 'thisMonth') {
+    fromDate = new Date(y, m, 1);
+    toDate   = new Date(y, m + 1, 0); // 今月末日(月別表示用)
+  } else if (kind === 'thisYear') {
+    fromDate = new Date(y, 0, 1);
+    toDate   = today;
+  } else if (kind === '1year') {
+    fromDate = new Date(y - 1, m, today.getDate());
+    toDate   = today;
+  } else if (kind === 'all') {
+    fromDate = null; // 全期間
+    toDate   = null;
+  }
+
+  if (_graphPeriod === 'monthly') {
+    const sel1 = document.getElementById('graphMonthFrom');
+    const sel2 = document.getElementById('graphMonthTo');
+    if (!sel1 || !sel2) return;
+    if (kind === 'all') {
+      const opts = [...sel1.options].map(o => o.value).sort();
+      if (opts.length) { sel1.value = opts[0]; sel2.value = opts[opts.length-1]; }
+    } else {
+      const fromYm = fromDate.getFullYear() + pad(fromDate.getMonth() + 1);
+      const toYm   = toDate.getFullYear()   + pad(toDate.getMonth()   + 1);
+      // セレクトの選択肢にあるものだけ設定（範囲外なら最寄りに丸める）
+      const opts = [...sel1.options].map(o => o.value).sort();
+      const clamp = v => {
+        if (!opts.length) return v;
+        if (v < opts[0]) return opts[0];
+        if (v > opts[opts.length-1]) return opts[opts.length-1];
+        return v;
+      };
+      sel1.value = clamp(fromYm);
+      sel2.value = clamp(toYm);
+    }
+  } else {
+    // daily モード
+    const d1 = document.getElementById('graphDateFrom');
+    const d2 = document.getElementById('graphDateTo');
+    if (!d1 || !d2) return;
+    if (kind === 'all') {
+      const dates = dailyRows.map(r => r.label?.replace(/\//g,'-')).filter(Boolean).sort();
+      if (dates.length) { d1.value = dates[0]; d2.value = dates[dates.length-1]; }
+    } else {
+      d1.value = fromDate.getFullYear() + '-' + pad(fromDate.getMonth()+1) + '-' + pad(fromDate.getDate());
+      d2.value = toDate.getFullYear()   + '-' + pad(toDate.getMonth()+1)   + '-' + pad(toDate.getDate());
+    }
+  }
+  renderGraph();
+}
+
 function _renderGraphTable(labels, datasets) {
   const wrap = document.getElementById('graphDataTable');
   if (!wrap) return;
@@ -4240,6 +4311,7 @@ function renderGraph() {
       return dailyRows.filter(d => d.code?.startsWith(ym)).reduce((s,d)=>s+(d.spendKw||0),0) || (r.spendKw || 0);
     });
     const data20 = rows.map((r,i) => Math.max(0, (r.spend||0) - dataKw[i]));
+    const dataTotal = dataKw.map((v,i) => v + data20[i]);
 
         const lineDs2 = (label, data, color) => ({
       label, data,
@@ -4253,6 +4325,32 @@ function renderGraph() {
       stack: 'spend',
     });
 
+    // 合計値を点ラベルとして表示するためのプラグイン
+    const totalLabelPlugin = {
+      id: 'spendTotalLabel',
+      afterDatasetsDraw(chart) {
+        const { ctx, scales: { x, y } } = chart;
+        if (!x || !y) return;
+        // 全dataset非表示なら描画しない
+        const visibleSets = chart.data.datasets.filter((_, i) => !chart.getDatasetMeta(i).hidden);
+        if (visibleSets.length === 0) return;
+        ctx.save();
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillStyle = '#1a1a1a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.shadowColor = 'rgba(255,255,255,0.95)';
+        ctx.shadowBlur = 4;
+        dataTotal.forEach((val, i) => {
+          if (val <= 0) return;
+          const xPos = x.getPixelForValue(i);
+          const yPos = y.getPixelForValue(val);
+          ctx.fillText('¥' + Math.round(val).toLocaleString(), xPos, yPos - 6);
+        });
+        ctx.restore();
+      }
+    };
+
     _chartInstance = new Chart(canvas, {
       type: 'line',
       data: {
@@ -4262,9 +4360,11 @@ function renderGraph() {
           lineDs2('KW実績',  dataKw,  '#60a5fa'),
         ]
       },
+      plugins: [totalLabelPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 22 } },
         plugins: {
           legend: {
             display: true,
@@ -4280,7 +4380,12 @@ function renderGraph() {
           },
           tooltip: {
             callbacks: {
-              label: ctx => ` ${ctx.dataset.label}: ¥${Math.round(ctx.raw).toLocaleString()}`
+              label: ctx => ` ${ctx.dataset.label}: ¥${Math.round(ctx.raw).toLocaleString()}`,
+              footer: items => {
+                if (!items.length) return '';
+                const idx = items[0].dataIndex;
+                return '合計: ¥' + Math.round(dataTotal[idx]).toLocaleString();
+              }
             }
           }
         },
@@ -4299,7 +4404,12 @@ function renderGraph() {
       }
     });
     _applyGlobalClLines(_chartInstance, labels);
-    _renderGraphTable(labels, _chartInstance.data.datasets);
+    // テーブル用に「合計」列を追加表示
+    const tableDatasets = [
+      ..._chartInstance.data.datasets,
+      { label: '合計', data: dataTotal, borderColor: '#1a1a1a' }
+    ];
+    _renderGraphTable(labels, tableDatasets);
     return;
   }
 
