@@ -400,7 +400,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.397</span>
+    <span class="build-date">v1.398</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4167,18 +4167,23 @@ function renderGraph() {
   const textColor = isDark ? '#a0aec0' : '#718096';
 
   if (metric === 'sales') {
-    // salesRowsから月別総売上を集計（全-月別データと同じ方法）
+    // salesRowsから集計（月別 or 日別で参照キーを切り替える）
     const salesByYm = {};
+    const salesByDate = {};
     salesRows.forEach(s => {
-      if (s.ym) {
-        const ymk = s.ym.replace('-',''); // YYYY-MM → YYYYMM
-        salesByYm[ymk] = (salesByYm[ymk]||0) + s.sales;
-      }
+      if (s.ym)   salesByYm[s.ym]     = (salesByYm[s.ym]   || 0) + s.sales;
+      if (s.date) salesByDate[s.date] = (salesByDate[s.date] || 0) + s.sales;
     });
 
     const dataTot = rows.map(r => {
-      const ymk = (r.code||'').slice(0,6);
-      return salesByYm[ymk] || 0;
+      const c = r.code || '';
+      if (_graphPeriod === 'daily' && c.length === 8) {
+        // 日別: code=20260419 → '2026-04-19'
+        const dateKey = c.slice(0,4) + '-' + c.slice(4,6) + '-' + c.slice(6,8);
+        return salesByDate[dateKey] || 0;
+      }
+      // 月別: code=202604 → 6桁キーをそのまま使う
+      return salesByYm[c.slice(0,6)] || 0;
     });
     const dataAdv = rows.map(r => r.sales || 0);
     const dataSeo = dataTot.map((t,i) => Math.max(0, t - dataAdv[i]));
