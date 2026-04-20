@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.403</span>
+    <span class="build-date">v1.404</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4452,8 +4452,29 @@ function renderGraph() {
     return;
   }
 
-  // ROASは3本折れ線（全体・KW・20円）
+  // ROASは5本折れ線（全体・KW・KW 40円台・KW 50円以上・20円）
   if (metric === 'roas') {
+    // KW別・日単位でCPC bucket判定(40円以下→40円台 / 50円以上→50円以上)し、
+    // rowsの code(月別:YYYYMM / 日別:YYYYMMDD) ごとに spend / sales を集計
+    const kwBucketAgg = {}; // { code: { spend40, sales40, spend50, sales50 } }
+    (kwRows || []).forEach(r => {
+      if (!r || !r.date) return;
+      const cl = r.cl || 0;
+      const sp = r.spend || 0;
+      const sa = r.sales || 0;
+      if (cl <= 0 || sp <= 0) return; // クリック/実績無しはCPC算出不可
+      const cpc = sp / cl;
+      const bucket = cpc <= 49 ? '40' : '50';
+      // 月別キーと日別キー両方に集計
+      const ymK   = r.ym || r.date.slice(0,7).replace('-','');
+      const dayK  = r.date.replace(/-/g,'');
+      [ymK, dayK].forEach(k => {
+        if (!kwBucketAgg[k]) kwBucketAgg[k] = { spend40:0, sales40:0, spend50:0, sales50:0 };
+        if (bucket === '40') { kwBucketAgg[k].spend40 += sp; kwBucketAgg[k].sales40 += sa; }
+        else                 { kwBucketAgg[k].spend50 += sp; kwBucketAgg[k].sales50 += sa; }
+      });
+    });
+
     const dataRoas   = rows.map(r => r.roas || 0);
     const dataRoasKw = rows.map(r => {
       if (_graphPeriod === 'daily') {
@@ -4464,6 +4485,16 @@ function renderGraph() {
       const sk = ds.reduce((s,d)=>s+(d.spendKw||0),0) || (r.spendKw||0);
       const slk= ds.reduce((s,d)=>s+(d.salesKw||0),0) || (r.salesKw||0);
       return sk > 0 ? Math.round(slk/sk*10000)/100 : 0;
+    });
+    const dataRoasKw40 = rows.map(r => {
+      const agg = kwBucketAgg[r.code || ''];
+      if (!agg || agg.spend40 <= 0) return 0;
+      return Math.round(agg.sales40 / agg.spend40 * 10000) / 100;
+    });
+    const dataRoasKw50 = rows.map(r => {
+      const agg = kwBucketAgg[r.code || ''];
+      if (!agg || agg.spend50 <= 0) return 0;
+      return Math.round(agg.sales50 / agg.spend50 * 10000) / 100;
     });
     const dataRoas20 = rows.map((r,i) => {
       if (_graphPeriod === 'daily') {
@@ -4482,7 +4513,7 @@ function renderGraph() {
       return s20 > 0 ? Math.round(sl20/s20*10000)/100 : 0;
     });
 
-    const lineDs = (label, data, color) => ({
+    const lineDs = (label, data, color, extras) => ({
       label, data,
       borderColor: color,
       backgroundColor: color + '22',
@@ -4491,6 +4522,7 @@ function renderGraph() {
       pointHoverRadius: 6,
       tension: 0.3,
       fill: false,
+      ...(extras || {}),
     });
 
     _chartInstance = new Chart(canvas, {
@@ -4498,9 +4530,11 @@ function renderGraph() {
       data: {
         labels,
         datasets: [
-          lineDs('ROAS■ (全体)', dataRoas,   '#fbbf24'),
-          lineDs('KW ROAS',     dataRoasKw, '#60a5fa'),
-          lineDs('20円 ROAS',   dataRoas20, '#f97316'),
+          lineDs('ROAS■ (全体)',   dataRoas,     '#fbbf24'),
+          lineDs('KW ROAS',        dataRoasKw,   '#60a5fa'),
+          lineDs('KW ROAS 40円台', dataRoasKw40, '#16a34a', { borderDash: [6,3] }),
+          lineDs('KW ROAS 50円+',  dataRoasKw50, '#9333ea', { borderDash: [6,3] }),
+          lineDs('20円 ROAS',      dataRoas20,   '#f97316'),
         ]
       },
       options: {
