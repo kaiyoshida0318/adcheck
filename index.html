@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.407</span>
+    <span class="build-date">v1.408</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -648,8 +648,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
             <option value="sales">売上（総売上/SEO/広告）</option>
             <option value="spend">実績額</option>
             <option value="spend_ratio">実績額-割合 (KW/20円)</option>
-            <option value="roas">ROAS</option>
-            <option value="cvr">CVR</option>
+            <option value="roas">ROAS-メイン</option>
+            <option value="roas5">ROAS-5項目</option>
+            <option value="cvr">CVR-メイン</option>
+            <option value="cvr5">CVR-5項目</option>
           </select>
 
           <!-- 月別期間選択 -->
@@ -4190,7 +4192,9 @@ function renderGraph() {
     spend_ratio: { label: '実績額-割合', key: null,    color: null,      yFmt: v => v.toFixed(1)+'%' },
     cl:          { label: 'クリック数',  key: 'cl',    color: '#60a5fa', yFmt: v => v.toLocaleString() },
     roas:        { label: 'ROAS (%)',    key: 'roas',  color: '#34d399', yFmt: v => v.toFixed(1)+'%' },
+    roas5:       { label: 'ROAS (%)',    key: 'roas',  color: '#34d399', yFmt: v => v.toFixed(1)+'%' },
     cvr:         { label: 'CVR (%)',     key: 'cvr',   color: '#a78bfa', yFmt: v => v.toFixed(2)+'%' },
+    cvr5:        { label: 'CVR (%)',     key: 'cvr',   color: '#a78bfa', yFmt: v => v.toFixed(2)+'%' },
   };
   const cfg = metricConfig[metric] || metricConfig.spend;
 
@@ -4336,8 +4340,8 @@ function renderGraph() {
   }
 
   const data = rows.map(r => {
-    if (metric === 'roas') return r.roas || 0;
-    if (metric === 'cvr')  return r.cvr  || 0;
+    if (metric === 'roas' || metric === 'roas5') return r.roas || 0;
+    if (metric === 'cvr'  || metric === 'cvr5')  return r.cvr  || 0;
     if (metric === 'cl')   return r.cl   || r.clicks || 0;
     return r.spend || 0;
   });
@@ -4365,13 +4369,42 @@ function renderGraph() {
     });
 
     // 合計値の各データポイント上に値ラベルを描画するプラグイン
+    // 表示点が多いと見づらくなるため、20個超の場合は近接値(隣との差が小さい点)を間引く
     const totalLabelPlugin = {
       id: 'spendTotalLabel',
       afterDatasetsDraw(chart) {
         const { ctx } = chart;
-        // 合計datasetは index=0 (先頭)
         const topMeta = chart.getDatasetMeta(0);
         if (!topMeta || topMeta.hidden || !topMeta.data) return;
+
+        // 表示対象インデックスを決定
+        const n = dataTotal.length;
+        let showIdx = new Set();
+        if (n <= 20) {
+          // 全部表示
+          for (let i = 0; i < n; i++) showIdx.add(i);
+        } else {
+          // 両端は必ず表示
+          showIdx.add(0);
+          showIdx.add(n - 1);
+          // 値のレンジで近似判定の閾値を決める(レンジの3%未満の差なら近似)
+          const maxV = Math.max(...dataTotal);
+          const minV = Math.min(...dataTotal.filter(v => v > 0));
+          const threshold = (maxV - minV) * 0.03;
+          // 目標: 約10〜12個になるように等間隔で候補を選び、近似点を間引く
+          const step = Math.ceil(n / 10);
+          let lastShownVal = dataTotal[0];
+          for (let i = step; i < n - 1; i += step) {
+            const v = dataTotal[i];
+            if (v <= 0) continue;
+            // 直前に表示した値と大きく違う場合のみ表示
+            if (Math.abs(v - lastShownVal) >= threshold) {
+              showIdx.add(i);
+              lastShownVal = v;
+            }
+          }
+        }
+
         ctx.save();
         ctx.font = 'bold 11px sans-serif';
         ctx.fillStyle = '#1a1a1a';
@@ -4381,7 +4414,7 @@ function renderGraph() {
         ctx.shadowBlur = 4;
         topMeta.data.forEach((pt, i) => {
           const val = dataTotal[i];
-          if (!pt || val <= 0) return;
+          if (!pt || val <= 0 || !showIdx.has(i)) return;
           ctx.fillText('¥' + Math.round(val).toLocaleString(), pt.x, pt.y - 6);
         });
         ctx.restore();
@@ -4426,8 +4459,9 @@ function renderGraph() {
     return;
   }
 
-  // ROASは5本折れ線（全体・KW・KW 40円台・KW 50円以上・20円）
-  if (metric === 'roas') {
+  // ROAS: 'roas' = メイン3本(全体/KW/20円), 'roas5' = 5本(40円台/50円+追加)
+  if (metric === 'roas' || metric === 'roas5') {
+    const isFive = metric === 'roas5';
     // KW別・日単位でCPC bucket判定(40円以下→40円台 / 50円以上→50円以上)し、
     // rowsの code(月別:YYYYMM / 日別:YYYYMMDD) ごとに spend / sales を集計
     const kwBucketAgg = {}; // { code: { spend40, sales40, spend50, sales50 } }
@@ -4503,11 +4537,15 @@ function renderGraph() {
       type: 'line',
       data: {
         labels,
-        datasets: [
+        datasets: isFive ? [
           lineDs('ROAS■ (全体)',   dataRoas,     '#fbbf24'),
           lineDs('KW ROAS',        dataRoasKw,   '#60a5fa'),
           lineDs('KW ROAS 40円台', dataRoasKw40, '#16a34a', { borderDash: [6,3] }),
           lineDs('KW ROAS 50円+',  dataRoasKw50, '#9333ea', { borderDash: [6,3] }),
+          lineDs('20円 ROAS',      dataRoas20,   '#f97316'),
+        ] : [
+          lineDs('ROAS■ (全体)',   dataRoas,     '#fbbf24'),
+          lineDs('KW ROAS',        dataRoasKw,   '#60a5fa'),
           lineDs('20円 ROAS',      dataRoas20,   '#f97316'),
         ]
       },
@@ -4529,8 +4567,9 @@ function renderGraph() {
     return;
   }
 
-  // CVRは5本折れ線（全体・KW・KW 40円台・KW 50円以上・20円）
-  if (metric === 'cvr') {
+  // CVR: 'cvr' = メイン3本(全体/KW/20円), 'cvr5' = 5本(40円台/50円+追加)
+  if (metric === 'cvr' || metric === 'cvr5') {
+    const isFive = metric === 'cvr5';
     // KW別・日単位でCPC bucket判定(40円以下→40円台 / 50円以上→50円以上)し、
     // rowsの code(月別:YYYYMM / 日別:YYYYMMDD) ごとに cl / orders を集計
     const kwBucketAgg = {}; // { code: { cl40, ord40, cl50, ord50 } }
@@ -4597,11 +4636,15 @@ function renderGraph() {
       type: 'line',
       data: {
         labels,
-        datasets: [
+        datasets: isFive ? [
           lineDs('CVR■ (全体)',   dataCvr,     '#a78bfa'),
           lineDs('KW CVR',        dataCvrKw,   '#60a5fa'),
           lineDs('KW CVR 40円台', dataCvrKw40, '#16a34a', { borderDash: [6,3] }),
           lineDs('KW CVR 50円+',  dataCvrKw50, '#9333ea', { borderDash: [6,3] }),
+          lineDs('20円 CVR',      dataCvr20,   '#f97316'),
+        ] : [
+          lineDs('CVR■ (全体)',   dataCvr,     '#a78bfa'),
+          lineDs('KW CVR',        dataCvrKw,   '#60a5fa'),
           lineDs('20円 CVR',      dataCvr20,   '#f97316'),
         ]
       },
