@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.420</span>
+    <span class="build-date">v1.421</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5297,7 +5297,7 @@ function applyAllStatusUpdates() {
       }
       headerHtml = h;
     }
-    _listWrap.innerHTML = headerHtml + '<div>' + inner + '</div>';
+    _listWrap.innerHTML = headerHtml + inner;
   } else {
     renderMonthlySubTab(_currentTab);
   }
@@ -5421,7 +5421,7 @@ function renderMonthlySubTab(tab) {
         <div style="padding:12px 16px">
           <div class="table-card">
             <div id="subTabToolbarWrap" style="position:sticky;top:0;z-index:6;background:var(--surface)">${_subTabToolbar(tab, ym)}</div>
-            <div style="overflow-y:auto;max-height:75vh;overflow-x:auto" id="subTabListWrap">${headerHtml}<div>${rows}</div></div>
+            <div style="overflow-y:auto;max-height:75vh;overflow-x:auto" id="subTabListWrap">${headerHtml}${rows}</div>
           </div>
         </div>
       `;
@@ -5429,7 +5429,7 @@ function renderMonthlySubTab(tab) {
       if (_sb2) _sb2.addEventListener('input', () => renderMonthlySubTab(_currentTab));
     } else {
       const _listWrap2 = panel.querySelector('#subTabListWrap');
-      if (_listWrap2) _listWrap2.innerHTML = headerHtml + '<div>' + rows + '</div>';
+      if (_listWrap2) _listWrap2.innerHTML = headerHtml + rows;
       const _newQ2 = document.getElementById('subTabSearchBox');
       if (_newQ2 && _savedQ2 !== undefined) _newQ2.value = _savedQ2;
     }
@@ -6220,7 +6220,7 @@ function renderPage() {
           <div style="padding:12px 16px">
             <div class="table-card">
               <div id="subTabToolbarWrap" style="position:sticky;top:0;z-index:6;background:var(--surface)">${_subTabToolbar(_currentTab, ym)}</div>
-              <div style="overflow-y:auto;max-height:75vh;overflow-x:auto" id="subTabListWrap">${headerHtml}<div>${inner}</div></div>
+              <div style="overflow-y:auto;max-height:75vh;overflow-x:auto" id="subTabListWrap">${headerHtml}${inner}</div>
             </div>
           </div>
         `;
@@ -6230,7 +6230,7 @@ function renderPage() {
       } else {
         // 2回目以降：リスト部分のみ更新
         const _listWrap = panel.querySelector('#subTabListWrap');
-        if (_listWrap) _listWrap.innerHTML = headerHtml + '<div>' + inner + '</div>';
+        if (_listWrap) _listWrap.innerHTML = headerHtml + inner;
         const _newQ = document.getElementById('subTabSearchBox');
         if (_newQ && _savedQ !== undefined) _newQ.value = _savedQ;
       }
@@ -6559,6 +6559,12 @@ function toggleRow(id, ym) {
       return;
     }
   } else {
+    // 閉じる時も状態タブではrenderPageで完全再描画
+    if (_subTabFilter) {
+      console.log('[ADcheck] close on subTab → renderPage');
+      renderPage();
+      return;
+    }
     panel.classList.remove('open');
     panel.innerHTML = '';
     panel.style.cssText = '';
