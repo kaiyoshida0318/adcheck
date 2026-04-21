@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.408</span>
+    <span class="build-date">v1.409</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1574,13 +1574,15 @@ function handleFiles(e) {
   setTimeout(() => { e.target.value = ''; }, 100);
 }
 
-function readFiles(files) {
+async function readFiles(files) {
   if (!files || files.length === 0) return;
-  (async () => {
-    _lockUI('ファイルを処理しています...<br>完了するまで画面を操作しないでください。');
+  console.log('[ADcheck] readFiles START: count=', files.length, 'names=', Array.from(files).map(f=>f.name));
+  _lockUI('ファイルを処理しています...<br>完了するまで画面を操作しないでください。');
+  try {
     // 常にGitHubから最新データをロードしてからマージ（上書き消失を防ぐ）
     _lockUI('GitHubから最新データを読み込み中...<br>しばらくお待ちください。');
     await loadFromGitHub();
+    console.log('[ADcheck] readFiles: GitHub load done');
     const csvTexts = [];
     let hasMonthlyFile = false;
     let hasSalesUpdate = false;
@@ -1614,6 +1616,7 @@ function readFiles(files) {
     for (const f of expandedFiles) {
       const fname = f.name.toLowerCase();
       const type = _nichFileType(f.name);
+      console.log('[ADcheck] processing file:', f.name, 'type=', type);
 
       // rpp_reports / rpp_keyword_reports は日別・月別データ用
       // ただしkwはitemDailyDataにも追記してから処理
@@ -1723,27 +1726,35 @@ function readFiles(files) {
 
     // salesRows更新があれば一括保存
     if (hasSalesUpdate) {
+      console.log('[ADcheck] hasSalesUpdate=true, saving...');
       renderAll();
       saveToGitHub();
     }
     // 月別データファイルが追加された場合は自動で表示を更新
     if (hasMonthlyFile) {
-      monthlyRun(); // 月別・日別データを処理して自動タブ切替
+      console.log('[ADcheck] hasMonthlyFile=true, running monthlyRun()');
+      await monthlyRun(); // 月別・日別データを処理して自動タブ切替
     }
 
     if (csvTexts.length === 0) {
+      console.log('[ADcheck] csvTexts is empty. hasMonthlyFile=', hasMonthlyFile, 'itemDailyData keys=', Object.keys(itemDailyData).length);
       if (!hasMonthlyFile) alert('CSVファイルが見つかりませんでした。ZIPまたはCSVファイルを選択してください。');
       // item/kwのみの場合でもsaveToGitHubを呼んでitemDailyDataを保存
       if (Object.keys(itemDailyData).length > 0) saveToGitHub();
-      if (_nichinichiFiles.length > 0) monthlyRun();
+      if (_nichinichiFiles.length > 0) await monthlyRun();
       return;
     }
+    console.log('[ADcheck] parseCSV for', csvTexts.length, 'item-report CSVs');
     csvTexts.forEach(({ text, name }) => parseCSV(text, name));
     afterLoad(); // afterLoad内でsaveToGitHubが呼ばれitemDailyDataも保存される
     // 商品別データ更新時も日別・月別データのキャッシュファイルがあれば再描画
-    if (_nichinichiFiles.length > 0) monthlyRun();
+    if (_nichinichiFiles.length > 0) await monthlyRun();
     else _unlockUI();
-  })();
+  } catch (err) {
+    console.error('[ADcheck] readFiles error:', err);
+    alert('ファイル処理中にエラーが発生しました:\n' + (err?.message || err) + '\n\nF12 > Consoleタブで詳細を確認してください。');
+    _unlockUI();
+  }
 }
 
 function parseCSV(text, fname) {
@@ -5652,12 +5663,13 @@ async function runDropZoneCheck() {
   if (!hasError) {
     html += '<div style="margin-top:8px;padding:7px 10px;background:#e8f5e9;border-radius:5px;font-size:11px;color:#2e7d32;font-weight:700">✅ 問題なし。「反映する」を押してください</div>';
   } else {
-    html += '<div style="margin-top:8px;padding:7px 10px;background:#fff8e1;border-radius:5px;font-size:11px;color:#6d4c00">⚠️ 問題がありますが「反映する」で強制的に処理することもできます</div>';
+    html += '<div style="margin-top:8px;padding:7px 10px;background:#ffebee;border-radius:5px;font-size:11px;color:#c62828;font-weight:700">❌ 問題があります。正しいファイルを選び直して再チェックしてください</div>';
   }
 
   result.innerHTML = html;
   btn.disabled = false; btn.textContent = '🔍 チェック';
-  document.getElementById('dropZoneApplyBtn').style.display = 'inline-block';
+  // エラー時は反映ボタンを出さない／OK時のみ表示
+  document.getElementById('dropZoneApplyBtn').style.display = hasError ? 'none' : 'inline-block';
 }
 
 async function runDropZoneApply() {
@@ -5665,15 +5677,24 @@ async function runDropZoneApply() {
   const btn = document.getElementById('dropZoneApplyBtn');
   btn.disabled = true; btn.textContent = '⏳ 反映中...';
   document.getElementById('dropZoneStatus').textContent = '処理中...';
-  readFiles(_stagedFiles);
-  _stagedFiles = null;
-  setTimeout(() => {
+  try {
+    await readFiles(_stagedFiles);
+    _stagedFiles = null;
     btn.style.display = 'none';
     document.getElementById('dropZoneCheckBtn').style.display = 'none';
     document.getElementById('dropZoneCheckResult').style.display = 'none';
-    document.getElementById('dropZoneStatus').textContent = '';
-    closeDropZone();
-  }, 600);
+    document.getElementById('dropZoneStatus').innerHTML =
+      '<span style="color:var(--green);font-weight:700">✅ 反映完了</span>';
+    setTimeout(() => {
+      document.getElementById('dropZoneStatus').textContent = '';
+      closeDropZone();
+    }, 800);
+  } catch (err) {
+    console.error('[ADcheck] runDropZoneApply error:', err);
+    document.getElementById('dropZoneStatus').innerHTML =
+      '<span style="color:var(--danger);font-weight:700">❌ 反映失敗: ' + (err?.message || err) + '</span>';
+    btn.disabled = false; btn.textContent = '✅ 反映する';
+  }
 }
 
 // ── インポートガイドモーダル ──
