@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.421</span>
+    <span class="build-date">v1.422</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4408,9 +4408,19 @@ function renderGraph() {
           showIdx.add(0);
           showIdx.add(n - 1);
           // 値のレンジで近似判定の閾値を決める(レンジの3%未満の差なら近似)
-          const maxV = Math.max(...dataTotal);
-          const minV = Math.min(...dataTotal.filter(v => v > 0));
+          const positiveVals = dataTotal.filter(v => v > 0);
+          const maxV = Math.max(...positiveVals);
+          const minV = Math.min(...positiveVals);
           const threshold = (maxV - minV) * 0.03;
+          // 最高値・最低値のインデックスを必ず追加
+          const maxIdx = dataTotal.indexOf(maxV);
+          if (maxIdx >= 0) showIdx.add(maxIdx);
+          // 最低値はvalue>0の中で探す(dataTotal.indexOf(minV)だと0が返る可能性ある)
+          let minIdx = -1;
+          for (let i = 0; i < n; i++) {
+            if (dataTotal[i] === minV && dataTotal[i] > 0) { minIdx = i; break; }
+          }
+          if (minIdx >= 0) showIdx.add(minIdx);
           // 目標: 約10〜12個になるように等間隔で候補を選び、近似点を間引く
           const step = Math.ceil(n / 10);
           let lastShownVal = dataTotal[0];
