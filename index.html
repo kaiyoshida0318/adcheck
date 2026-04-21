@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.413</span>
+    <span class="build-date">v1.414</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4857,8 +4857,8 @@ function renderRoasTrend() {
   }
 
   // ヘッダー
-  // 列構成: 商品番号 / 商品管理番号 / 画像 / 商品名 / 月×6 / 平均 / 差分 / KW順 / 記入欄 / 区分 / SS
-  const colW = `82px 76px 40px minmax(0,1fr) ${last4.map(()=>'78px').join(' ')} 80px 80px 78px minmax(0,150px) 100px 64px`;
+  // 列構成: 商品番号 / 商品管理番号 / 画像 / 商品名 / 月×4 / 平均 / 差分 / KW順 / 記入欄 / 区分 / SS
+  const colW = `82px 76px 40px minmax(0,1fr) ${last4.map(()=>'100px').join(' ')} 100px 100px 78px minmax(0,140px) 100px 64px`;
   const headerCells = last4.map(m => {
     const [y, mo] = m.split('-');
     const isActive = _roasTrendSortKey === m;
@@ -4893,7 +4893,7 @@ function renderRoasTrend() {
       const gp = calcGross(p, m);
       const color = gp === null ? 'var(--text3)' : gp >= 0 ? 'var(--green)' : 'var(--danger)';
       const txt = gp === null ? '—' : (gp >= 0 ? '+' : '') + '¥' + Math.abs(gp).toLocaleString();
-      return `<div class="cell r mono" style="background:#e8f5e9;font-size:11px;font-weight:700;color:${color}">${txt}</div>`;
+      return `<div class="cell r mono" style="background:#e8f5e9;font-size:11px;font-weight:700;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${txt}</div>`;
     }).join('');
 
     // 最新月差分（最新月粗広告利益 - 前3ヶ月平均粗広告利益）
@@ -4904,10 +4904,10 @@ function renderRoasTrend() {
     const diff = (latestGp !== null && prev5avg !== null) ? Math.round(latestGp - prev5avg) : null;
     const diffColor = diff === null ? 'var(--text3)' : diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--danger)' : 'var(--text2)';
     const diffTxt = diff === null ? '—' : (diff > 0 ? '+' : '') + '¥' + Math.abs(diff).toLocaleString();
-    const diffCell = `<div class="cell r mono" style="background:#f3e8ff;font-size:11px;font-weight:700;color:${diffColor}">${diffTxt}</div>`;
+    const diffCell = `<div class="cell r mono" style="background:#f3e8ff;font-size:11px;font-weight:700;color:${diffColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${diffTxt}</div>`;
     const avgTxt = prev5avg !== null ? (prev5avg >= 0 ? '+' : '') + '¥' + Math.abs(Math.round(prev5avg)).toLocaleString() : '—';
     const avgColor = prev5avg === null ? 'var(--text3)' : prev5avg >= 0 ? 'var(--green)' : 'var(--danger)';
-    const avgCell = `<div class="cell r mono" style="background:#e8f5e9;font-size:11px;font-weight:600;color:${avgColor}">${avgTxt}</div>`;
+    const avgCell = `<div class="cell r mono" style="background:#e8f5e9;font-size:11px;font-weight:600;color:${avgColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${avgTxt}</div>`;
 
     // 記入欄
     const memo = cached.memo || '';
