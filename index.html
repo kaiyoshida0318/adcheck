@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.415</span>
+    <span class="build-date">v1.416</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6518,21 +6518,28 @@ function renderCalendar(p, ym) {
 }
 
 function toggleRow(id, ym) {
+  console.log('[ADcheck] toggleRow called: id=', id, 'ym=', ym, 'currentExpanded=', expandedSet.has(id));
   if (expandedSet.has(id)) expandedSet.delete(id);
   else expandedSet.add(id);
 
-  // 【状態】・【基本】共通：DOMアニメーションのみ（renderPage不要）
   const panel = document.getElementById(`dp-${id}`);
+  console.log('[ADcheck] panel found:', !!panel, 'panel.className=', panel?.className);
   if (!panel) {
-    // パネルDOMが見つからない場合は再描画で復旧
     console.warn('[ADcheck] toggleRow: panel not found for', id, '- triggering re-render');
     renderPage();
     return;
   }
   const isOpen = expandedSet.has(id);
+  console.log('[ADcheck] → isOpen(target state):', isOpen);
 
   // 進行中のアニメーションがあれば即終了（連打時の状態不整合を防ぐ）
   if (panel._animTimer) { clearTimeout(panel._animTimer); panel._animTimer = null; }
+  // 現在インラインで適用中のheight/transitionもリセット(連打時のズレを防ぐ)
+  panel.style.transition = 'none';
+  panel.style.height = '';
+  panel.style.overflow = '';
+  // reflow 強制
+  void panel.offsetHeight;
 
   const cleanup = () => {
     panel.style.height = '';
@@ -6548,6 +6555,7 @@ function toggleRow(id, ym) {
   if (isOpen) {
     if (DB[id]) panel.innerHTML = renderCalendar(DB[id], ym);
     panel.classList.add('open');
+    // 一旦display:blockにしてからscrollHeight測定
     const h = panel.scrollHeight;
     panel.style.height = '0';
     panel.style.overflow = 'hidden';
@@ -6555,7 +6563,6 @@ function toggleRow(id, ym) {
     requestAnimationFrame(() => requestAnimationFrame(() => {
       panel.style.height = h + 'px';
       panel.addEventListener('transitionend', cleanup, { once: true });
-      // 万が一transitionendが発火しない場合のフォールバック
       panel._animTimer = setTimeout(cleanup, 400);
     }));
   } else {
@@ -6572,7 +6579,6 @@ function toggleRow(id, ym) {
 
   const basic = panel.previousElementSibling;
   if (basic) {
-    // className再代入で他のクラス(with-status等)が消えないよう classList.toggle で expanded のみ切替
     basic.classList.toggle('expanded', isOpen);
     const icon = basic.querySelector('.toggle-icon');
     if (icon) icon.classList.toggle('open', isOpen);
