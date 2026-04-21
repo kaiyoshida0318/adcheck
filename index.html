@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.412</span>
+    <span class="build-date">v1.413</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -461,7 +461,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 </nav>
 <nav class="tab-sub-row tab-sub-row-2">
   <span class="tab-row-label" style="color:#7B3FA0">【対応検討】</span>
-  <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近半年</button>
+  <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近4ヶ月</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3">
   <span class="tab-row-label red">【状態】</span>
@@ -4812,7 +4812,7 @@ function renderRoasTrend() {
     return;
   }
   // 直近6ヶ月
-  const last6 = useMonths.slice(-6);
+  const last4 = useMonths.slice(-4);
   const _roasQ = (document.getElementById('roasTrendSearch')?.value || '').toLowerCase();
   let products = Object.values(DB).filter(p => {
     if (productCache[p.id]?.retired) return false;
@@ -4832,7 +4832,7 @@ function renderRoasTrend() {
       let vA, vB;
       if (_roasTrendSortKey === 'diff') {
         const calcDiff = p => {
-          const vals = last6.map(m => calcGross(p,m));
+          const vals = last4.map(m => calcGross(p,m));
           const latest = vals[vals.length-1];
           const prev = vals.slice(0,-1).filter(v=>v!==null);
           if (latest===null || prev.length===0) return -9999999;
@@ -4841,12 +4841,12 @@ function renderRoasTrend() {
         vA = calcDiff(a); vB = calcDiff(b);
       } else if (_roasTrendSortKey === 'avg') {
         const getAvg = p => {
-          const vals = last6.map(m => calcGross(p,m));
+          const vals = last4.map(m => calcGross(p,m));
           const prev = vals.slice(0,-1).filter(v=>v!==null);
           return prev.length > 0 ? prev.reduce((s,v)=>s+v,0)/prev.length : -9999999;
         };
         vA = getAvg(a); vB = getAvg(b);
-      } else if (last6.includes(_roasTrendSortKey)) {
+      } else if (last4.includes(_roasTrendSortKey)) {
         vA = calcGross(a, _roasTrendSortKey) ?? -9999999;
         vB = calcGross(b, _roasTrendSortKey) ?? -9999999;
       } else {
@@ -4858,8 +4858,8 @@ function renderRoasTrend() {
 
   // ヘッダー
   // 列構成: 商品番号 / 商品管理番号 / 画像 / 商品名 / 月×6 / 平均 / 差分 / KW順 / 記入欄 / 区分 / SS
-  const colW = `82px 76px 40px minmax(0,1fr) ${last6.map(()=>'78px').join(' ')} 80px 80px 78px minmax(0,150px) 100px 64px`;
-  const headerCells = last6.map(m => {
+  const colW = `82px 76px 40px minmax(0,1fr) ${last4.map(()=>'78px').join(' ')} 80px 80px 78px minmax(0,150px) 100px 64px`;
+  const headerCells = last4.map(m => {
     const [y, mo] = m.split('-');
     const isActive = _roasTrendSortKey === m;
     const arrow = isActive ? (_roasTrendSortDir === 'desc' ? ' ▼' : ' ▲') : '';
@@ -4872,7 +4872,7 @@ function renderRoasTrend() {
     <div class="ch" style="text-align:center;font-size:10px">画像</div>
     <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('name')">商品</div>
     ${headerCells}
-    <div class="ch r" style="background:#e8f5e9;cursor:pointer" onclick="sortRoasTrend('avg')">直近半年<br><span style="font-size:9px">平均${_roasTrendSortKey==='avg' ? (_roasTrendSortDir==='desc'?' ▼':' ▲') : ''}</span></div>
+    <div class="ch r" style="background:#e8f5e9;cursor:pointer" onclick="sortRoasTrend('avg')">直近4ヶ月<br><span style="font-size:9px">平均${_roasTrendSortKey==='avg' ? (_roasTrendSortDir==='desc'?' ▼':' ▲') : ''}</span></div>
     <div class="ch r" style="background:#f3e8ff;cursor:pointer" onclick="sortRoasTrend('diff')">最新月<br><span style="font-size:9px">差分${_roasTrendSortKey==='diff' ? (_roasTrendSortDir==='desc'?' ▼':' ▲') : ''}</span></div>
     <div class="ch" style="text-align:center;font-size:10px">KW_vol順</div>
     <div class="ch">記入欄</div>
@@ -4889,15 +4889,15 @@ function renderRoasTrend() {
       ? `<img loading="lazy" src="${imgSrc}" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集">`
       : `<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集"></div>`;
 
-    const grossCells = last6.map(m => {
+    const grossCells = last4.map(m => {
       const gp = calcGross(p, m);
       const color = gp === null ? 'var(--text3)' : gp >= 0 ? 'var(--green)' : 'var(--danger)';
       const txt = gp === null ? '—' : (gp >= 0 ? '+' : '') + '¥' + Math.abs(gp).toLocaleString();
       return `<div class="cell r mono" style="background:#e8f5e9;font-size:11px;font-weight:700;color:${color}">${txt}</div>`;
     }).join('');
 
-    // 最新月差分（最新月粗広告利益 - 前5か月平均粗広告利益）
-    const gpVals = last6.map(m => calcGross(p, m));
+    // 最新月差分（最新月粗広告利益 - 前3ヶ月平均粗広告利益）
+    const gpVals = last4.map(m => calcGross(p, m));
     const latestGp = gpVals[gpVals.length-1];
     const prev5 = gpVals.slice(0,-1).filter(v=>v!==null);
     const prev5avg = prev5.length > 0 ? prev5.reduce((s,v)=>s+v,0)/prev5.length : null;
