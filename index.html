@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.418</span>
+    <span class="build-date">v1.419</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6532,15 +6532,16 @@ function toggleRow(id, ym) {
   const isOpen = expandedSet.has(id);
   console.log('[ADcheck] → isOpen(target state):', isOpen);
 
-  // インラインstyleを全て消去(以前のアニメーション残留を除去)
-  panel.style.cssText = '';
-
   if (isOpen) {
     if (DB[id]) panel.innerHTML = renderCalendar(DB[id], ym);
     panel.classList.add('open');
+    // インラインstyleで強制表示(CSS側の干渉対策)
+    panel.style.cssText = 'display:block !important; height:auto !important; max-height:none !important; overflow:visible !important; visibility:visible !important;';
+    console.log('[ADcheck] → set inline style. offsetHeight=', panel.offsetHeight, 'innerHTML.length=', panel.innerHTML.length);
   } else {
     panel.classList.remove('open');
     panel.innerHTML = '';
+    panel.style.cssText = '';
   }
 
   const basic = panel.previousElementSibling;
