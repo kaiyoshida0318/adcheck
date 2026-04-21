@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.409</span>
+    <span class="build-date">v1.410</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -662,9 +662,9 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           </div>
           <!-- 日別期間選択 -->
           <div id="graphDateRange" style="display:none;align-items:center;gap:6px">
-            <input type="date" id="graphDateFrom" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px">
+            <input type="date" id="graphDateFrom" autocomplete="off" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px">
             <span style="font-size:12px;color:var(--text3)">〜</span>
-            <input type="date" id="graphDateTo" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px">
+            <input type="date" id="graphDateTo" autocomplete="off" class="toolbar-month" onchange="renderGraph()" style="font-size:12px;padding:4px 8px">
           </div>
           <!-- クイック期間ボタン -->
           <div id="graphQuickBtns" style="display:flex;gap:3px;margin-left:6px">
@@ -743,9 +743,9 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <span id="daily-run-status" style="font-size:11px;color:var(--text3)"></span>
           <div id="dailyMonthBtns" style="display:flex;flex-wrap:wrap;gap:3px;align-items:center"></div>
           <div style="display:flex;align-items:center;gap:6px">
-            <input type="date" id="dailyDateFrom" class="toolbar-month" onchange="renderDailyFiltered()" style="font-size:12px;padding:4px 8px">
+            <input type="date" id="dailyDateFrom" autocomplete="off" class="toolbar-month" onchange="renderDailyFiltered()" style="font-size:12px;padding:4px 8px">
             <span style="font-size:12px;color:var(--text3)">〜</span>
-            <input type="date" id="dailyDateTo" class="toolbar-month" onchange="renderDailyFiltered()" style="font-size:12px;padding:4px 8px">
+            <input type="date" id="dailyDateTo" autocomplete="off" class="toolbar-month" onchange="renderDailyFiltered()" style="font-size:12px;padding:4px 8px">
           </div>
           <div class="toolbar-right"></div>
         </div>
@@ -3301,8 +3301,12 @@ function populateDailyMonthSel() {
   const maxDate = dates[dates.length-1];
   const fromEl = document.getElementById('dailyDateFrom');
   const toEl   = document.getElementById('dailyDateTo');
+  // 画面を開いたとき(ロード直後)は必ず最新日まで表示できるようにする。
+  // 既存値があっても、現在の最新日より古い「to」は最新日に更新する
   if (fromEl && !fromEl.value) fromEl.value = minDate;
-  if (toEl   && !toEl.value)   toEl.value   = maxDate;
+  if (toEl) {
+    if (!toEl.value || toEl.value < maxDate) toEl.value = maxDate;
+  }
 
   // 月ボタン生成（同じ年を横1列、年が変わったら改行）
   const btnsEl = document.getElementById('dailyMonthBtns');
@@ -4021,16 +4025,21 @@ function _initGraphRange() {
     const opts = monthsDesc.map(m => `<option value="${m}">${m.slice(0,4)}/${m.slice(4,6)}</option>`).join('');
     sel1.innerHTML = opts;
     sel2.innerHTML = opts;
-    sel1.value = (cur1 && months.includes(cur1)) ? cur1 : months[0];     // 開始は最古
-    sel2.value = (cur2 && months.includes(cur2)) ? cur2 : months[months.length-1]; // 終了は最新
+    // 開始は既存値が使えるならそのまま、なければ最古
+    sel1.value = (cur1 && months.includes(cur1)) ? cur1 : months[0];
+    // 終了は既存値が最新より古い場合は最新まで広げる(新データが反映されないのを防ぐ)
+    const latestMonth = months[months.length-1];
+    sel2.value = (cur2 && months.includes(cur2) && cur2 >= latestMonth) ? cur2 : latestMonth;
   } else {
     const d1 = document.getElementById('graphDateFrom');
     const d2 = document.getElementById('graphDateTo');
     if (!d1 || !d2) return;
     const dates = dailyRows.map(r => r.label?.replace(/\//g,'-')).filter(Boolean).sort();
     if (dates.length === 0) return;
+    const latestDate = dates[dates.length-1];
     if (!d1.value) d1.value = dates[0];
-    if (!d2.value) d2.value = dates[dates.length-1];
+    // 終了は最新より古い場合に最新まで拡張
+    if (!d2.value || d2.value < latestDate) d2.value = latestDate;
   }
 }
 let _graphPeriod = 'monthly'; // 'monthly' or 'daily'
@@ -6615,6 +6624,19 @@ window.addEventListener('DOMContentLoaded', async () => {
   // GitHubからデータを読み込む（全PCで共有）
   const loaded = await loadFromGitHub();
   if (loaded) {
+    // 日付範囲フィルタを強制的に最新日までに設定（ブラウザの値復元で古い日付が残るのを防ぐ）
+    try {
+      const dates = dailyRows.map(r=>r.label?.replace(/\//g,'-')).filter(Boolean).sort();
+      if (dates.length > 0) {
+        const minDate = dates[0];
+        const maxDate = dates[dates.length-1];
+        const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+        setVal('dailyDateFrom', minDate);
+        setVal('dailyDateTo',   maxDate);
+        setVal('graphDateFrom', minDate);
+        setVal('graphDateTo',   maxDate);
+      }
+    } catch(e) { console.warn('[ADcheck] 日付範囲初期化エラー:', e); }
     afterLoad(true);
     switchTab('monthly');
   }
