@@ -424,9 +424,26 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         </text>
       </svg>
     </div>
+    <div id="shopSelectorWrap" style="position:relative;margin-left:8px">
+      <button id="shopSelectorBtn" onclick="toggleShopMenu(event)" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
+        <span style="font-size:14px">🏪</span>
+        <span id="shopSelectorLabel">—</span>
+        <span style="font-size:9px;color:var(--text3)">▼</span>
+      </button>
+      <div id="shopMenu" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);min-width:200px;z-index:300;overflow:hidden">
+        <div id="shopMenuList"></div>
+        <div style="border-top:1px solid var(--border)"></div>
+        <button onclick="openShopAddModal();closeShopMenu()" style="width:100%;text-align:left;padding:10px 14px;border:none;background:none;cursor:pointer;font-size:12px;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:6px;font-family:inherit" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+          <span>＋</span> 新規ショップ追加
+        </button>
+        <button onclick="openShopManageModal();closeShopMenu()" style="width:100%;text-align:left;padding:10px 14px;border:none;background:none;cursor:pointer;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;font-family:inherit;border-top:1px solid var(--border)" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+          <span>⚙</span> ショップ管理
+        </button>
+      </div>
+    </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.424</span>
+    <span class="build-date">v1.425</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1076,6 +1093,54 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   </div>
 </div>
 
+<!-- ショップ追加モーダル -->
+<div class="modal-overlay" id="shopAddModal">
+  <div class="modal" style="max-width:480px">
+    <h3>🏪 新規ショップを追加</h3>
+    <p>新しいショップのデータは <code style="background:var(--surface2);padding:2px 6px;border-radius:3px;font-family:'DM Mono',monospace;font-size:11px">data/{ID}/</code> 以下に保存されます。</p>
+    <div class="modal-field">
+      <label class="modal-label">ショップID(英数字・ハイフンのみ)</label>
+      <input type="text" class="modal-input" id="shopAddId" placeholder="例: shop2" pattern="[a-zA-Z0-9_-]+">
+      <div class="modal-hint">後から変更不可。データ保存先のディレクトリ名になります。</div>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">表示名</label>
+      <input type="text" class="modal-input" id="shopAddName" placeholder="例: 第二ショップ">
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">店舗コード(shopCode)</label>
+      <input type="text" class="modal-input" id="shopAddShopCode" placeholder="例: shop2">
+      <div class="modal-hint">楽天市場の店舗URL内の英数字コード。</div>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">アプリケーションID</label>
+      <input type="text" class="modal-input" id="shopAddAppId" placeholder="例: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">アクセスキー</label>
+      <input type="text" class="modal-input" id="shopAddAccessKey" placeholder="例: pk_xxxxxxxxxxxxxxxxxxxx">
+    </div>
+    <div id="shopAddStatus" class="modal-status"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeShopAddModal()">キャンセル</button>
+      <button class="modal-btn save" onclick="saveNewShop()">追加して切替</button>
+    </div>
+  </div>
+</div>
+
+<!-- ショップ管理モーダル -->
+<div class="modal-overlay" id="shopManageModal">
+  <div class="modal" style="max-width:600px;max-height:85vh;display:flex;flex-direction:column;padding:20px 24px">
+    <h3 style="margin-bottom:8px;flex-shrink:0">⚙ ショップ管理</h3>
+    <p style="flex-shrink:0;margin-bottom:14px">登録済みショップの編集・削除ができます。</p>
+    <div id="shopManageList" style="flex:1;overflow-y:auto;min-height:0"></div>
+    <div class="modal-actions" style="flex-shrink:0;border-top:1px solid var(--border);padding-top:14px;margin-top:14px">
+      <button class="modal-btn" onclick="closeShopManageModal()">閉じる</button>
+      <button class="modal-btn save" onclick="openShopAddModal();closeShopManageModal()">＋ 新規ショップ追加</button>
+    </div>
+  </div>
+</div>
+
 <!-- 商品編集モーダル -->
 <div class="modal-overlay" id="editItemModal">
   <div class="modal" style="max-width:520px">
@@ -1172,16 +1237,28 @@ let expandedSet = new Set();
 let productCache = {};
 let currentPage = 1;
 
-// productCacheのlocalStorage永続化
-const CACHE_KEY = 'adcheck_product_cache';
+// productCacheのlocalStorage永続化(ショップ別)
+function _cacheKey() { return 'adcheck_product_cache_' + (localStorage.getItem(CURRENT_SHOP_KEY) || 'yukaiya'); }
+// 旧キー(マイグレーション用)
+const CACHE_KEY_LEGACY = 'adcheck_product_cache';
+// 互換のためCACHE_KEYは関数で都度取得
+Object.defineProperty(window, 'CACHE_KEY', { get() { return _cacheKey(); } });
 function loadProductCache() {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    let raw = localStorage.getItem(_cacheKey());
+    // 新キーに無く、yukaiyaショップの場合は旧キーから移行
+    if (!raw && _getCurrentShopId() === 'yukaiya') {
+      raw = localStorage.getItem(CACHE_KEY_LEGACY);
+      if (raw) {
+        localStorage.setItem(_cacheKey(), raw);
+        console.log('[ADcheck] productCache移行: 旧キー→ショップ別キー');
+      }
+    }
     if (raw) Object.assign(productCache, JSON.parse(raw));
   } catch(e) {}
 }
 function saveProductCache() {
-  try { localStorage.setItem(CACHE_KEY, JSON.stringify(productCache)); } catch(e) {}
+  try { localStorage.setItem(_cacheKey(), JSON.stringify(productCache)); } catch(e) {}
   if (typeof _updateStatusCounts === 'function') _updateStatusCounts();
 }
 loadProductCache(); // 起動時即座に読み込み
@@ -1361,9 +1438,65 @@ const DOW = ['日','月','火','水','木','金','土'];
 // ── GitHub データ永続化 ──
 const GH_OWNER = 'kaiyoshida0318';
 const GH_REPO = 'adcheck';
-const GH_FILE = 'data/rpp_data.json'
-const GH_KW_FILE = 'data/rpp_kw.json';
-const GH_ITEM_FILE = 'data/rpp_item.json';
+
+// ── ショップ管理 ──
+// shops: [{id, name, appId, accessKey, shopCode}]  ※idはユニーク、英数字のみ推奨
+const SHOPS_KEY = 'adcheck_shops';
+const CURRENT_SHOP_KEY = 'adcheck_current_shop';
+
+function _getShops() {
+  try { return JSON.parse(localStorage.getItem(SHOPS_KEY) || '[]'); } catch(e) { return []; }
+}
+function _saveShops(shops) {
+  try { localStorage.setItem(SHOPS_KEY, JSON.stringify(shops)); } catch(e) {}
+}
+function _getCurrentShopId() {
+  return localStorage.getItem(CURRENT_SHOP_KEY) || 'yukaiya';
+}
+function _setCurrentShopId(id) {
+  localStorage.setItem(CURRENT_SHOP_KEY, id);
+}
+function _getCurrentShop() {
+  const shops = _getShops();
+  const id = _getCurrentShopId();
+  return shops.find(s => s.id === id) || shops[0] || null;
+}
+
+// ── 初回マイグレーション ──
+// 旧データ(data/rpp_*.json)があり、shops設定が空なら自動でyukaiyaショップを作成
+function _initShopsIfNeeded() {
+  const shops = _getShops();
+  if (shops.length === 0) {
+    // 既存のlocalStorage設定を読んでyukaiyaショップとして登録
+    const appId     = localStorage.getItem('rakuten_app_id')     || '';
+    const accessKey = localStorage.getItem('rakuten_access_key') || '';
+    const shopCode  = localStorage.getItem('rakuten_shop_code')  || 'yukaiya';
+    const yukaiya = {
+      id: 'yukaiya',
+      name: 'ゆかいや',
+      appId, accessKey,
+      shopCode: shopCode || 'yukaiya',
+    };
+    _saveShops([yukaiya]);
+    _setCurrentShopId('yukaiya');
+    console.log('[ADcheck] 初回マイグレーション: yukaiyaショップを作成');
+  }
+}
+_initShopsIfNeeded();
+
+// 現在ショップに対応するGitHubファイルパスを返す
+function _shopDataDir() {
+  const id = _getCurrentShopId() || 'yukaiya';
+  return `data/${id}`;
+}
+// パス取得関数(従来の定数はゲッター化)
+function _ghFile()     { return `${_shopDataDir()}/rpp_data.json`; }
+function _ghKwFile()   { return `${_shopDataDir()}/rpp_kw.json`; }
+function _ghItemFile() { return `${_shopDataDir()}/rpp_item.json`; }
+// 旧パス(初回マイグレーション用)
+const GH_FILE_LEGACY      = 'data/rpp_data.json';
+const GH_KW_FILE_LEGACY   = 'data/rpp_kw.json';
+const GH_ITEM_FILE_LEGACY = 'data/rpp_item.json';
 
 async function saveProductCacheToGitHub() {
   const pat = localStorage.getItem('github_pat');
@@ -1373,12 +1506,13 @@ async function saveProductCacheToGitHub() {
     'Accept': 'application/vnd.github.v3+json',
     'Content-Type': 'application/json'
   };
-  const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, { headers });
+  const file = _ghFile();
+  const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${file}`, { headers });
   const sha = getRes.ok ? (await getRes.json()).sha : null;
   const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ productCache, calEvents, nichinichiRows, dailyRows, salesRows }))));
   const body = { message: 'Update productCache', content: base64 };
   if (sha) body.sha = sha;
-  const putRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, {
+  const putRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${file}`, {
     method: 'PUT', headers, body: JSON.stringify(body)
   });
   if (!putRes.ok) {
@@ -1416,10 +1550,10 @@ async function saveToGitHub() {
       }
     };
 
-    // productCacheのみ変更の場合は1ファイルだけ保存（高速化）
-    await _ghPut(GH_FILE, { productCache, calEvents, nichinichiRows, dailyRows, salesRows });
-    await _ghPut(GH_ITEM_FILE, { DB, itemDailyData });
-    await _ghPut(GH_KW_FILE,   { kwRows });
+    // ショップ別ディレクトリに保存
+    await _ghPut(_ghFile(),     { productCache, calEvents, nichinichiRows, dailyRows, salesRows });
+    await _ghPut(_ghItemFile(), { DB, itemDailyData });
+    await _ghPut(_ghKwFile(),   { kwRows });
 
   } catch(e) {
     console.error('[ADcheck] GitHub save exception:', e);
@@ -1429,9 +1563,17 @@ async function saveToGitHub() {
 
 async function loadFromGitHub() {
   try {
-    // PATなしでも公開リポジトリならraw URLで読める
-    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_FILE}`;
-    const res = await fetch(url + '?t=' + Date.now());
+    // ショップ別ディレクトリから読み込み(失敗時は旧パスにフォールバック=マイグレーション)
+    let url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${_ghFile()}`;
+    let res = await fetch(url + '?t=' + Date.now());
+    let usedLegacy = false;
+    if (!res.ok && _getCurrentShopId() === 'yukaiya') {
+      // yukaiyaショップで新パスにファイルが無い場合、旧パスから読み込んで自動マイグレーション
+      console.log('[ADcheck] 新パス未存在、旧パスから読み込み(自動マイグレーション)');
+      url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_FILE_LEGACY}`;
+      res = await fetch(url + '?t=' + Date.now());
+      usedLegacy = true;
+    }
     if (!res.ok) return false;
     const data = await res.json();
     if (data && (data.productCache || data.dailyRows || data.nichinichiRows)) {
@@ -1456,9 +1598,10 @@ async function loadFromGitHub() {
         itemDailyData = data.itemDailyData;
       }
       if (data.salesRows) salesRows = data.salesRows;
-      // DB・itemDailyDataを別ファイルから読み込む
+      // DB・itemDailyDataを別ファイルから読み込む(usedLegacyならGH_ITEM_FILE_LEGACY)
       try {
-        const itemUrl = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_ITEM_FILE}`;
+        const itemPath = usedLegacy ? GH_ITEM_FILE_LEGACY : _ghItemFile();
+        const itemUrl = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${itemPath}`;
         const itemRes = await fetch(itemUrl + '?t=' + Date.now());
         if (itemRes.ok) {
           const itemData = await itemRes.json();
@@ -1466,15 +1609,22 @@ async function loadFromGitHub() {
           if (itemData.itemDailyData) Object.assign(itemDailyData, itemData.itemDailyData);
         }
       } catch(e) { console.warn('[ADcheck] ITEM読込エラー:', e); }
-      // kwRowsを別ファイルから読み込む
+      // kwRowsを別ファイルから読み込む(usedLegacyならGH_KW_FILE_LEGACY)
       try {
-        const kwUrl = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_KW_FILE}`;
+        const kwPath = usedLegacy ? GH_KW_FILE_LEGACY : _ghKwFile();
+        const kwUrl = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${kwPath}`;
         const kwRes = await fetch(kwUrl + '?t=' + Date.now());
         if (kwRes.ok) {
           const kwData = await kwRes.json();
           if (kwData.kwRows) { kwRows = kwData.kwRows; }
         }
       } catch(e) { console.warn('[ADcheck] KW読込エラー:', e); }
+      // 旧パスから読んだ場合、新パスにマイグレーション保存
+      if (usedLegacy) {
+        console.log('[ADcheck] 新パスへマイグレーション保存中...');
+        try { await saveToGitHub(); console.log('[ADcheck] マイグレーション完了'); }
+        catch(e) { console.warn('[ADcheck] マイグレーション保存失敗:', e); }
+      }
       if (data.kwRows) {
         kwRows = data.kwRows;
         if (kwRows.length > 0) { populateKwMonthSel(); renderKwFiltered(); _initFormulaMonthSel(); }
@@ -1529,10 +1679,212 @@ function saveSettings() {
   localStorage.setItem('rakuten_access_key', ak);
   localStorage.setItem('rakuten_shop_code', sc);
   localStorage.setItem('github_pat', pat);
+  // 現在ショップの設定もshops配列に反映
+  const shops = _getShops();
+  const curId = _getCurrentShopId();
+  const cur = shops.find(s => s.id === curId);
+  if (cur) {
+    cur.appId = id;
+    cur.accessKey = ak;
+    cur.shopCode = sc;
+    _saveShops(shops);
+    _renderShopMenu();
+  }
   updateApiStatus(id, ak);
   showModalStatus('設定を保存しました', 'ok');
   setTimeout(closeSettings, 1000);
   if (id && ak && sc) fetchAllProductInfo();
+}
+
+// ── ショップ切替UI ──
+function _renderShopMenu() {
+  const shops = _getShops();
+  const curId = _getCurrentShopId();
+  const cur = shops.find(s => s.id === curId);
+  const labelEl = document.getElementById('shopSelectorLabel');
+  if (labelEl) labelEl.textContent = cur ? cur.name : '—';
+  const list = document.getElementById('shopMenuList');
+  if (!list) return;
+  list.innerHTML = shops.map(s => {
+    const active = s.id === curId;
+    return `<button onclick="switchShop('${s.id}')" style="width:100%;text-align:left;padding:10px 14px;border:none;background:${active?'var(--surface2)':'none'};cursor:pointer;font-size:13px;color:${active?'var(--accent)':'var(--text)'};font-weight:${active?'700':'500'};display:flex;align-items:center;gap:8px;font-family:inherit" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='${active?'var(--surface2)':'none'}'">
+      <span style="width:14px">${active?'✓':''}</span>
+      <span style="flex:1">${s.name}</span>
+      <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${s.id}</span>
+    </button>`;
+  }).join('');
+}
+
+function toggleShopMenu(event) {
+  event?.stopPropagation();
+  const menu = document.getElementById('shopMenu');
+  const isOpen = menu.style.display === 'block';
+  if (isOpen) menu.style.display = 'none';
+  else { _renderShopMenu(); menu.style.display = 'block'; }
+}
+function closeShopMenu() {
+  const menu = document.getElementById('shopMenu');
+  if (menu) menu.style.display = 'none';
+}
+// メニュー外クリックで閉じる
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('shopSelectorWrap');
+  if (wrap && !wrap.contains(e.target)) closeShopMenu();
+});
+
+function switchShop(shopId) {
+  const shops = _getShops();
+  const target = shops.find(s => s.id === shopId);
+  if (!target) return;
+  if (shopId === _getCurrentShopId()) { closeShopMenu(); return; }
+  // 切替前: 現在ショップの設定をshops配列に保存
+  const curId = _getCurrentShopId();
+  const cur = shops.find(s => s.id === curId);
+  if (cur) {
+    cur.appId     = localStorage.getItem('rakuten_app_id')     || cur.appId || '';
+    cur.accessKey = localStorage.getItem('rakuten_access_key') || cur.accessKey || '';
+    cur.shopCode  = localStorage.getItem('rakuten_shop_code')  || cur.shopCode || '';
+    _saveShops(shops);
+  }
+  // 切替先の設定をrakuten_*キーに展開
+  localStorage.setItem('rakuten_app_id',     target.appId     || '');
+  localStorage.setItem('rakuten_access_key', target.accessKey || '');
+  localStorage.setItem('rakuten_shop_code',  target.shopCode  || '');
+  _setCurrentShopId(shopId);
+  // リロード(完全に1ショップ分のメモリだけ使う)
+  location.reload();
+}
+
+// ── 新規ショップ追加 ──
+function openShopAddModal() {
+  document.getElementById('shopAddId').value = '';
+  document.getElementById('shopAddName').value = '';
+  document.getElementById('shopAddShopCode').value = '';
+  document.getElementById('shopAddAppId').value = '';
+  document.getElementById('shopAddAccessKey').value = '';
+  document.getElementById('shopAddStatus').className = 'modal-status';
+  document.getElementById('shopAddStatus').textContent = '';
+  document.getElementById('shopAddModal').classList.add('open');
+}
+function closeShopAddModal() {
+  document.getElementById('shopAddModal').classList.remove('open');
+}
+function _showShopAddStatus(msg, type) {
+  const el = document.getElementById('shopAddStatus');
+  el.textContent = msg;
+  el.className = 'modal-status ' + (type || '');
+}
+function saveNewShop() {
+  const id = document.getElementById('shopAddId').value.trim();
+  const name = document.getElementById('shopAddName').value.trim();
+  const shopCode = document.getElementById('shopAddShopCode').value.trim();
+  const appId = document.getElementById('shopAddAppId').value.trim();
+  const accessKey = document.getElementById('shopAddAccessKey').value.trim();
+  if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) { _showShopAddStatus('ショップIDは英数字・ハイフンのみで入力してください', 'err'); return; }
+  if (!name) { _showShopAddStatus('表示名を入力してください', 'err'); return; }
+  if (!shopCode) { _showShopAddStatus('店舗コードを入力してください', 'err'); return; }
+  const shops = _getShops();
+  if (shops.find(s => s.id === id)) { _showShopAddStatus('そのショップIDは既に存在します', 'err'); return; }
+  // 現在ショップの最新設定を保存
+  const curId = _getCurrentShopId();
+  const cur = shops.find(s => s.id === curId);
+  if (cur) {
+    cur.appId     = localStorage.getItem('rakuten_app_id')     || cur.appId || '';
+    cur.accessKey = localStorage.getItem('rakuten_access_key') || cur.accessKey || '';
+    cur.shopCode  = localStorage.getItem('rakuten_shop_code')  || cur.shopCode || '';
+  }
+  // 新ショップを追加
+  shops.push({ id, name, shopCode, appId, accessKey });
+  _saveShops(shops);
+  _showShopAddStatus(`✅ ${name}を追加しました。切替中...`, 'ok');
+  // 即時切替(=リロード)
+  setTimeout(() => switchShop(id), 600);
+}
+
+// ── ショップ管理(編集/削除) ──
+function openShopManageModal() {
+  _renderShopManageList();
+  document.getElementById('shopManageModal').classList.add('open');
+}
+function closeShopManageModal() {
+  document.getElementById('shopManageModal').classList.remove('open');
+}
+function _renderShopManageList() {
+  const shops = _getShops();
+  const curId = _getCurrentShopId();
+  const list = document.getElementById('shopManageList');
+  if (shops.length === 0) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">ショップなし</div>';
+    return;
+  }
+  list.innerHTML = shops.map((s, i) => {
+    const active = s.id === curId;
+    const canDelete = shops.length > 1 && !active;
+    return `<div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;background:${active?'var(--surface2)':'var(--surface)'}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-weight:700;font-size:14px;color:var(--text)">🏪 ${s.name}</span>
+        ${active?'<span style="font-size:10px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:10px;font-weight:600">表示中</span>':''}
+        <span style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace;margin-left:auto">${s.id}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:90px 1fr;gap:6px 10px;font-size:12px;margin-bottom:10px">
+        <label style="color:var(--text3);align-self:center">表示名</label>
+        <input type="text" value="${s.name||''}" data-shop-idx="${i}" data-field="name" class="modal-input" style="font-size:12px;padding:5px 8px">
+        <label style="color:var(--text3);align-self:center">店舗コード</label>
+        <input type="text" value="${s.shopCode||''}" data-shop-idx="${i}" data-field="shopCode" class="modal-input" style="font-size:12px;padding:5px 8px;font-family:'DM Mono',monospace">
+        <label style="color:var(--text3);align-self:center">アプリID</label>
+        <input type="text" value="${s.appId||''}" data-shop-idx="${i}" data-field="appId" class="modal-input" style="font-size:11px;padding:5px 8px;font-family:'DM Mono',monospace">
+        <label style="color:var(--text3);align-self:center">アクセスキー</label>
+        <input type="text" value="${s.accessKey||''}" data-shop-idx="${i}" data-field="accessKey" class="modal-input" style="font-size:11px;padding:5px 8px;font-family:'DM Mono',monospace">
+      </div>
+      <div style="display:flex;gap:6px;justify-content:flex-end">
+        ${!active?`<button onclick="switchShop('${s.id}')" style="font-size:11px;padding:5px 12px;border:1px solid var(--accent);border-radius:5px;background:var(--surface);color:var(--accent);cursor:pointer;font-weight:600">この ショップに切替</button>`:''}
+        <button onclick="saveShopEdit(${i})" style="font-size:11px;padding:5px 12px;border:1px solid var(--border2);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer">💾 保存</button>
+        ${canDelete?`<button onclick="deleteShop(${i})" style="font-size:11px;padding:5px 12px;border:1px solid var(--danger);border-radius:5px;background:var(--surface);color:var(--danger);cursor:pointer">🗑 削除</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function saveShopEdit(idx) {
+  const shops = _getShops();
+  const s = shops[idx];
+  if (!s) return;
+  const fields = ['name','shopCode','appId','accessKey'];
+  fields.forEach(f => {
+    const el = document.querySelector(`#shopManageList input[data-shop-idx="${idx}"][data-field="${f}"]`);
+    if (el) s[f] = el.value.trim();
+  });
+  _saveShops(shops);
+  // 現在ショップなら rakuten_* も更新
+  if (s.id === _getCurrentShopId()) {
+    localStorage.setItem('rakuten_app_id',     s.appId);
+    localStorage.setItem('rakuten_access_key', s.accessKey);
+    localStorage.setItem('rakuten_shop_code',  s.shopCode);
+    updateApiStatus(s.appId, s.accessKey);
+  }
+  _renderShopManageList();
+  _renderShopMenu();
+  // 軽いトースト
+  const toast = document.createElement('div');
+  toast.textContent = '✅ 保存しました';
+  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#16a34a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
+function deleteShop(idx) {
+  const shops = _getShops();
+  const s = shops[idx];
+  if (!s) return;
+  if (s.id === _getCurrentShopId()) { alert('表示中のショップは削除できません。先に他ショップに切り替えてください。'); return; }
+  if (!confirm(`ショップ「${s.name}」(${s.id})を削除しますか?\n※GitHubのdata/${s.id}/フォルダは残ります。手動で削除してください。`)) return;
+  shops.splice(idx, 1);
+  _saveShops(shops);
+  // ショップ別localStorageも掃除
+  try {
+    localStorage.removeItem('adcheck_product_cache_' + s.id);
+    localStorage.removeItem('adcheck_cal_events_' + s.id);
+  } catch(e) {}
+  _renderShopManageList();
+  _renderShopMenu();
 }
 function updateApiStatus(id, ak) {
   const el = document.getElementById('apiStatus');
@@ -5478,17 +5830,23 @@ function switchTab(tab) {
 }
 
 // ── カレンダーイベント ──
-const CAL_EVENTS_KEY = 'adcheck_cal_events';
+function _calEventsKey() { return 'adcheck_cal_events_' + (localStorage.getItem(CURRENT_SHOP_KEY) || 'yukaiya'); }
+const CAL_EVENTS_KEY_LEGACY = 'adcheck_cal_events';
+Object.defineProperty(window, 'CAL_EVENTS_KEY', { get() { return _calEventsKey(); } });
 let calEvents = [];
 
 function loadCalEvents() {
   try {
-    const raw = localStorage.getItem(CAL_EVENTS_KEY);
+    let raw = localStorage.getItem(_calEventsKey());
+    if (!raw && _getCurrentShopId() === 'yukaiya') {
+      raw = localStorage.getItem(CAL_EVENTS_KEY_LEGACY);
+      if (raw) localStorage.setItem(_calEventsKey(), raw);
+    }
     if (raw) calEvents = JSON.parse(raw);
   } catch(e) { calEvents = []; }
 }
 function saveCalEvents() {
-  try { localStorage.setItem(CAL_EVENTS_KEY, JSON.stringify(calEvents)); } catch(e) {}
+  try { localStorage.setItem(_calEventsKey(), JSON.stringify(calEvents)); } catch(e) {}
   saveToGitHub(); // 全PC共有
 }
 loadCalEvents();
@@ -6649,6 +7007,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const id = localStorage.getItem('rakuten_app_id') || '';
   const ak = localStorage.getItem('rakuten_access_key') || '';
   updateApiStatus(id, ak);
+  // ショップメニュー初期描画
+  _renderShopMenu();
   document.getElementById('settingsModal').addEventListener('click', e => {
     if (e.target === document.getElementById('settingsModal')) closeSettings();
   });
@@ -6661,6 +7021,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
   document.getElementById('confirmClearModal').addEventListener('click', e => {
     if (e.target === document.getElementById('confirmClearModal')) closeConfirmClear();
+  });
+  // ショップ系モーダル
+  const shopAddModal = document.getElementById('shopAddModal');
+  if (shopAddModal) shopAddModal.addEventListener('click', e => {
+    if (e.target === shopAddModal) closeShopAddModal();
+  });
+  const shopManageModal = document.getElementById('shopManageModal');
+  if (shopManageModal) shopManageModal.addEventListener('click', e => {
+    if (e.target === shopManageModal) closeShopManageModal();
   });
   // ページ全体でドラッグ&ドロップを受け取る
   document.body.addEventListener('dragover', e => e.preventDefault());
