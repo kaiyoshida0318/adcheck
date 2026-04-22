@@ -443,7 +443,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.428</span>
+    <span class="build-date">v1.430</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -454,6 +454,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <button class="header-btn" onclick="openBulkNameModal()">📋 商品名一括更新</button>
         <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
     <button class="header-btn danger-btn" onclick="confirmClearAll()">🗑 データ削除</button>
+    <button class="header-btn" onclick="clearShopLocalCacheAndReload()" style="background:#e0f2fe;color:#075985;border-color:#0284c7;font-weight:700" title="現在ショップのローカルキャッシュをクリアしてGitHubから再取得">♻️ 再取得</button>
     <button class="header-btn" onclick="forceRecoverLegacyData()" style="background:#fffbeb;color:#92400e;border-color:#f59e0b;font-weight:700" title="v1.425で発生したデータ消失を旧パスから復旧">🔧 データ復旧</button>
     <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
@@ -1085,6 +1086,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       <div class="modal-hint">入力すると全PCでデータを共有できます。GitHubのSettings → Developer settings → Personal access tokens で発行（repo権限）。</div>
     </div>
     <div id="modalStatus" class="modal-status"></div>
+    <div style="margin-top:14px;padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text2)">
+      <strong>💡 商品画像の自動取得について</strong><br>
+      v1.430より、起動時の自動画像取得は無効化されました(楽天APIレート制限で既存データが失われるリスクがあったため)。<br>
+      新商品の画像/名前を取得したい場合は下のボタンを押してください。1.2秒間隔で1件ずつ処理するので時間がかかります。
+      <div style="margin-top:8px">
+        <button onclick="manualFetchAllProductInfo()" style="font-size:11px;padding:6px 14px;border:1px solid var(--accent);border-radius:5px;background:var(--surface);color:var(--accent);cursor:pointer;font-weight:600">🖼 画像・商品名を取得(手動)</button>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="closeSettings()">キャンセル</button>
       <button class="modal-btn" onclick="testApi()">接続テスト</button>
@@ -1718,7 +1727,9 @@ function saveSettings() {
   updateApiStatus(id, ak);
   showModalStatus('設定を保存しました', 'ok');
   setTimeout(closeSettings, 1000);
-  if (id && ak && sc) fetchAllProductInfo();
+  // ⚠ 自動fetchAllProductInfo は無効化: 楽天APIレート制限(429)で既存データを失うリスクがあるため
+  // 必要な時は「画像を取得」ボタンから手動実行してください
+  // if (id && ak && sc) fetchAllProductInfo();
 }
 
 // ── ショップ切替UI ──
@@ -1921,15 +1932,42 @@ function deleteShop(idx) {
   _renderShopMenu();
 }
 
+// 現在ショップのローカルキャッシュ(localStorage)をクリアしてリロード
+// → GitHubから最新データを再取得する
+function clearShopLocalCacheAndReload() {
+  const shopId = _getCurrentShopId();
+  if (!confirm(`現在ショップ(${shopId})のローカルキャッシュを削除してGitHubから再取得しますか?\n\n※ GitHub側のデータは変更されません\n※ 未保存のローカル変更がある場合は失われます`)) return;
+  try {
+    localStorage.removeItem('adcheck_product_cache_' + shopId);
+    localStorage.removeItem('adcheck_cal_events_' + shopId);
+    // 旧キーも念のため削除(yukaiyaの場合)
+    if (shopId === 'yukaiya') {
+      localStorage.removeItem('adcheck_product_cache');
+      localStorage.removeItem('adcheck_cal_events');
+    }
+    console.log('[ADcheck] ローカルキャッシュ削除完了');
+    location.reload();
+  } catch(e) {
+    console.error('[ADcheck] キャッシュクリアエラー:', e);
+    alert('エラー: ' + (e.message || e));
+  }
+}
+
 // 旧パス(data/rpp_*.json)からデータを強制復旧する
 async function forceRecoverLegacyData() {
   if (_getCurrentShopId() !== 'yukaiya') {
     alert('この機能はyukaiyaショップでのみ使えます。');
     return;
   }
-  if (!confirm('旧パス(data/rpp_*.json)から現在ショップ(yukaiya)にデータを復旧しますか?\n\n※ 現在ショップのデータは上書きされます。\n※ 実行後に自動リロードします。')) return;
+  if (!confirm('旧パス(data/rpp_*.json)から現在ショップ(yukaiya)にデータを復旧しますか?\n\n※ 現在ショップのデータは上書きされます。\n※ localStorageのキャッシュも一旦クリアします。\n※ 実行後に自動リロードします。')) return;
   try {
-    // 旧パスから全データを強制的に読み込む
+    console.log('[ADcheck] ===== 復旧処理開始 =====');
+    // 0. ショップ別localStorageを先にクリア(汚染されたキャッシュ除去)
+    localStorage.removeItem(_cacheKey());
+    localStorage.removeItem(_calEventsKey());
+    console.log('[ADcheck] ショップ別localStorageをクリア');
+
+    // 1. 旧パスから全データを強制的に読み込む
     const files = [
       { url: `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_FILE_LEGACY}`, label: 'data/rpp_data.json' },
       { url: `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_ITEM_FILE_LEGACY}`, label: 'data/rpp_item.json' },
@@ -1937,6 +1975,7 @@ async function forceRecoverLegacyData() {
     ];
     console.log('[ADcheck] 旧パスから復旧開始...');
     const [resMain, resItem, resKw] = await Promise.all(files.map(f => fetch(f.url + '?t=' + Date.now())));
+    console.log('[ADcheck] 取得結果: main=', resMain.status, 'item=', resItem.status, 'kw=', resKw.status);
     if (!resMain.ok) { alert('旧パス(data/rpp_data.json)が見つかりません。復旧できません。'); return; }
     const dataMain = await resMain.json();
     const dataItem = resItem.ok ? await resItem.json() : {};
@@ -1944,32 +1983,64 @@ async function forceRecoverLegacyData() {
     console.log('[ADcheck] 旧データ取得完了', {
       productCache: Object.keys(dataMain.productCache||{}).length,
       DB: Object.keys(dataItem.DB||{}).length,
-      kwRows: (dataKw.kwRows||[]).length
+      itemDailyData: Object.keys(dataItem.itemDailyData||{}).length,
+      kwRows: (dataKw.kwRows||[]).length,
+      dailyRows: (dataMain.dailyRows||[]).length,
+      nichinichiRows: (dataMain.nichinichiRows||[]).length,
+      salesRows: (dataMain.salesRows||[]).length,
     });
-    // グローバル変数を全部上書き
-    if (dataMain.productCache) {
-      // 一旦clearしてから書き込み
-      for (const k of Object.keys(productCache)) delete productCache[k];
-      Object.assign(productCache, dataMain.productCache);
-      saveProductCache();
+    if (!dataMain.productCache || Object.keys(dataMain.productCache).length === 0) {
+      alert('旧パスのデータが空です。復旧できません。');
+      return;
     }
-    if (dataMain.calEvents) { calEvents = dataMain.calEvents; try { localStorage.setItem(_calEventsKey(), JSON.stringify(calEvents)); } catch(e) {} }
+    // 2. グローバル変数を全部上書き(ローカルも新パスも全無視で旧パスのみ採用)
+    for (const k of Object.keys(productCache)) delete productCache[k];
+    Object.assign(productCache, dataMain.productCache);
+    if (dataMain.calEvents) calEvents = dataMain.calEvents;
+    else calEvents = [];
     if (dataMain.nichinichiRows) nichinichiRows = dataMain.nichinichiRows;
     if (dataMain.dailyRows)      dailyRows      = dataMain.dailyRows;
     if (dataMain.salesRows)      salesRows      = dataMain.salesRows;
     if (dataItem.DB) { for (const k of Object.keys(DB)) delete DB[k]; Object.assign(DB, dataItem.DB); }
     if (dataItem.itemDailyData) { for (const k of Object.keys(itemDailyData)) delete itemDailyData[k]; Object.assign(itemDailyData, dataItem.itemDailyData); }
     if (dataKw.kwRows) kwRows = dataKw.kwRows;
-    // 新パスに保存
+
+    // 3. localStorageを新しく書く(ショップ別キー)
+    try { localStorage.setItem(_cacheKey(), JSON.stringify(productCache)); } catch(e) { console.error('LS cache write err:', e); }
+    try { localStorage.setItem(_calEventsKey(), JSON.stringify(calEvents)); } catch(e) {}
+    console.log('[ADcheck] localStorageに書込み完了. productCache=', Object.keys(productCache).length);
+
+    // 4. 新パス(data/yukaiya/)に保存
     console.log('[ADcheck] 新パスへ保存中...');
     await saveToGitHub();
-    alert('✅ 復旧完了! ページを再読み込みします。');
+    console.log('[ADcheck] 新パスへ保存完了');
+
+    alert('✅ 復旧完了! productCache=' + Object.keys(productCache).length + '件、DB=' + Object.keys(DB).length + '件、kwRows=' + kwRows.length + '件\n\nページを再読み込みします。');
     location.reload();
   } catch(e) {
     console.error('[ADcheck] 復旧エラー:', e);
     alert('復旧中にエラーが発生しました: ' + (e.message || e));
   }
 }
+// 設定モーダルからの手動画像取得ボタン
+async function manualFetchAllProductInfo() {
+  const missing = Object.keys(DB).filter(id => !productCache[id]?.img && !productCache[id]?.manualImg);
+  if (missing.length === 0) { alert('画像が未取得の商品はありません(全て取得済み)'); return; }
+  if (!confirm(`画像未取得の商品 ${missing.length}件を楽天APIから取得します。\n※ 1.2秒間隔で1件ずつ処理。${Math.ceil(missing.length * 1.2 / 60)}分程度かかる見込みです。\n※ 既に手動で登録した画像/商品名は上書きしません。\n\n実行しますか?`)) return;
+  showModalStatus(`画像取得中... (対象${missing.length}件)`, 'ok');
+  try {
+    await fetchAllProductInfo();
+    const after = Object.keys(DB).filter(id => !productCache[id]?.img && !productCache[id]?.manualImg).length;
+    const got = missing.length - after;
+    showModalStatus(`取得完了: ${got}件成功 / ${after}件失敗`, 'ok');
+    // GitHubにも保存
+    saveToGitHub().catch(e => console.warn(e));
+    renderAll();
+  } catch(e) {
+    showModalStatus('エラー: ' + (e.message || e), 'err');
+  }
+}
+
 function updateApiStatus(id, ak) {
   const el = document.getElementById('apiStatus');
   if (id && ak) { el.textContent = 'アプリID設定済み'; el.className = 'api-status set'; }
@@ -2265,10 +2336,12 @@ function afterLoad(fromGitHub = false) {  document.getElementById('emptyState').
   document.getElementById('dataArea').style.display = 'block';
   populateMonthSel();
   if (!fromGitHub) saveToGitHub();
-  const appId = localStorage.getItem('rakuten_app_id');
-  const accessKey = localStorage.getItem('rakuten_access_key');
-  const shopCode = localStorage.getItem('rakuten_shop_code');
-  if (appId && accessKey && shopCode) fetchAllProductInfo(); // GitHubからでも常にフェッチ
+  // ⚠ 自動fetchAllProductInfo は無効化: 楽天APIレート制限(429)で既存画像を失うリスクがあるため
+  // 必要な時は設定モーダルの「画像を取得」ボタンから手動実行
+  // const appId = localStorage.getItem('rakuten_app_id');
+  // const accessKey = localStorage.getItem('rakuten_access_key');
+  // const shopCode = localStorage.getItem('rakuten_shop_code');
+  // if (appId && accessKey && shopCode) fetchAllProductInfo();
   renderAll();
 }
 
@@ -2310,6 +2383,13 @@ async function fetchAllProductInfo() {
   const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
   const headers = { 'Origin': 'https://kaiyoshida0318.github.io' };
 
+  // ⚠ 429(Too Many Requests)カウンタ: 3回連続でHITしたら中断(既存データ保護)
+  let rateLimitHits = 0;
+  const MAX_RATE_LIMIT = 3;
+  // 楽天API推奨: 1秒1リクエスト以下。安全のため1200msに設定
+  const SAFE_INTERVAL = 1200;
+  console.log('[ADcheck] fetchAllProductInfo 開始(1.2秒間隔・429×3回で中断)');
+
   // Step1: shopCode一括取得（公開中商品を高速取得）
   let page = 1;
   let hasMore = true;
@@ -2317,6 +2397,13 @@ async function fetchAllProductInfo() {
     try {
       const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&shopCode=${shopCode}&hits=30&page=${page}&format=json&elements=itemName,mediumImageUrls,itemCode`;
       const res = await fetch(url, { headers });
+      if (res.status === 429) {
+        rateLimitHits++;
+        console.warn(`[ADcheck] 429 rate limit (${rateLimitHits}/${MAX_RATE_LIMIT}). waiting 5s...`);
+        if (rateLimitHits >= MAX_RATE_LIMIT) { console.error('[ADcheck] 429多発で中断'); break; }
+        await new Promise(r => setTimeout(r, 5000));
+        continue;
+      }
       if (!res.ok) break;
       const data = await res.json();
       const items = data.Items || [];
@@ -2337,52 +2424,47 @@ async function fetchAllProductInfo() {
       });
       hasMore = items.length === 30;
       page++;
-      if (hasMore) await new Promise(r => setTimeout(r, 300));
-    } catch(e) { break; }
+      if (hasMore) await new Promise(r => setTimeout(r, SAFE_INTERVAL));
+    } catch(e) { console.warn('[ADcheck] fetch err:', e); break; }
   }
 
   // Step2: 漏れた商品をitemCode個別検索でフォールバック（廃番・非公開商品対応）
-  // 画像・名前が未取得の商品のみAPIリクエスト（取得済みはスキップして高速化）
-  const missing = Object.keys(DB).filter(id => !productCache[id]?.img && !productCache[id]?.manualImg);
-  const retryList = [];
+  // 画像・名前が未取得の商品のみAPIリクエスト（manualImg/manualName/name/imgがある商品はスキップ）
+  const missing = Object.keys(DB).filter(id => {
+    const c = productCache[id];
+    if (!c) return true;
+    // どれか1つでも画像情報があればスキップ
+    if (c.img || c.manualImg) return false;
+    return true;
+  });
+  console.log(`[ADcheck] Step2: 画像未取得${missing.length}件を個別取得`);
   for (const itemId of missing) {
+    // 429が多発したら中断
+    if (rateLimitHits >= MAX_RATE_LIMIT) { console.warn('[ADcheck] 429多発のためStep2中断'); break; }
     try {
       const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${itemId}&hits=1&format=json&elements=itemName,mediumImageUrls,itemCode`;
       const res = await fetch(url, { headers });
-      if (!res.ok) { retryList.push(itemId); await new Promise(r => setTimeout(r, 500)); continue; }
+      if (res.status === 429) {
+        rateLimitHits++;
+        console.warn(`[ADcheck] 429 (Step2 ${rateLimitHits}/${MAX_RATE_LIMIT}). waiting 5s...`);
+        await new Promise(r => setTimeout(r, 5000));
+        continue;
+      }
+      if (!res.ok) { await new Promise(r => setTimeout(r, SAFE_INTERVAL)); continue; }
       const data = await res.json();
       const item = data.Items?.[0]?.Item;
       // 既存データ（retired・status等）を保持しながらname・imgのみ更新
       if (!productCache[itemId]) productCache[itemId] = {};
-      productCache[itemId].name = productCache[itemId].name || item?.itemName || '';
-      productCache[itemId].img  = item?.mediumImageUrls?.[0]?.imageUrl || null;
+      // ⚠ 既存の name/img を空で上書きしない (手動登録データを保護)
+      if (!productCache[itemId].name && item?.itemName) productCache[itemId].name = item.itemName;
+      if (!productCache[itemId].img  && item?.mediumImageUrls?.[0]?.imageUrl) productCache[itemId].img = item.mediumImageUrls[0].imageUrl;
       productCache[itemId].shopCode = itemId;
       applyImageToDOM(itemId, productCache[itemId].img, productCache[itemId].name);
-      await new Promise(r => setTimeout(r, 300));
-    } catch(e) { retryList.push(itemId); continue; }
-  }
-  // 失敗した商品を1秒待ってリトライ
-  if (retryList.length > 0) {
-    await new Promise(r => setTimeout(r, 1000));
-    for (const itemId of retryList) {
-      if (productCache[itemId]) continue;
-      try {
-        const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${itemId}&hits=1&format=json&elements=itemName,mediumImageUrls,itemCode`;
-        const res = await fetch(url, { headers });
-        if (!res.ok) continue;
-        const data = await res.json();
-        const item = data.Items?.[0]?.Item;
-        // 既存データ（retired・status等）を保持しながらname・imgのみ更新
-        if (!productCache[itemId]) productCache[itemId] = {};
-        productCache[itemId].name = productCache[itemId].name || item?.itemName || '';
-        productCache[itemId].img  = item?.mediumImageUrls?.[0]?.imageUrl || null;
-        productCache[itemId].shopCode = itemId;
-        applyImageToDOM(itemId, productCache[itemId].img, productCache[itemId].name);
-        await new Promise(r => setTimeout(r, 500));
-      } catch(e) { continue; }
-    }
+      await new Promise(r => setTimeout(r, SAFE_INTERVAL));
+    } catch(e) { console.warn('[ADcheck] Step2 err:', e); continue; }
   }
   saveProductCache(); // フェッチ完了後にlocalStorageへ保存
+  console.log('[ADcheck] fetchAllProductInfo 完了. productCache=', Object.keys(productCache).length);
   _fetchInProgress = false;
 }
 
