@@ -443,7 +443,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.431</span>
+    <span class="build-date">v1.432</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1744,7 +1744,8 @@ function _renderShopMenu() {
   if (!list) return;
   list.innerHTML = shops.map(s => {
     const active = s.id === curId;
-    return `<button onclick="switchShop('${s.id}')" style="width:100%;text-align:left;padding:10px 14px;border:none;background:${active?'var(--surface2)':'none'};cursor:pointer;font-size:13px;color:${active?'var(--accent)':'var(--text)'};font-weight:${active?'700':'500'};display:flex;align-items:center;gap:8px;font-family:inherit" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='${active?'var(--surface2)':'none'}'">
+    // event.stopPropagation()でdocumentのクリックハンドラ干渉を防ぐ
+    return `<button onclick="event.stopPropagation();switchShop('${s.id}')" style="width:100%;text-align:left;padding:10px 14px;border:none;background:${active?'var(--surface2)':'none'};cursor:pointer;font-size:13px;color:${active?'var(--accent)':'var(--text)'};font-weight:${active?'700':'500'};display:flex;align-items:center;gap:8px;font-family:inherit" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='${active?'var(--surface2)':'none'}'">
       <span style="width:14px">${active?'✓':''}</span>
       <span style="flex:1">${s.name}</span>
       <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${s.id}</span>
@@ -1770,12 +1771,14 @@ document.addEventListener('click', (e) => {
 });
 
 function switchShop(shopId) {
+  console.log('[ADcheck] switchShop called:', shopId);
   const shops = _getShops();
   const target = shops.find(s => s.id === shopId);
-  if (!target) return;
-  if (shopId === _getCurrentShopId()) { closeShopMenu(); return; }
-  // 切替前: 現在ショップの設定をshops配列に保存
+  if (!target) { console.warn('[ADcheck] switchShop: target not found', shopId); return; }
   const curId = _getCurrentShopId();
+  console.log('[ADcheck] switchShop: current=', curId, '-> target=', shopId);
+  if (shopId === curId) { console.log('[ADcheck] switchShop: same shop, just close menu'); closeShopMenu(); return; }
+  // 切替前: 現在ショップの設定をshops配列に保存
   const cur = shops.find(s => s.id === curId);
   if (cur) {
     cur.appId     = localStorage.getItem('rakuten_app_id')     || cur.appId || '';
@@ -1788,6 +1791,7 @@ function switchShop(shopId) {
   localStorage.setItem('rakuten_access_key', target.accessKey || '');
   localStorage.setItem('rakuten_shop_code',  target.shopCode  || '');
   _setCurrentShopId(shopId);
+  console.log('[ADcheck] switchShop: reloading...');
   // リロード(完全に1ショップ分のメモリだけ使う)
   location.reload();
 }
