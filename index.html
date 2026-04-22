@@ -443,7 +443,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.433</span>
+    <span class="build-date">v1.434</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1758,27 +1758,36 @@ function toggleShopMenu(event) {
   const menu = document.getElementById('shopMenu');
   const btn = document.getElementById('shopSelectorBtn');
   if (!menu || !btn) return;
+  // ⚠ 重要: メニューをdocument.body直下に移動(stacking contextから解放して最上位に)
+  if (menu.parentElement !== document.body) {
+    document.body.appendChild(menu);
+    console.log('[ADcheck] shopMenu moved to body');
+  }
   const isOpen = menu.style.display === 'block';
   if (isOpen) {
     menu.style.display = 'none';
   } else {
     _renderShopMenu();
-    // position:fixedなので、ボタンの位置を計算してメニューを配置
+    // ボタンの位置を計算してメニューを配置
     const rect = btn.getBoundingClientRect();
     menu.style.top = (rect.bottom + 4) + 'px';
     menu.style.left = rect.left + 'px';
     menu.style.display = 'block';
-    console.log('[ADcheck] shopMenu opened at', menu.style.top, menu.style.left);
+    console.log('[ADcheck] shopMenu opened at top=', menu.style.top, 'left=', menu.style.left);
   }
 }
 function closeShopMenu() {
   const menu = document.getElementById('shopMenu');
   if (menu) menu.style.display = 'none';
 }
-// メニュー外クリックで閉じる
+// メニュー外クリックで閉じる(body直下に移動しても対応)
 document.addEventListener('click', (e) => {
-  const wrap = document.getElementById('shopSelectorWrap');
-  if (wrap && !wrap.contains(e.target)) closeShopMenu();
+  const menu = document.getElementById('shopMenu');
+  const btn = document.getElementById('shopSelectorBtn');
+  if (!menu || menu.style.display !== 'block') return;
+  // ボタン本体かメニュー内クリックなら閉じない
+  if (btn?.contains(e.target) || menu.contains(e.target)) return;
+  closeShopMenu();
 });
 
 function switchShop(shopId) {
