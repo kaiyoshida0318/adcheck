@@ -430,20 +430,20 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <span id="shopSelectorLabel">—</span>
         <span style="font-size:9px;color:var(--text3)">▼</span>
       </button>
-      <div id="shopMenu" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);min-width:200px;z-index:300;overflow:hidden">
+      <div id="shopMenu" style="display:none;position:fixed;margin-top:4px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.2);min-width:240px;z-index:99999;overflow:hidden">
         <div id="shopMenuList"></div>
         <div style="border-top:1px solid var(--border)"></div>
-        <button onclick="openShopAddModal();closeShopMenu()" style="width:100%;text-align:left;padding:10px 14px;border:none;background:none;cursor:pointer;font-size:12px;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:6px;font-family:inherit" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+        <button onclick="event.stopPropagation();openShopAddModal();closeShopMenu()" style="width:100%;text-align:left;padding:10px 14px;border:none;background:none;cursor:pointer;font-size:12px;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:6px;font-family:inherit" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
           <span>＋</span> 新規ショップ追加
         </button>
-        <button onclick="openShopManageModal();closeShopMenu()" style="width:100%;text-align:left;padding:10px 14px;border:none;background:none;cursor:pointer;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;font-family:inherit;border-top:1px solid var(--border)" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+        <button onclick="event.stopPropagation();openShopManageModal();closeShopMenu()" style="width:100%;text-align:left;padding:10px 14px;border:none;background:none;cursor:pointer;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;font-family:inherit;border-top:1px solid var(--border)" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
           <span>⚙</span> ショップ管理
         </button>
       </div>
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.432</span>
+    <span class="build-date">v1.433</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1756,9 +1756,20 @@ function _renderShopMenu() {
 function toggleShopMenu(event) {
   event?.stopPropagation();
   const menu = document.getElementById('shopMenu');
+  const btn = document.getElementById('shopSelectorBtn');
+  if (!menu || !btn) return;
   const isOpen = menu.style.display === 'block';
-  if (isOpen) menu.style.display = 'none';
-  else { _renderShopMenu(); menu.style.display = 'block'; }
+  if (isOpen) {
+    menu.style.display = 'none';
+  } else {
+    _renderShopMenu();
+    // position:fixedなので、ボタンの位置を計算してメニューを配置
+    const rect = btn.getBoundingClientRect();
+    menu.style.top = (rect.bottom + 4) + 'px';
+    menu.style.left = rect.left + 'px';
+    menu.style.display = 'block';
+    console.log('[ADcheck] shopMenu opened at', menu.style.top, menu.style.left);
+  }
 }
 function closeShopMenu() {
   const menu = document.getElementById('shopMenu');
