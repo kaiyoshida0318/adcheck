@@ -443,7 +443,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.435</span>
+    <span class="build-date">v1.436</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1547,7 +1547,8 @@ const GH_FILE_LEGACY      = 'data/rpp_data.json';
 const GH_KW_FILE_LEGACY   = 'data/rpp_kw.json';
 const GH_ITEM_FILE_LEGACY = 'data/rpp_item.json';
 
-async function saveProductCacheToGitHub() {
+async function saveProductCacheToGitHub(retryCount = 0) {
+  const MAX_RETRY = 5;
   const pat = localStorage.getItem('github_pat');
   if (!pat) return;
   const headers = {
@@ -1566,13 +1567,28 @@ async function saveProductCacheToGitHub() {
   });
   if (!putRes.ok) {
     const e = await putRes.json();
+    // 409ならリトライ
+    if (putRes.status === 409 && retryCount < MAX_RETRY) {
+      console.warn(`[ADcheck] saveProductCacheToGitHub 409, retry ${retryCount+1}/${MAX_RETRY}`);
+      await new Promise(r => setTimeout(r, 500 + retryCount * 300));
+      return saveProductCacheToGitHub(retryCount + 1);
+    }
     throw new Error(e.message || putRes.status);
   }
 }
 
+// saveToGitHub 並列実行防止用のPromise mutex
+let _saveToGitHubInFlight = null;
+
 async function saveToGitHub() {
   const pat = localStorage.getItem('github_pat');
   if (!pat) return;
+  // 既に実行中なら、それの完了を待ってから実行(並列防止→SHA衝突回避)
+  if (_saveToGitHubInFlight) {
+    console.log('[ADcheck] saveToGitHub: 他の保存処理を待機中...');
+    try { await _saveToGitHubInFlight; } catch(e) {}
+  }
+  _saveToGitHubInFlight = (async () => {
   try {
     const headers = {
       'Authorization': `token ${pat}`,
@@ -1580,7 +1596,8 @@ async function saveToGitHub() {
       'Content-Type': 'application/json'
     };
 
-    const _ghPut = async (file, payload) => {
+    const _ghPut = async (file, payload, retryCount = 0) => {
+      const MAX_RETRY = 5;
       const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${file}`, { headers });
       const sha = getRes.ok ? (await getRes.json()).sha : null;
       const jsonStr = JSON.stringify(payload);
@@ -1592,10 +1609,16 @@ async function saveToGitHub() {
       });
       if (!putRes.ok) {
         const err = await putRes.json();
+        // 409 Conflict (SHA不一致)なら自動リトライ: 最新SHAを再取得して再PUT
+        if (putRes.status === 409 && retryCount < MAX_RETRY) {
+          console.warn(`[ADcheck] 409 Conflict, retrying (${retryCount+1}/${MAX_RETRY}):`, file);
+          await new Promise(r => setTimeout(r, 500 + retryCount * 300)); // 指数バックオフ
+          return _ghPut(file, payload, retryCount + 1);
+        }
         console.error('[ADcheck] 保存失敗:', file, err);
         throw new Error(`保存失敗: ${file} (${err.message || putRes.status})`);
       } else {
-        console.log('[ADcheck] 保存成功:', file);
+        console.log('[ADcheck] 保存成功:', file, retryCount > 0 ? `(${retryCount}回リトライ後)` : '');
       }
     };
 
@@ -1615,6 +1638,12 @@ async function saveToGitHub() {
   } catch(e) {
     console.error('[ADcheck] GitHub save exception:', e);
     throw e; // 呼び出し側でcatchできるよう再throw
+  }
+  })();
+  try {
+    await _saveToGitHubInFlight;
+  } finally {
+    _saveToGitHubInFlight = null;
   }
 }
 
