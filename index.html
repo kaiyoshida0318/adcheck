@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.423</span>
+    <span class="build-date">v1.424</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5662,10 +5662,11 @@ async function runDropZoneCheck() {
   // チェック結果HTML生成
   const keys = Object.keys(grouped).sort();
   let hasError = false;
-  let html = '<div style="font-size:11px">';
+  let okCount = 0, errCount = 0;
+  let detailHtml = '';
 
   if (keys.length === 0 && warnings.length === 0) {
-    html += '<div style="color:var(--danger)">対応ファイルが見つかりませんでした</div>';
+    detailHtml += '<div style="color:var(--danger)">対応ファイルが見つかりませんでした</div>';
     hasError = true;
   }
 
@@ -5673,9 +5674,9 @@ async function runDropZoneCheck() {
     const g = grouped[key];
     const rppOk = !!g.rpp, kwOk = !!g.kw;
     const pairOk = rppOk && kwOk;
-    if (!pairOk) hasError = true;
+    if (!pairOk) { hasError = true; errCount++; } else { okCount++; }
     const label = g.isPeriod ? key + '（期間）' : key;
-    html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+    detailHtml += `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
       <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);min-width:80px">${label}</span>
       <span title="rpp_reports">${rppOk ? '✅' : '❌'} RPP</span>
       <span title="kw_reports">${kwOk ? '✅' : '❌'} KW</span>
@@ -5685,8 +5686,22 @@ async function runDropZoneCheck() {
     </div>`;
   });
 
-  warnings.forEach(w => { html += `<div style="color:var(--danger);padding:4px 0">${w}</div>`; hasError = true; });
-  html += '</div>';
+  warnings.forEach(w => { detailHtml += `<div style="color:var(--danger);padding:4px 0">${w}</div>`; hasError = true; });
+
+  // サマリー + 折りたたみ詳細
+  const totalCount = keys.length;
+  const summaryText = `📋 ${totalCount}件 (✅問題なし:${okCount} ${errCount > 0 ? '⚠️片方のみ:'+errCount : ''})`;
+  // 件数が10件以下ならデフォルト展開、それ以上は折りたたみ
+  const defaultOpen = totalCount <= 10;
+
+  let html = `<div style="font-size:11px">
+    <div onclick="(function(el){const d=el.nextElementSibling;const arr=el.querySelector('.acc-arr');const open=d.style.display!=='none';d.style.display=open?'none':'block';arr.textContent=open?'▶':'▼';})(this)"
+         style="cursor:pointer;background:var(--surface2);padding:8px 12px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:12px;color:var(--text);user-select:none;border:1px solid var(--border)">
+      <span>${summaryText}</span>
+      <span class="acc-arr" style="font-size:10px;color:var(--text3)">${defaultOpen ? '▼' : '▶'}</span>
+    </div>
+    <div style="display:${defaultOpen ? 'block' : 'none'};max-height:300px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;padding:6px 12px">${detailHtml}</div>
+  </div>`;
 
   if (!hasError) {
     html += '<div style="margin-top:8px;padding:7px 10px;background:#e8f5e9;border-radius:5px;font-size:11px;color:#2e7d32;font-weight:700">✅ 問題なし。「反映する」を押してください</div>';
