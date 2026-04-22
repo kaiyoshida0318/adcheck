@@ -454,8 +454,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <button class="header-btn" onclick="openBulkNameModal()">📋 商品名一括更新</button>
         <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
     <button class="header-btn danger-btn" onclick="confirmClearAll()">🗑 データ削除</button>
-    <button class="header-btn" onclick="clearShopLocalCacheAndReload()" style="background:#e0f2fe;color:#075985;border-color:#0284c7;font-weight:700" title="現在ショップのローカルキャッシュをクリアしてGitHubから再取得">♻️ 再取得</button>
-    <button class="header-btn" onclick="forceRecoverLegacyData()" style="background:#fffbeb;color:#92400e;border-color:#f59e0b;font-weight:700" title="v1.425で発生したデータ消失を旧パスから復旧">🔧 データ復旧</button>
+    <button class="header-btn" onclick="clearShopLocalCacheAndReload()" title="ローカルキャッシュをクリアしてGitHubから再取得">♻️ 再取得</button>
+    <button class="header-btn" onclick="forceRecoverLegacyData()" style="font-size:11px;padding:4px 8px;opacity:0.6" title="緊急用:旧パス(data/rpp_*.json)から強制復旧">🔧</button>
     <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
   </div>
