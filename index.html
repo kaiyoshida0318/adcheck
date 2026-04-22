@@ -443,7 +443,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.434</span>
+    <span class="build-date">v1.435</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -454,8 +454,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <button class="header-btn" onclick="openBulkNameModal()">📋 商品名一括更新</button>
         <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
     <button class="header-btn danger-btn" onclick="confirmClearAll()">🗑 データ削除</button>
-    <button class="header-btn" onclick="clearShopLocalCacheAndReload()" title="ローカルキャッシュをクリアしてGitHubから再取得">♻️ 再取得</button>
-    <button class="header-btn" onclick="forceRecoverLegacyData()" style="font-size:11px;padding:4px 8px;opacity:0.6" title="緊急用:旧パス(data/rpp_*.json)から強制復旧">🔧</button>
     <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
   </div>
@@ -868,13 +866,48 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <!-- データ削除確認モーダル -->
 <div class="modal-overlay" id="confirmClearModal">
-  <div class="modal" style="max-width:400px;text-align:center">
-    <div style="font-size:40px;margin-bottom:12px">🗑</div>
-    <h3 style="margin-bottom:8px">データを削除しますか？</h3>
-    <p>読み込んだRPPデータがすべて消えます。<br>この操作は取り消せません。</p>
-    <div class="modal-actions" style="justify-content:center;margin-top:20px;gap:12px">
-      <button class="modal-btn" onclick="closeConfirmClear()" style="min-width:100px">キャンセル</button>
-      <button class="modal-btn save" onclick="doDeleteAll()" style="min-width:100px;background:var(--danger);border-color:var(--danger)">削除する</button>
+  <div class="modal" style="max-width:520px">
+    <div style="text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">🗑</div>
+      <h3 style="margin-bottom:8px">データ削除</h3>
+      <p style="margin-bottom:16px;font-size:12px;color:var(--text2)">削除範囲を選んでください</p>
+    </div>
+
+    <!-- 削除範囲選択 -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.15s" onclick="_onClearScopeChange(this,'month')">
+        <input type="radio" name="clearScope" value="month" checked style="margin-top:2px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:4px">📅 指定月のRPPデータのみ削除(推奨)</div>
+          <div style="font-size:11px;color:var(--text3)">選んだ月の日別/月別/KW別の実績データだけ削除。<br><strong style="color:var(--accent)">画像・商品名・ステータス・変更記録は保持されます</strong></div>
+          <select id="clearScopeYm" style="margin-top:8px;padding:6px 10px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);min-width:120px"></select>
+        </div>
+      </label>
+
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.15s" onclick="_onClearScopeChange(this,'rpp_all')">
+        <input type="radio" name="clearScope" value="rpp_all" style="margin-top:2px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:4px">📊 全期間のRPPデータを削除</div>
+          <div style="font-size:11px;color:var(--text3)">全期間の実績データ(日別/月別/KW別/売上)を削除。<br>画像・商品名・ステータスは保持されます</div>
+        </div>
+      </label>
+
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:2px solid var(--danger);border-radius:8px;cursor:pointer;transition:all 0.15s;background:#fff5f5" onclick="_onClearScopeChange(this,'all')">
+        <input type="radio" name="clearScope" value="all" style="margin-top:2px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;color:var(--danger);margin-bottom:4px">⚠️ 全データ削除(現在ショップ)</div>
+          <div style="font-size:11px;color:var(--text3)">実績データに加え<strong style="color:var(--danger)">画像・商品名・ステータス・変更記録も全消去</strong>。<br>取り消し不可。本当に全部リセットしたい時だけ</div>
+        </div>
+      </label>
+    </div>
+
+    <div style="padding:8px 12px;background:var(--surface2);border-radius:5px;font-size:11px;color:var(--text2);margin-bottom:14px">
+      <strong>対象ショップ:</strong> <span id="clearTargetShop" style="color:var(--accent);font-weight:700">—</span>
+    </div>
+
+    <div class="modal-actions" style="justify-content:center;gap:12px">
+      <button class="modal-btn" onclick="closeConfirmClear()" style="min-width:110px">キャンセル</button>
+      <button class="modal-btn save" onclick="doClearByScope()" style="min-width:110px;background:var(--danger);border-color:var(--danger)">削除する</button>
     </div>
   </div>
 </div>
@@ -6118,11 +6151,141 @@ function deleteCalEvent(i) {
 
 // ── データ削除確認 ──
 function confirmClearAll() {
+  // 月セレクタを populate
+  const sel = document.getElementById('clearScopeYm');
+  if (sel) {
+    const months = new Set();
+    // dailyRows から年月抽出
+    (dailyRows||[]).forEach(r => { const ym = (r.label||r.date||'').replace(/\//g,'-').substring(0,7); if (ym.length === 7) months.add(ym); });
+    // nichinichiRows から
+    (nichinichiRows||[]).forEach(r => { const ym = (r.label||r.date||'').replace(/\//g,'-').substring(0,7); if (ym.length === 7) months.add(ym); });
+    // kwRows から
+    (kwRows||[]).forEach(r => { const ym = r.ym ? r.ym.substring(0,4)+'-'+r.ym.substring(4,6) : (r.date||'').substring(0,7); if (ym.length === 7) months.add(ym); });
+    const sorted = Array.from(months).sort().reverse();
+    sel.innerHTML = sorted.length > 0
+      ? sorted.map(ym => `<option value="${ym}">${ym}</option>`).join('')
+      : '<option value="">(データなし)</option>';
+  }
+  // 対象ショップ表示
+  const cur = _getCurrentShop();
+  const tgt = document.getElementById('clearTargetShop');
+  if (tgt) tgt.textContent = cur ? `${cur.name} (${cur.id})` : _getCurrentShopId();
+  // 最初のオプションを選択状態に
+  _onClearScopeChange(document.querySelector('#confirmClearModal label'), 'month');
+  document.querySelectorAll('#confirmClearModal input[name="clearScope"]').forEach(r => r.checked = (r.value === 'month'));
   document.getElementById('confirmClearModal').classList.add('open');
 }
 function closeConfirmClear() {
   document.getElementById('confirmClearModal').classList.remove('open');
 }
+function _onClearScopeChange(labelEl, scope) {
+  // ラベル選択時の視覚的フィードバック(ボーダー色変更)
+  document.querySelectorAll('#confirmClearModal label').forEach(l => {
+    l.style.borderColor = 'var(--border)';
+    l.style.background = l.querySelector('input').value === 'all' ? '#fff5f5' : 'transparent';
+  });
+  if (labelEl) {
+    labelEl.style.borderColor = scope === 'all' ? 'var(--danger)' : 'var(--accent)';
+    labelEl.style.background = scope === 'all' ? '#ffe5e5' : 'var(--surface2)';
+  }
+  // ラジオボタンのcheck
+  const radio = labelEl?.querySelector('input');
+  if (radio) radio.checked = true;
+}
+
+// ── 実際の削除処理 ──
+async function doClearByScope() {
+  const scope = document.querySelector('#confirmClearModal input[name="clearScope"]:checked')?.value || 'month';
+  const curShop = _getCurrentShop();
+  const shopLabel = curShop ? curShop.name + '(' + curShop.id + ')' : _getCurrentShopId();
+
+  if (scope === 'month') {
+    const ym = document.getElementById('clearScopeYm')?.value;
+    if (!ym) { alert('月が選択されていません'); return; }
+    if (!confirm(`${shopLabel} の ${ym} のRPP実績データを削除しますか?\n\n削除対象:\n・日別データ(dailyRows)\n・月別データ(nichinichiRows)\n・KW別データ(kwRows)\n・商品別日次データ(itemDailyData)の当月分\n\n保持されるもの:\n・画像/商品名/ステータス/変更記録`)) return;
+    await clearDataByMonth(ym);
+  } else if (scope === 'rpp_all') {
+    if (!confirm(`${shopLabel} の全期間のRPP実績データを削除しますか?\n\n削除対象:\n・日別/月別/KW別/売上の全データ\n\n保持されるもの:\n・画像/商品名/ステータス/変更記録`)) return;
+    await clearAllRppData();
+  } else if (scope === 'all') {
+    if (!confirm(`⚠️ ${shopLabel} の全データを完全削除しますか?\n\n削除対象:\n・全ての実績データ\n・画像/商品名/ステータス/変更記録\n\n※ この操作は取り消せません`)) return;
+    if (!confirm('最終確認: 本当にすべて消しますか? 画像や手動登録した商品名も全て消えます。')) return;
+    clearAll();
+    try { await saveToGitHub(); } catch(e) { console.warn(e); }
+  }
+  closeConfirmClear();
+}
+
+// 指定月のRPPデータのみ削除(productCache/DB/画像は保持)
+async function clearDataByMonth(ym) {
+  const ymCompact = ym.replace('-', ''); // '2026-04' -> '202604'
+  // dailyRows
+  const beforeDaily = dailyRows.length;
+  dailyRows = dailyRows.filter(r => {
+    const l = (r.label || r.date || '').replace(/\//g,'-');
+    return !l.startsWith(ym);
+  });
+  // nichinichiRows (月別)
+  const beforeNichi = nichinichiRows.length;
+  nichinichiRows = nichinichiRows.filter(r => {
+    const l = (r.label || r.date || '').replace(/\//g,'-');
+    return !l.startsWith(ym);
+  });
+  // kwRows
+  const beforeKw = kwRows.length;
+  kwRows = kwRows.filter(r => {
+    if (r.ym && r.ym === ymCompact) return false;
+    if (r.date && r.date.replace(/\//g,'-').startsWith(ym)) return false;
+    return true;
+  });
+  // salesRows
+  const beforeSales = salesRows.length;
+  salesRows = salesRows.filter(r => {
+    const d = (r.date || '').replace(/\//g,'-');
+    return !d.startsWith(ym);
+  });
+  // itemDailyData: 各商品の当月分の日付キーを削除
+  Object.keys(itemDailyData).forEach(itemId => {
+    const days = itemDailyData[itemId];
+    if (!days) return;
+    Object.keys(days).forEach(d => {
+      if (d.replace(/\//g,'-').startsWith(ym)) delete days[d];
+    });
+    // 全て消えた商品のキー自体も消す
+    if (Object.keys(days).length === 0) delete itemDailyData[itemId];
+  });
+  // DB内の各商品の.daysも当月分を削除
+  Object.keys(DB).forEach(id => {
+    const p = DB[id];
+    if (p && p.days) {
+      Object.keys(p.days).forEach(d => {
+        if (d.replace(/\//g,'-').startsWith(ym)) delete p.days[d];
+      });
+    }
+  });
+  console.log(`[ADcheck] clearDataByMonth(${ym}): daily ${beforeDaily}->${dailyRows.length}, monthly ${beforeNichi}->${nichinichiRows.length}, kw ${beforeKw}->${kwRows.length}, sales ${beforeSales}->${salesRows.length}`);
+  renderAll();
+  try { await saveToGitHub(); } catch(e) { console.warn(e); }
+  alert(`✅ ${ym} のデータを削除しました`);
+}
+
+// 全期間のRPP実績データ削除(画像・商品名は保持)
+async function clearAllRppData() {
+  dailyRows = [];
+  nichinichiRows = [];
+  kwRows = [];
+  salesRows = [];
+  // itemDailyData, DB.daysも全クリア
+  Object.keys(itemDailyData).forEach(k => delete itemDailyData[k]);
+  Object.keys(DB).forEach(id => {
+    const p = DB[id];
+    if (p && p.days) p.days = {};
+  });
+  renderAll();
+  try { await saveToGitHub(); } catch(e) { console.warn(e); }
+  alert('✅ 全期間のRPPデータを削除しました(画像・商品名は保持)');
+}
+
 function doDeleteAll() {
   closeConfirmClear();
   clearAll();
