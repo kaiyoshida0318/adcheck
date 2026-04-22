@@ -443,7 +443,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.425</span>
+    <span class="build-date">v1.427</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -451,7 +451,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
     <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
-    <button class="header-btn" onclick="openImportGuide()" title="インポート方法">📋 インポート方法</button>
     <button class="header-btn" onclick="openBulkNameModal()">📋 商品名一括更新</button>
         <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
     <button class="header-btn danger-btn" onclick="confirmClearAll()">🗑 データ削除</button>
@@ -1134,6 +1133,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <h3 style="margin-bottom:8px;flex-shrink:0">⚙ ショップ管理</h3>
     <p style="flex-shrink:0;margin-bottom:14px">登録済みショップの編集・削除ができます。</p>
     <div id="shopManageList" style="flex:1;overflow-y:auto;min-height:0"></div>
+    <div style="flex-shrink:0;margin-top:10px;padding:10px 14px;background:#fff3cd;border:1px solid #ffe082;border-radius:6px;font-size:11px;color:#6d4c00">
+      <strong>🔧 データが消えた場合の復旧</strong><br>
+      旧パス(<code style="font-family:'DM Mono',monospace">data/rpp_*.json</code>)にデータが残っていれば、下のボタンで強制的に再マイグレーションできます(※現在ショップのみ・yukaiyaのみ対象)
+      <div style="margin-top:6px;display:flex;gap:6px">
+        <button onclick="forceRecoverLegacyData()" style="font-size:11px;padding:5px 12px;border:1px solid #f59e0b;border-radius:5px;background:#fffbeb;color:#92400e;cursor:pointer;font-weight:600">🔧 旧パスから復旧</button>
+      </div>
+    </div>
     <div class="modal-actions" style="flex-shrink:0;border-top:1px solid var(--border);padding-top:14px;margin-top:14px">
       <button class="modal-btn" onclick="closeShopManageModal()">閉じる</button>
       <button class="modal-btn save" onclick="openShopAddModal();closeShopManageModal()">＋ 新規ショップ追加</button>
@@ -1473,7 +1479,7 @@ function _initShopsIfNeeded() {
     const shopCode  = localStorage.getItem('rakuten_shop_code')  || 'yukaiya';
     const yukaiya = {
       id: 'yukaiya',
-      name: 'ゆかいや',
+      name: 'ゆかい屋',
       appId, accessKey,
       shopCode: shopCode || 'yukaiya',
     };
@@ -1551,6 +1557,14 @@ async function saveToGitHub() {
     };
 
     // ショップ別ディレクトリに保存
+    // セーフガード: productCacheもDBも空、全データが空なら保存しない(誤上書き防止)
+    const _totalData = Object.keys(productCache).length + Object.keys(DB).length
+                     + (kwRows?.length||0) + (nichinichiRows?.length||0)
+                     + (dailyRows?.length||0) + (salesRows?.length||0);
+    if (_totalData === 0) {
+      console.warn('[ADcheck] 全データが空のため保存スキップ(誤上書き防止)');
+      return;
+    }
     await _ghPut(_ghFile(),     { productCache, calEvents, nichinichiRows, dailyRows, salesRows });
     await _ghPut(_ghItemFile(), { DB, itemDailyData });
     await _ghPut(_ghKwFile(),   { kwRows });
@@ -1619,12 +1633,6 @@ async function loadFromGitHub() {
           if (kwData.kwRows) { kwRows = kwData.kwRows; }
         }
       } catch(e) { console.warn('[ADcheck] KW読込エラー:', e); }
-      // 旧パスから読んだ場合、新パスにマイグレーション保存
-      if (usedLegacy) {
-        console.log('[ADcheck] 新パスへマイグレーション保存中...');
-        try { await saveToGitHub(); console.log('[ADcheck] マイグレーション完了'); }
-        catch(e) { console.warn('[ADcheck] マイグレーション保存失敗:', e); }
-      }
       if (data.kwRows) {
         kwRows = data.kwRows;
         if (kwRows.length > 0) { populateKwMonthSel(); renderKwFiltered(); _initFormulaMonthSel(); }
@@ -1648,6 +1656,22 @@ async function loadFromGitHub() {
         populateDailyMonthSel();
   populateMonthlyItemSel();
         renderDailyFiltered();
+      }
+      // 旧パスから読んだ場合、**全データロード完了後に**新パスへマイグレーション保存
+      // セーフガード: productCacheが空 or データロード失敗なら保存しない(空で上書きしないため)
+      if (usedLegacy) {
+        const hasData = Object.keys(productCache).length > 0
+                     || Object.keys(DB).length > 0
+                     || kwRows.length > 0
+                     || nichinichiRows.length > 0
+                     || dailyRows.length > 0;
+        if (hasData) {
+          console.log('[ADcheck] 新パスへマイグレーション保存中... (productCache:', Object.keys(productCache).length, 'DB:', Object.keys(DB).length, 'kwRows:', kwRows.length, ')');
+          try { await saveToGitHub(); console.log('[ADcheck] マイグレーション完了'); }
+          catch(e) { console.warn('[ADcheck] マイグレーション保存失敗:', e); }
+        } else {
+          console.warn('[ADcheck] 空データのため新パス保存スキップ(誤上書き防止)');
+        }
       }
       return true;
     }
@@ -1885,6 +1909,56 @@ function deleteShop(idx) {
   } catch(e) {}
   _renderShopManageList();
   _renderShopMenu();
+}
+
+// 旧パス(data/rpp_*.json)からデータを強制復旧する
+async function forceRecoverLegacyData() {
+  if (_getCurrentShopId() !== 'yukaiya') {
+    alert('この機能はyukaiyaショップでのみ使えます。');
+    return;
+  }
+  if (!confirm('旧パス(data/rpp_*.json)から現在ショップ(yukaiya)にデータを復旧しますか?\n\n※ 現在ショップのデータは上書きされます。\n※ 実行後に自動リロードします。')) return;
+  try {
+    // 旧パスから全データを強制的に読み込む
+    const files = [
+      { url: `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_FILE_LEGACY}`, label: 'data/rpp_data.json' },
+      { url: `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_ITEM_FILE_LEGACY}`, label: 'data/rpp_item.json' },
+      { url: `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_KW_FILE_LEGACY}`, label: 'data/rpp_kw.json' },
+    ];
+    console.log('[ADcheck] 旧パスから復旧開始...');
+    const [resMain, resItem, resKw] = await Promise.all(files.map(f => fetch(f.url + '?t=' + Date.now())));
+    if (!resMain.ok) { alert('旧パス(data/rpp_data.json)が見つかりません。復旧できません。'); return; }
+    const dataMain = await resMain.json();
+    const dataItem = resItem.ok ? await resItem.json() : {};
+    const dataKw   = resKw.ok   ? await resKw.json()   : {};
+    console.log('[ADcheck] 旧データ取得完了', {
+      productCache: Object.keys(dataMain.productCache||{}).length,
+      DB: Object.keys(dataItem.DB||{}).length,
+      kwRows: (dataKw.kwRows||[]).length
+    });
+    // グローバル変数を全部上書き
+    if (dataMain.productCache) {
+      // 一旦clearしてから書き込み
+      for (const k of Object.keys(productCache)) delete productCache[k];
+      Object.assign(productCache, dataMain.productCache);
+      saveProductCache();
+    }
+    if (dataMain.calEvents) { calEvents = dataMain.calEvents; try { localStorage.setItem(_calEventsKey(), JSON.stringify(calEvents)); } catch(e) {} }
+    if (dataMain.nichinichiRows) nichinichiRows = dataMain.nichinichiRows;
+    if (dataMain.dailyRows)      dailyRows      = dataMain.dailyRows;
+    if (dataMain.salesRows)      salesRows      = dataMain.salesRows;
+    if (dataItem.DB) { for (const k of Object.keys(DB)) delete DB[k]; Object.assign(DB, dataItem.DB); }
+    if (dataItem.itemDailyData) { for (const k of Object.keys(itemDailyData)) delete itemDailyData[k]; Object.assign(itemDailyData, dataItem.itemDailyData); }
+    if (dataKw.kwRows) kwRows = dataKw.kwRows;
+    // 新パスに保存
+    console.log('[ADcheck] 新パスへ保存中...');
+    await saveToGitHub();
+    alert('✅ 復旧完了! ページを再読み込みします。');
+    location.reload();
+  } catch(e) {
+    console.error('[ADcheck] 復旧エラー:', e);
+    alert('復旧中にエラーが発生しました: ' + (e.message || e));
+  }
 }
 function updateApiStatus(id, ak) {
   const el = document.getElementById('apiStatus');
