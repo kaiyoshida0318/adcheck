@@ -426,7 +426,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.422</span>
+    <span class="build-date">v1.423</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -944,10 +944,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 <!-- Settings Modal -->
 <!-- ドロップゾーンモーダル -->
 <div class="modal-overlay" id="dropZoneModal" ondragover="onDropModalOver(event)" ondragleave="onDropModalLeave(event)" ondrop="onDropModalDrop(event)">
-  <div class="modal" style="max-width:600px;text-align:center">
+  <div class="modal" style="max-width:600px;text-align:center;max-height:92vh;display:flex;flex-direction:column;padding:20px 24px">
+    <div style="flex-shrink:0">
     <h3 style="margin-bottom:8px">📂 レポートを追加</h3>
     <p style="margin-bottom:12px">楽天RMSからダウンロードしたRPPレポートのZIPまたはCSVを<br>複数まとめてドロップできます</p>
+    </div>
 
+    <div style="overflow-y:auto;flex:1;min-height:0;text-align:center">
     <!-- ファイル種別説明（アコーディオン） -->
     <div style="text-align:left;border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden">
       <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.acc-arrow').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼'"
@@ -1007,14 +1010,17 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
     <!-- チェック結果エリア（初期非表示） -->
     <div id="dropZoneCheckResult" style="display:none;margin-top:12px;text-align:left"></div>
+    </div>
 
-    <div id="dropZoneStatus" style="margin-top:10px;font-size:12px;color:var(--text2);min-height:18px"></div>
-    <div class="modal-actions" style="justify-content:space-between;margin-top:14px;gap:8px">
+    <div style="flex-shrink:0;border-top:1px solid var(--border);padding-top:12px;margin-top:12px">
+    <div id="dropZoneStatus" style="font-size:12px;color:var(--text2);min-height:18px;text-align:center;margin-bottom:8px"></div>
+    <div class="modal-actions" style="justify-content:space-between;gap:8px;margin:0">
       <button class="modal-btn" onclick="closeDropZone()">閉じる</button>
       <div style="display:flex;gap:8px">
         <button id="dropZoneCheckBtn" class="modal-btn save" style="display:none;background:#1565C0" onclick="runDropZoneCheck()">🔍 チェック</button>
         <button id="dropZoneApplyBtn" class="modal-btn save" style="display:none" onclick="runDropZoneApply()">✅ 反映する</button>
       </div>
+    </div>
     </div>
   </div>
 </div>
