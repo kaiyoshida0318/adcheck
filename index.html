@@ -443,7 +443,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.441</span>
+    <span class="build-date">v1.442</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1585,12 +1585,20 @@ async function saveProductCacheToGitHub(retryCount = 0) {
   }
 }
 
+// readFiles処理中のsaveToGitHub重複呼び出しを抑制するフラグ
+let _readFilesInProgress = false;
+
 // saveToGitHub 並列実行防止用のPromise mutex
 let _saveToGitHubInFlight = null;
 
 async function saveToGitHub(options = {}) {
   const pat = localStorage.getItem('github_pat');
   if (!pat) return;
+  // readFiles処理中は保存をスキップ(最後に1回だけ保存される)
+  if (_readFilesInProgress && !options.force) {
+    console.log('[ADcheck] saveToGitHub: readFiles処理中のためスキップ(最後に1回保存)');
+    return;
+  }
   // 既に実行中なら、それの完了を待ってから実行(並列防止→SHA衝突回避)
   if (_saveToGitHubInFlight) {
     console.log('[ADcheck] saveToGitHub: 他の保存処理を待機中...');
@@ -2200,6 +2208,7 @@ async function readFiles(files) {
   if (!files || files.length === 0) return;
   console.log('[ADcheck] readFiles START: count=', files.length, 'names=', Array.from(files).map(f=>f.name));
   _lockUI('ファイルを処理しています...<br>完了するまで画面を操作しないでください。');
+  _readFilesInProgress = true; // 処理中はsaveToGitHubをスキップして最後に1回だけ保存
   try {
     // 常にGitHubから最新データをロードしてからマージ（上書き消失を防ぐ）
     _lockUI('GitHubから最新データを読み込み中...<br>しばらくお待ちください。');
@@ -2376,6 +2385,14 @@ async function readFiles(files) {
     console.error('[ADcheck] readFiles error:', err);
     alert('ファイル処理中にエラーが発生しました:\n' + (err?.message || err) + '\n\nF12 > Consoleタブで詳細を確認してください。');
     _unlockUI();
+  } finally {
+    // フラグを解除して最後に1回だけ保存(force=trueでフラグ無視)
+    _readFilesInProgress = false;
+    try {
+      console.log('[ADcheck] readFiles完了。最終保存開始...');
+      await saveToGitHub({force: true});
+      console.log('[ADcheck] readFiles完了。最終保存終了');
+    } catch(e) { console.warn('[ADcheck] readFiles最終保存エラー:', e); }
   }
 }
 
