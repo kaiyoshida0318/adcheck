@@ -470,7 +470,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.443</span>
+    <span class="build-date">v1.445</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1701,15 +1701,30 @@ async function saveToGitHub(options = {}) {
 
 async function loadFromGitHub() {
   try {
+    // GitHub APIのcontents経由で最新を確実に取得(raw.githubusercontent.comはCDNキャッシュがあるため回避)
+    const pat = localStorage.getItem('github_pat');
+    const _apiFetch = async (path) => {
+      if (pat) {
+        // PAT認証付きAPIで取得(最新・キャッシュ無効)
+        const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`;
+        const r = await fetch(apiUrl, {
+          headers: { 'Authorization': `token ${pat}`, 'Accept': 'application/vnd.github.v3.raw' },
+          cache: 'no-store'
+        });
+        return r;
+      }
+      // PAT無しの場合はraw経由(CDNキャッシュ許容)
+      const rawUrl = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${path}?t=${Date.now()}`;
+      return fetch(rawUrl, { cache: 'no-store' });
+    };
+
     // ショップ別ディレクトリから読み込み(失敗時は旧パスにフォールバック=マイグレーション)
-    let url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${_ghFile()}`;
-    let res = await fetch(url + '?t=' + Date.now());
+    let res = await _apiFetch(_ghFile());
     let usedLegacy = false;
     if (!res.ok && _getCurrentShopId() === 'yukaiya') {
       // yukaiyaショップで新パスにファイルが無い場合、旧パスから読み込んで自動マイグレーション
       console.log('[ADcheck] 新パス未存在、旧パスから読み込み(自動マイグレーション)');
-      url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_FILE_LEGACY}`;
-      res = await fetch(url + '?t=' + Date.now());
+      res = await _apiFetch(GH_FILE_LEGACY);
       usedLegacy = true;
     }
     if (!res.ok) return false;
@@ -1740,8 +1755,7 @@ async function loadFromGitHub() {
       // DB・itemDailyDataを別ファイルから読み込む(usedLegacyならGH_ITEM_FILE_LEGACY)
       try {
         const itemPath = usedLegacy ? GH_ITEM_FILE_LEGACY : _ghItemFile();
-        const itemUrl = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${itemPath}`;
-        const itemRes = await fetch(itemUrl + '?t=' + Date.now());
+        const itemRes = await _apiFetch(itemPath);
         if (itemRes.ok) {
           const itemData = await itemRes.json();
           if (itemData.DB) Object.assign(DB, itemData.DB);
@@ -1751,8 +1765,7 @@ async function loadFromGitHub() {
       // kwRowsを別ファイルから読み込む(usedLegacyならGH_KW_FILE_LEGACY)
       try {
         const kwPath = usedLegacy ? GH_KW_FILE_LEGACY : _ghKwFile();
-        const kwUrl = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${kwPath}`;
-        const kwRes = await fetch(kwUrl + '?t=' + Date.now());
+        const kwRes = await _apiFetch(kwPath);
         if (kwRes.ok) {
           const kwData = await kwRes.json();
           if (kwData.kwRows) { kwRows = kwData.kwRows; }
@@ -6416,6 +6429,26 @@ function doDeleteAll() {
 // ── ドロップゾーンモーダル ──
 function openDropZone() {
   document.getElementById('dropZoneStatus').textContent = '';
+  // ボタン状態を初期化(前回の反映完了状態を引きずらないように)
+  const applyBtn = document.getElementById('dropZoneApplyBtn');
+  const checkBtn = document.getElementById('dropZoneCheckBtn');
+  const checkResult = document.getElementById('dropZoneCheckResult');
+  if (applyBtn) {
+    applyBtn.disabled = false;
+    applyBtn.textContent = '✅ 反映する';
+    applyBtn.style.display = 'none'; // チェック成功時だけ表示するので初期は非表示
+  }
+  if (checkBtn) {
+    checkBtn.disabled = false;
+    checkBtn.textContent = '🔍 チェック';
+    checkBtn.style.display = 'inline-block';
+  }
+  if (checkResult) {
+    checkResult.style.display = 'none';
+    checkResult.innerHTML = '';
+  }
+  // ステージ済みファイルもリセット(前回の残留を防ぐ)
+  _stagedFiles = null;
   document.getElementById('dropZoneModal').classList.add('open');
 }
 function closeDropZone() {
