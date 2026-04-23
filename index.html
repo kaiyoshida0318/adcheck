@@ -443,7 +443,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.439</span>
+    <span class="build-date">v1.440</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1588,7 +1588,7 @@ async function saveProductCacheToGitHub(retryCount = 0) {
 // saveToGitHub 並列実行防止用のPromise mutex
 let _saveToGitHubInFlight = null;
 
-async function saveToGitHub() {
+async function saveToGitHub(options = {}) {
   const pat = localStorage.getItem('github_pat');
   if (!pat) return;
   // 既に実行中なら、それの完了を待ってから実行(並列防止→SHA衝突回避)
@@ -1632,12 +1632,16 @@ async function saveToGitHub() {
 
     // ショップ別ディレクトリに保存
     // セーフガード: productCacheもDBも空、全データが空なら保存しない(誤上書き防止)
+    // ただし options.allowEmpty === true の場合はスキップしない(意図的なデータ削除時)
     const _totalData = Object.keys(productCache).length + Object.keys(DB).length
                      + (kwRows?.length||0) + (nichinichiRows?.length||0)
                      + (dailyRows?.length||0) + (salesRows?.length||0);
-    if (_totalData === 0) {
-      console.warn('[ADcheck] 全データが空のため保存スキップ(誤上書き防止)');
+    if (_totalData === 0 && !options.allowEmpty) {
+      console.warn('[ADcheck] 全データが空のため保存スキップ(誤上書き防止)。意図的な削除の場合は saveToGitHub({allowEmpty: true}) を使用');
       return;
+    }
+    if (options.allowEmpty) {
+      console.log('[ADcheck] saveToGitHub: allowEmpty=true で空データ保存を許可');
     }
     await _ghPut(_ghFile(),     { productCache, calEvents, nichinichiRows, dailyRows, salesRows });
     await _ghPut(_ghItemFile(), { DB, itemDailyData });
@@ -6262,7 +6266,7 @@ async function doClearByScope() {
     if (!confirm(`⚠️ ${shopLabel} の全データを完全削除しますか?\n\n削除対象:\n・全ての実績データ\n・画像/商品名/ステータス/変更記録\n\n※ この操作は取り消せません`)) return;
     if (!confirm('最終確認: 本当にすべて消しますか? 画像や手動登録した商品名も全て消えます。')) return;
     clearAll();
-    try { await saveToGitHub(); } catch(e) { console.warn(e); }
+    try { await saveToGitHub({allowEmpty: true}); alert('✅ 全データを削除しました'); } catch(e) { console.warn(e); alert('❌ 削除は完了しましたが、GitHub同期エラー: ' + (e.message || e)); }
   }
   closeConfirmClear();
 }
@@ -7465,10 +7469,24 @@ function removeDate(d) {
 function clearAll() {
   Object.keys(DB).forEach(k => delete DB[k]);
   expandedSet.clear();
-  productCache = {};
+  // productCacheを空に(再代入ではなくキー削除)
+  Object.keys(productCache).forEach(k => delete productCache[k]);
+  // 実績データ全てクリア
+  dailyRows = [];
+  nichinichiRows = [];
+  kwRows = [];
+  salesRows = [];
+  Object.keys(itemDailyData).forEach(k => delete itemDailyData[k]);
+  // カレンダーイベントもクリア
+  calEvents = [];
+  // localStorageもクリア
   try { localStorage.removeItem(CACHE_KEY); } catch(e) {}
+  try { localStorage.removeItem(CAL_EVENTS_KEY); } catch(e) {}
+  // 画面更新
+  try { _renderTable('monthly', []); _renderTable('daily', []); } catch(e) {}
   document.getElementById('emptyState').style.display = 'flex';
   document.getElementById('dataArea').style.display = 'none';
+  console.log('[ADcheck] clearAll: DB/productCache/dailyRows/nichinichiRows/kwRows/salesRows/itemDailyData/calEvents 全てクリア');
 }
 
 function exportCSV() {
