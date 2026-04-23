@@ -443,7 +443,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.437</span>
+    <span class="build-date">v1.438</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -889,6 +889,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div style="flex:1">
           <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:4px">📊 全期間のRPPデータを削除</div>
           <div style="font-size:11px;color:var(--text3)">全期間の実績データ(日別/月別/KW別/売上)を削除。<br>画像・商品名・ステータスは保持されます</div>
+        </div>
+      </label>
+
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:2px solid #0284c7;border-radius:8px;cursor:pointer;transition:all 0.15s;background:#f0f9ff" onclick="_onClearScopeChange(this,'cleanup')">
+        <input type="radio" name="clearScope" value="cleanup" style="margin-top:2px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;color:#0369a1;margin-bottom:4px">🧹 他ショップから混入した商品情報を整理</div>
+          <div style="font-size:11px;color:var(--text3)">現在ショップのDBに存在しない商品のproductCache(画像/商品名/ステータス/変更記録)を削除。<br>実績データは変更されません</div>
         </div>
       </label>
 
@@ -6236,6 +6244,23 @@ async function doClearByScope() {
   } else if (scope === 'rpp_all') {
     if (!confirm(`${shopLabel} の全期間のRPP実績データを削除しますか?\n\n削除対象:\n・日別/月別/KW別/売上の全データ\n\n保持されるもの:\n・画像/商品名/ステータス/変更記録`)) return;
     await clearAllRppData();
+  } else if (scope === 'cleanup') {
+    // DBに存在しない商品IDをproductCacheから削除
+    const dbIds = new Set(Object.keys(DB));
+    // __global__ は特殊キーなので保持
+    const pcIds = Object.keys(productCache).filter(k => k !== '__global__');
+    const toRemove = pcIds.filter(k => !dbIds.has(k));
+    if (toRemove.length === 0) {
+      alert('✅ 混入データはありません(productCacheはDB内商品のみで構成されています)');
+      closeConfirmClear();
+      return;
+    }
+    if (!confirm(`${shopLabel} から、DBに存在しない商品 ${toRemove.length}件 のproductCacheを削除しますか?\n\n削除される情報:\n・画像(img/manualImg)\n・商品名(name/manualName)\n・ステータス(status/ss)\n・変更記録(changeLog)\n\nDB(実績データ)には変更ありません。`)) return;
+    toRemove.forEach(k => delete productCache[k]);
+    saveProductCache();
+    renderAll();
+    try { await saveToGitHub(); } catch(e) { console.warn(e); }
+    alert(`✅ ${toRemove.length}件の混入商品情報を削除しました`);
   } else if (scope === 'all') {
     if (!confirm(`⚠️ ${shopLabel} の全データを完全削除しますか?\n\n削除対象:\n・全ての実績データ\n・画像/商品名/ステータス/変更記録\n\n※ この操作は取り消せません`)) return;
     if (!confirm('最終確認: 本当にすべて消しますか? 画像や手動登録した商品名も全て消えます。')) return;
