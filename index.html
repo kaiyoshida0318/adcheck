@@ -443,7 +443,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.436</span>
+    <span class="build-date">v1.437</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6376,6 +6376,68 @@ async function runDropZoneCheck() {
   const warnings = [];
   const infos = [];
 
+  // ⚠ ショップコード検出: ファイル名から_<shopCode>_を抽出
+  // 例: rpp_reports_kai-ry_20260422.csv → "kai-ry"
+  // 例: rpp_keyword_reports_yukaiya_xxx.zip → "yukaiya"
+  const detectedShopCodes = {}; // shopCode -> count
+  const _extractShopFromFname = (name) => {
+    // rpp_reports_<shop>_, rpp_keyword_reports_<shop>_, rpp_item_reports_<shop>_
+    const m1 = name.match(/^rpp_reports_([^_]+(?:-[^_]+)*)_\d/i);
+    if (m1) return m1[1];
+    const m2 = name.match(/^rpp_keyword_reports_([^_]+(?:-[^_]+)*)_\d/i);
+    if (m2) return m2[1];
+    const m3 = name.match(/^rpp_item_reports_([^_]+(?:-[^_]+)*)_\d/i);
+    if (m3) return m3[1];
+    return null;
+  };
+  for (const f of Array.from(_stagedFiles)) {
+    const sc = _extractShopFromFname(f.name);
+    if (sc) detectedShopCodes[sc] = (detectedShopCodes[sc] || 0) + 1;
+  }
+  const detectedList = Object.keys(detectedShopCodes);
+  const currentShopCode = (localStorage.getItem('rakuten_shop_code') || '').toLowerCase();
+  const currentShop = _getCurrentShop();
+  const currentShopName = currentShop ? currentShop.name : _getCurrentShopId();
+
+  let shopMismatch = false;
+  let shopWarningHtml = '';
+  if (detectedList.length === 0) {
+    // ショップコードが検出できないファイルだけ → 警告のみ
+    shopWarningHtml = `<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#1565c0">
+      ℹ️ ファイル名からショップコードを検出できません(売上CSV単体の可能性) - 現在ショップ「<strong>${currentShopName}</strong>」に反映されます
+    </div>`;
+  } else if (detectedList.length === 1) {
+    const detected = detectedList[0].toLowerCase();
+    if (currentShopCode && detected !== currentShopCode) {
+      // 不一致 → エラー
+      shopMismatch = true;
+      // 該当する登録ショップを探す(切替を提案)
+      const matchedShop = _getShops().find(s => (s.shopCode || '').toLowerCase() === detected);
+      const switchBtn = matchedShop
+        ? `<button onclick="switchShop('${matchedShop.id}')" style="margin-left:8px;font-size:11px;padding:4px 12px;border:1px solid var(--accent);border-radius:5px;background:var(--surface);color:var(--accent);cursor:pointer;font-weight:600">「${matchedShop.name}」に切替</button>`
+        : '';
+      shopWarningHtml = `<div style="background:#ffebee;border:2px solid var(--danger);border-radius:6px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#c62828">
+        <strong>❌ ショップ不一致!</strong><br>
+        ファイルは <strong style="font-family:'DM Mono',monospace">${detected}</strong> 用ですが、<br>
+        現在表示中は <strong>${currentShopName}</strong>(<span style="font-family:'DM Mono',monospace">${currentShopCode}</span>)です。<br>
+        <span style="font-size:10px;color:#7f1d1d">このまま反映するとデータが混ざります${switchBtn}</span>
+      </div>`;
+    } else {
+      // 一致
+      shopWarningHtml = `<div style="background:#e8f5e9;border:1px solid #81c784;border-radius:6px;padding:6px 12px;margin-bottom:10px;font-size:11px;color:#2e7d32">
+        ✅ ショップ一致: <strong style="font-family:'DM Mono',monospace">${detected}</strong> = ${currentShopName}
+      </div>`;
+    }
+  } else {
+    // 複数ショップ混在 → エラー
+    shopMismatch = true;
+    shopWarningHtml = `<div style="background:#ffebee;border:2px solid var(--danger);border-radius:6px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#c62828">
+      <strong>❌ 複数ショップのファイルが混在!</strong><br>
+      検出: ${detectedList.map(c => `<span style="font-family:'DM Mono',monospace">${c}</span>`).join(', ')}<br>
+      <span style="font-size:10px;color:#7f1d1d">同じショップのファイルだけでドロップし直してください</span>
+    </div>`;
+  }
+
   for (const f of Array.from(_stagedFiles)) {
     const fname = f.name.toLowerCase();
     let dateInfo = null;
@@ -6454,16 +6516,19 @@ async function runDropZoneCheck() {
     <div style="display:${defaultOpen ? 'block' : 'none'};max-height:300px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;padding:6px 12px">${detailHtml}</div>
   </div>`;
 
-  if (!hasError) {
+  if (!hasError && !shopMismatch) {
     html += '<div style="margin-top:8px;padding:7px 10px;background:#e8f5e9;border-radius:5px;font-size:11px;color:#2e7d32;font-weight:700">✅ 問題なし。「反映する」を押してください</div>';
+  } else if (shopMismatch) {
+    html += '<div style="margin-top:8px;padding:7px 10px;background:#ffebee;border-radius:5px;font-size:11px;color:#c62828;font-weight:700">❌ ショップ不一致のため反映できません。ショップを切替えるか、正しいファイルを選び直してください</div>';
   } else {
     html += '<div style="margin-top:8px;padding:7px 10px;background:#ffebee;border-radius:5px;font-size:11px;color:#c62828;font-weight:700">❌ 問題があります。正しいファイルを選び直して再チェックしてください</div>';
   }
 
-  result.innerHTML = html;
+  // ショップ警告は最上部に表示
+  result.innerHTML = shopWarningHtml + html;
   btn.disabled = false; btn.textContent = '🔍 チェック';
-  // エラー時は反映ボタンを出さない／OK時のみ表示
-  document.getElementById('dropZoneApplyBtn').style.display = hasError ? 'none' : 'inline-block';
+  // エラー時 or ショップ不一致時は反映ボタン非表示
+  document.getElementById('dropZoneApplyBtn').style.display = (hasError || shopMismatch) ? 'none' : 'inline-block';
 }
 
 async function runDropZoneApply() {
