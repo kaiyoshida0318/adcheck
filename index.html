@@ -31,19 +31,30 @@ html { -webkit-text-size-adjust: none; text-size-adjust: none; zoom: 1; }
 body { font-family: 'Noto Sans JP', sans-serif; font-size: 13px; background: var(--bg); color: var(--text); min-height: 100vh; }
 
 /* ── Header ── */
-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-.header-left { display: flex; align-items: center; gap: 10px; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 24px; min-height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 8px; row-gap: 6px; }
+.header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .logo { flex-shrink: 0; line-height: 0; width: auto; }
 .app-name { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
 .app-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
-.header-right { display: flex; align-items: center; gap: 8px; }
-.header-btn { font-size: 12px; padding: 6px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.header-btn { font-size: 12px; padding: 6px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
 .header-btn:hover { background: var(--surface2); border-color: var(--border2); }
 .header-btn.primary { background: var(--red); color: #fff; border-color: var(--red); }
 .header-btn.primary:hover { background: var(--red-dark); }
 
+/* 画面が狭い・ズームが大きい時はヘッダーボタンを小さく */
+@media (max-width: 1400px) {
+  .header-btn { font-size: 11px; padding: 5px 9px; }
+}
+@media (max-width: 1200px) {
+  .header-btn { font-size: 10px; padding: 4px 7px; }
+  header { padding: 6px 16px; }
+}
+
 /* ── Layout ── */
 .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+/* ヘッダーstickyの被さりを避けるため、最初のmain要素には少し余白 */
+header + * { margin-top: 4px; }
 
 /* ── Upload (hidden, only accessible via header button) ── */
 #uploadScreen { display: none; }
@@ -470,7 +481,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.445</span>
+    <span class="build-date">v1.449</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1302,17 +1313,29 @@ function _applyZoom() {
   document.documentElement.style.zoom = _zoom;
   // ズーム適用時、CSSのsticky topが実表示と合わなくなる(下に隙間ができる)ため
   // CSS変数経由でtopをズーム倍率で補正する
-  const headerH = 52;
-  const tabH = 46;
+  // ヘッダー・タブバーの実際の高さを測定(固定値52pxだとズーム時にずれる)
+  const header = document.querySelector('header');
+  const tabRow1 = document.querySelector('.tab-bar');
+  const tabRow2 = document.querySelector('.tab-sub-row-2');
+  const headerH = header ? header.offsetHeight : 52;
+  const tabH1 = tabRow1 ? tabRow1.offsetHeight : 46;
+  const tabH2 = tabRow2 ? tabRow2.offsetHeight : 46;
   document.documentElement.style.setProperty('--z-header-top', '0px');
   document.documentElement.style.setProperty('--z-tab1-top',   (headerH / _zoom) + 'px');
-  document.documentElement.style.setProperty('--z-tab2-top',   ((headerH + tabH) / _zoom) + 'px');
-  document.documentElement.style.setProperty('--z-tab3-top',   ((headerH + tabH * 2) / _zoom) + 'px');
+  document.documentElement.style.setProperty('--z-tab2-top',   ((headerH + tabH1) / _zoom) + 'px');
+  document.documentElement.style.setProperty('--z-tab3-top',   ((headerH + tabH1 + tabH2) / _zoom) + 'px');
   const lbl = document.getElementById('zoomLabel');
   if (lbl) lbl.textContent = Math.round(_zoom * 100) + '%';
   localStorage.setItem(ZOOM_KEY, _zoom);
 }
-function adjustZoom(delta) { _zoom += delta; _applyZoom(); }
+function adjustZoom(delta) {
+  _zoom += delta;
+  _applyZoom();
+  // CSS transform適用後にヘッダー実サイズを再測定して sticky top を再調整
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => _applyZoom());
+  });
+}
 _applyZoom(); // 起動時に即適用
 
 // ── State ──
@@ -1861,6 +1884,21 @@ function saveSettings() {
 }
 
 // ── ショップ切替UI ──
+// ヘッダーとタブバーの高さを測定してsticky位置を更新(ズーム対応)
+function _updateStickyTops() {
+  try {
+    const header = document.querySelector('header');
+    const tabRow1 = document.querySelector('.tab-bar');
+    const tabRow2 = document.querySelector('.tab-sub-row-2');
+    const h = header ? header.offsetHeight : 52;
+    const t1 = tabRow1 ? tabRow1.offsetHeight : 46;
+    const t2 = tabRow2 ? tabRow2.offsetHeight : 46;
+    document.documentElement.style.setProperty('--z-tab1-top', h + 'px');
+    document.documentElement.style.setProperty('--z-tab2-top', (h + t1) + 'px');
+    document.documentElement.style.setProperty('--z-tab3-top', (h + t1 + t2) + 'px');
+  } catch(e) { console.warn('_updateStickyTops error:', e); }
+}
+
 function _renderShopMenu() {
   const shops = _getShops();
   const curId = _getCurrentShopId();
@@ -1899,8 +1937,12 @@ function toggleShopMenu(event) {
     const rect = btn.getBoundingClientRect();
     menu.style.top = (rect.bottom + 4) + 'px';
     menu.style.left = rect.left + 'px';
+    // 画面下端からはみ出ないよう最大高さを制限してスクロール可能に
+    const maxH = window.innerHeight - rect.bottom - 20;
+    menu.style.maxHeight = Math.max(200, maxH) + 'px';
+    menu.style.overflowY = 'auto';
     menu.style.display = 'block';
-    console.log('[ADcheck] shopMenu opened at top=', menu.style.top, 'left=', menu.style.left);
+    console.log('[ADcheck] shopMenu opened at top=', menu.style.top, 'left=', menu.style.left, 'maxH=', menu.style.maxHeight);
   }
 }
 function closeShopMenu() {
@@ -1926,11 +1968,20 @@ function switchShop(shopId) {
   console.log('[ADcheck] switchShop: current=', curId, '-> target=', shopId);
   if (shopId === curId) { console.log('[ADcheck] switchShop: same shop, just close menu'); closeShopMenu(); return; }
   // 切替前: 現在ショップの設定をshops配列に保存
+  // ⚠ ただしlocalStorageの値が他ショップのshopCodeと一致してる場合は誤上書きの可能性があるので保存しない
   const cur = shops.find(s => s.id === curId);
   if (cur) {
+    const lsShopCode = localStorage.getItem('rakuten_shop_code') || '';
+    // 他のショップで使われてるshopCodeと同じなら、誤って混入した可能性が高いので保存しない
+    const otherShopCodes = shops.filter(s => s.id !== curId).map(s => (s.shopCode || '').toLowerCase());
+    const lsLower = lsShopCode.toLowerCase();
+    if (lsShopCode && !otherShopCodes.includes(lsLower)) {
+      cur.shopCode = lsShopCode || cur.shopCode || '';
+    } else if (lsShopCode && otherShopCodes.includes(lsLower)) {
+      console.warn('[ADcheck] switchShop: localStorage.rakuten_shop_code(' + lsShopCode + ')が他ショップのshopCodeと一致するため保存スキップ。元の値('+ cur.shopCode +')を維持');
+    }
     cur.appId     = localStorage.getItem('rakuten_app_id')     || cur.appId || '';
     cur.accessKey = localStorage.getItem('rakuten_access_key') || cur.accessKey || '';
-    cur.shopCode  = localStorage.getItem('rakuten_shop_code')  || cur.shopCode || '';
     _saveShops(shops);
   }
   // 切替先の設定をrakuten_*キーに展開
@@ -1974,12 +2025,19 @@ function saveNewShop() {
   const shops = _getShops();
   if (shops.find(s => s.id === id)) { _showShopAddStatus('そのショップIDは既に存在します', 'err'); return; }
   // 現在ショップの最新設定を保存
+  // ⚠ shopCodeのlocalStorage値が他ショップと同じなら誤上書きの可能性があるためスキップ
   const curId = _getCurrentShopId();
   const cur = shops.find(s => s.id === curId);
   if (cur) {
     cur.appId     = localStorage.getItem('rakuten_app_id')     || cur.appId || '';
     cur.accessKey = localStorage.getItem('rakuten_access_key') || cur.accessKey || '';
-    cur.shopCode  = localStorage.getItem('rakuten_shop_code')  || cur.shopCode || '';
+    const lsShopCode = localStorage.getItem('rakuten_shop_code') || '';
+    const otherShopCodes = shops.filter(s => s.id !== curId).map(s => (s.shopCode || '').toLowerCase());
+    if (lsShopCode && !otherShopCodes.includes(lsShopCode.toLowerCase())) {
+      cur.shopCode = lsShopCode || cur.shopCode || '';
+    } else if (lsShopCode && otherShopCodes.includes(lsShopCode.toLowerCase())) {
+      console.warn('[ADcheck] saveNewShop: shopCode誤上書きを防止 - localStorageの値(' + lsShopCode + ')をスキップ');
+    }
   }
   // 新ショップを追加
   shops.push({ id, name, shopCode, appId, accessKey });
@@ -5655,7 +5713,7 @@ function renderRoasTrend() {
       ${['03','06','09','12'].map(m => {
         const active = (cached.ss || []).includes(m);
         const lbl = {'03':'3月','06':'6月','09':'9月','12':'12月'}[m];
-        return `<button onclick="_toggleRoasTrendSS('${p.id}','${m}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;text-align:center">${lbl}</button>`;
+        return `<button id="ss-btn-${p.id}-${m}" data-code="${p.id}" data-mon="${m}" data-active="${active?'1':'0'}" onclick="_toggleRoasTrendSS('${p.id}','${m}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;text-align:center">${lbl}</button>`;
       }).join('')}
     </div>`;
 
@@ -5695,6 +5753,8 @@ function _toggleRoasTrendSS(code, mon, btn) {
   btn.style.background = active ? 'var(--surface)' : '#1565C0';
   btn.style.color = active ? 'var(--text3)' : '#fff';
   btn.style.borderColor = active ? 'var(--border)' : '#1565C0';
+  // data-active属性も更新(applyAllStatusUpdatesから参照される)
+  btn.setAttribute('data-active', active ? '0' : '1');
   if (!productCache[code]) productCache[code] = {};
   const ss = productCache[code].ss || [];
   productCache[code].ss = active ? ss.filter(m => m !== mon) : [...ss, mon];
@@ -5929,26 +5989,24 @@ function applyAllStatusUpdates() {
     if (!productCache[code]) productCache[code] = {};
     productCache[code].status = sel.value;
   });
-  // SS：商品ごとに現在の4ボタン状態を読み取り、既存設定を上書き
+  // SS: data-code, data-mon, data-active 属性から確実に取得(idでなく)
   const MONTHS = ['03','06','09','12'];
-  const codesInView = new Set();
-  MONTHS.forEach(mon => {
-    const btn = document.querySelector(`[id^="ss-btn-"][id$="-${mon}"]`);
-    if (!btn) return;
-    // そのmonの全ボタンを走査
-  });
-  // 全ss-btnを商品コードごとにまとめる
   const ssPerCode = {};
+  const codesInView = new Set();
   document.querySelectorAll('[id^="ss-btn-"]').forEach(btn => {
-    // id形式: ss-btn-{code}-{mon}  monは必ず2桁(03,06,09,12)
-    const id = btn.id; // "ss-btn-cg-22-01-03"
-    const mon = id.slice(-2);           // "03"
-    const code = id.slice('ss-btn-'.length, -(3)); // "cg-22-01" (-3 = "-" + 2桁)
+    const code = btn.getAttribute('data-code');
+    const mon = btn.getAttribute('data-mon');
+    if (!code || !mon) {
+      console.warn('[ADcheck] SS button missing data attrs:', btn.id);
+      return;
+    }
+    // 現在の状態を「見た目」から判定(背景色) 
+    const active = btn.style.background.includes('21, 101, 192') || btn.style.background === '#1565C0' || btn.getAttribute('data-active') === '1';
     if (!ssPerCode[code]) ssPerCode[code] = {};
-    const active = btn.style.background.includes('21, 101, 192') || btn.style.background === '#1565C0';
     ssPerCode[code][mon] = active;
     codesInView.add(code);
   });
+  console.log('[ADcheck] applyAllStatusUpdates: SS update for', codesInView.size, '商品');
   // 画面に出ている商品のSS設定だけ更新（他は保持）
   codesInView.forEach(code => {
     if (!productCache[code]) productCache[code] = {};
@@ -6544,8 +6602,8 @@ async function runDropZoneCheck() {
         : '';
       shopWarningHtml = `<div style="background:#ffebee;border:2px solid var(--danger);border-radius:6px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#c62828">
         <strong>❌ ショップ不一致!</strong><br>
-        ファイルは <strong style="font-family:'DM Mono',monospace">${detected}</strong> 用ですが、<br>
-        現在表示中は <strong>${currentShopName}</strong>(<span style="font-family:'DM Mono',monospace">${currentShopCode}</span>)です。<br>
+        ファイル名のショップコード: <strong style="font-family:'DM Mono',monospace">${detected}</strong><br>
+        現在ショップ: <strong>${currentShopName}</strong> (店舗コード: <span style="font-family:'DM Mono',monospace">${currentShopCode || '未設定'}</span>)<br>
         <span style="font-size:10px;color:#7f1d1d">このまま反映するとデータが混ざります${switchBtn}</span>
       </div>`;
     } else {
@@ -7652,6 +7710,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateApiStatus(id, ak);
   // ショップメニュー初期描画
   _renderShopMenu();
+  // ヘッダー高さを測定してCSS変数を更新(ズーム対応)
+  _updateStickyTops();
+  window.addEventListener('resize', _updateStickyTops);
   document.getElementById('settingsModal').addEventListener('click', e => {
     if (e.target === document.getElementById('settingsModal')) closeSettings();
   });
