@@ -481,7 +481,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.450</span>
+    <span class="build-date">v1.451</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5749,15 +5749,18 @@ function _setRoasTrendStatus(code, val) {
 }
 
 function _toggleRoasTrendSS(code, mon, btn) {
-  const active = btn.style.background.includes('21, 101, 192') || btn.style.background === '#1565C0';
-  btn.style.background = active ? 'var(--surface)' : '#1565C0';
-  btn.style.color = active ? 'var(--text3)' : '#fff';
-  btn.style.borderColor = active ? 'var(--border)' : '#1565C0';
-  // data-active属性も更新(applyAllStatusUpdatesから参照される)
-  btn.setAttribute('data-active', active ? '0' : '1');
+  // 現在の状態は data-active 属性で判定(背景色の文字列比較は壊れやすい)
+  const active = btn.getAttribute('data-active') === '1';
+  // 状態を反転
+  const newActive = !active;
+  btn.style.background = newActive ? '#1565C0' : 'var(--surface)';
+  btn.style.color = newActive ? '#fff' : 'var(--text3)';
+  btn.style.borderColor = newActive ? '#1565C0' : 'var(--border)';
+  btn.setAttribute('data-active', newActive ? '1' : '0');
   if (!productCache[code]) productCache[code] = {};
   const ss = productCache[code].ss || [];
-  productCache[code].ss = active ? ss.filter(m => m !== mon) : [...ss, mon];
+  productCache[code].ss = newActive ? [...ss.filter(m => m !== mon), mon] : ss.filter(m => m !== mon);
+  console.log('[ADcheck] SS toggle:', code, mon, '→', newActive ? 'ON' : 'OFF', 'ss=', productCache[code].ss);
   saveProductCache(); saveToGitHub();
   // 注: 【SS】タブ表示中でも、ここでは一覧再描画しない
   // (スクロール位置がリセットされUXが悪化するため)
@@ -6003,13 +6006,13 @@ function applyAllStatusUpdates() {
       console.warn('[ADcheck] SS button missing data attrs:', btn.id);
       return;
     }
-    // 現在の状態を「見た目」から判定(背景色) 
-    const active = btn.style.background.includes('21, 101, 192') || btn.style.background === '#1565C0' || btn.getAttribute('data-active') === '1';
+    // data-active 属性だけを真実の源として参照(背景色の文字列比較は壊れやすい)
+    const active = btn.getAttribute('data-active') === '1';
     if (!ssPerCode[code]) ssPerCode[code] = {};
     ssPerCode[code][mon] = active;
     codesInView.add(code);
   });
-  console.log('[ADcheck] applyAllStatusUpdates: SS update for', codesInView.size, '商品');
+  console.log('[ADcheck] applyAllStatusUpdates: SS update for', codesInView.size, '商品', ssPerCode);
   // 画面に出ている商品のSS設定だけ更新（他は保持）
   codesInView.forEach(code => {
     if (!productCache[code]) productCache[code] = {};
