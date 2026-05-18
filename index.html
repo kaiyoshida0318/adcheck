@@ -481,7 +481,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.451</span>
+    <span class="build-date">v1.452</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5758,13 +5758,28 @@ function _toggleRoasTrendSS(code, mon, btn) {
   btn.style.borderColor = newActive ? '#1565C0' : 'var(--border)';
   btn.setAttribute('data-active', newActive ? '1' : '0');
   if (!productCache[code]) productCache[code] = {};
-  const ss = productCache[code].ss || [];
-  productCache[code].ss = newActive ? [...ss.filter(m => m !== mon), mon] : ss.filter(m => m !== mon);
+  const ss = (productCache[code].ss || []).filter(m => m !== mon); // 既存から該当月を除く
+  productCache[code].ss = newActive ? [...ss, mon] : ss; // ONなら追加、OFFなら削除済の状態
   console.log('[ADcheck] SS toggle:', code, mon, '→', newActive ? 'ON' : 'OFF', 'ss=', productCache[code].ss);
   saveProductCache(); saveToGitHub();
-  // 注: 【SS】タブ表示中でも、ここでは一覧再描画しない
-  // (スクロール位置がリセットされUXが悪化するため)
-  // 「💾 一括更新」ボタンを押した時に applyAllStatusUpdates 内で再描画される
+  // 【SS】タブを表示中なら、そのタブの月と一致するボタン操作の場合だけ一覧再描画
+  // (他の月のボタン操作なら現状の表示には影響しないので再描画不要)
+  if (_ssTabActive && typeof _currentTab !== 'undefined' && _currentTab in SS_TABS) {
+    const currentSSMonth = SS_TABS[_currentTab];
+    if (mon === currentSSMonth) {
+      // OFFにした → 一覧から消える / ONにした → 一覧に出る
+      // スクロール位置を保持して再描画
+      const panel = document.getElementById('tab-' + _currentTab);
+      const scrollEl = panel?.querySelector('#subTabListWrap');
+      const savedScroll = scrollEl?.scrollTop || 0;
+      renderMonthlySubTab(_currentTab);
+      // 再描画後にスクロール位置を復元
+      requestAnimationFrame(() => {
+        const newScrollEl = document.getElementById('tab-' + _currentTab)?.querySelector('#subTabListWrap');
+        if (newScrollEl) newScrollEl.scrollTop = savedScroll;
+      });
+    }
+  }
 }
 
 function openMemoModal(code) {
