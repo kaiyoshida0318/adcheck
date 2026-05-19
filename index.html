@@ -88,7 +88,11 @@ header + * { margin-top: 4px; }
 
 /* ── Table ── */
 .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);  box-shadow: var(--shadow); }
-.table-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.table-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; position: sticky; top: 60px; z-index: 50; background: var(--surface); }
+/* ヘッダーが大きくなる場合(ボタン2段化等)を考慮して余裕を持たせる */
+@media (max-width: 1200px) {
+  .table-toolbar { top: 80px; }
+}
 .toolbar-search { font-size: 13px; padding: 6px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); color: var(--text); outline: none; width: 200px; font-family: inherit; transition: all 0.15s; }
 .toolbar-search:focus { border-color: var(--red); background: var(--surface); }
 .toolbar-select { font-size: 12px; padding: 6px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); outline: none; cursor: pointer; font-family: inherit; }
@@ -170,7 +174,7 @@ header + * { margin-top: 4px; }
 .prod-link a { color: #1a73e8; }
 
 /* ── Settings Modal ── */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; overflow-y: auto; padding: 12px; }
 .modal-overlay.open { display: flex; }
 .modal { background: var(--surface); border-radius: 14px; padding: 28px; max-width: 480px; width: 100%; margin: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
 .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
@@ -481,7 +485,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.455</span>
+    <span class="build-date">v1.457</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1041,13 +1045,13 @@ header + * { margin-top: 4px; }
 <!-- Settings Modal -->
 <!-- ドロップゾーンモーダル -->
 <div class="modal-overlay" id="dropZoneModal" ondragover="onDropModalOver(event)" ondragleave="onDropModalLeave(event)" ondrop="onDropModalDrop(event)">
-  <div class="modal" style="max-width:600px;text-align:center;max-height:92vh;display:flex;flex-direction:column;padding:20px 24px">
+  <div class="modal" style="max-width:600px;text-align:center;max-height:90vh;height:auto;display:flex;flex-direction:column;padding:16px 20px;margin:16px 0">
     <div style="flex-shrink:0">
-    <h3 style="margin-bottom:8px">📂 レポートを追加</h3>
-    <p style="margin-bottom:12px">楽天RMSからダウンロードしたRPPレポートのZIPまたはCSVを<br>複数まとめてドロップできます</p>
+    <h3 style="margin:0 0 6px;font-size:16px">📂 レポートを追加</h3>
+    <p style="margin-bottom:10px;font-size:11px;color:var(--text2)">楽天RMSからダウンロードしたRPPレポートのZIPまたはCSVを<br>複数まとめてドロップできます</p>
     </div>
 
-    <div style="overflow-y:auto;flex:1;min-height:0;text-align:center">
+    <div style="overflow-y:auto;flex:1 1 auto;min-height:0;text-align:center;padding-right:4px">
     <!-- ファイル種別説明（アコーディオン） -->
     <div style="text-align:left;border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden">
       <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.acc-arrow').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼'"
