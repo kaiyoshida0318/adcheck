@@ -485,7 +485,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.461</span>
+    <span class="build-date">v1.462</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1371,7 +1371,28 @@ function loadProductCache() {
   } catch(e) {}
 }
 function saveProductCache() {
-  try { localStorage.setItem(_cacheKey(), JSON.stringify(productCache)); } catch(e) {}
+  try {
+    localStorage.setItem(_cacheKey(), JSON.stringify(productCache));
+  } catch(e) {
+    console.error('[ADcheck] saveProductCache 失敗:', e.name, e.message);
+    // QuotaExceededError などの場合、最低でも SS設定だけは保存する
+    try {
+      const ssOnly = {};
+      for (const code of Object.keys(productCache)) {
+        if (productCache[code]?.ss && Array.isArray(productCache[code].ss) && productCache[code].ss.length > 0) {
+          ssOnly[code] = { ss: productCache[code].ss };
+        }
+        if (productCache[code]?.status) {
+          if (!ssOnly[code]) ssOnly[code] = {};
+          ssOnly[code].status = productCache[code].status;
+        }
+      }
+      localStorage.setItem(_cacheKey() + '_ss_only', JSON.stringify(ssOnly));
+      console.warn('[ADcheck] 容量不足のため、SS/status のみ別キーに退避保存:', Object.keys(ssOnly).length, '件');
+    } catch(e2) {
+      console.error('[ADcheck] SS設定の退避保存も失敗:', e2);
+    }
+  }
   if (typeof _updateStatusCounts === 'function') _updateStatusCounts();
 }
 loadProductCache(); // 起動時即座に読み込み
@@ -1773,20 +1794,32 @@ async function loadFromGitHub() {
         // ただし、SS設定(ss配列)とstatus(区分)については、localStorageに新しい変更が
         // 残ってる場合があるので、これらの項目はマージで保持する
         const _localProductCache = JSON.parse(localStorage.getItem(_cacheKey()) || '{}');
+        // SS退避用キーも合わせて読む(QuotaExceededError時の退避先)
+        const _localSsOnly = JSON.parse(localStorage.getItem(_cacheKey() + '_ss_only') || '{}');
         for (const k of Object.keys(productCache)) delete productCache[k];
         Object.assign(productCache, data.productCache);
         // SS/status は localStorage の値もマージ(直前にユーザが変更してGitHub未保存の場合あり)
         // GitHubの値が空 or 未設定で、localStorageに値がある場合のみ反映(GitHub優先・補完のみ)
         let _localKept = 0;
+        // メインキーから救済
         for (const code of Object.keys(_localProductCache)) {
           const local = _localProductCache[code];
           if (!local || typeof local !== 'object') continue;
           if (!productCache[code]) productCache[code] = {};
-          // ss配列: GitHubに無いがlocalにある月を補う(消えた分を救済しない=削除も反映する点に注意)
-          // よりシンプルに: ssだけはlocalStorageの値を採用(F5でSS設定が消える問題対策)
           if (Array.isArray(local.ss) && JSON.stringify(local.ss) !== JSON.stringify(productCache[code].ss || [])) {
             productCache[code].ss = local.ss;
             _localKept++;
+          }
+        }
+        // 退避キーからも救済(QuotaExceededError時用)
+        for (const code of Object.keys(_localSsOnly)) {
+          const local = _localSsOnly[code];
+          if (!local || typeof local !== 'object') continue;
+          if (!productCache[code]) productCache[code] = {};
+          if (Array.isArray(local.ss) && JSON.stringify(local.ss) !== JSON.stringify(productCache[code].ss || [])) {
+            productCache[code].ss = local.ss;
+            _localKept++;
+            console.log('[ADcheck] 退避キーからSS救済:', code, local.ss);
           }
         }
         if (_localKept > 0) {
