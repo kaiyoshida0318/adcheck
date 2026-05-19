@@ -485,7 +485,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.460</span>
+    <span class="build-date">v1.461</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5794,27 +5794,28 @@ function _setRoasTrendStatus(code, val) {
 let _ssSaveTimer = null;
 let _ssSavePending = false;
 
-function _scheduleSSSave() {
+async function _scheduleSSSave() {
   // 既存タイマーをキャンセル
   if (_ssSaveTimer) clearTimeout(_ssSaveTimer);
   _ssSavePending = true;
-  // UIロック表示(保存待機中もF5禁止)
-  _lockUI('SS設定を保存中...<br>完了まで画面を更新しないでください。', {indeterminate: true});
-  // 800ms以内に再操作なければ保存実行(連打中はリセット)
+  // UIロック表示(保存待機中もF5禁止) - 即座に表示
+  _lockUI('SS設定を保存中...<br><strong style="color:#c62828">完了まで画面を更新しないでください!</strong>', {indeterminate: true});
+  // 300ms以内に再操作なければ保存実行(連打中はリセット)
   _ssSaveTimer = setTimeout(async () => {
     _ssSaveTimer = null;
     try {
+      console.log('[ADcheck] SS設定 GitHub保存開始');
       await saveProductCacheToGitHub();
-      console.log('[ADcheck] SS設定 GitHub保存完了');
+      console.log('[ADcheck] SS設定 GitHub保存完了 ✅');
       _ssSavePending = false;
       _unlockUI();
     } catch (e) {
       console.error('[ADcheck] SS設定 GitHub保存失敗:', e);
       _ssSavePending = false;
       _unlockUI();
-      alert('GitHub保存に失敗しました。F12コンソールを確認してください。\n' + (e?.message || e));
+      alert('GitHub保存に失敗しました。\nF12コンソールでエラー詳細を確認してください。\n\nエラー: ' + (e?.message || e));
     }
-  }, 800);
+  }, 300);
 }
 
 function _toggleRoasTrendSS(code, mon, btn) {
@@ -5832,7 +5833,7 @@ function _toggleRoasTrendSS(code, mon, btn) {
   console.log('[ADcheck] SS toggle:', code, mon, '→', newActive ? 'ON' : 'OFF', 'ss=', productCache[code].ss);
   // localStorage は即時保存(F5してもブラウザ側は保持)
   saveProductCache();
-  // GitHub保存は800ms遅延でデバウンス(連打しても1回にまとめる)
+  // GitHub保存は300msデバウンス(連打時1回にまとめる)
   _scheduleSSSave();
   // 【SS】タブを表示中なら、そのタブの月と一致するボタン操作の場合だけ一覧再描画
   if (_ssTabActive && typeof _currentTab !== 'undefined' && _currentTab in SS_TABS) {
