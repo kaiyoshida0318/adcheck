@@ -485,7 +485,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.457</span>
+    <span class="build-date">v1.459</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1613,13 +1613,18 @@ async function saveProductCacheToGitHub(retryCount = 0) {
   const MAX_RETRY = 5;
   const pat = localStorage.getItem('github_pat');
   if (!pat) return;
+  // saveToGitHub と並列実行されると SHA 衝突するので、その完了を待つ
+  if (_saveToGitHubInFlight) {
+    console.log('[ADcheck] saveProductCacheToGitHub: 他の保存処理を待機中...');
+    try { await _saveToGitHubInFlight; } catch(e) {}
+  }
   const headers = {
     'Authorization': `token ${pat}`,
     'Accept': 'application/vnd.github.v3+json',
     'Content-Type': 'application/json'
   };
   const file = _ghFile();
-  const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${file}`, { headers });
+  const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${file}`, { headers, cache: 'no-store' });
   const sha = getRes.ok ? (await getRes.json()).sha : null;
   const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ productCache, calEvents, nichinichiRows, dailyRows, salesRows }))));
   const body = { message: 'Update productCache', content: base64 };
@@ -1635,8 +1640,10 @@ async function saveProductCacheToGitHub(retryCount = 0) {
       await new Promise(r => setTimeout(r, 500 + retryCount * 300));
       return saveProductCacheToGitHub(retryCount + 1);
     }
+    console.error('[ADcheck] saveProductCacheToGitHub 失敗:', putRes.status, e);
     throw new Error(e.message || putRes.status);
   }
+  console.log('[ADcheck] saveProductCacheToGitHub 成功');
 }
 
 // readFiles処理中のsaveToGitHub重複呼び出しを抑制するフラグ
@@ -1761,8 +1768,37 @@ async function loadFromGitHub() {
       if (data.productCache) {
         // ⚠ シンプル化: GitHub = 真実の源として完全置換
         // 複雑なlocalStorageマージは削除(v1.427以前のバグの温床だった)
+        // ただし、SS設定(ss配列)とstatus(区分)については、localStorageに新しい変更が
+        // 残ってる場合があるので、これらの項目はマージで保持する
+        const _localProductCache = JSON.parse(localStorage.getItem(_cacheKey()) || '{}');
         for (const k of Object.keys(productCache)) delete productCache[k];
         Object.assign(productCache, data.productCache);
+        // SS/status は localStorage の値もマージ(直前にユーザが変更してGitHub未保存の場合あり)
+        // GitHubの値が空 or 未設定で、localStorageに値がある場合のみ反映(GitHub優先・補完のみ)
+        let _localKept = 0;
+        for (const code of Object.keys(_localProductCache)) {
+          const local = _localProductCache[code];
+          if (!local || typeof local !== 'object') continue;
+          if (!productCache[code]) productCache[code] = {};
+          // ss配列: GitHubに無いがlocalにある月を補う(消えた分を救済しない=削除も反映する点に注意)
+          // よりシンプルに: ssだけはlocalStorageの値を採用(F5でSS設定が消える問題対策)
+          if (Array.isArray(local.ss) && JSON.stringify(local.ss) !== JSON.stringify(productCache[code].ss || [])) {
+            productCache[code].ss = local.ss;
+            _localKept++;
+          }
+        }
+        if (_localKept > 0) {
+          console.log('[ADcheck] localStorageのSS設定を', _localKept, '件保持(GitHub未保存分の救済)');
+          // GitHub未保存のSS設定があったので、ロード完了後にGitHubへ反映する
+          setTimeout(() => {
+            console.log('[ADcheck] SS設定の救済分をGitHubに保存中...');
+            saveProductCacheToGitHub().then(() => {
+              console.log('[ADcheck] SS設定救済分のGitHub保存完了');
+            }).catch(e => {
+              console.error('[ADcheck] SS設定救済分のGitHub保存失敗:', e);
+            });
+          }, 3000); // ページ初期化が落ち着いてから(他の処理と競合しないように)
+        }
         // localStorageは結果をキャッシュするだけ
         saveProductCache();
         if (productCache['__global__']?.changeLogs) {
@@ -5752,7 +5788,34 @@ function _setRoasTrendStatus(code, val) {
   saveProductCache(); saveToGitHub();
 }
 
-async function _toggleRoasTrendSS(code, mon, btn) {
+// SS設定の遅延保存タイマー(連打対応)
+let _ssSaveTimer = null;
+let _ssSavePending = false;
+
+function _scheduleSSSave() {
+  // 既存タイマーをキャンセル
+  if (_ssSaveTimer) clearTimeout(_ssSaveTimer);
+  _ssSavePending = true;
+  // UIロック表示(保存待機中もF5禁止)
+  _lockUI('SS設定を保存中...<br>完了まで画面を更新しないでください。', {indeterminate: true});
+  // 800ms以内に再操作なければ保存実行(連打中はリセット)
+  _ssSaveTimer = setTimeout(async () => {
+    _ssSaveTimer = null;
+    try {
+      await saveProductCacheToGitHub();
+      console.log('[ADcheck] SS設定 GitHub保存完了');
+      _ssSavePending = false;
+      _unlockUI();
+    } catch (e) {
+      console.error('[ADcheck] SS設定 GitHub保存失敗:', e);
+      _ssSavePending = false;
+      _unlockUI();
+      alert('GitHub保存に失敗しました。F12コンソールを確認してください。\n' + (e?.message || e));
+    }
+  }, 800);
+}
+
+function _toggleRoasTrendSS(code, mon, btn) {
   // 現在の状態は data-active 属性で判定(背景色の文字列比較は壊れやすい)
   const active = btn.getAttribute('data-active') === '1';
   // 状態を反転
@@ -5762,32 +5825,21 @@ async function _toggleRoasTrendSS(code, mon, btn) {
   btn.style.borderColor = newActive ? '#1565C0' : 'var(--border)';
   btn.setAttribute('data-active', newActive ? '1' : '0');
   if (!productCache[code]) productCache[code] = {};
-  const ss = (productCache[code].ss || []).filter(m => m !== mon); // 既存から該当月を除く
-  productCache[code].ss = newActive ? [...ss, mon] : ss; // ONなら追加、OFFなら削除済の状態
+  const ss = (productCache[code].ss || []).filter(m => m !== mon);
+  productCache[code].ss = newActive ? [...ss, mon] : ss;
   console.log('[ADcheck] SS toggle:', code, mon, '→', newActive ? 'ON' : 'OFF', 'ss=', productCache[code].ss);
+  // localStorage は即時保存(F5してもブラウザ側は保持)
   saveProductCache();
-  // UIロック表示: ボタン押下から保存完了までの間、F5/タブ閉じを防ぐ
-  _lockUI('SS設定を保存中...<br>完了まで画面を更新しないでください。', {indeterminate: true});
-  try {
-    await saveProductCacheToGitHub();
-  } catch (e) {
-    console.error('[ADcheck] SS toggle save error:', e);
-    alert('GitHub保存に失敗しました。F12コンソールを確認してください。\n' + (e?.message || e));
-  } finally {
-    _unlockUI();
-  }
+  // GitHub保存は800ms遅延でデバウンス(連打しても1回にまとめる)
+  _scheduleSSSave();
   // 【SS】タブを表示中なら、そのタブの月と一致するボタン操作の場合だけ一覧再描画
-  // (他の月のボタン操作なら現状の表示には影響しないので再描画不要)
   if (_ssTabActive && typeof _currentTab !== 'undefined' && _currentTab in SS_TABS) {
     const currentSSMonth = SS_TABS[_currentTab];
     if (mon === currentSSMonth) {
-      // OFFにした → 一覧から消える / ONにした → 一覧に出る
-      // スクロール位置を保持して再描画
       const panel = document.getElementById('tab-' + _currentTab);
       const scrollEl = panel?.querySelector('#subTabListWrap');
       const savedScroll = scrollEl?.scrollTop || 0;
       renderMonthlySubTab(_currentTab);
-      // 再描画後にスクロール位置を復元
       requestAnimationFrame(() => {
         const newScrollEl = document.getElementById('tab-' + _currentTab)?.querySelector('#subTabListWrap');
         if (newScrollEl) newScrollEl.scrollTop = savedScroll;
