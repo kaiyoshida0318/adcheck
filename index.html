@@ -485,7 +485,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.459</span>
+    <span class="build-date">v1.460</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -563,7 +563,8 @@ header + * { margin-top: 4px; }
           </div>
         </div>
         <div class="table-card">
-          <div class="table-toolbar">
+          <div id="products-scroll-area" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
+          <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
             <select class="toolbar-month" id="monthSel" onchange="renderAll()" style="transition:opacity 0.2s"></select>
             <button id="multiMonthToggle" class="tbtn" onclick="toggleMultiMonth()" style="font-size:11px;white-space:nowrap">📊 月比較</button>
             <div id="multiMonthPicker" style="display:none;align-items:center;gap:6px;flex-wrap:wrap"></div>
@@ -576,8 +577,7 @@ header + * { margin-top: 4px; }
               <button class="tbtn" onclick="exportCSV()">CSV出力</button>
             </div>
           </div>
-          <div id="products-scroll-area" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
-          <div class="col-header">
+          <div class="col-header" style="position:sticky;top:48px;z-index:25;background:#f8f9fa">
             <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="cursor:pointer">商品番号</div>
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
             <div class="ch" onclick="sortBy('name')">商品</div>
@@ -605,12 +605,14 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-roas-trend">
     <div style="padding:12px 16px">
       <div class="table-card">
-        <div class="table-toolbar">
+        <div id="roas-trend-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
+        <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
           <input type="text" id="roasTrendSearch" placeholder="商品管理番号・商品番号・商品名で検索..." oninput="renderRoasTrend()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
           <div class="toolbar-right"></div>
         </div>
-        <div id="roas-trend-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
+        <div id="roas-trend-inner">
           <div class="tab-coming-soon"><div class="icon">📈</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>
+        </div>
         </div>
       </div>
     </div>
@@ -5613,7 +5615,7 @@ function closeKwVolModal() {
 }
 
 function renderRoasTrend() {
-  const wrap = document.getElementById('roas-trend-list');
+  const wrap = document.getElementById('roas-trend-inner') || document.getElementById('roas-trend-list');
   if (!wrap) return;
   const months = getMonths();
   if (months.length === 0) {
@@ -6305,16 +6307,18 @@ function renderMonthlySubTab(tab) {
       panel.innerHTML = `
         <div style="padding:12px 16px">
           <div class="table-card">
-            <div id="subTabToolbarWrap" style="position:sticky;top:0;z-index:6;background:var(--surface)">${_subTabToolbar(tab, ym)}</div>
-            <div style="overflow-y:auto;max-height:75vh;overflow-x:auto" id="subTabListWrap">${headerHtml}${rows}</div>
+            <div style="overflow-y:auto;max-height:75vh;overflow-x:auto" id="subTabListWrap">
+              <div id="subTabToolbarWrap" style="position:sticky;top:0;z-index:30;background:var(--surface)">${_subTabToolbar(tab, ym)}</div>
+              <div id="subTabListInner">${headerHtml}${rows}</div>
+            </div>
           </div>
         </div>
       `;
       const _sb2 = panel.querySelector('#subTabSearchBox');
       if (_sb2) _sb2.addEventListener('input', () => renderMonthlySubTab(_currentTab));
     } else {
-      const _listWrap2 = panel.querySelector('#subTabListWrap');
-      if (_listWrap2) _listWrap2.innerHTML = headerHtml + rows;
+      const _listInner = panel.querySelector('#subTabListInner');
+      if (_listInner) _listInner.innerHTML = headerHtml + rows;
       const _newQ2 = document.getElementById('subTabSearchBox');
       if (_newQ2 && _savedQ2 !== undefined) _newQ2.value = _savedQ2;
     }
@@ -7400,8 +7404,10 @@ function renderPage() {
         panel.innerHTML = `
           <div style="padding:12px 16px">
             <div class="table-card">
-              <div id="subTabToolbarWrap" style="position:sticky;top:0;z-index:6;background:var(--surface)">${_subTabToolbar(_currentTab, ym)}</div>
-              <div style="overflow-y:auto;max-height:75vh;overflow-x:auto" id="subTabListWrap">${headerHtml}${inner}</div>
+              <div style="overflow-y:auto;max-height:75vh;overflow-x:auto" id="subTabListWrap">
+                <div id="subTabToolbarWrap" style="position:sticky;top:0;z-index:30;background:var(--surface)">${_subTabToolbar(_currentTab, ym)}</div>
+                <div id="subTabListInner">${headerHtml}${inner}</div>
+              </div>
             </div>
           </div>
         `;
@@ -7410,8 +7416,8 @@ function renderPage() {
         if (_sb) _sb.addEventListener('input', () => renderMonthlySubTab(_currentTab));
       } else {
         // 2回目以降：リスト部分のみ更新
-        const _listWrap = panel.querySelector('#subTabListWrap');
-        if (_listWrap) _listWrap.innerHTML = headerHtml + inner;
+        const _listInner = panel.querySelector('#subTabListInner');
+        if (_listInner) _listInner.innerHTML = headerHtml + inner;
         const _newQ = document.getElementById('subTabSearchBox');
         if (_newQ && _savedQ !== undefined) _newQ.value = _savedQ;
       }
