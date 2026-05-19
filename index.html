@@ -481,7 +481,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.453</span>
+    <span class="build-date">v1.455</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6262,7 +6262,8 @@ function renderMonthlySubTab(tab) {
       const _newQ2 = document.getElementById('subTabSearchBox');
       if (_newQ2 && _savedQ2 !== undefined) _newQ2.value = _savedQ2;
     }
-    _subTabFilter = null; _ssTabActive = false;
+    // 注: ここでは _ssTabActive をリセットしない(SSタブ表示中なのでtrueのまま維持)
+    // リセットすると、次に「💾 反映」ボタン押下時にSSフィルター再描画されず通常タブ再描画になる
   }
 }
 function switchTab(tab) {
@@ -7525,7 +7526,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
         ${['03','06','09','12'].map(m => {
           const active = (productCache[p.id]?.ss || []).includes(m);
           const lbl = {'03':'3月','06':'6月','09':'9月','12':'12月'}[m] || m+'月';
-          return `<button id="ss-btn-${p.id}-${m}" onclick="toggleSSBtn('${p.id}','${m}',this)"
+          return `<button id="ss-btn-${p.id}-${m}" data-code="${p.id}" data-mon="${m}" data-active="${active?'1':'0'}" onclick="_toggleRoasTrendSS('${p.id}','${m}',this)"
             style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;white-space:nowrap;text-align:center">${lbl}</button>`;
         }).join('')}
       </div>` : ''}
