@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.466</span>
+    <span class="build-date">v1.467</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6328,12 +6328,31 @@ function renderMonthlySubTab(tab) {
     const panel = document.getElementById('tab-' + tab);
     if (!panel) return;
     const ym = _getSubTabMonth();
+    // 検索キーワードを取得
+    const qEl = document.getElementById('subTabSearchBox');
+    const q = (qEl ? qEl.value : '').toLowerCase().trim();
     const allCodes = Object.keys(DB).filter(code => !productCache[code]?.retired);
-    const codes = allCodes.filter(code => (productCache[code]?.ss || []).includes(mon));
+    let codes = allCodes.filter(code => (productCache[code]?.ss || []).includes(mon));
+    // 検索キーワードで絞り込み(商品ID・商品番号・商品名)
+    if (q) {
+      codes = codes.filter(code => {
+        const cached = productCache[code];
+        const id = code.toString().toLowerCase();
+        const itemNum = (cached?.itemNumber || '').toLowerCase();
+        const name = (cached?.manualName || cached?.name || '').toLowerCase();
+        return id.includes(q) || itemNum.includes(q) || name.includes(q);
+      });
+    }
     const label = SS_LABELS[tab];
     if (codes.length === 0) {
+      // 検索でヒット0と「SSなし」を分けて表示(toolbar維持)
+      const _toolbarWrap0 = panel.querySelector('#subTabToolbarWrap');
+      if (_toolbarWrap0) {
+        const _listInner0 = panel.querySelector('#subTabListInner');
+        if (_listInner0) _listInner0.innerHTML = `<div class="empty" style="padding:30px;text-align:center;color:var(--text3)">${q ? '🔍 検索条件にマッチする商品がありません' : '該当商品なし'}</div>`;
+        return;
+      }
       panel.innerHTML = `<div class="tab-coming-soon"><div class="icon">📊</div><div style="font-size:15px;font-weight:700;color:var(--text)">${label}</div><div style="color:var(--text3);font-size:13px">該当商品なし</div></div>`;
-      _subTabFilter = null; _ssTabActive = false;
       return;
     }
     const maxSpend = Math.max(...codes.map(c => { const s=getStats(DB[c],ym); return s.spend; }), 1);
@@ -6372,8 +6391,18 @@ function renderMonthlySubTab(tab) {
     } else {
       const _listInner = panel.querySelector('#subTabListInner');
       if (_listInner) _listInner.innerHTML = headerHtml + rows;
+      // 検索ボックスのフォーカスとカーソル位置を維持
       const _newQ2 = document.getElementById('subTabSearchBox');
-      if (_newQ2 && _savedQ2 !== undefined) _newQ2.value = _savedQ2;
+      if (_newQ2) {
+        if (_savedQ2 !== undefined && _newQ2.value !== _savedQ2) _newQ2.value = _savedQ2;
+        // 元々フォーカスがあった場合は復元
+        if (document.activeElement === _newQ2 || _newQ2.dataset.wasFocused === '1') {
+          _newQ2.focus();
+          // カーソルを末尾に
+          const len = _newQ2.value.length;
+          _newQ2.setSelectionRange(len, len);
+        }
+      }
     }
     // 注: ここでは _ssTabActive をリセットしない(SSタブ表示中なのでtrueのまま維持)
     // リセットすると、次に「💾 反映」ボタン押下時にSSフィルター再描画されず通常タブ再描画になる
