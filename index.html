@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.470</span>
+    <span class="build-date">v1.471</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6305,9 +6305,9 @@ function _subTabToolbar(tab, currentYm) {
   const updateBtn = (isStatus || isSS)
     ? `<button onclick="applyAllStatusUpdates()" style="padding:5px 16px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(249,115,22,0.35)">💾 反映</button>`
     : '';
-  // SSタブには商品管理番号CSVダウンロードボタンを追加
+  // SSタブにはSALE一括用ファイル出力ボタンを追加
   const csvBtn = isSS
-    ? `<button onclick="downloadSSCsv('${tab}')" style="padding:7px 16px;border-radius:8px;border:2px solid var(--accent);background:#e3f2fd;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(21,101,192,0.15);transition:all 0.15s" onmouseover="this.style.background='#bbdefb';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(21,101,192,0.25)'" onmouseout="this.style.background='#e3f2fd';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(21,101,192,0.15)'" title="この月の商品管理番号をCSVでダウンロード">📥 商品管理番号出力</button>`
+    ? `<button onclick="downloadSSCsv('${tab}')" style="padding:7px 16px;border-radius:8px;border:2px solid var(--accent);background:#e3f2fd;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(21,101,192,0.15);transition:all 0.15s" onmouseover="this.style.background='#bbdefb';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(21,101,192,0.25)'" onmouseout="this.style.background='#e3f2fd';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(21,101,192,0.15)'" title="この月の商品管理番号と広告出稿有無をCSVでダウンロード">📥 SALE一括用ファイル出力</button>`
     : '';
   return `<div class="table-toolbar">
     <select class="toolbar-month" id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)">${monthOpts}</select>
@@ -6316,11 +6316,10 @@ function _subTabToolbar(tab, currentYm) {
   </div>`;
 }
 
-// 【SS】タブの商品管理番号をCSVでダウンロード
+// 【SS】タブの商品をSALE一括用CSVでダウンロード(商品管理番号 + 広告出稿あり/なし)
 function downloadSSCsv(tab) {
   const mon = SS_TABS[tab];
   if (!mon) return;
-  const monLabel = SS_LABELS[tab] || mon;
   // 該当月の商品をフィルター(retiredは除く)
   const codes = Object.keys(DB)
     .filter(code => !productCache[code]?.retired)
@@ -6329,13 +6328,16 @@ function downloadSSCsv(tab) {
     alert('該当する商品がありません');
     return;
   }
-  // CSV作成: 商品管理番号 / 商品番号 / 商品名 の3列
-  const header = '商品管理番号,商品番号,商品名';
+  // 区分(status)を「広告出稿」のあり/なしに変換
+  // g3(健常-広告無し)/mid2(中立-広告無し)/warn(撤退検討▲)/out(撤退■) → なし
+  // それ以外 → あり
+  const NASHI_STATUSES = ['g3', 'mid2', 'warn', 'out'];
+  const toAdStatus = (status) => NASHI_STATUSES.includes(status) ? 'なし' : 'あり';
+  // CSV作成: 商品管理番号 / 広告出稿
+  const header = '商品管理番号,広告出稿';
   const rows = codes.map(code => {
-    const cached = productCache[code] || {};
-    const name = (cached.manualName || cached.name || '').replace(/"/g, '""'); // ダブルクォートエスケープ
-    const itemNum = (cached.itemNumber || '').replace(/"/g, '""');
-    return `"${code}","${itemNum}","${name}"`;
+    const status = productCache[code]?.status || '';
+    return `"${code}","${toAdStatus(status)}"`;
   });
   const csv = '\uFEFF' + [header, ...rows].join('\r\n'); // BOM付きでExcel対応
   // ダウンロード
@@ -6343,14 +6345,12 @@ function downloadSSCsv(tab) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const today = new Date().toISOString().slice(0, 10);
-  const shopId = _getCurrentShopId() || 'shop';
-  a.download = `SS_${monLabel.replace(/[年月]/g,'')}月_${shopId}_${today}.csv`;
+  a.download = 'セール開始準備1.2で使用.csv';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  console.log(`[ADcheck] CSV出力: ${codes.length}件 (${monLabel})`);
+  console.log(`[ADcheck] SALE一括用CSV出力: ${codes.length}件`);
 }
 
 function renderMonthlySubTab(tab) {
