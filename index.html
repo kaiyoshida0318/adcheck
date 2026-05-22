@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.471</span>
+    <span class="build-date">v1.472</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6328,13 +6328,13 @@ function downloadSSCsv(tab) {
     alert('該当する商品がありません');
     return;
   }
-  // 区分(status)を「広告出稿」のあり/なしに変換
-  // g3(健常-広告無し)/mid2(中立-広告無し)/warn(撤退検討▲)/out(撤退■) → なし
-  // それ以外 → あり
-  const NASHI_STATUSES = ['g3', 'mid2', 'warn', 'out'];
-  const toAdStatus = (status) => NASHI_STATUSES.includes(status) ? 'なし' : 'あり';
-  // CSV作成: 商品管理番号 / 広告出稿
-  const header = '商品管理番号,広告出稿';
+  // 区分(status)を「広告状況」の出稿中/未出稿に変換
+  // g3(健常-広告無し)/mid2(中立-広告無し)/warn(撤退検討▲)/out(撤退■) → 未出稿
+  // それ以外 → 出稿中
+  const MISYUKKO_STATUSES = ['g3', 'mid2', 'warn', 'out'];
+  const toAdStatus = (status) => MISYUKKO_STATUSES.includes(status) ? '未出稿' : '出稿中';
+  // CSV作成: 商品管理番号 / 広告状況
+  const header = '商品管理番号,広告状況';
   const rows = codes.map(code => {
     const status = productCache[code]?.status || '';
     return `"${code}","${toAdStatus(status)}"`;
