@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.494</span>
+    <span class="build-date">v1.495</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -748,6 +748,7 @@ header + * { margin-top: 4px; }
             📝 変更記録
           </button>
         </div>
+        <div id="graphMetricToggles" style="display:none;padding:0 0 10px;flex-wrap:wrap;gap:6px"></div>
         <div style="position:relative;height:400px">
           <canvas id="graphCanvas"></canvas>
         </div>
@@ -5130,6 +5131,44 @@ function _renderGraphTable(labels, datasets) {
   </table>`;
 }
 
+// 全-日月別グラフ：凡例クリックは無効（下のボタンで操作）
+function _graphLegendNoop() {}
+
+// 全-日月別グラフ：指標ON/OFFボタン（リニューアル実施済と同じ仕組み）
+function _renderGraphToggles() {
+  const wrap = document.getElementById('graphMetricToggles');
+  if (!wrap) return;
+  const chart = _chartInstance;
+  // 系列が2本以上あるときだけボタンを出す（1本なら不要）
+  if (!chart || !chart.data || !chart.data.datasets || chart.data.datasets.length < 2) {
+    wrap.style.display = 'none'; wrap.innerHTML = ''; return;
+  }
+  wrap.style.display = 'flex';
+  wrap.innerHTML = chart.data.datasets.map((ds, i) => {
+    const on = chart.isDatasetVisible(i);
+    const color = ds.borderColor || '#888';
+    return `<button onclick="_toggleGraphMetric(${i})" style="
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:12px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;
+      border:2px solid ${color};
+      background:${on ? color : 'transparent'};
+      color:${on ? '#fff' : 'var(--text3)'};
+      opacity:${on ? '1' : '0.55'};
+      text-decoration:${on ? 'none' : 'line-through'};
+      transition:all 0.12s">
+      <span style="width:9px;height:9px;border-radius:50%;background:${on ? '#fff' : color};display:inline-block"></span>
+      ${ds.label}
+    </button>`;
+  }).join('');
+}
+function _toggleGraphMetric(i) {
+  const chart = _chartInstance;
+  if (!chart) return;
+  chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
+  chart.update();
+  _renderGraphToggles();
+}
+
 function renderGraph() {
   const metric = document.getElementById('graphMetricSel')?.value || 'spend';
   const canvas = document.getElementById('graphCanvas');
@@ -5163,6 +5202,7 @@ function renderGraph() {
   if (rows.length === 0) {
     canvas.style.display = 'none';
     empty.style.display = 'block';
+    const tg = document.getElementById('graphMetricToggles'); if (tg) { tg.style.display='none'; tg.innerHTML=''; }
     return;
   }
   canvas.style.display = 'block';
@@ -5228,7 +5268,7 @@ function renderGraph() {
         animation: false,
         responsive: true, maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: true },
-        plugins: { legend: { labels: { color: textColor, font: { size: 12 } } }, tooltip: {
+        plugins: { legend: { onClick: _graphLegendNoop, labels: { color: textColor, font: { size: 12 } } }, tooltip: {
           callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ¥' + Math.round(ctx.raw).toLocaleString() }
         }},
         scales: {
@@ -5239,6 +5279,7 @@ function renderGraph() {
     });
     _applyGlobalClLines(_chartInstance, labels);
     _renderGraphTable(labels, _chartInstance.data.datasets);
+    _renderGraphToggles();
     return;
   }
 
@@ -5299,6 +5340,7 @@ function renderGraph() {
           legend: {
             display: true,
             position: 'top',
+            onClick: _graphLegendNoop,
             labels: { color: textColor, font: { size: 12 }, usePointStyle: true }
           },
           tooltip: {
@@ -5326,6 +5368,7 @@ function renderGraph() {
     });
     _applyGlobalClLines(_chartInstance, labels);
     _renderGraphTable(labels, _chartInstance.data.datasets);
+    _renderGraphToggles();
     return;
   }
 
@@ -5440,6 +5483,7 @@ function renderGraph() {
           legend: {
             display: true,
             position: 'top',
+            onClick: _graphLegendNoop,
             labels: { color: textColor, font: { size: 12 }, usePointStyle: true }
           },
           tooltip: {
@@ -5456,6 +5500,7 @@ function renderGraph() {
     });
     _applyGlobalClLines(_chartInstance, labels);
     _renderGraphTable(labels, _chartInstance.data.datasets);
+    _renderGraphToggles();
     return;
   }
 
@@ -5553,7 +5598,7 @@ function renderGraph() {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: true, position: 'top', labels: { color: textColor, font: { size: 12 }, usePointStyle: true } },
+          legend: { display: true, position: 'top', onClick: _graphLegendNoop, labels: { color: textColor, font: { size: 12 }, usePointStyle: true } },
           tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}%` } }
         },
         scales: {
@@ -5564,6 +5609,7 @@ function renderGraph() {
     });
     _applyGlobalClLines(_chartInstance, labels);
     _renderGraphTable(labels, _chartInstance.data.datasets);
+    _renderGraphToggles();
     return;
   }
 
@@ -5652,7 +5698,7 @@ function renderGraph() {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: true, position: 'top', labels: { color: textColor, font: { size: 12 }, usePointStyle: true } },
+          legend: { display: true, position: 'top', onClick: _graphLegendNoop, labels: { color: textColor, font: { size: 12 }, usePointStyle: true } },
           tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}%` } }
         },
         scales: {
@@ -5663,11 +5709,13 @@ function renderGraph() {
     });
     _applyGlobalClLines(_chartInstance, labels);
     _renderGraphTable(labels, _chartInstance.data.datasets);
+    _renderGraphToggles();
     return;
   }
 
   _applyGlobalClLines(_chartInstance, labels);
   _renderGraphTable(labels, _chartInstance.data.datasets);
+    _renderGraphToggles();
 }
 let _memoEditCode = null;
 
