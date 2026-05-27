@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.479</span>
+    <span class="build-date">v1.480</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5775,11 +5775,12 @@ function _setRenewalGraphPeriod(period) {
 
 // 各指標の定義（CTR/平均単価含む）。値配列を返すヘルパ付き
 const _RENEWAL_METRICS = {
-  roas:   { label: 'ROAS',         color: '#fbbf24', unit: '%', fmt: v => v + '%' },
-  cvr:    { label: 'CVR',          color: '#a78bfa', unit: '%', fmt: v => v + '%' },
-  orders: { label: '個数(売上件数)', color: '#60a5fa', unit: '件', fmt: v => v + '件' },
-  ctr:    { label: 'CTR',          color: '#34d399', unit: '%', fmt: v => v + '%' },
-  cpc:    { label: '平均単価',      color: '#f97316', unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },
+  roas:    { label: 'ROAS',          color: '#fbbf24', unit: '%', fmt: v => v + '%' },
+  cvr:     { label: 'CVR',           color: '#a78bfa', unit: '%', fmt: v => v + '%' },
+  ctr:     { label: 'CTR',           color: '#34d399', unit: '%', fmt: v => v + '%' },
+  totsales:{ label: '売上総額',       color: '#3b82f6', unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },
+  orders:  { label: '個数(売上件数)', color: '#60a5fa', unit: '件', fmt: v => v + '件' },
+  cpc:     { label: '平均単価',       color: '#f97316', unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },
 };
 
 // 指定指標の値配列を返す（labels: 集計済みキー配列）
@@ -5797,11 +5798,28 @@ function _renewalMetricValues(metric, labels, dataMap, code) {
       }
     });
   }
+  // 売上総額・平均単価は「総売上(RPP+SEO)」を使う。
+  // 総売上は月単位(salesRows)しか無いため、月別はtotSales、日別はRPP売上(sales)で代替。
+  const totSalesOf = (lbl, d) => {
+    if (_renewalGraphPeriod === 'daily') return d.sales || 0; // 日別はRPP売上で代替
+    return getItemMonthAgg(code, lbl).totSales || 0;
+  };
+  if (metric === 'totsales') {
+    return labels.map(l => totSalesOf(l, dataMap[l] || {}));
+  }
+  if (metric === 'cpc') {
+    // 平均単価 = 受注総額 ÷ 受注件数(orders)
+    return labels.map(l => {
+      const d = dataMap[l] || {};
+      const tot = totSalesOf(l, d);
+      const ord = d.orders || 0;
+      return ord > 0 ? Math.round(tot / ord) : 0;
+    });
+  }
   const calc = {
     roas:   d => d.spend > 0 ? Math.round((d.sales || 0) / d.spend * 10000) / 100 : 0,
     cvr:    d => d.cl    > 0 ? Math.round((d.orders || 0) / d.cl   * 10000) / 100 : 0,
     orders: d => d.orders || 0,
-    cpc:    d => d.cl    > 0 ? Math.round((d.spend || 0) / d.cl) : 0, // 平均単価 = 実績額÷クリック
   };
   const fn = calc[metric] || calc.roas;
   return labels.map(l => fn(dataMap[l] || {}));
@@ -5858,7 +5876,7 @@ function renderRenewalGraph() {
 
   if (metric === 'all') {
     // 全指標を0〜100%に正規化して重ねる（形状比較用）。実値はrawValueに保持しツールチップで表示
-    const keys = ['roas','cvr','orders','ctr','cpc'];
+    const keys = ['roas','cvr','ctr','totsales','orders','cpc'];
     datasets = keys.map(k => {
       const meta = _RENEWAL_METRICS[k];
       const raw = _renewalMetricValues(k, labels, dataMap, code);
@@ -5934,7 +5952,7 @@ function _renderRenewalTable(labels, dataMap, code) {
   });
 
   // 各指標の値配列
-  const metricKeys = ['roas','cvr','orders','ctr','cpc'];
+  const metricKeys = ['roas','cvr','ctr','totsales','orders','cpc'];
   const valuesByMetric = {};
   metricKeys.forEach(k => { valuesByMetric[k] = _renewalMetricValues(k, labels, dataMap, code); });
 
@@ -8647,11 +8665,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         <option value="all">全体(全項目)</option>
         <option value="roas">ROAS</option>
         <option value="cvr">CVR</option>
-        <option value="orders">個数(売上件数)</option>
         <option value="ctr">CTR</option>
+        <option value="totsales">売上総額</option>
+        <option value="orders">個数(売上件数)</option>
         <option value="cpc">平均単価</option>
       </select>
-      <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較</span>
+      <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較 ／ 売上総額・平均単価は月別=総売上(RPP+SEO)、日別=RPP分のみ</span>
     </div>
     <div style="padding:8px 24px 20px">
       <div style="position:relative;height:360px">
