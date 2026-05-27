@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.476</span>
+    <span class="build-date">v1.477</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5832,7 +5832,9 @@ function renderRenewalGraph() {
   }
 
   if (labels.length === 0) {
-    canvas.style.display = 'none'; empty.style.display = 'block'; return;
+    canvas.style.display = 'none'; empty.style.display = 'block';
+    const t = document.getElementById('renewalGraphTable'); if (t) t.innerHTML = '';
+    return;
   }
   canvas.style.display = 'block'; empty.style.display = 'none';
 
@@ -5904,6 +5906,63 @@ function renderRenewalGraph() {
 
   // 変更記録の起点を縦線で描画（_renewalGraphPeriodに合わせてラベル形式を合わせる）
   _drawRenewalChangeLines(_renewalChartInstance, labels, code);
+
+  // グラフ下のデータ表も描画（同じlabels/dataMapを使う）
+  _renderRenewalTable(labels, dataMap, code);
+}
+
+// 実施済モーダル：グラフ下のデータ表（5指標）。変更記録のある行はハイライト＋内容列
+function _renderRenewalTable(labels, dataMap, code) {
+  const table = document.getElementById('renewalGraphTable');
+  const periodLabel = document.getElementById('renewalTablePeriodLabel');
+  if (!table) return;
+  if (periodLabel) periodLabel.textContent = _renewalGraphPeriod === 'daily' ? '日別' : '月別';
+  if (!labels || labels.length === 0) { table.innerHTML = ''; return; }
+
+  // 変更記録を期間キー（YYYY-MM or YYYY-MM-DD）でまとめる
+  const logs = (productCache[code]?.changeLog || []).filter(l => l.date && l.note);
+  const logByKey = {};
+  logs.forEach(l => {
+    const key = _renewalGraphPeriod === 'daily' ? l.date : l.date.slice(0,7);
+    (logByKey[key] || (logByKey[key] = [])).push(l);
+  });
+
+  // 各指標の値配列
+  const metricKeys = ['roas','cvr','orders','ctr','cpc'];
+  const valuesByMetric = {};
+  metricKeys.forEach(k => { valuesByMetric[k] = _renewalMetricValues(k, labels, dataMap, code); });
+
+  // 新しい行が上に来るよう逆順表示
+  const order = labels.map((_, i) => i).reverse();
+
+  const head = `<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)">
+    <th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">${_renewalGraphPeriod==='daily'?'日付':'月'}</th>
+    ${metricKeys.map(k=>`<th style="padding:7px 10px;text-align:right;border-bottom:2px solid var(--border);font-weight:700;color:${_RENEWAL_METRICS[k].color};white-space:nowrap">${_RENEWAL_METRICS[k].label}</th>`).join('')}
+    <th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">変更記録</th>
+  </tr></thead>`;
+
+  const rows = order.map(i => {
+    const key = labels[i];
+    const dispKey = _renewalGraphPeriod === 'daily'
+      ? key.slice(5).replace('-','/')           // MM/DD
+      : key.slice(0,4)+'/'+key.slice(5,7);      // YYYY/MM
+    const hasLog = !!logByKey[key];
+    const bg = hasLog ? 'background:rgba(249,115,22,0.10)' : '';
+    const cells = metricKeys.map(k => {
+      const v = valuesByMetric[k][i];
+      return `<td style="padding:6px 10px;text-align:right;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);${bg}">${_RENEWAL_METRICS[k].fmt(v)}</td>`;
+    }).join('');
+    const logCell = hasLog
+      ? `<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);${bg}">${logByKey[key].map(l=>`<span style="display:inline-block;background:#f97316;color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">📝 ${l.date} ${l.note}</span>`).join('')}</td>`
+      : `<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>`;
+    const keyStyle = hasLog ? 'font-weight:700;color:#f97316' : 'color:var(--text)';
+    return `<tr>
+      <td style="padding:6px 10px;text-align:left;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);${keyStyle};${bg}">${hasLog?'📝 ':''}${dispKey}</td>
+      ${cells}${logCell}
+    </tr>`;
+  }).join('');
+
+  table.innerHTML = head + '<tbody>' + rows + '</tbody>';
 }
 
 // 実施済モーダル用：変更記録の縦線（日別=YYYY-MM-DDマッチ、月別=YYYY-MMマッチ）
@@ -8593,6 +8652,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         <canvas id="renewalGraphCanvas"></canvas>
       </div>
       <div id="renewalGraphEmpty" style="display:none;text-align:center;padding:50px;color:var(--text3);font-size:13px">この商品のデータがありません。</div>
+      <!-- データ表（グラフと同じ期間切替に連動） -->
+      <div id="renewalGraphTableWrap" style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">📋 <span id="renewalTablePeriodLabel">月別</span>データ</div>
+        <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+          <table id="renewalGraphTable" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"></table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
