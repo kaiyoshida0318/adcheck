@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.484</span>
+    <span class="build-date">v1.485</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5819,6 +5819,7 @@ function openRenewalGraph(code) {
   const ms = document.getElementById('renewalGraphMetric');
   if (ms) ms.value = 'all';
   _syncRenewalMetricOptions();
+  _syncRenewalDayMonth();
   document.getElementById('renewalGraphModal').style.display = 'flex';
   renderRenewalGraph();
 }
@@ -5845,7 +5846,25 @@ function _setRenewalGraphPeriod(period) {
   _renewalGraphPeriod = period;
   _setRenewalGraphPeriodBtnUI(period);
   _syncRenewalMetricOptions();
+  _syncRenewalDayMonth();
   renderRenewalGraph();
+}
+
+// 日別のとき：その商品の利用可能な月でセレクトを構築し表示。月別なら隠す。
+function _syncRenewalDayMonth(keepSelection) {
+  const sel = document.getElementById('renewalGraphDayMonth');
+  if (!sel) return;
+  if (_renewalGraphPeriod !== 'daily') { sel.style.display = 'none'; return; }
+  sel.style.display = '';
+  const code = _renewalGraphCode;
+  const byDate = (code && itemDailyData[code]) || {};
+  // 利用可能な月(YYYY-MM)を新しい順に
+  const months = [...new Set(Object.keys(byDate).map(d => d.slice(0,7)))].sort().reverse();
+  const prev = keepSelection ? sel.value : null;
+  sel.innerHTML = months.map(m => `<option value="${m}">${m.slice(0,4)}年${m.slice(5,7)}月</option>`).join('');
+  // 以前の選択を維持、無ければ最新月
+  if (prev && months.includes(prev)) sel.value = prev;
+  else if (months.length) sel.value = months[0];
 }
 
 // 期間に応じてセレクトの選択肢を出し分け（日別では売上総額・平均単価を隠す）
@@ -5926,7 +5945,9 @@ function renderRenewalGraph() {
   // 期間ごとに集計
   let labels = [], dataMap = {};
   if (_renewalGraphPeriod === 'daily') {
-    labels = Object.keys(byDate).sort();
+    // 選択中の月だけに絞る（数百日が出ないように）
+    const selMonth = document.getElementById('renewalGraphDayMonth')?.value || '';
+    labels = Object.keys(byDate).filter(d => !selMonth || d.startsWith(selMonth)).sort();
     labels.forEach(d => { dataMap[d] = byDate[d]; });
   } else {
     const monthly = {};
@@ -8781,6 +8802,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         <button id="renewalGraphPeriodMonth" onclick="_setRenewalGraphPeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
         <button id="renewalGraphPeriodDaily" onclick="_setRenewalGraphPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
       </div>
+      <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
       <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
         <option value="all">全体(全項目)</option>
         <option value="roas">ROAS</option>
