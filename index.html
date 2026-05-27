@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.489</span>
+    <span class="build-date">v1.490</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5867,18 +5867,11 @@ function _syncRenewalDayMonth(keepSelection) {
   else if (months.length) sel.value = months[0];
 }
 
-// 期間に応じてセレクトの選択肢を出し分け（日別では売上総額・平均単価を隠す）
+// 指標セレクトの選択肢を全表示（月別・日別とも全項目使える）
 function _syncRenewalMetricOptions() {
   const sel = document.getElementById('renewalGraphMetric');
   if (!sel) return;
-  const hidden = _renewalGraphPeriod === 'daily' ? ['totsales','cpc'] : [];
-  Array.from(sel.options).forEach(opt => {
-    const hide = hidden.includes(opt.value);
-    opt.hidden = hide;
-    opt.disabled = hide;
-  });
-  // 選択中の指標が隠れる場合は全体に戻す
-  if (hidden.includes(sel.value)) sel.value = 'all';
+  Array.from(sel.options).forEach(opt => { opt.hidden = false; opt.disabled = false; });
 }
 
 // 各指標の定義（CTR/平均単価含む）。値配列を返すヘルパ付き
@@ -5892,11 +5885,9 @@ const _RENEWAL_METRICS = {
 };
 
 // 現在の期間で表示する指標キー配列を返す。
-// 日別は総売上データが無いため、売上総額・平均単価を除外する。
+// 表示する指標キー（月別・日別とも全項目。売上系はsalesRows日次データから算出）
 function _renewalMetricKeys() {
-  const all = ['roas','cvr','ctr','totsales','orders','cpc'];
-  if (_renewalGraphPeriod === 'daily') return all.filter(k => k !== 'totsales' && k !== 'cpc');
-  return all;
+  return ['roas','cvr','ctr','totsales','orders','cpc'];
 }
 
 // 指定指標の値配列を返す（labels: 集計済みキー配列）
@@ -5914,12 +5905,22 @@ function _renewalMetricValues(metric, labels, dataMap, code) {
       }
     });
   }
-  // 売上総額・平均単価は「総売上(RPP+SEO、Item_SalesList由来)」を使う。月別のみ。
+  // 売上総額・平均単価は「総売上(RPP+SEO、Item_SalesList由来)」を使う。
+  // 日別はsalesRowsの日次データ、月別は月集計から。
   if (metric === 'totsales') {
+    if (_renewalGraphPeriod === 'daily') {
+      return labels.map(l => getItemDaySales(code, l).sales || 0);
+    }
     return labels.map(l => getItemMonthAgg(code, l).totSales || 0);
   }
   if (metric === 'cpc') {
-    // 平均単価 = 総売上 ÷ 総売上件数（CSVの売上・売上件数から算出）
+    // 平均単価 = 総売上 ÷ 総売上件数（売上・売上件数から算出）
+    if (_renewalGraphPeriod === 'daily') {
+      return labels.map(l => {
+        const d = getItemDaySales(code, l);
+        return d.orders > 0 ? Math.round(d.sales / d.orders) : 0;
+      });
+    }
     return labels.map(l => {
       const a = getItemMonthAgg(code, l);
       return a.totOrders > 0 ? Math.round(a.totSales / a.totOrders) : 0;
@@ -7667,18 +7668,41 @@ function getDatesForMonth(ym) {
 // ══════════════════════════════════════════
 let _monthAggCache = {}; // { ym: { [code]: {totSales, rppSales, kwSpend, kwSales} } }
 let _monthAggSig = '';   // salesRows/itemDailyDataの変化検出用シグネチャ
+let _dailySalesCache = null; // { [code]: { [date]: {sales, orders, units} } }
 
 // キャッシュ全消去（データ更新時に呼ぶ）
 function invalidateMonthAgg() {
   _monthAggCache = {};
+  _dailySalesCache = null;
   for (const k in _datesForMonthCache) delete _datesForMonthCache[k];
+}
+
+// salesRowsから日別売上を商品コード別に集計（1回構築してキャッシュ）
+function _getDailySales() {
+  if (_dailySalesCache) return _dailySalesCache;
+  const c = {};
+  for (let i = 0; i < salesRows.length; i++) {
+    const r = salesRows[i];
+    if (!c[r.itemCode]) c[r.itemCode] = {};
+    const d = c[r.itemCode][r.date] || (c[r.itemCode][r.date] = { sales:0, orders:0, units:0 });
+    d.sales  += (r.sales  || 0);
+    d.orders += (r.orders || 0);
+    d.units  += (r.units  || 0);
+  }
+  _dailySalesCache = c;
+  return c;
+}
+// 商品×日付の総売上情報を取得
+function getItemDaySales(code, date) {
+  const c = _getDailySales()[code];
+  return (c && c[date]) || { sales:0, orders:0, units:0 };
 }
 
 // 指定月の集計を返す（無ければ1パスで構築）。ymは 'YYYY-MM' 形式
 function getMonthAgg(ym) {
   // データが差し替わっていたら自動で全消去（無効化呼び忘れの保険）
   const sig = salesRows.length + '|' + Object.keys(itemDailyData).length;
-  if (_monthAggSig !== sig) { _monthAggCache = {}; _monthAggSig = sig; }
+  if (_monthAggSig !== sig) { _monthAggCache = {}; _dailySalesCache = null; _monthAggSig = sig; }
   if (_monthAggCache[ym]) return _monthAggCache[ym];
   const agg = {};
   const ymCompact = ym.replace('-', ''); // salesRowsのymは 'YYYYMM' 形式
@@ -8870,7 +8894,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         <option value="orders">個数(売上件数)</option>
         <option value="cpc">平均単価</option>
       </select>
-      <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較 ／ 売上総額・平均単価は月別のみ（売上÷売上件数）</span>
+      <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較 ／ 平均単価 = 売上 ÷ 売上件数</span>
     </div>
     <div style="padding:8px 24px 20px">
       <div style="position:relative;height:360px">
