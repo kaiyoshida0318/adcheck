@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.477</span>
+    <span class="build-date">v1.479</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -842,6 +842,7 @@ header + * { margin-top: 4px; }
       <div class="table-card">
         <div class="table-toolbar" style="flex-wrap:wrap;gap:6px">
           <div id="monthlyItemYmBtns" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center"></div>
+          <input type="text" id="monthlyItemSearch" placeholder="商品名・商品管理番号・商品番号で絞り込む..." oninput="renderMonthlyItem()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:280px;outline:none">
           <div class="toolbar-right"></div>
         </div>
         <div id="monthly-item-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
@@ -4085,8 +4086,9 @@ function renderMonthlyItem() {
     productRows.push({ code, name, itemNum, imgSrc, monthStats });
   });
   productRows.sort((a,b)=>b.monthStats.reduce((s,m)=>s+m.spend,0)-a.monthStats.reduce((s,m)=>s+m.spend,0));
-  // 表示は上位5件まで（パフォーマンス対策）
-  const displayRows = productRows.slice(0, 5);
+  // 通常は上位5件（パフォーマンス対策）、絞り込み時は上位30件まで表示
+  const limit = q ? 30 : 5;
+  const displayRows = productRows.slice(0, limit);
 
   if (displayRows.length===0) {
     wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
@@ -4094,9 +4096,9 @@ function renderMonthlyItem() {
   }
 
   const totalCount = productRows.length;
-  const countNote = totalCount > 5
-    ? `<div style="padding:6px 12px;font-size:11px;color:var(--text3);background:var(--surface2);border-bottom:1px solid var(--border)">${totalCount}件中 上位5件を表示。商品名・管理番号で絞り込むと特定商品を表示できます。</div>`
-    : '';
+  const countNote = totalCount > limit
+    ? `<div style="padding:6px 12px;font-size:11px;color:var(--text3);background:var(--surface2);border-bottom:1px solid var(--border)">${totalCount}件中 上位${limit}件を表示。${q?'検索語を絞るとさらに特定できます。':'商品名・管理番号で絞り込むと特定商品を表示できます。'}</div>`
+    : (q ? `<div style="padding:6px 12px;font-size:11px;color:var(--text3);background:var(--surface2);border-bottom:1px solid var(--border)">${totalCount}件 該当</div>` : '');
 
   // パーセンタイルベースのrank5（全商品×月の値を集めてランク付け）
   const _rank5mi = (val, allVals, higherIsBetter) => {
@@ -5828,6 +5830,10 @@ function renderRenewalGraph() {
       });
     });
     labels = Object.keys(monthly).sort();
+    // 当月（まだ締まっていない月）は数値が不完全なので月別表示から除外
+    const _now = new Date();
+    const _curYm = _now.getFullYear() + '-' + String(_now.getMonth()+1).padStart(2,'0');
+    labels = labels.filter(m => m < _curYm);
     labels.forEach(m => { dataMap[m] = monthly[m]; });
   }
 
