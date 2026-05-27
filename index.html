@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.473</span>
+    <span class="build-date">v1.474</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -525,7 +525,7 @@ header + * { margin-top: 4px; }
 </nav>
 <nav class="tab-sub-row tab-sub-row-2">
   <span class="tab-row-label" style="color:#00897B">【リニューアル】</span>
-  <button class="tab-btn" id="tab-btn-renewal-todo" onclick="switchTab('renewal-todo')">選択前<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-todo"></span></button>
+  <button class="tab-btn" id="tab-btn-renewal-todo" onclick="switchTab('renewal-todo')">全体<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-todo"></span></button>
   <button class="tab-btn" id="tab-btn-renewal-done" onclick="switchTab('renewal-done')">実施済<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-done"></span></button>
   <span class="tab-row-label" id="label-taiou" style="color:#7B3FA0">【対応検討】</span>
   <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近4ヶ月</button>
@@ -868,12 +868,37 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-ss-sep"></div>
   <div class="tab-panel" id="tab-ss-dec"></div>
 
-  <!-- リニューアルタブ(中身は後で実装) -->
+  <!-- リニューアル：全体（変更記録一覧） -->
   <div class="tab-panel" id="tab-renewal-todo">
-    <div class="tab-coming-soon"><div class="icon">🔧</div><h3>リニューアル — 選択前</h3><p>この機能は後ほど実装予定です。</p></div>
+    <div style="padding:12px 16px">
+      <div class="table-card">
+        <div id="renewal-todo-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
+          <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
+            <input type="text" id="renewalTodoSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalTodo()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+            <div class="toolbar-right"></div>
+          </div>
+          <div id="renewal-todo-inner">
+            <div class="tab-coming-soon"><div class="icon">🔧</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+  <!-- リニューアル：実施済（変更記録あり商品） -->
   <div class="tab-panel" id="tab-renewal-done">
-    <div class="tab-coming-soon"><div class="icon">✅</div><h3>リニューアル — 実施済</h3><p>この機能は後ほど実装予定です。</p></div>
+    <div style="padding:12px 16px">
+      <div class="table-card">
+        <div id="renewal-done-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
+          <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
+            <input type="text" id="renewalDoneSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalDone()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+            <div class="toolbar-right"></div>
+          </div>
+          <div id="renewal-done-inner">
+            <div class="tab-coming-soon"><div class="icon">✅</div><div style="font-size:13px;color:var(--text3)">変更記録のある商品がここに表示されます</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 <!-- カレンダー設定ページ -->
@@ -5569,6 +5594,341 @@ function renderGraph() {
 }
 let _memoEditCode = null;
 
+// ══════════════════════════════════════════
+// ── リニューアル（全体 / 実施済） ──
+// ══════════════════════════════════════════
+
+// 変更記録が1件以上あるか（__global__は除外）
+function _hasChangeLog(code) {
+  if (code === '__global__') return false;
+  const logs = productCache[code]?.changeLog || [];
+  return logs.some(l => l && (l.date || l.note));
+}
+
+// 共通：商品一覧の行HTML（変更記録列付き）。modeで done(実施済) は行クリックでモーダル
+function _renewalRowHtml(code, mode) {
+  const cached = productCache[code] || {};
+  const name = cached.manualName || cached.name || code;
+  const num  = cached.itemNumber || '—';
+  const imgSrc = cached.manualImg || cached.img || null;
+  const logs = (cached.changeLog || []).filter(l => l && (l.date || l.note));
+  const logCount = logs.length;
+  // 変更記録プレビュー（最新3件）
+  const logPreview = logs.slice(-3).reverse().map(l =>
+    `<div style="font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:var(--accent);font-family:'DM Mono',monospace">${l.date||'—'}</span> ${l.note||''}</div>`
+  ).join('') || '<span style="color:var(--text3);font-size:11px">記録なし</span>';
+
+  const imgEl = imgSrc
+    ? `<img loading="lazy" src="${imgSrc}" style="width:32px;height:32px;border-radius:6px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">`
+    : `<div style="width:32px;height:32px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0"></div>`;
+
+  // done(実施済)なら行クリックでグラフモーダル、todo(全体)なら変更記録ボタンで編集
+  const rowClick = mode === 'done' ? `onclick="openRenewalGraph('${code}')" style="cursor:pointer"` : '';
+  const colW = '90px 76px 40px minmax(0,1fr) minmax(0,1.4fr) 120px';
+  const actionCell = mode === 'done'
+    ? `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);cursor:pointer;font-weight:600;white-space:nowrap">📝 編集 (${logCount})</button></div>`
+    : `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid ${logCount>0?'var(--green)':'var(--accent)'};background:var(--surface2);color:${logCount>0?'var(--green)':'var(--accent)'};cursor:pointer;font-weight:600;white-space:nowrap">📝 ${logCount>0?'記録 ('+logCount+')':'記録する'}</button></div>`;
+
+  return `<div class="item-row">
+    <div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:50px;background:var(--surface)" ${rowClick}>
+      <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${num}</div>
+      <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${code}</div>
+      <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
+      <div style="padding:6px 8px;display:flex;align-items:center;overflow:hidden"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${name}">${name}</span></div>
+      <div style="padding:6px 10px;overflow:hidden;border-left:1px solid var(--border)">${logPreview}</div>
+      ${actionCell}
+    </div>
+  </div>`;
+}
+
+function _renewalHeaderHtml() {
+  const colW = '90px 76px 40px minmax(0,1fr) minmax(0,1.4fr) 120px';
+  return `<div class="col-header" style="grid-template-columns:${colW}">
+    <div class="ch">商品番号</div>
+    <div class="ch">商品管理番号</div>
+    <div class="ch" style="text-align:center">画像</div>
+    <div class="ch">商品</div>
+    <div class="ch" style="border-left:1px solid var(--border)">変更記録</div>
+    <div class="ch" style="text-align:center">操作</div>
+  </div>`;
+}
+
+// 【リニューアル：全体】現役商品を一覧表示。変更記録ボタンを各行に
+function renderRenewalTodo() {
+  const inner = document.getElementById('renewal-todo-inner');
+  if (!inner) return;
+  const q = (document.getElementById('renewalTodoSearch')?.value || '').toLowerCase().trim();
+  let codes = Object.keys(DB).filter(code => !productCache[code]?.retired);
+  if (q) {
+    codes = codes.filter(code => {
+      const c = productCache[code] || {};
+      return code.toLowerCase().includes(q)
+        || (c.itemNumber||'').toLowerCase().includes(q)
+        || (c.manualName||c.name||'').toLowerCase().includes(q);
+    });
+  }
+  // 商品番号順
+  codes.sort((a,b) => {
+    const an = productCache[a]?.itemNumber || a;
+    const bn = productCache[b]?.itemNumber || b;
+    return an.localeCompare(bn, 'ja', { numeric: true });
+  });
+  if (codes.length === 0) {
+    inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
+    return;
+  }
+  inner.innerHTML = _renewalHeaderHtml() + codes.map(c => _renewalRowHtml(c, 'todo')).join('');
+}
+
+// 【リニューアル：実施済】変更記録が1件以上ある商品だけ。行クリックでグラフモーダル
+function renderRenewalDone() {
+  const inner = document.getElementById('renewal-done-inner');
+  if (!inner) return;
+  const q = (document.getElementById('renewalDoneSearch')?.value || '').toLowerCase().trim();
+  let codes = Object.keys(productCache).filter(code => _hasChangeLog(code) && !productCache[code]?.retired);
+  if (q) {
+    codes = codes.filter(code => {
+      const c = productCache[code] || {};
+      return code.toLowerCase().includes(q)
+        || (c.itemNumber||'').toLowerCase().includes(q)
+        || (c.manualName||c.name||'').toLowerCase().includes(q);
+    });
+  }
+  // 最新の変更記録日が新しい順
+  codes.sort((a,b) => {
+    const la = (productCache[a].changeLog||[]).map(l=>l.date).filter(Boolean).sort().pop() || '';
+    const lb = (productCache[b].changeLog||[]).map(l=>l.date).filter(Boolean).sort().pop() || '';
+    return lb.localeCompare(la);
+  });
+  if (codes.length === 0) {
+    inner.innerHTML = '<div class="tab-coming-soon"><div class="icon">✅</div><div style="font-size:13px;color:var(--text3)">変更記録のある商品がここに表示されます。<br>「全体」タブで変更記録を追加すると、ここに移動します。</div></div>';
+    return;
+  }
+  inner.innerHTML = _renewalHeaderHtml() + codes.map(c => _renewalRowHtml(c, 'done')).join('');
+}
+
+// 件数バッジ更新（タブの横）
+function _updateRenewalCounts() {
+  const all  = Object.keys(DB).filter(code => !productCache[code]?.retired).length;
+  const done = Object.keys(productCache).filter(code => _hasChangeLog(code) && !productCache[code]?.retired).length;
+  const e1 = document.getElementById('cnt-renewal-todo');
+  const e2 = document.getElementById('cnt-renewal-done');
+  if (e1) e1.textContent = all  > 0 ? `(${all})`  : '';
+  if (e2) e2.textContent = done > 0 ? `(${done})` : '';
+}
+
+// ══════════════════════════════════════════
+// ── 実施済 グラフモーダル ──
+// ══════════════════════════════════════════
+let _renewalGraphCode = null;
+let _renewalGraphPeriod = 'monthly';
+let _renewalChartInstance = null;
+
+function openRenewalGraph(code) {
+  _renewalGraphCode = code;
+  _renewalGraphPeriod = 'monthly';
+  const cached = productCache[code] || {};
+  const name = cached.manualName || cached.name || code;
+  const num  = cached.itemNumber || code;
+  const imgSrc = cached.manualImg || cached.img || null;
+  document.getElementById('renewalGraphName').textContent = name;
+  document.getElementById('renewalGraphSub').textContent = `${num}　|　${code}`;
+  document.getElementById('renewalGraphImg').innerHTML = imgSrc
+    ? `<img loading="lazy" src="${imgSrc}" style="width:40px;height:40px;border-radius:7px;object-fit:cover;border:1px solid var(--border)">`
+    : '';
+  // 期間ボタンを月別にリセット
+  _setRenewalGraphPeriodBtnUI('monthly');
+  document.getElementById('renewalGraphModal').style.display = 'flex';
+  renderRenewalGraph();
+}
+
+function closeRenewalGraph() {
+  document.getElementById('renewalGraphModal').style.display = 'none';
+  if (_renewalChartInstance) { _renewalChartInstance.destroy(); _renewalChartInstance = null; }
+  _renewalGraphCode = null;
+}
+
+function _setRenewalGraphPeriodBtnUI(period) {
+  const mBtn = document.getElementById('renewalGraphPeriodMonth');
+  const dBtn = document.getElementById('renewalGraphPeriodDaily');
+  [['monthly', mBtn], ['daily', dBtn]].forEach(([p, btn]) => {
+    if (!btn) return;
+    const active = p === period;
+    btn.style.background = active ? '#f97316' : 'var(--surface2)';
+    btn.style.color = active ? '#fff' : 'var(--text)';
+    btn.style.borderColor = active ? '#f97316' : 'var(--border)';
+  });
+}
+
+function _setRenewalGraphPeriod(period) {
+  _renewalGraphPeriod = period;
+  _setRenewalGraphPeriodBtnUI(period);
+  renderRenewalGraph();
+}
+
+function renderRenewalGraph() {
+  const canvas = document.getElementById('renewalGraphCanvas');
+  const empty  = document.getElementById('renewalGraphEmpty');
+  if (!canvas || !_renewalGraphCode) return;
+  const code = _renewalGraphCode;
+  const byDate = itemDailyData[code] || {};
+  const metric = document.getElementById('renewalGraphMetric')?.value || 'roas';
+
+  // 期間ごとに集計
+  let labels = [], dataMap = {};
+  if (_renewalGraphPeriod === 'daily') {
+    labels = Object.keys(byDate).sort();
+    labels.forEach(d => { dataMap[d] = byDate[d]; });
+  } else {
+    const monthly = {};
+    Object.entries(byDate).forEach(([d, v]) => {
+      const ym = d.slice(0,7); // YYYY-MM
+      if (!monthly[ym]) monthly[ym] = { spend:0, sales:0, orders:0, cl:0, spendKw:0, salesKw:0, ordersKw:0, clKw:0 };
+      ['spend','sales','orders','cl','spendKw','salesKw','ordersKw','clKw'].forEach(k => {
+        monthly[ym][k] = (monthly[ym][k]||0) + (v[k]||0);
+      });
+    });
+    labels = Object.keys(monthly).sort();
+    labels.forEach(m => { dataMap[m] = monthly[m]; });
+  }
+
+  if (labels.length === 0) {
+    canvas.style.display = 'none'; empty.style.display = 'block'; return;
+  }
+  canvas.style.display = 'block'; empty.style.display = 'none';
+
+  const displayLabels = labels.map(l =>
+    _renewalGraphPeriod === 'daily' ? l.slice(5) : l.slice(0,4)+'/'+l.slice(5,7)
+  );
+
+  // 指標ごとにデータ配列を作る
+  const calc = {
+    roas:   (d) => d.spend > 0 ? Math.round((d.sales||0)/d.spend*10000)/100 : 0,
+    cvr:    (d) => d.cl   > 0 ? Math.round((d.orders||0)/d.cl*10000)/100 : 0,
+    orders: (d) => d.orders || 0,
+    ctr:    (d) => null, // CTRはitemDailyDataに無いので下で別計算
+  };
+  const metricMeta = {
+    roas:   { label: 'ROAS', color: '#fbbf24', fmt: v => v+'%' },
+    cvr:    { label: 'CVR',  color: '#a78bfa', fmt: v => v+'%' },
+    orders: { label: '個数(売上件数)', color: '#60a5fa', fmt: v => v+'件' },
+    ctr:    { label: 'CTR',  color: '#34d399', fmt: v => v+'%' },
+  };
+  const meta = metricMeta[metric] || metricMeta.roas;
+
+  let data;
+  if (metric === 'ctr') {
+    // CTR = クリック数 ÷ 表示回数。itemDailyDataに表示回数が無いため、DB側のctr(日次)から月平均を取る
+    data = labels.map(lbl => {
+      if (_renewalGraphPeriod === 'daily') {
+        const dd = DB[code]?.days?.[lbl];
+        return dd && dd.ctr ? Math.round(dd.ctr*100)/100 : 0;
+      } else {
+        // 月内の日次ctrを平均
+        const days = Object.keys(DB[code]?.days||{}).filter(d => d.startsWith(lbl));
+        const vals = days.map(d => DB[code].days[d].ctr).filter(v => v > 0);
+        return vals.length ? Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*100)/100 : 0;
+      }
+    });
+  } else {
+    data = labels.map(l => calc[metric](dataMap[l] || {}));
+  }
+
+  if (_renewalChartInstance) { _renewalChartInstance.destroy(); _renewalChartInstance = null; }
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? '#a0aec0' : '#718096';
+
+  _renewalChartInstance = new Chart(canvas, {
+    type: 'line',
+    data: { labels: displayLabels, datasets: [{
+      label: meta.label, data, borderColor: meta.color, backgroundColor: meta.color+'22',
+      borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, fill: false,
+    }]},
+    options: {
+      animation: false, responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top', labels: { color: textColor, font: { size: 12 }, usePointStyle: true } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${meta.fmt(ctx.raw)}` } }
+      },
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 }, callback: v => meta.fmt(v) } }
+      }
+    }
+  });
+
+  // 変更記録の起点を縦線で描画（_renewalGraphPeriodに合わせてラベル形式を合わせる）
+  _drawRenewalChangeLines(_renewalChartInstance, labels, code);
+}
+
+// 実施済モーダル用：変更記録の縦線（日別=YYYY-MM-DDマッチ、月別=YYYY-MMマッチ）
+function _drawRenewalChangeLines(chart, fullLabels, code) {
+  const logs = (productCache[code]?.changeLog || []).filter(l => l.date && l.note);
+  chart._rnLogs = logs;
+  chart._rnFullLabels = fullLabels; // 元のYYYY-MM(-DD)形式
+  chart._rnPeriod = _renewalGraphPeriod;
+  if (!chart._rnHooked) {
+    chart._rnHooked = true;
+    const origDraw = chart.draw.bind(chart);
+    chart.draw = function() { origDraw(); _renderRenewalChangeOverlay(this); };
+  }
+  chart.update('none');
+}
+
+function _renderRenewalChangeOverlay(chart) {
+  const logs = chart._rnLogs || [];
+  const fullLabels = chart._rnFullLabels || [];
+  if (!logs.length || !fullLabels.length) return;
+  const ctx = chart.ctx;
+  const xAxis = chart.scales?.x;
+  const yKeys = Object.keys(chart.scales || {}).filter(k => k !== 'x');
+  const yScale = yKeys.length ? chart.scales[yKeys[0]] : null;
+  if (!xAxis || !yScale) return;
+
+  logs.forEach((log, li) => {
+    // 変更日を期間に合わせて該当インデックスに変換
+    let idx;
+    if (chart._rnPeriod === 'daily') {
+      idx = fullLabels.indexOf(log.date); // YYYY-MM-DD
+    } else {
+      const ym = log.date.slice(0,7); // YYYY-MM
+      idx = fullLabels.indexOf(ym);
+    }
+    if (idx < 0) return;
+    const x = xAxis.getPixelForValue(idx);
+    const top = yScale.top, bottom = yScale.bottom;
+    const note = log.note;
+
+    ctx.save();
+    // 縦線
+    ctx.beginPath();
+    ctx.moveTo(x, top); ctx.lineTo(x, bottom);
+    ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 3]); ctx.globalAlpha = 0.85; ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    // バッジ
+    const fontSize = 11, pad = 5;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    const noteText = note.length > 14 ? note.slice(0, 14) + '…' : note;
+    const textW = ctx.measureText(noteText).width;
+    const bw = textW + pad*2, bh = fontSize + pad*2;
+    const bx = x - bw/2;
+    const by = top + (li % 2 === 0 ? 4 : bh + 12);
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(noteText, x, by + bh/2);
+    ctx.beginPath();
+    ctx.moveTo(x-5, by+bh); ctx.lineTo(x+5, by+bh); ctx.lineTo(x, by+bh+5);
+    ctx.closePath(); ctx.fillStyle = '#f97316'; ctx.fill();
+    ctx.restore();
+  });
+}
+
+
 // ── KW vol順モーダル ──
 let _kwVolCode = null;
 
@@ -6496,6 +6856,8 @@ function switchTab(tab) {
   if (tab === 'monthly-item') renderMonthlyItem();
   if (tab === 'retired') renderRetired();
   if (tab === 'roas-trend') renderRoasTrend();
+  if (tab === 'renewal-todo') renderRenewalTodo();
+  if (tab === 'renewal-done') renderRenewalDone();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'formula') { _initFormulaMonthSel(); renderFormulaBrowser(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
@@ -7186,6 +7548,10 @@ function saveChangeLog() {
   saveToGitHub();
   closeChangeLog();
   renderTable(); // ボタンの件数表示を更新
+  // リニューアルタブが開いていれば再描画（変更記録の有無で実施済へ移動）
+  if (typeof _updateRenewalCounts === 'function') _updateRenewalCounts();
+  if (_currentTab === 'renewal-todo') renderRenewalTodo();
+  if (_currentTab === 'renewal-done') renderRenewalDone();
 }
 
 function toggleSummaryBar(innerId, btnId) {
@@ -7322,6 +7688,7 @@ function renderAll() {
   renderSummary(ym);
   renderTable();
   _updateStatusCounts();
+  if (typeof _updateRenewalCounts === 'function') _updateRenewalCounts();
 }
 
 function renderSummary(ym) {
@@ -8101,6 +8468,41 @@ window.addEventListener('DOMContentLoaded', async () => {
     <button onclick="closeKwVolModal()" style="position:absolute;top:10px;right:14px;border:none;background:rgba(0,0,0,0.12);cursor:pointer;font-size:16px;color:#333;line-height:1;padding:4px 9px;border-radius:50%;z-index:3">✕</button>
     <div id="kwVolModalBody" style="padding:16px;overflow-x:auto"></div>
     <div id="kwVolModalTitle" style="display:none"></div>
+  </div>
+</div>
+
+<!-- リニューアル実施済 グラフモーダル -->
+<div id="renewalGraphModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:var(--surface);border-radius:12px;width:94vw;max-width:1100px;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3);position:relative;margin:auto">
+    <div style="padding:16px 24px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+        <div id="renewalGraphImg" style="flex-shrink:0"></div>
+        <div style="overflow:hidden">
+          <div id="renewalGraphName" style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          <div id="renewalGraphSub" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace"></div>
+        </div>
+      </div>
+      <button onclick="closeRenewalGraph()" style="border:none;background:rgba(0,0,0,0.08);cursor:pointer;font-size:16px;color:#333;line-height:1;padding:6px 11px;border-radius:50%;flex-shrink:0">✕</button>
+    </div>
+    <div style="padding:14px 24px 8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="display:flex;gap:4px">
+        <button id="renewalGraphPeriodMonth" onclick="_setRenewalGraphPeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
+        <button id="renewalGraphPeriodDaily" onclick="_setRenewalGraphPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
+      </div>
+      <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
+        <option value="roas">ROAS</option>
+        <option value="cvr">CVR</option>
+        <option value="orders">個数(売上件数)</option>
+        <option value="ctr">CTR</option>
+      </select>
+      <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点</span>
+    </div>
+    <div style="padding:8px 24px 20px">
+      <div style="position:relative;height:360px">
+        <canvas id="renewalGraphCanvas"></canvas>
+      </div>
+      <div id="renewalGraphEmpty" style="display:none;text-align:center;padding:50px;color:var(--text3);font-size:13px">この商品のデータがありません。</div>
+    </div>
   </div>
 </div>
 
