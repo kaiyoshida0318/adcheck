@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.474</span>
+    <span class="build-date">v1.475</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5738,6 +5738,9 @@ function openRenewalGraph(code) {
     : '';
   // 期間ボタンを月別にリセット
   _setRenewalGraphPeriodBtnUI('monthly');
+  // 指標を「全体」にリセット
+  const ms = document.getElementById('renewalGraphMetric');
+  if (ms) ms.value = 'all';
   document.getElementById('renewalGraphModal').style.display = 'flex';
   renderRenewalGraph();
 }
@@ -5766,13 +5769,47 @@ function _setRenewalGraphPeriod(period) {
   renderRenewalGraph();
 }
 
+// 各指標の定義（CTR/平均単価含む）。値配列を返すヘルパ付き
+const _RENEWAL_METRICS = {
+  roas:   { label: 'ROAS',         color: '#fbbf24', unit: '%', fmt: v => v + '%' },
+  cvr:    { label: 'CVR',          color: '#a78bfa', unit: '%', fmt: v => v + '%' },
+  orders: { label: '個数(売上件数)', color: '#60a5fa', unit: '件', fmt: v => v + '件' },
+  ctr:    { label: 'CTR',          color: '#34d399', unit: '%', fmt: v => v + '%' },
+  cpc:    { label: '平均単価',      color: '#f97316', unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },
+};
+
+// 指定指標の値配列を返す（labels: 集計済みキー配列）
+function _renewalMetricValues(metric, labels, dataMap, code) {
+  if (metric === 'ctr') {
+    // CTRはitemDailyDataに無いのでDBの日次ctrから（月別は平均）
+    return labels.map(lbl => {
+      if (_renewalGraphPeriod === 'daily') {
+        const dd = DB[code]?.days?.[lbl];
+        return dd && dd.ctr ? Math.round(dd.ctr * 100) / 100 : 0;
+      } else {
+        const days = Object.keys(DB[code]?.days || {}).filter(d => d.startsWith(lbl));
+        const vals = days.map(d => DB[code].days[d].ctr).filter(v => v > 0);
+        return vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length * 100) / 100 : 0;
+      }
+    });
+  }
+  const calc = {
+    roas:   d => d.spend > 0 ? Math.round((d.sales || 0) / d.spend * 10000) / 100 : 0,
+    cvr:    d => d.cl    > 0 ? Math.round((d.orders || 0) / d.cl   * 10000) / 100 : 0,
+    orders: d => d.orders || 0,
+    cpc:    d => d.cl    > 0 ? Math.round((d.spend || 0) / d.cl) : 0, // 平均単価 = 実績額÷クリック
+  };
+  const fn = calc[metric] || calc.roas;
+  return labels.map(l => fn(dataMap[l] || {}));
+}
+
 function renderRenewalGraph() {
   const canvas = document.getElementById('renewalGraphCanvas');
   const empty  = document.getElementById('renewalGraphEmpty');
   if (!canvas || !_renewalGraphCode) return;
   const code = _renewalGraphCode;
   const byDate = itemDailyData[code] || {};
-  const metric = document.getElementById('renewalGraphMetric')?.value || 'roas';
+  const metric = document.getElementById('renewalGraphMetric')?.value || 'all';
 
   // 期間ごとに集計
   let labels = [], dataMap = {};
@@ -5801,61 +5838,64 @@ function renderRenewalGraph() {
     _renewalGraphPeriod === 'daily' ? l.slice(5) : l.slice(0,4)+'/'+l.slice(5,7)
   );
 
-  // 指標ごとにデータ配列を作る
-  const calc = {
-    roas:   (d) => d.spend > 0 ? Math.round((d.sales||0)/d.spend*10000)/100 : 0,
-    cvr:    (d) => d.cl   > 0 ? Math.round((d.orders||0)/d.cl*10000)/100 : 0,
-    orders: (d) => d.orders || 0,
-    ctr:    (d) => null, // CTRはitemDailyDataに無いので下で別計算
-  };
-  const metricMeta = {
-    roas:   { label: 'ROAS', color: '#fbbf24', fmt: v => v+'%' },
-    cvr:    { label: 'CVR',  color: '#a78bfa', fmt: v => v+'%' },
-    orders: { label: '個数(売上件数)', color: '#60a5fa', fmt: v => v+'件' },
-    ctr:    { label: 'CTR',  color: '#34d399', fmt: v => v+'%' },
-  };
-  const meta = metricMeta[metric] || metricMeta.roas;
-
-  let data;
-  if (metric === 'ctr') {
-    // CTR = クリック数 ÷ 表示回数。itemDailyDataに表示回数が無いため、DB側のctr(日次)から月平均を取る
-    data = labels.map(lbl => {
-      if (_renewalGraphPeriod === 'daily') {
-        const dd = DB[code]?.days?.[lbl];
-        return dd && dd.ctr ? Math.round(dd.ctr*100)/100 : 0;
-      } else {
-        // 月内の日次ctrを平均
-        const days = Object.keys(DB[code]?.days||{}).filter(d => d.startsWith(lbl));
-        const vals = days.map(d => DB[code].days[d].ctr).filter(v => v > 0);
-        return vals.length ? Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*100)/100 : 0;
-      }
-    });
-  } else {
-    data = labels.map(l => calc[metric](dataMap[l] || {}));
-  }
-
   if (_renewalChartInstance) { _renewalChartInstance.destroy(); _renewalChartInstance = null; }
 
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const textColor = isDark ? '#a0aec0' : '#718096';
 
+  let datasets, yCallback, tooltipLabel;
+
+  if (metric === 'all') {
+    // 全指標を0〜100%に正規化して重ねる（形状比較用）。実値はrawValueに保持しツールチップで表示
+    const keys = ['roas','cvr','orders','ctr','cpc'];
+    datasets = keys.map(k => {
+      const meta = _RENEWAL_METRICS[k];
+      const raw = _renewalMetricValues(k, labels, dataMap, code);
+      const max = Math.max(...raw, 0);
+      const norm = raw.map(v => max > 0 ? Math.round(v / max * 1000) / 10 : 0);
+      return {
+        label: meta.label,
+        data: norm,
+        _raw: raw,
+        _fmt: meta.fmt,
+        borderColor: meta.color,
+        backgroundColor: meta.color + '22',
+        borderWidth: 2.2, pointRadius: 3, pointHoverRadius: 5, tension: 0.3, fill: false,
+      };
+    });
+    yCallback = v => v + '%';
+    tooltipLabel = ctx => {
+      const ds = ctx.dataset;
+      const realRaw = ds._raw ? ds._raw[ctx.dataIndex] : ctx.raw;
+      const realStr = ds._fmt ? ds._fmt(realRaw) : realRaw;
+      return ` ${ds.label}: ${realStr}（${ctx.raw}%）`;
+    };
+  } else {
+    const meta = _RENEWAL_METRICS[metric] || _RENEWAL_METRICS.roas;
+    const data = _renewalMetricValues(metric, labels, dataMap, code);
+    datasets = [{
+      label: meta.label, data, _fmt: meta.fmt,
+      borderColor: meta.color, backgroundColor: meta.color + '22',
+      borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, fill: false,
+    }];
+    yCallback = v => meta.fmt(v);
+    tooltipLabel = ctx => ` ${ctx.dataset.label}: ${meta.fmt(ctx.raw)}`;
+  }
+
   _renewalChartInstance = new Chart(canvas, {
     type: 'line',
-    data: { labels: displayLabels, datasets: [{
-      label: meta.label, data, borderColor: meta.color, backgroundColor: meta.color+'22',
-      borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, fill: false,
-    }]},
+    data: { labels: displayLabels, datasets },
     options: {
       animation: false, responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: true, position: 'top', labels: { color: textColor, font: { size: 12 }, usePointStyle: true } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${meta.fmt(ctx.raw)}` } }
+        tooltip: { callbacks: { label: tooltipLabel } }
       },
       scales: {
         x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
-        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 }, callback: v => meta.fmt(v) } }
+        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 }, callback: yCallback }, beginAtZero: true }
       }
     }
   });
@@ -8490,12 +8530,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         <button id="renewalGraphPeriodDaily" onclick="_setRenewalGraphPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
       </div>
       <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
+        <option value="all">全体(全項目)</option>
         <option value="roas">ROAS</option>
         <option value="cvr">CVR</option>
         <option value="orders">個数(売上件数)</option>
         <option value="ctr">CTR</option>
+        <option value="cpc">平均単価</option>
       </select>
-      <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点</span>
+      <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較</span>
     </div>
     <div style="padding:8px 24px 20px">
       <div style="position:relative;height:360px">
