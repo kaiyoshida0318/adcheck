@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.495</span>
+    <span class="build-date">v1.497</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -617,6 +617,8 @@ header + * { margin-top: 4px; }
         <div id="roas-trend-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
         <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
           <input type="text" id="roasTrendSearch" placeholder="商品管理番号・商品番号・商品名で検索..." oninput="renderRoasTrend()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+          <button onclick="_clearRoasMemoCheckDate()" title="「チェック日」から始まる記入欄だけを空白にします" style="margin-left:10px;font-size:11px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">🗑 メモ欄-チェック日削除</button>
+          <button onclick="_clearRoasMemoAll()" title="全ての記入欄を空白にします" style="margin-left:6px;font-size:11px;padding:6px 12px;border-radius:6px;border:1px solid var(--danger);background:var(--surface2);color:var(--danger);cursor:pointer;white-space:nowrap">🗑 メモ欄-全削除</button>
           <div class="toolbar-right"></div>
         </div>
         <div id="roas-trend-inner">
@@ -6487,10 +6489,12 @@ function renderRoasTrend() {
     const avgColor = prev5avg === null ? 'var(--text3)' : prev5avg >= 0 ? 'var(--green)' : 'var(--danger)';
     const avgCell = `<div class="cell r mono" style="background:#e8f5e9;font-size:11px;font-weight:600;color:${avgColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${avgTxt}</div>`;
 
-    // 記入欄
+    // 記入欄（行に直接入力。フォーカスアウトで保存。初回入力時に当日日付を先頭付与）
     const memo = cached.memo || '';
-    const memoPreview = memo.split('\n').slice(0, 8).join('\n');
-    const memoCell = `<div class="cell" style="padding:4px 8px;cursor:pointer;font-size:10px;color:var(--text2);white-space:pre-wrap;line-height:1.4;overflow:hidden" onclick="event.stopPropagation();openMemoModal('${p.id}')" title="クリックで編集">${memoPreview || '<span style="color:var(--text3)">クリックで記入</span>'}</div>`;
+    const memoCell = `<div class="cell" style="padding:2px 4px;overflow:hidden" onclick="event.stopPropagation()">
+      <textarea data-code="${p.id}" onblur="_saveRoasMemo('${p.id}', this.value)" placeholder="クリックで記入"
+        style="width:100%;min-height:54px;resize:vertical;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text2);font-size:10px;line-height:1.4;padding:4px 6px;font-family:inherit;outline:none;box-sizing:border-box">${memo.replace(/</g,'&lt;')}</textarea>
+    </div>`;
 
     // 区分
     const statusVal = cached.status || 'unset';
@@ -6543,6 +6547,56 @@ function _setRoasTrendStatus(code, val) {
   if (!productCache[code]) productCache[code] = {};
   productCache[code].status = val;
   saveProductCache(); saveToGitHub();
+}
+
+// 「チェック日」で始まる記入欄だけを空白にする（日付始まりはそのまま）
+function _clearRoasMemoCheckDate() {
+  const targets = Object.keys(productCache).filter(code => {
+    const m = (productCache[code]?.memo || '');
+    return m.startsWith('チェック日');
+  });
+  if (targets.length === 0) { alert('「チェック日」から始まる記入欄はありません。'); return; }
+  if (!confirm(`「チェック日」から始まる記入欄 ${targets.length}件 を空白にします。よろしいですか?`)) return;
+  targets.forEach(code => { productCache[code].memo = ''; });
+  saveProductCache(); saveToGitHub();
+  if (_currentTab === 'roas-trend') renderRoasTrend();
+}
+
+// 全ての記入欄を空白にする
+function _clearRoasMemoAll() {
+  const targets = Object.keys(productCache).filter(code => (productCache[code]?.memo || '') !== '');
+  if (targets.length === 0) { alert('記入欄に内容のある商品はありません。'); return; }
+  if (!confirm(`⚠️ 全ての記入欄 ${targets.length}件 を空白にします。\nこの操作は元に戻せません。よろしいですか?`)) return;
+  targets.forEach(code => { productCache[code].memo = ''; });
+  saveProductCache(); saveToGitHub();
+  if (_currentTab === 'roas-trend') renderRoasTrend();
+}
+
+// 粗広告利益タブのメモ保存（直接入力）。初回入力時に当日日付を先頭付与
+function _saveRoasMemo(code, value) {
+  if (!productCache[code]) productCache[code] = {};
+  const prev = productCache[code].memo || '';
+  const input = (value || '').trim();
+  // 当日日付 YY-MMDD
+  const d = new Date();
+  const ymd = String(d.getFullYear()).slice(2) + '-' + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+
+  let next;
+  if (prev === '') {
+    // 初回入力：日付プレフィックスを付ける
+    if (input === '') next = 'チェック日-' + ymd;        // 空欄 → チェック日-YY-MMDD
+    else              next = ymd + '-' + input;          // 記入あり → YY-MMDD-記入内容
+  } else {
+    // 既存メモがある：入力値をそのまま（二重で日付を付けない）
+    next = input;
+  }
+
+  if (next === prev) return; // 変化なしなら保存しない
+  productCache[code].memo = next;
+  saveProductCache(); saveToGitHub();
+  // textareaの表示を保存後の値に更新（日付付与を反映）
+  const ta = document.querySelector(`#tab-roas-trend textarea[data-code="${code}"]`);
+  if (ta && ta.value !== next) ta.value = next;
 }
 
 // SS設定の遅延保存タイマー(連打対応)
