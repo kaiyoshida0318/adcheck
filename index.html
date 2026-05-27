@@ -456,7 +456,7 @@ header + * { margin-top: 4px; }
 
 <header>
   <div class="header-left">
-    <div class="logo" onclick="switchTab('products');window.scrollTo({top:0,behavior:'smooth'})" style="cursor:pointer" title="トップへ戻る">
+    <div class="logo" onclick="_onLogoClick(event)" style="cursor:pointer" title="クリック:トップへ / Ctrl+クリック:新しいタブで開く">
       <svg width="160" height="36" viewBox="0 0 160 36" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="160" height="36" rx="8" fill="#BF0000"/>
         <!-- 棒グラフ4本（低→高） -->
@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.486</span>
+    <span class="build-date">v1.487</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7075,6 +7075,17 @@ function renderMonthlySubTab(tab) {
     // リセットすると、次に「💾 反映」ボタン押下時にSSフィルター再描画されず通常タブ再描画になる
   }
 }
+function _onLogoClick(e) {
+  // Ctrl(Win) / Cmd(Mac) + クリック で新しいタブで「商品-基本データ」を開く
+  if (e && (e.ctrlKey || e.metaKey)) {
+    const url = location.origin + location.pathname + '?tab=products';
+    window.open(url, '_blank');
+    return;
+  }
+  switchTab('products');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function switchTab(tab) {
   _currentTab = tab;
   // 全ボタンのactive解除
@@ -8319,16 +8330,16 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}${_subTabFilter?' with-status':''}" onclick="toggleRow('${p.id}','${ym}')">
-      <div style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center" title="${cached?.itemNumber||''}">
+      <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${cached?.itemNumber||''}（ダブルクリックでコピー）">
         ${cached?.itemNumber || '—'}
       </div>
-      <div style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center" title="${p.id}">
+      <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${p.id}（ダブルクリックでコピー）">
         ${p.id}
       </div>
       <div class="cell-name" style="display:flex;align-items:center;gap:6px">
         ${imgEl}
         <div style="overflow:hidden">
-          <div class="prod-name" id="prod-name-${p.id}" title="${name}" data-raw="${cached ? '' : p.id}">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}${isManual?'<span class="manual-badge" title="手動編集済み"></span>':''}</div>
+          <div class="prod-name" id="prod-name-${p.id}" ondblclick="_selectAndCopyText(this,event)" data-full="${(name||'').replace(/"/g,'&quot;')}" title="${name}（ダブルクリックでコピー）" data-raw="${cached ? '' : p.id}" style="user-select:text;cursor:text">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}${isManual?'<span class="manual-badge" title="手動編集済み"></span>':''}</div>
           <button class="edit-btn" onclick="event.stopPropagation();openEditModal('${p.id}')" title="編集">✏</button>
         </div>
       </div>
@@ -8535,6 +8546,66 @@ function renderCalendar(p, ym) {
   </div>`;
 }
 
+// data-full 属性のフルテキストをコピー（商品名が省略表示されている場合用）
+function _selectAndCopyText(el, e) {
+  if (e) { e.stopPropagation(); }
+  try {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    const text = (el.getAttribute('data-full') || el.textContent || '').trim();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => _flashCopied(el)).catch(() => { try { document.execCommand('copy'); _flashCopied(el); } catch(_){} });
+    } else {
+      try { document.execCommand('copy'); _flashCopied(el); } catch(_){}
+    }
+  } catch(err) { console.warn('_selectAndCopyText error:', err); }
+}
+
+// ダブルクリックで要素テキストを範囲選択し、クリップボードにコピー
+function _selectAndCopy(el, e) {
+  if (e) { e.stopPropagation(); } // 行の展開トグルを暴発させない
+  try {
+    // テキストを範囲選択（視覚的に選択状態にする）
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    // クリップボードへコピー
+    const text = (el.textContent || '').trim();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => _flashCopied(el)).catch(() => { try { document.execCommand('copy'); _flashCopied(el); } catch(_){} });
+    } else {
+      try { document.execCommand('copy'); _flashCopied(el); } catch(_){}
+    }
+  } catch(err) { console.warn('_selectAndCopy error:', err); }
+}
+// コピー成功時に一瞬ハイライト＋「コピー!」表示
+function _flashCopied(el) {
+  const old = el.style.background;
+  el.style.transition = 'background 0.15s';
+  el.style.background = 'rgba(34,197,94,0.25)';
+  // ツールチップ的に小さなトースト
+  let tip = document.getElementById('_copyTip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = '_copyTip';
+    tip.style.cssText = 'position:fixed;z-index:99999;background:#16a34a;color:#fff;font-size:11px;padding:3px 10px;border-radius:5px;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);transition:opacity 0.3s';
+    document.body.appendChild(tip);
+  }
+  const r = el.getBoundingClientRect();
+  tip.textContent = '✓ コピーしました';
+  tip.style.left = (r.left + r.width/2 - 50) + 'px';
+  tip.style.top  = (r.top - 26) + 'px';
+  tip.style.opacity = '1';
+  clearTimeout(tip._t);
+  tip._t = setTimeout(() => { tip.style.opacity = '0'; }, 1100);
+  setTimeout(() => { el.style.background = old; }, 400);
+}
+
 function toggleRow(id, ym) {
   console.log('[ADcheck] toggleRow called: id=', id, 'ym=', ym, 'currentExpanded=', expandedSet.has(id));
   if (expandedSet.has(id)) expandedSet.delete(id);
@@ -8706,7 +8777,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     } catch(e) { console.warn('[ADcheck] 日付範囲初期化エラー:', e); }
     afterLoad(true);
-    switchTab('monthly');
+    // URLに ?tab=xxx があればそのタブを開く（ロゴCtrl+クリックの新タブ用）
+    const _initTab = new URLSearchParams(location.search).get('tab');
+    switchTab(_initTab || 'monthly');
   }
 });
 </script>
