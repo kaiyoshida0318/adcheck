@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.491</span>
+    <span class="build-date">v1.492</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5970,6 +5970,7 @@ function renderRenewalGraph() {
   if (labels.length === 0) {
     canvas.style.display = 'none'; empty.style.display = 'block';
     const t = document.getElementById('renewalGraphTable'); if (t) t.innerHTML = '';
+    if (typeof _renderRenewalToggles === 'function') _renderRenewalToggles(false);
     return;
   }
   canvas.style.display = 'block'; empty.style.display = 'none';
@@ -6031,16 +6032,8 @@ function renderRenewalGraph() {
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
-          display: true, position: 'top',
-          labels: { color: textColor, font: { size: 12 }, usePointStyle: true },
-          onClick: (e, legendItem, legend) => {
-            // クリックした系列だけ表示/非表示をトグル（個別ON/OFF）
-            const ci = legend.chart;
-            const idx = legendItem.datasetIndex;
-            const vis = ci.isDatasetVisible(idx);
-            ci.setDatasetVisibility(idx, !vis);
-            ci.update();
-          }
+          display: metric !== 'all', position: 'top',
+          labels: { color: textColor, font: { size: 12 }, usePointStyle: true }
         },
         tooltip: { callbacks: { label: tooltipLabel } }
       },
@@ -6056,6 +6049,43 @@ function renderRenewalGraph() {
 
   // グラフ下のデータ表も描画（同じlabels/dataMapを使う）
   _renderRenewalTable(labels, dataMap, code);
+
+  // 「全体」モードのときだけ指標ON/OFFボタンを表示
+  _renderRenewalToggles(metric === 'all');
+}
+
+// 指標ON/OFFボタンを描画（全体モード専用）
+function _renderRenewalToggles(show) {
+  const wrap = document.getElementById('renewalMetricToggles');
+  if (!wrap) return;
+  const chart = _renewalChartInstance;
+  if (!show || !chart) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  wrap.style.display = 'flex';
+  wrap.innerHTML = chart.data.datasets.map((ds, i) => {
+    const on = chart.isDatasetVisible(i);
+    const color = ds.borderColor || '#888';
+    return `<button onclick="_toggleRenewalMetric(${i})" style="
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:12px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;
+      border:2px solid ${color};
+      background:${on ? color : 'transparent'};
+      color:${on ? '#fff' : 'var(--text3)'};
+      opacity:${on ? '1' : '0.55'};
+      text-decoration:${on ? 'none' : 'line-through'};
+      transition:all 0.12s">
+      <span style="width:9px;height:9px;border-radius:50%;background:${on ? '#fff' : color};display:inline-block"></span>
+      ${ds.label}
+    </button>`;
+  }).join('');
+}
+
+// ボタンで指標をON/OFF
+function _toggleRenewalMetric(i) {
+  const chart = _renewalChartInstance;
+  if (!chart) return;
+  chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
+  chart.update();
+  _renderRenewalToggles(true); // ボタンの見た目を更新
 }
 
 // 実施済モーダル：グラフ下のデータ表（5指標）。変更記録のある行はハイライト＋内容列
@@ -8907,6 +8937,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       </select>
       <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較 ／ 平均単価 = 売上 ÷ 売上件数</span>
     </div>
+    <!-- 全体モード時の指標ON/OFFボタン -->
+    <div id="renewalMetricToggles" style="display:none;padding:0 24px 6px;flex-wrap:wrap;gap:6px"></div>
     <div style="padding:8px 24px 20px">
       <div style="position:relative;height:360px">
         <canvas id="renewalGraphCanvas"></canvas>
