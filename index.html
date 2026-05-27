@@ -334,13 +334,13 @@ header + * { margin-top: 4px; }
 
 /* ── Tab Navigation ── */
 /* ズーム時に sticky の top がCSS指定値ピッタリ計算されないため、JSから --z-tab*-top をズーム倍率補正で注入する */
-.tab-bar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; top: var(--z-tab1-top, 52px); z-index: 199; min-height: 46px; box-sizing: border-box; }
-.tab-btn { font-size: 13px; font-weight: 500; padding: 12px 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
-.tab-sub-row-3 .tab-btn { padding: 8px 10px; font-size: 12px; }
+.tab-bar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; top: var(--z-tab1-top, 52px); z-index: 199; min-height: 34px; box-sizing: border-box; }
+.tab-btn { font-size: 13px; font-weight: 500; padding: 7px 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+.tab-sub-row-3 .tab-btn { padding: 6px 10px; font-size: 12px; }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
 /* sub-tab rows (2nd and 3rd row) — 不透明白で塗り、隙間ができないよう疑似要素でも上下を白に */
-.tab-sub-row { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; z-index: 198; min-height: 46px; box-sizing: border-box; }
+.tab-sub-row { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: flex-end; gap: 2px; position: sticky; z-index: 198; min-height: 34px; box-sizing: border-box; }
 .tab-sub-row-2 { top: var(--z-tab2-top, calc(52px + 46px)); background: #ffffff; z-index: 198; }
 .tab-sub-row-3 { top: var(--z-tab3-top, calc(52px + 46px + 46px)); background: #ffffff; z-index: 198; }
 /* stickyナビの隙間に色付きヘッダーが覗くのを防ぐため、各ナビの上端外に白いカバーを配置 */
@@ -368,7 +368,7 @@ header + * { margin-top: 4px; }
 .tab-bar, .tab-sub-row { /* ::before/::after の絶対配置基準 */
   /* position: sticky は既に指定済み。sticky自体がpositioning contextを作る */
 }
-.tab-row-label { font-size: 12px; font-weight: 700; padding: 0 10px 14px 4px; white-space: nowrap; align-self: flex-end; letter-spacing: 0.3px; }
+.tab-row-label { font-size: 12px; font-weight: 700; padding: 0 10px 9px 4px; white-space: nowrap; align-self: flex-end; letter-spacing: 0.3px; }
 .tab-row-label.red { color: var(--red); }
 .tab-row-label.blue { color: #1565C0; }
 .s-g1   { color: #1565C0; }   /* 健常◎        青 */
@@ -1982,11 +1982,10 @@ function _alignTaiouLabel() {
   try {
     const zentai = document.getElementById('label-zentai');
     const taiou  = document.getElementById('label-taiou');
-    const nav2   = document.querySelector('.tab-sub-row-2');
-    if (!zentai || !taiou || !nav2) return;
+    if (!zentai || !taiou) return;
     // いったんマージンをリセットして自然位置を測る
     taiou.style.marginLeft = '0px';
-    const navLeft   = nav2.getBoundingClientRect().left;
+    // リセットを反映させてから測定
     const zentaiLeft = zentai.getBoundingClientRect().left;
     const taiouLeft  = taiou.getBoundingClientRect().left;
     // 【全体】の左端に揃うのに必要な追加マージン(ズームの影響を打ち消すため倍率補正)
@@ -7980,6 +7979,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   // フォント読込後にレイアウトが変わるので再調整
   requestAnimationFrame(() => requestAnimationFrame(_alignTaiouLabel));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(_alignTaiouLabel);
+  setTimeout(_alignTaiouLabel, 300);
+  setTimeout(_alignTaiouLabel, 800);
   document.getElementById('settingsModal').addEventListener('click', e => {
     if (e.target === document.getElementById('settingsModal')) closeSettings();
   });
