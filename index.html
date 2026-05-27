@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.493</span>
+    <span class="build-date">v1.494</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5926,10 +5926,17 @@ function _renewalMetricValues(metric, labels, dataMap, code) {
       return a.totOrders > 0 ? Math.round(a.totSales / a.totOrders) : 0;
     });
   }
+  if (metric === 'orders') {
+    // 個数(売上件数) = 総売上の件数（CSVと同じ。SEO含む）
+    if (_renewalGraphPeriod === 'daily') {
+      return labels.map(l => getItemDaySales(code, l).orders || 0);
+    }
+    return labels.map(l => getItemMonthAgg(code, l).totOrders || 0);
+  }
   const calc = {
     roas:   d => d.spend > 0 ? Math.round((d.sales || 0) / d.spend * 10000) / 100 : 0,
+    // CVR = 広告経由のコンバージョン ÷ クリック（RPP経由のordersを使う。SEOは含めない）
     cvr:    d => d.cl    > 0 ? Math.round((d.orders || 0) / d.cl   * 10000) / 100 : 0,
-    orders: d => d.orders || 0,
   };
   const fn = calc[metric] || calc.roas;
   return labels.map(l => fn(dataMap[l] || {}));
