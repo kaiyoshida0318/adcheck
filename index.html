@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.482</span>
+    <span class="build-date">v1.483</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2443,6 +2443,7 @@ async function readFiles(files) {
     const csvTexts = [];
     let hasMonthlyFile = false;
     let hasSalesUpdate = false;
+    const _salesListResults = []; // { name, date, hasOrdersCol, rowCount, error }
 
     // フォルダZIP（中にrpp_等のファイルが入っているZIP）を展開してフラット化
     const expandedFiles = [];
@@ -2484,7 +2485,8 @@ async function readFiles(files) {
       if (type === 'saleslist') {
         const text = await _readNichText(f);
         if (text) {
-          _parseSalesRows(text);
+          const res = _parseSalesRows(text) || {};
+          _salesListResults.push({ name: f.name, ...res });
           hasSalesUpdate = true;
         }
         hasMonthlyFile = true;
@@ -2582,6 +2584,39 @@ async function readFiles(files) {
           text = new TextDecoder('shift-jis').decode(bytes);
         }
         csvTexts.push({ text, name: f.name });
+      }
+    }
+
+    // SalesListの取り込み結果をチェックして警告（重複日付 / 件数列なし）
+    if (_salesListResults.length > 0) {
+      const warnLines = [];
+      // 1) 同じ日付が複数あるか（誤って2個DLした疑い）
+      const byDate = {};
+      _salesListResults.forEach(r => {
+        if (!r.date) return;
+        (byDate[r.date] || (byDate[r.date] = [])).push(r);
+      });
+      Object.keys(byDate).sort().forEach(date => {
+        const list = byDate[date];
+        if (list.length > 1) {
+          warnLines.push(`■ ${date} のSalesListが${list.length}個あります（同じ日を重複DLした可能性）:`);
+          list.forEach(r => warnLines.push(`　・${r.name}${r.hasOrdersCol === false ? '（件数列なし）' : ''}`));
+        }
+      });
+      // 2) 件数列が無いファイル（古い形式で平均単価が出せない）
+      const noOrders = _salesListResults.filter(r => r.hasOrdersCol === false);
+      if (noOrders.length > 0) {
+        warnLines.push(`■ 「売上件数」列が無いSalesList（平均単価が0になります）:`);
+        noOrders.forEach(r => warnLines.push(`　・${r.name}${r.date ? '（'+r.date+'）' : ''}`));
+      }
+      // 3) 解析できなかったファイル
+      const errored = _salesListResults.filter(r => r.error);
+      if (errored.length > 0) {
+        warnLines.push(`■ 読み込めなかったSalesList:`);
+        errored.forEach(r => warnLines.push(`　・${r.name}（${r.error}）`));
+      }
+      if (warnLines.length > 0) {
+        alert('⚠️ SalesListの取り込みで以下を検出しました:\n\n' + warnLines.join('\n') + '\n\n※ 件数のある正しいファイルだけ残し、不要なファイルを除いて取り込み直すと平均単価が正しく出ます。');
       }
     }
 
@@ -3684,6 +3719,7 @@ function _parseCsvLine(line) {
 function _parseSalesRows(text) {
   // Item_SalesList CSVから日別総売上を取得
   // ファイル名から日付を特定できないのでヘッダー行の「表示期間」から取得
+  // 戻り値: { date, hasOrdersCol, rowCount } / 解析できない場合 { error }
   const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
   // 「表示期間」行から日付を取得
   let dateStr = '';
@@ -3691,22 +3727,31 @@ function _parseSalesRows(text) {
     const m = lines[i].match(/(\d{4})年(\d{2})月(\d{2})日/);
     if (m) { dateStr = `${m[1]}-${m[2]}-${m[3]}`; break; }
   }
-  if (!dateStr) return;
+  if (!dateStr) return { error: '日付(表示期間)が見つかりません' };
   // ヘッダー行を探す
   let hi = -1;
   for (let i = 0; i < Math.min(10, lines.length); i++) {
     if (lines[i].includes('商品管理番号') && lines[i].includes('売上')) { hi = i; break; }
   }
-  if (hi < 0) return;
+  if (hi < 0) return { error: 'ヘッダー行が見つかりません', date: dateStr };
   const headers = _parseCsvLine(lines[hi]).map(h=>h.trim());
   const col = h => headers.indexOf(h);
   const codeIdx  = col('商品管理番号');
   const salesIdx = col('売上');
   const ordersIdx = col('売上件数'); // 受注件数
   const unitsIdx  = col('売上個数'); // 販売個数
-  if (codeIdx < 0 || salesIdx < 0) return;
+  if (codeIdx < 0 || salesIdx < 0) return { error: '必要な列(商品管理番号/売上)がありません', date: dateStr };
+  const hasOrdersCol = ordersIdx >= 0;
+  // 件数列が無いファイルで、同日に既に件数ありデータがある場合は上書きしない（データ破壊防止）
+  if (!hasOrdersCol) {
+    const existing = salesRows.filter(r => r.date === dateStr);
+    if (existing.length > 0 && existing.some(r => r.orders > 0)) {
+      return { date: dateStr, hasOrdersCol: false, rowCount: 0, skipped: true };
+    }
+  }
   // 既存の同日データを削除して再取得
   salesRows = salesRows.filter(r => r.date !== dateStr);
+  let rowCount = 0;
   for (let i = hi+1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
     const vals = _parseCsvLine(lines[i]);
@@ -3718,8 +3763,10 @@ function _parseSalesRows(text) {
     if (!code || sales === 0) continue;
     const ym = dateStr.slice(0,7).replace('-','');
     salesRows.push({ date: dateStr, ym, itemCode: code, sales, orders, units });
+    rowCount++;
   }
   invalidateMonthAgg();
+  return { date: dateStr, hasOrdersCol, rowCount };
 }
 
 function _getSalesSummary(ymOrDate, isMonthly) {
