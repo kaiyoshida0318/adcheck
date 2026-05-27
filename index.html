@@ -491,7 +491,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.480</span>
+    <span class="build-date">v1.482</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2859,7 +2859,7 @@ function monthlyClear() {
 }
 // ── KW別データ ──
 var kwRows = []; // { code, kw, date, spend, sales, orders, cl, roas, ctr, cpc }
-var salesRows = []; // Item_SalesList 日別総売上
+var salesRows = []; // Item_SalesList 日別総売上 { date, ym, itemCode, sales, orders, units }
 
 function _parseKwRows(text) {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
@@ -3660,6 +3660,27 @@ function _parseRppRows(text) {
   return rows;
 }
 
+// CSV1行をクオート対応でパース（商品名内のカンマでズレないように）
+function _parseCsvLine(line) {
+  const out = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQ) {
+      if (ch === '"') {
+        if (line[i+1] === '"') { cur += '"'; i++; } // エスケープされた "
+        else inQ = false;
+      } else cur += ch;
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === ',') { out.push(cur); cur = ''; }
+      else cur += ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
 function _parseSalesRows(text) {
   // Item_SalesList CSVから日別総売上を取得
   // ファイル名から日付を特定できないのでヘッダー行の「表示期間」から取得
@@ -3677,21 +3698,26 @@ function _parseSalesRows(text) {
     if (lines[i].includes('商品管理番号') && lines[i].includes('売上')) { hi = i; break; }
   }
   if (hi < 0) return;
-  const headers = lines[hi].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  const headers = _parseCsvLine(lines[hi]).map(h=>h.trim());
   const col = h => headers.indexOf(h);
   const codeIdx  = col('商品管理番号');
   const salesIdx = col('売上');
+  const ordersIdx = col('売上件数'); // 受注件数
+  const unitsIdx  = col('売上個数'); // 販売個数
   if (codeIdx < 0 || salesIdx < 0) return;
   // 既存の同日データを削除して再取得
   salesRows = salesRows.filter(r => r.date !== dateStr);
   for (let i = hi+1; i < lines.length; i++) {
-    const vals = lines[i].split(',').map(v=>v.trim().replace(/^"|"$/g,''));
+    if (!lines[i].trim()) continue;
+    const vals = _parseCsvLine(lines[i]);
     if (vals.length <= Math.max(codeIdx, salesIdx)) continue;
-    const code  = vals[codeIdx];
+    const code  = (vals[codeIdx]||'').trim();
     const sales = parseFloat(vals[salesIdx]) || 0;
+    const orders = ordersIdx >= 0 ? (parseFloat(vals[ordersIdx]) || 0) : 0;
+    const units  = unitsIdx  >= 0 ? (parseFloat(vals[unitsIdx])  || 0) : 0;
     if (!code || sales === 0) continue;
     const ym = dateStr.slice(0,7).replace('-','');
-    salesRows.push({ date: dateStr, ym, itemCode: code, sales });
+    salesRows.push({ date: dateStr, ym, itemCode: code, sales, orders, units });
   }
   invalidateMonthAgg();
 }
@@ -5745,6 +5771,7 @@ function openRenewalGraph(code) {
   // 指標を「全体」にリセット
   const ms = document.getElementById('renewalGraphMetric');
   if (ms) ms.value = 'all';
+  _syncRenewalMetricOptions();
   document.getElementById('renewalGraphModal').style.display = 'flex';
   renderRenewalGraph();
 }
@@ -5770,7 +5797,22 @@ function _setRenewalGraphPeriodBtnUI(period) {
 function _setRenewalGraphPeriod(period) {
   _renewalGraphPeriod = period;
   _setRenewalGraphPeriodBtnUI(period);
+  _syncRenewalMetricOptions();
   renderRenewalGraph();
+}
+
+// 期間に応じてセレクトの選択肢を出し分け（日別では売上総額・平均単価を隠す）
+function _syncRenewalMetricOptions() {
+  const sel = document.getElementById('renewalGraphMetric');
+  if (!sel) return;
+  const hidden = _renewalGraphPeriod === 'daily' ? ['totsales','cpc'] : [];
+  Array.from(sel.options).forEach(opt => {
+    const hide = hidden.includes(opt.value);
+    opt.hidden = hide;
+    opt.disabled = hide;
+  });
+  // 選択中の指標が隠れる場合は全体に戻す
+  if (hidden.includes(sel.value)) sel.value = 'all';
 }
 
 // 各指標の定義（CTR/平均単価含む）。値配列を返すヘルパ付き
@@ -5782,6 +5824,14 @@ const _RENEWAL_METRICS = {
   orders:  { label: '個数(売上件数)', color: '#60a5fa', unit: '件', fmt: v => v + '件' },
   cpc:     { label: '平均単価',       color: '#f97316', unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },
 };
+
+// 現在の期間で表示する指標キー配列を返す。
+// 日別は総売上データが無いため、売上総額・平均単価を除外する。
+function _renewalMetricKeys() {
+  const all = ['roas','cvr','ctr','totsales','orders','cpc'];
+  if (_renewalGraphPeriod === 'daily') return all.filter(k => k !== 'totsales' && k !== 'cpc');
+  return all;
+}
 
 // 指定指標の値配列を返す（labels: 集計済みキー配列）
 function _renewalMetricValues(metric, labels, dataMap, code) {
@@ -5798,22 +5848,15 @@ function _renewalMetricValues(metric, labels, dataMap, code) {
       }
     });
   }
-  // 売上総額・平均単価は「総売上(RPP+SEO)」を使う。
-  // 総売上は月単位(salesRows)しか無いため、月別はtotSales、日別はRPP売上(sales)で代替。
-  const totSalesOf = (lbl, d) => {
-    if (_renewalGraphPeriod === 'daily') return d.sales || 0; // 日別はRPP売上で代替
-    return getItemMonthAgg(code, lbl).totSales || 0;
-  };
+  // 売上総額・平均単価は「総売上(RPP+SEO、Item_SalesList由来)」を使う。月別のみ。
   if (metric === 'totsales') {
-    return labels.map(l => totSalesOf(l, dataMap[l] || {}));
+    return labels.map(l => getItemMonthAgg(code, l).totSales || 0);
   }
   if (metric === 'cpc') {
-    // 平均単価 = 受注総額 ÷ 受注件数(orders)
+    // 平均単価 = 総売上 ÷ 総売上件数（CSVの売上・売上件数から算出）
     return labels.map(l => {
-      const d = dataMap[l] || {};
-      const tot = totSalesOf(l, d);
-      const ord = d.orders || 0;
-      return ord > 0 ? Math.round(tot / ord) : 0;
+      const a = getItemMonthAgg(code, l);
+      return a.totOrders > 0 ? Math.round(a.totSales / a.totOrders) : 0;
     });
   }
   const calc = {
@@ -5876,7 +5919,7 @@ function renderRenewalGraph() {
 
   if (metric === 'all') {
     // 全指標を0〜100%に正規化して重ねる（形状比較用）。実値はrawValueに保持しツールチップで表示
-    const keys = ['roas','cvr','ctr','totsales','orders','cpc'];
+    const keys = _renewalMetricKeys();
     datasets = keys.map(k => {
       const meta = _RENEWAL_METRICS[k];
       const raw = _renewalMetricValues(k, labels, dataMap, code);
@@ -5952,7 +5995,7 @@ function _renderRenewalTable(labels, dataMap, code) {
   });
 
   // 各指標の値配列
-  const metricKeys = ['roas','cvr','ctr','totsales','orders','cpc'];
+  const metricKeys = _renewalMetricKeys();
   const valuesByMetric = {};
   metricKeys.forEach(k => { valuesByMetric[k] = _renewalMetricValues(k, labels, dataMap, code); });
 
@@ -7535,7 +7578,7 @@ function getMonthAgg(ym) {
   if (_monthAggCache[ym]) return _monthAggCache[ym];
   const agg = {};
   const ymCompact = ym.replace('-', ''); // salesRowsのymは 'YYYYMM' 形式
-  const ensure = code => (agg[code] || (agg[code] = { totSales:0, rppSales:0, kwSpend:0, kwSales:0, spend:0, clicks:0, sales720:0 }));
+  const ensure = code => (agg[code] || (agg[code] = { totSales:0, totOrders:0, totUnits:0, rppSales:0, kwSpend:0, kwSales:0, spend:0, clicks:0, sales720:0 }));
 
   // 0) DB[code].days からその月の spend/clicks/sales720 を集計（getStats用）
   const monthDates = getDatesForMonth(ym);
@@ -7550,10 +7593,15 @@ function getMonthAgg(ym) {
     if (touched) { const a = ensure(code); a.spend = spend; a.clicks = clicks; a.sales720 = sales720; }
   }
 
-  // 1) salesRows を1回だけ走査して商品別の総売上を集計
+  // 1) salesRows を1回だけ走査して商品別の総売上・総件数・総個数を集計
   for (let i = 0; i < salesRows.length; i++) {
     const r = salesRows[i];
-    if (r.ym === ymCompact) ensure(r.itemCode).totSales += (r.sales || 0);
+    if (r.ym === ymCompact) {
+      const a = ensure(r.itemCode);
+      a.totSales  += (r.sales  || 0);
+      a.totOrders += (r.orders || 0);
+      a.totUnits  += (r.units  || 0);
+    }
   }
   // 2) itemDailyData を1回だけ走査して RPP売上 / KW実績 / KW売上 を集計
   for (const code in itemDailyData) {
@@ -7580,7 +7628,7 @@ function getMonthAgg(ym) {
 // 1商品分の月集計を取得（無ければゼロ値）
 function getItemMonthAgg(code, ym) {
   const a = getMonthAgg(ym)[code];
-  return a || { totSales:0, rppSales:0, kwSpend:0, kwSales:0, spend:0, clicks:0, sales720:0 };
+  return a || { totSales:0, totOrders:0, totUnits:0, rppSales:0, kwSpend:0, kwSales:0, spend:0, clicks:0, sales720:0 };
 }
 
 function getProducts() { return Object.values(DB); }
@@ -8670,7 +8718,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         <option value="orders">個数(売上件数)</option>
         <option value="cpc">平均単価</option>
       </select>
-      <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較 ／ 売上総額・平均単価は月別=総売上(RPP+SEO)、日別=RPP分のみ</span>
+      <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較 ／ 売上総額・平均単価は月別のみ（売上÷売上件数）</span>
     </div>
     <div style="padding:8px 24px 20px">
       <div style="position:relative;height:360px">
