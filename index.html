@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.502</span>
+    <span class="build-date">v1.503</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5786,7 +5786,17 @@ function _renewalRowHtml(code, mode) {
 
   // done(実施済)なら行クリックでグラフモーダル、todo(全体)なら変更記録ボタンで編集
   const rowClick = mode === 'done' ? `onclick="openRenewalGraph('${code}')" style="cursor:pointer"` : '';
-  const colW = '90px 76px 40px minmax(0,1fr) minmax(0,1.4fr) 120px';
+  const colW = mode === 'todo'
+    ? '90px 76px 40px minmax(0,1.2fr) 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px'
+    : '90px 76px 40px minmax(0,1fr) minmax(0,1.4fr) 120px';
+  let metricCells = '';
+  if (mode === 'todo') {
+    const mt = _renewalTodoMetrics(code, _renewalTodoMonth);
+    const dash = '<span style="color:var(--text3)">-</span>';
+    const fmt = v => (v === null || v === undefined) ? dash : (v + '%');
+    const cell = v => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap">${fmt(v)}</div>`;
+    metricCells = cell(mt.ctrAll) + cell(mt.ctrKw) + cell(mt.ctr20) + cell(mt.cvrAll) + cell(mt.cvrKw) + cell(mt.cvr20);
+  }
   const actionCell = mode === 'done'
     ? `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);cursor:pointer;font-weight:600;white-space:nowrap">📝 編集 (${logCount})</button></div>`
     : `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid ${logCount>0?'var(--green)':'var(--accent)'};background:var(--surface2);color:${logCount>0?'var(--green)':'var(--accent)'};cursor:pointer;font-weight:600;white-space:nowrap">📝 ${logCount>0?'記録 ('+logCount+')':'記録する'}</button></div>`;
@@ -5797,13 +5807,31 @@ function _renewalRowHtml(code, mode) {
       <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${code}</div>
       <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
       <div style="padding:6px 8px;display:flex;align-items:center;overflow:hidden"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${name}">${name}</span></div>
+      ${metricCells}
       <div style="padding:6px 10px;overflow:hidden;border-left:1px solid var(--border)">${logPreview}</div>
       ${actionCell}
     </div>
   </div>`;
 }
 
-function _renewalHeaderHtml() {
+function _renewalHeaderHtml(mode) {
+  if (mode === 'todo') {
+    const colW = '90px 76px 40px minmax(0,1.2fr) 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px';
+    return `<div class="col-header" style="grid-template-columns:${colW}">
+      <div class="ch">商品番号</div>
+      <div class="ch">商品管理番号</div>
+      <div class="ch" style="text-align:center">画像</div>
+      <div class="ch">商品</div>
+      <div class="ch" style="text-align:right">CTR全体</div>
+      <div class="ch" style="text-align:right">CTR-KW</div>
+      <div class="ch" style="text-align:right">CTR-20</div>
+      <div class="ch" style="text-align:right">CVR全体</div>
+      <div class="ch" style="text-align:right">CVR-KW</div>
+      <div class="ch" style="text-align:right">CVR-20</div>
+      <div class="ch" style="border-left:1px solid var(--border)">変更記録</div>
+      <div class="ch" style="text-align:center">操作</div>
+    </div>`;
+  }
   const colW = '90px 76px 40px minmax(0,1fr) minmax(0,1.4fr) 120px';
   return `<div class="col-header" style="grid-template-columns:${colW}">
     <div class="ch">商品番号</div>
@@ -5815,10 +5843,47 @@ function _renewalHeaderHtml() {
   </div>`;
 }
 
+// 実施前タブで選択中の月（YYYY-MM）。空なら最新月
+let _renewalTodoMonth = '';
+
+// 全商品のitemDailyDataに存在する月(YYYY-MM)を新しい順で返す
+function _renewalTodoMonths() {
+  const set = {};
+  Object.keys(itemDailyData).forEach(code => {
+    Object.keys(itemDailyData[code] || {}).forEach(d => {
+      const ym = (d || '').slice(0, 7);
+      if (ym) set[ym] = true;
+    });
+  });
+  return Object.keys(set).sort().reverse();
+}
+
+// 指定商品・指定月のCTR/CVRを 全体/KW/20 の6値で返す（%、無理なら null）
+function _renewalTodoMetrics(code, ym) {
+  const days = itemDailyData[code] || {};
+  let cl = 0, clKw = 0, orders = 0, ordersKw = 0, imp = 0, impKw = 0;
+  Object.keys(days).forEach(d => {
+    if (ym && !d.startsWith(ym)) return;
+    const x = days[d] || {};
+    cl += x.cl || 0; clKw += x.clKw || 0;
+    orders += x.orders || 0; ordersKw += x.ordersKw || 0;
+    imp += x.imp || 0; impKw += x.impKw || 0;
+  });
+  const cl20 = Math.max(0, cl - clKw);
+  const o20  = Math.max(0, orders - ordersKw);
+  const imp20 = Math.max(0, imp - impKw);
+  const pct = (n, d) => d > 0 ? Math.round(n / d * 10000) / 100 : null;
+  return {
+    ctrAll: pct(cl, imp),   ctrKw: pct(clKw, impKw),   ctr20: pct(cl20, imp20),
+    cvrAll: pct(orders, cl), cvrKw: pct(ordersKw, clKw), cvr20: pct(o20, cl20),
+  };
+}
+
 // 【リニューアル：全体】現役商品を一覧表示。変更記録ボタンを各行に
 function renderRenewalTodo() {
   const inner = document.getElementById('renewal-todo-inner');
   if (!inner) return;
+  _buildRenewalTodoMonthSelect();
   const q = (document.getElementById('renewalTodoSearch')?.value || '').toLowerCase().trim();
   let codes = Object.keys(DB).filter(code => !productCache[code]?.retired);
   if (q) {
@@ -5839,7 +5904,30 @@ function renderRenewalTodo() {
     inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
     return;
   }
-  inner.innerHTML = _renewalHeaderHtml() + codes.map(c => _renewalRowHtml(c, 'todo')).join('');
+  inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'todo')).join('');
+}
+
+// 実施前タブの月ドロップダウンを構築
+function _buildRenewalTodoMonthSelect() {
+  const wrap = document.querySelector('#tab-renewal-todo .toolbar-right');
+  if (!wrap) return;
+  const months = _renewalTodoMonths();
+  if (!_renewalTodoMonth || !months.includes(_renewalTodoMonth)) {
+    _renewalTodoMonth = months[0] || '';
+  }
+  const opts = months.map(m => {
+    const lbl = m.slice(0,4) + '/' + m.slice(5,7);
+    return `<option value="${m}"${m===_renewalTodoMonth?' selected':''}>${lbl}</option>`;
+  }).join('');
+  wrap.innerHTML = `<label style="font-size:11px;color:var(--text3);margin-right:6px">表示月</label>`
+    + `<select id="renewalTodoMonth" onchange="_onRenewalTodoMonthChange(this.value)" style="font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">`
+    + (opts || '<option value="">データなし</option>')
+    + `</select>`;
+}
+
+function _onRenewalTodoMonthChange(v) {
+  _renewalTodoMonth = v;
+  renderRenewalTodo();
 }
 
 // 【リニューアル：実施済】変更記録が1件以上ある商品だけ。行クリックでグラフモーダル
