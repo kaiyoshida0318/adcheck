@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.499</span>
+    <span class="build-date">v1.500</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2541,6 +2541,7 @@ async function readFiles(files) {
                   itemDailyData[code][dateInfo.start].salesKw = 0;
                   itemDailyData[code][dateInfo.start].ordersKw = 0;
                   itemDailyData[code][dateInfo.start].clKw = 0;
+                  itemDailyData[code][dateInfo.start].impKw = 0;
                 }
               });
             }
@@ -3251,24 +3252,28 @@ function _parseItemDaily(text, mode) {
     const sales  = parseFloat(vals[col('売上金額(合計720時間)')]) || 0;
     const orders = parseFloat(vals[col('売上件数(合計720時間)')]) || 0;
     const cl     = parseFloat(vals[col('クリック数(合計)')]) || 0;
+    const ctr    = parseFloat(vals[col('CTR(%)')]) || 0;
+    const imp    = (cl > 0 && ctr > 0) ? cl / (ctr / 100) : 0;
 
     if (!itemDailyData[itemCode]) itemDailyData[itemCode] = {};
     // item読み込み時はその日付の■データをリセット（古いkw=0データを上書き）
     if (mode === 'item') {
       if (!itemDailyData[itemCode][dateKey]) {
-        itemDailyData[itemCode][dateKey] = { spend:0, sales:0, orders:0, cl:0, spendKw:0, salesKw:0, ordersKw:0, clKw:0 };
+        itemDailyData[itemCode][dateKey] = { spend:0, sales:0, orders:0, cl:0, imp:0, spendKw:0, salesKw:0, ordersKw:0, clKw:0, impKw:0 };
       }
       const d = itemDailyData[itemCode][dateKey];
       d.spend  += spend;  d.sales  += sales;
       d.orders += orders; d.cl     += cl;
+      d.imp    += imp;
     } else if (mode === 'kw') {
       // kw読み込み時はKW項目のみリセットして上書き（複数回読み込んでも正確）
       if (!itemDailyData[itemCode][dateKey]) {
-        itemDailyData[itemCode][dateKey] = { spend:0, sales:0, orders:0, cl:0, spendKw:0, salesKw:0, ordersKw:0, clKw:0 };
+        itemDailyData[itemCode][dateKey] = { spend:0, sales:0, orders:0, cl:0, imp:0, spendKw:0, salesKw:0, ordersKw:0, clKw:0, impKw:0 };
       }
       const d = itemDailyData[itemCode][dateKey];
       d.spendKw  += spend;  d.salesKw  += sales;
       d.ordersKw += orders; d.clKw     += cl;
+      d.impKw    += imp;
     }
   }
 }
@@ -4819,8 +4824,8 @@ function renderItemGraph() {
     Object.entries(byDate).forEach(([d, v]) => {
       const ym = d.slice(0,7).replace('-','');
       if ((fromM && ym < fromM) || (toM && ym > toM)) return;
-      if (!monthly[ym]) monthly[ym] = {spend:0,sales:0,spendKw:0,salesKw:0,cl:0,clKw:0,orders:0,ordersKw:0};
-      ['spend','sales','spendKw','salesKw','cl','clKw','orders','ordersKw'].forEach(k => {
+      if (!monthly[ym]) monthly[ym] = {spend:0,sales:0,spendKw:0,salesKw:0,cl:0,clKw:0,orders:0,ordersKw:0,imp:0,impKw:0};
+      ['spend','sales','spendKw','salesKw','cl','clKw','orders','ordersKw','imp','impKw'].forEach(k => {
         monthly[ym][k] = (monthly[ym][k]||0) + (v[k]||0);
       });
     });
@@ -5774,9 +5779,10 @@ function _renewalRowHtml(code, mode) {
     `<div style="font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:var(--accent);font-family:'DM Mono',monospace">${l.date||'—'}</span> ${l.note||''}</div>`
   ).join('') || '<span style="color:var(--text3);font-size:11px">記録なし</span>';
 
+  const imgClick = mode === 'todo' ? `onclick="event.stopPropagation();openRenewalGraph('${code}')" style="cursor:pointer"` : '';
   const imgEl = imgSrc
-    ? `<img loading="lazy" src="${imgSrc}" style="width:32px;height:32px;border-radius:6px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">`
-    : `<div style="width:32px;height:32px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0"></div>`;
+    ? `<img loading="lazy" src="${imgSrc}" ${imgClick} style="width:32px;height:32px;border-radius:6px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;${mode==='todo'?'cursor:pointer':''}">`
+    : `<div ${imgClick} style="width:32px;height:32px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0"></div>`;
 
   // done(実施済)なら行クリックでグラフモーダル、todo(全体)なら変更記録ボタンで編集
   const rowClick = mode === 'done' ? `onclick="openRenewalGraph('${code}')" style="cursor:pointer"` : '';
@@ -5910,7 +5916,7 @@ function openRenewalGraph(code) {
   _setRenewalGraphPeriodBtnUI('monthly');
   // 指標を「全体」にリセット
   const ms = document.getElementById('renewalGraphMetric');
-  if (ms) ms.value = 'all';
+  if (ms) ms.value = 'roas';
   _syncRenewalMetricOptions();
   _syncRenewalDayMonth();
   document.getElementById('renewalGraphModal').style.display = 'flex';
@@ -6035,13 +6041,32 @@ function _renewalMetricValues(metric, labels, dataMap, code) {
   return labels.map(l => fn(dataMap[l] || {}));
 }
 
+function _renewalTripleValues(metric, labels, dataMap) {
+  const all = [], kw = [], p20 = [];
+  labels.forEach(l => {
+    const d = dataMap[l] || {};
+    const cl = d.cl || 0, clKw = d.clKw || 0, cl20 = Math.max(0, cl - clKw);
+    if (metric === 'cvr') {
+      const o = d.orders || 0, oKw = d.ordersKw || 0, o20 = Math.max(0, o - oKw);
+      all.push(cl   > 0 ? Math.round(o   / cl   * 10000) / 100 : 0);
+      kw .push(clKw > 0 ? Math.round(oKw / clKw * 10000) / 100 : 0);
+      p20.push(cl20 > 0 ? Math.round(o20 / cl20 * 10000) / 100 : 0);
+    } else {
+      const imp = d.imp || 0, impKw = d.impKw || 0, imp20 = Math.max(0, imp - impKw);
+      all.push(imp   > 0 ? Math.round(cl   / imp   * 10000) / 100 : 0);
+      kw .push(impKw > 0 ? Math.round(clKw / impKw * 10000) / 100 : 0);
+      p20.push(imp20 > 0 ? Math.round(cl20 / imp20 * 10000) / 100 : 0);
+    }
+  });
+  return { all, kw, p20 };
+}
 function renderRenewalGraph() {
   const canvas = document.getElementById('renewalGraphCanvas');
   const empty  = document.getElementById('renewalGraphEmpty');
   if (!canvas || !_renewalGraphCode) return;
   const code = _renewalGraphCode;
   const byDate = itemDailyData[code] || {};
-  const metric = document.getElementById('renewalGraphMetric')?.value || 'all';
+  const metric = document.getElementById('renewalGraphMetric')?.value || 'roas';
 
   // 期間ごとに集計
   let labels = [], dataMap = {};
@@ -6054,8 +6079,8 @@ function renderRenewalGraph() {
     const monthly = {};
     Object.entries(byDate).forEach(([d, v]) => {
       const ym = d.slice(0,7); // YYYY-MM
-      if (!monthly[ym]) monthly[ym] = { spend:0, sales:0, orders:0, cl:0, spendKw:0, salesKw:0, ordersKw:0, clKw:0 };
-      ['spend','sales','orders','cl','spendKw','salesKw','ordersKw','clKw'].forEach(k => {
+      if (!monthly[ym]) monthly[ym] = { spend:0, sales:0, orders:0, cl:0, imp:0, spendKw:0, salesKw:0, ordersKw:0, clKw:0, impKw:0 };
+      ['spend','sales','orders','cl','imp','spendKw','salesKw','ordersKw','clKw','impKw'].forEach(k => {
         monthly[ym][k] = (monthly[ym][k]||0) + (v[k]||0);
       });
     });
@@ -6112,6 +6137,23 @@ function renderRenewalGraph() {
       const realStr = ds._fmt ? ds._fmt(realRaw) : realRaw;
       return ` ${ds.label}: ${realStr}（${ctx.raw}%）`;
     };
+  } else if (metric === 'cvr' || metric === 'ctr') {
+    // CVR/CTR: overall / KW / 20yen(non-KW) = 3 lines
+    const triples = _renewalTripleValues(metric, labels, dataMap);
+    const defs = [
+      { key:'all', label:(metric==='cvr'?'CVR\u5168\u4f53':'CTR\u5168\u4f53'), color:(metric==='cvr'?'#a78bfa':'#34d399') },
+      { key:'kw',  label:(metric==='cvr'?'CVR(KW)':'CTR(KW)'),                 color:'#f59e0b' },
+      { key:'p20', label:(metric==='cvr'?'CVR(20\u5186)':'CTR(20\u5186)'),    color:'#38bdf8' },
+    ];
+    datasets = defs.map(def => ({
+      label: def.label,
+      data: triples[def.key],
+      _fmt: v => v + '%',
+      borderColor: def.color, backgroundColor: def.color + '22',
+      borderWidth: 2.3, pointRadius: 3, pointHoverRadius: 6, tension: 0.3, fill: false,
+    }));
+    yCallback = v => v + '%';
+    tooltipLabel = ctx => ` ${ctx.dataset.label}: ${ctx.raw}%`;
   } else {
     const meta = _RENEWAL_METRICS[metric] || _RENEWAL_METRICS.roas;
     const data = _renewalMetricValues(metric, labels, dataMap, code);
@@ -9103,7 +9145,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       </div>
       <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
       <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
-        <option value="all">全体(全項目)</option>
         <option value="roas">ROAS</option>
         <option value="cvr">CVR</option>
         <option value="ctr">CTR</option>
