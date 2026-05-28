@@ -217,17 +217,12 @@ header + * { margin-top: 4px; }
   overflow-y: auto;
   max-height: 75vh;
 }
-#monthly-table-wrap table thead tr,
-#daily-table-wrap table thead tr {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-}
 #monthly-table-wrap table thead th,
 #daily-table-wrap table thead th {
   position: sticky;
   top: 0;
-  z-index: 3;
+  z-index: 5;
+  background: var(--surface2);
 }
 
 /* ── Loading Lock Overlay ── */
@@ -491,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.497</span>
+    <span class="build-date">v1.498</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8464,6 +8459,21 @@ function renderPage() {
     })()
     : '<div class="empty">該当する商品がありません</div>';
   if (!_multiMonthMode) updateSortHeaders();
+  // ヘッダーと本体の列数を必ず一致させる（ズレ防止）
+  _syncColHeaderStatus();
+}
+
+// 表示中タブのcol-headerに、本体行と同じwith-status状態を反映して列ズレを防ぐ
+function _syncColHeaderStatus() {
+  try {
+    // 商品-基本データ／全-月別データのヘッダー（itemListと同じスクロール領域内）
+    const header = document.querySelector('#tab-products .col-header');
+    if (header) {
+      // 本体行がwith-status（区分・SS列あり）かどうかで判定
+      const useStatus = !!_subTabFilter;
+      header.classList.toggle('with-status', useStatus);
+    }
+  } catch(e) { console.warn('_syncColHeaderStatus error:', e); }
 }
 
 function _renderMultiMonthView() {
