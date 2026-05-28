@@ -520,8 +520,10 @@ header + * { margin-top: 4px; }
 </nav>
 <nav class="tab-sub-row tab-sub-row-2">
   <span class="tab-row-label" style="color:#00897B">【リニューアル】</span>
-  <button class="tab-btn" id="tab-btn-renewal-todo" onclick="switchTab('renewal-todo')">全体<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-todo"></span></button>
-  <button class="tab-btn" id="tab-btn-renewal-done" onclick="switchTab('renewal-done')">実施済<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-done"></span></button>
+  <button class="tab-btn" id="tab-btn-renewal-todo" onclick="switchTab('renewal-todo')">実施前<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-todo"></span></button>
+  <button class="tab-btn" id="tab-btn-renewal-done" onclick="switchTab('renewal-done')">実施済-全体<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-done"></span></button>
+  <button class="tab-btn" id="tab-btn-renewal-lp" onclick="switchTab('renewal-lp')">LP更新<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-lp"></span></button>
+  <button class="tab-btn" id="tab-btn-renewal-thumb" onclick="switchTab('renewal-thumb')">サムネ更新<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-thumb"></span></button>
   <span class="tab-row-label" id="label-taiou" style="color:#7B3FA0">【対応検討】</span>
   <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近4ヶ月</button>
 </nav>
@@ -894,6 +896,38 @@ header + * { margin-top: 4px; }
           </div>
           <div id="renewal-done-inner">
             <div class="tab-coming-soon"><div class="icon">✅</div><div style="font-size:13px;color:var(--text3)">変更記録のある商品がここに表示されます</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- リニューアル：LP更新 -->
+  <div class="tab-panel" id="tab-renewal-lp">
+    <div style="padding:12px 16px">
+      <div class="table-card">
+        <div id="renewal-lp-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
+          <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
+            <input type="text" id="renewalLpSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalLp()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+            <div class="toolbar-right"></div>
+          </div>
+          <div id="renewal-lp-inner">
+            <div class="tab-coming-soon"><div class="icon">📄</div><div style="font-size:13px;color:var(--text3)">LP更新タブ（表示条件は後ほど設定します）</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- リニューアル：サムネ更新 -->
+  <div class="tab-panel" id="tab-renewal-thumb">
+    <div style="padding:12px 16px">
+      <div class="table-card">
+        <div id="renewal-thumb-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
+          <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
+            <input type="text" id="renewalThumbSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalThumb()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+            <div class="toolbar-right"></div>
+          </div>
+          <div id="renewal-thumb-inner">
+            <div class="tab-coming-soon"><div class="icon">🖼</div><div style="font-size:13px;color:var(--text3)">サムネ更新タブ（表示条件は後ほど設定します）</div></div>
           </div>
         </div>
       </div>
@@ -5823,10 +5857,24 @@ function renderRenewalDone() {
     return lb.localeCompare(la);
   });
   if (codes.length === 0) {
-    inner.innerHTML = '<div class="tab-coming-soon"><div class="icon">✅</div><div style="font-size:13px;color:var(--text3)">変更記録のある商品がここに表示されます。<br>「全体」タブで変更記録を追加すると、ここに移動します。</div></div>';
+    inner.innerHTML = '<div class="tab-coming-soon"><div class="icon">✅</div><div style="font-size:13px;color:var(--text3)">変更記録のある商品がここに表示されます。<br>「実施前」タブで変更記録を追加すると、ここに移動します。</div></div>';
     return;
   }
   inner.innerHTML = _renewalHeaderHtml() + codes.map(c => _renewalRowHtml(c, 'done')).join('');
+}
+
+// 【リニューアル：LP更新】表示条件は後ほど設定。今はプレースホルダー
+function renderRenewalLp() {
+  const inner = document.getElementById('renewal-lp-inner');
+  if (!inner) return;
+  inner.innerHTML = '<div class="tab-coming-soon"><div class="icon">📄</div><div style="font-size:13px;color:var(--text3)">LP更新タブ<br>表示条件は後ほど設定します。</div></div>';
+}
+
+// 【リニューアル：サムネ更新】表示条件は後ほど設定。今はプレースホルダー
+function renderRenewalThumb() {
+  const inner = document.getElementById('renewal-thumb-inner');
+  if (!inner) return;
+  inner.innerHTML = '<div class="tab-coming-soon"><div class="icon">🖼</div><div style="font-size:13px;color:var(--text3)">サムネ更新タブ<br>表示条件は後ほど設定します。</div></div>';
 }
 
 // 件数バッジ更新（タブの横）
@@ -7003,7 +7051,19 @@ function applyAllStatusUpdates() {
     const _totSales = data.reduce((s,p)=>s+p.sales720,0);
     const _avgRoas  = _totSpend > 0 ? _totSales / _totSpend : 0;
     const inner = data.map(p => renderRow(p, maxSpend, ym, _totSpend, _avgRoas)).join('');
-    const headerHtml = _buildSubTabHeader();
+    const origHeader = document.querySelector('#tab-products .col-header');
+    let headerHtml = '';
+    if (origHeader) {
+      let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
+      const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
+      if (lastEmpty !== -1) {
+        h = h.slice(0, lastEmpty)
+          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
+          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS</div>'
+          + h.slice(lastEmpty);
+      }
+      headerHtml = h;
+    }
     _listWrap.innerHTML = headerHtml + inner;
   } else {
     renderMonthlySubTab(_currentTab);
@@ -7167,7 +7227,19 @@ function renderMonthlySubTab(tab) {
     const _totSpend = codes.reduce((s,c)=>s+getStats(DB[c],ym).spend,0);
     const _totSales = codes.reduce((s,c)=>s+getStats(DB[c],ym).sales720,0);
     const _avgRoas  = _totSpend>0?_totSales/_totSpend:0;
-    const headerHtml = _buildSubTabHeader();
+    const origHeader = document.querySelector('#tab-products .col-header');
+    let headerHtml = '';
+    if (origHeader) {
+      let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
+      const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
+      if (lastEmpty !== -1) {
+        h = h.slice(0, lastEmpty)
+          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
+          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS</div>'
+          + h.slice(lastEmpty);
+      }
+      headerHtml = h;
+    }
     const rows = codes.map(code => renderRow({...DB[code],...getStats(DB[code],ym)}, maxSpend, ym, _totSpend, _avgRoas)).join('');
     const _savedQ2 = document.getElementById('subTabSearchBox')?.value || '';
     const _toolbarWrap2 = panel.querySelector('#subTabToolbarWrap');
@@ -7234,6 +7306,8 @@ function switchTab(tab) {
   if (tab === 'roas-trend') renderRoasTrend();
   if (tab === 'renewal-todo') renderRenewalTodo();
   if (tab === 'renewal-done') renderRenewalDone();
+  if (tab === 'renewal-lp') renderRenewalLp();
+  if (tab === 'renewal-thumb') renderRenewalThumb();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'formula') { _initFormulaMonthSel(); renderFormulaBrowser(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
@@ -8364,29 +8438,6 @@ function getSorted(ym) {
 
 function renderTable() { renderPage(); }
 
-// サブタブ用の列ヘッダーを生成（商品-基本データのcol-headerを複製→区分/SS列を追加→
-// 重複id除去・stickyを検索バーの下に調整して列ズレ/重なりを防ぐ）
-function _buildSubTabHeader() {
-  const origHeader = document.querySelector('#tab-products .col-header');
-  if (!origHeader) return '';
-  let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
-  // 重複idを除去（複製で同一idが2つになるのを防ぐ）
-  h = h.replace(/\sid="[^"]*"/g, '');
-  // onclick(sortBy)も複製先では不要なので除去（誤動作防止）
-  h = h.replace(/\sonclick="[^"]*"/g, '');
-  // 末尾の空セル(開閉ボタン用)の直前に「区分」「SS」列を挿入
-  const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
-  if (lastEmpty !== -1) {
-    h = h.slice(0, lastEmpty)
-      + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
-      + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS</div>'
-      + h.slice(lastEmpty);
-  }
-  // stickyを検索バー(subTabToolbarWrap, 高さ約44px)の下に来るよう上書き
-  h = h.replace('class="col-header with-status"', 'class="col-header with-status" style="top:44px"');
-  return h;
-}
-
 function renderPage() {
   const ym = _subTabFilter ? _getSubTabMonth() : getSelectedMonth();
   const data = getSorted(ym);
@@ -8408,7 +8459,19 @@ function renderPage() {
           })()
         : `<div class="empty">該当する商品がありません（${label}）</div>`;
       // col-headerを商品-基本データから複製
-      const headerHtml = _buildSubTabHeader();
+      const origHeader = document.querySelector('#tab-products .col-header');
+      let headerHtml = '';
+      if (origHeader) {
+        let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
+        const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
+        if (lastEmpty !== -1) {
+          h = h.slice(0, lastEmpty)
+            + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
+            + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS</div>'
+            + h.slice(lastEmpty);
+        }
+        headerHtml = h;
+      }
       // ツールバーは初回のみ生成、以降はリスト部分だけ更新
       const _toolbarWrap = panel.querySelector('#subTabToolbarWrap');
       const _savedQ = document.getElementById('subTabSearchBox')?.value || '';
