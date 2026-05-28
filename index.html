@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.498</span>
+    <span class="build-date">v1.499</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7003,19 +7003,7 @@ function applyAllStatusUpdates() {
     const _totSales = data.reduce((s,p)=>s+p.sales720,0);
     const _avgRoas  = _totSpend > 0 ? _totSales / _totSpend : 0;
     const inner = data.map(p => renderRow(p, maxSpend, ym, _totSpend, _avgRoas)).join('');
-    const origHeader = document.querySelector('#tab-products .col-header');
-    let headerHtml = '';
-    if (origHeader) {
-      let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
-      const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
-      if (lastEmpty !== -1) {
-        h = h.slice(0, lastEmpty)
-          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
-          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS</div>'
-          + h.slice(lastEmpty);
-      }
-      headerHtml = h;
-    }
+    const headerHtml = _buildSubTabHeader();
     _listWrap.innerHTML = headerHtml + inner;
   } else {
     renderMonthlySubTab(_currentTab);
@@ -7179,19 +7167,7 @@ function renderMonthlySubTab(tab) {
     const _totSpend = codes.reduce((s,c)=>s+getStats(DB[c],ym).spend,0);
     const _totSales = codes.reduce((s,c)=>s+getStats(DB[c],ym).sales720,0);
     const _avgRoas  = _totSpend>0?_totSales/_totSpend:0;
-    const origHeader = document.querySelector('#tab-products .col-header');
-    let headerHtml = '';
-    if (origHeader) {
-      let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
-      const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
-      if (lastEmpty !== -1) {
-        h = h.slice(0, lastEmpty)
-          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
-          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS</div>'
-          + h.slice(lastEmpty);
-      }
-      headerHtml = h;
-    }
+    const headerHtml = _buildSubTabHeader();
     const rows = codes.map(code => renderRow({...DB[code],...getStats(DB[code],ym)}, maxSpend, ym, _totSpend, _avgRoas)).join('');
     const _savedQ2 = document.getElementById('subTabSearchBox')?.value || '';
     const _toolbarWrap2 = panel.querySelector('#subTabToolbarWrap');
@@ -8388,6 +8364,29 @@ function getSorted(ym) {
 
 function renderTable() { renderPage(); }
 
+// サブタブ用の列ヘッダーを生成（商品-基本データのcol-headerを複製→区分/SS列を追加→
+// 重複id除去・stickyを検索バーの下に調整して列ズレ/重なりを防ぐ）
+function _buildSubTabHeader() {
+  const origHeader = document.querySelector('#tab-products .col-header');
+  if (!origHeader) return '';
+  let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
+  // 重複idを除去（複製で同一idが2つになるのを防ぐ）
+  h = h.replace(/\sid="[^"]*"/g, '');
+  // onclick(sortBy)も複製先では不要なので除去（誤動作防止）
+  h = h.replace(/\sonclick="[^"]*"/g, '');
+  // 末尾の空セル(開閉ボタン用)の直前に「区分」「SS」列を挿入
+  const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
+  if (lastEmpty !== -1) {
+    h = h.slice(0, lastEmpty)
+      + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
+      + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS</div>'
+      + h.slice(lastEmpty);
+  }
+  // stickyを検索バー(subTabToolbarWrap, 高さ約44px)の下に来るよう上書き
+  h = h.replace('class="col-header with-status"', 'class="col-header with-status" style="top:44px"');
+  return h;
+}
+
 function renderPage() {
   const ym = _subTabFilter ? _getSubTabMonth() : getSelectedMonth();
   const data = getSorted(ym);
@@ -8409,19 +8408,7 @@ function renderPage() {
           })()
         : `<div class="empty">該当する商品がありません（${label}）</div>`;
       // col-headerを商品-基本データから複製
-      const origHeader = document.querySelector('#tab-products .col-header');
-      let headerHtml = '';
-      if (origHeader) {
-        let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
-        const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
-        if (lastEmpty !== -1) {
-          h = h.slice(0, lastEmpty)
-            + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
-            + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS</div>'
-            + h.slice(lastEmpty);
-        }
-        headerHtml = h;
-      }
+      const headerHtml = _buildSubTabHeader();
       // ツールバーは初回のみ生成、以降はリスト部分だけ更新
       const _toolbarWrap = panel.querySelector('#subTabToolbarWrap');
       const _savedQ = document.getElementById('subTabSearchBox')?.value || '';
