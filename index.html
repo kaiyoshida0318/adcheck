@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.553</span>
+    <span class="build-date">v1.554</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -673,11 +673,15 @@ header + * { margin-top: 4px; }
               style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
           </div>
           <select id="itemGraphMetric" class="toolbar-month" onchange="renderItemGraph()" style="font-size:13px;padding:6px 12px">
-            <option value="sales">売上</option>
+            <option value="all">全体(全項目)</option>
+            <option value="sales">売上(SEO内訳)</option>
             <option value="spend">実績額</option>
-            <option value="spend_ratio">実績額-割合 (KW/20円)</option>
             <option value="roas">ROAS</option>
             <option value="cvr">CVR</option>
+            <option value="ctr">CTR</option>
+            <option value="totsales">売上総額</option>
+            <option value="orders">個数</option>
+            <option value="cpc">平均単価</option>
           </select>
           <div id="itemGraphMonthRange" style="display:flex;align-items:center;gap:6px">
             <select id="itemGraphMonthFrom" class="toolbar-month" onchange="renderItemGraph()" style="font-size:12px;padding:4px 8px"></select>
@@ -690,6 +694,8 @@ header + * { margin-top: 4px; }
             <input type="date" id="itemGraphDateTo" class="toolbar-month" onchange="renderItemGraph()" style="font-size:12px;padding:4px 8px">
           </div>
         </div>
+        <div id="itemGraphYearToggles" style="display:none;justify-content:flex-end;padding:0 0 6px;flex-wrap:wrap;gap:6px"></div>
+        <div id="itemGraphMetricToggles" style="display:none;padding:0 0 10px;flex-wrap:wrap;gap:6px"></div>
         <div style="position:relative;height:400px">
           <canvas id="itemGraphCanvas" style="display:none"></canvas>
         </div>
@@ -4488,6 +4494,7 @@ let _itemChartInstance = null;
 let _itemGraphPeriod = 'monthly';
 let _itemGraphCode = null; // アクティブな商品コード
 let _itemGraphOn = false;
+let _itemGraphLastCode = null;
 
 function _itemGraphSuggest(val) {
   const box = document.getElementById('itemGraphSuggest');
@@ -4815,17 +4822,16 @@ function renderItemGraph() {
   const canvas = document.getElementById('itemGraphCanvas');
   const empty  = document.getElementById('itemGraphEmpty');
   if (!canvas) return;
-  if (!_itemGraphOn || !_itemGraphCode) {
-    canvas.style.display = 'none'; empty.style.display = 'block'; return;
-  }
-
-  const byDate = itemDailyData[_itemGraphCode] || {};
-  const metric = document.getElementById('itemGraphMetric')?.value || 'spend';
+  if (!_itemGraphOn || !_itemGraphCode) { canvas.style.display='none'; empty.style.display='block'; _renderItemToggles(false); _renderItemYearToggles(null); return; }
+  const code = _itemGraphCode;
+  if (code !== _itemGraphLastCode) { _renewalHiddenFY.clear(); _renewalHiddenMetric.clear(); _itemGraphLastCode = code; }
+  _renewalGraphPeriod = _itemGraphPeriod;
+  const byDate = itemDailyData[code] || {};
+  const metric = document.getElementById('itemGraphMetric')?.value || 'all';
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const textColor = isDark ? '#a0aec0' : '#718096';
 
-  // 期間フィルタ適用してデータ集計
   let labels = [], dataMap = {};
   if (_itemGraphPeriod === 'daily') {
     const fromD = document.getElementById('itemGraphDateFrom')?.value || '';
@@ -4835,140 +4841,118 @@ function renderItemGraph() {
   } else {
     const fromM = document.getElementById('itemGraphMonthFrom')?.value || '';
     const toM   = document.getElementById('itemGraphMonthTo')?.value   || '';
-    // 月別集計
     const monthly = {};
     Object.entries(byDate).forEach(([d, v]) => {
-      const ym = d.slice(0,7).replace('-','');
-      if ((fromM && ym < fromM) || (toM && ym > toM)) return;
+      const ym = d.slice(0,7), ymc = ym.replace('-','');
+      if ((fromM && ymc < fromM) || (toM && ymc > toM)) return;
       if (!monthly[ym]) monthly[ym] = {spend:0,sales:0,spendKw:0,salesKw:0,cl:0,clKw:0,orders:0,ordersKw:0,imp:0,impKw:0};
-      ['spend','sales','spendKw','salesKw','cl','clKw','orders','ordersKw','imp','impKw'].forEach(k => {
-        monthly[ym][k] = (monthly[ym][k]||0) + (v[k]||0);
-      });
+      ['spend','sales','spendKw','salesKw','cl','clKw','orders','ordersKw','imp','impKw'].forEach(k=>{ monthly[ym][k]=(monthly[ym][k]||0)+(v[k]||0); });
     });
     labels = Object.keys(monthly).sort();
+    const _now=new Date(); const _curYm=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');
+    labels = labels.filter(m => m < _curYm);
     labels.forEach(m => { dataMap[m] = monthly[m]; });
   }
-
-  if (!labels.length) {
-    canvas.style.display = 'none'; empty.style.display = 'block';
-    empty.textContent = '選択期間にデータがありません。'; return;
-  }
-  canvas.style.display = 'block'; empty.style.display = 'none';
-
-  const displayLabels = labels.map(l =>
-    _itemGraphPeriod === 'daily' ? l.slice(5) : l.slice(0,4)+'/'+l.slice(4,6)
-  );
-
+  if (!labels.length) { canvas.style.display='none'; empty.style.display='block'; empty.textContent='\u9078\u629e\u671f\u9593\u306b\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093\u3002'; _renderItemToggles(false); _renderItemYearToggles(null); const t=document.getElementById('itemGraphDataTable'); if(t)t.innerHTML=''; return; }
+  canvas.style.display='block'; empty.style.display='none';
+  const displayLabels = labels.map(l => _itemGraphPeriod==='daily' ? l.slice(5) : l.slice(0,4)+'/'+l.slice(5,7));
   if (_itemChartInstance) { _itemChartInstance.destroy(); _itemChartInstance = null; }
 
-  const lineDs = (label, data, color) => ({
-    label, data, borderColor: color, backgroundColor: color+'22',
-    borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, fill: false,
-  });
-
-  if (metric === 'spend') {
-    const dataKw = labels.map(l => dataMap[l]?.spendKw || 0);
-    const data20 = labels.map((l,i) => Math.max(0, (dataMap[l]?.spend||0) - dataKw[i]));
-    _itemChartInstance = new Chart(canvas, {
-      type: 'bar',
-      data: { labels: displayLabels, datasets: [
-        { label: '20円実績', data: data20, backgroundColor:'#f9731688', borderColor:'#f97316', borderWidth:1, borderRadius:0, stack:'s' },
-        { label: 'KW実績',  data: dataKw, backgroundColor:'#60a5fa88', borderColor:'#60a5fa', borderWidth:1, borderRadius:4, stack:'s',
-          onClick: undefined }
-      ]},
-      options: { animation: false, interaction: { mode: 'index', intersect: true }, responsive:true, maintainAspectRatio:false,
-        plugins: { legend:{ display:true, position:'top', labels:{color:textColor,font:{size:12},usePointStyle:true},
-          onClick:(e,li,leg)=>{ const chart=leg.chart; const other=li.datasetIndex===0?1:0; const meta=chart.getDatasetMeta(other); meta.hidden=!meta.hidden; chart.update(); }
-        }, tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ¥${Math.round(ctx.raw).toLocaleString()}`}}},
-        scales:{ x:{stacked:true,grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},
-          y:{stacked:true,grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>'¥'+v.toLocaleString()}} }
-      }
-    });
-  } else if (metric === 'spend_ratio') {
-    const dataKwR = labels.map(l => { const sp=dataMap[l]?.spend||0; return sp?Math.round((dataMap[l]?.spendKw||0)/sp*1000)/10:0; });
-    const data20R = labels.map(l => { const sp=dataMap[l]?.spend||0; const sk=dataMap[l]?.spendKw||0; const s20=Math.max(0,sp-sk); return sp?Math.round(s20/sp*1000)/10:0; });
-    _itemChartInstance = new Chart(canvas, {
-      type:'line', data:{labels:displayLabels, datasets:[lineDs('KW実績 割合',dataKwR,'#60a5fa'),lineDs('20円実績 割合',data20R,'#f97316')]},
-      options:{animation:false,interaction:{mode:'index',intersect:true},responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
-        scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{min:0,max:100,grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
-      }
-    });
-  } else if (metric === 'roas') {
-    const dataR   = labels.map(l => { const sp=dataMap[l]?.spend||0; return sp?Math.round((dataMap[l]?.sales||0)/sp*10000)/100:0; });
-    const dataRKw = labels.map(l => { const sk=dataMap[l]?.spendKw||0; return sk?Math.round((dataMap[l]?.salesKw||0)/sk*10000)/100:0; });
-    const dataR20 = labels.map(l => { const sp=dataMap[l]?.spend||0,sk=dataMap[l]?.spendKw||0,sl=dataMap[l]?.sales||0,slk=dataMap[l]?.salesKw||0; const s20=Math.max(0,sp-sk),sl20=Math.max(0,sl-slk); return s20?Math.round(sl20/s20*10000)/100:0; });
-    _itemChartInstance = new Chart(canvas, {
-      type:'line', data:{labels:displayLabels, datasets:[lineDs('ROAS■ (全体)',dataR,'#fbbf24'),lineDs('KW ROAS',dataRKw,'#60a5fa'),lineDs('20円 ROAS',dataR20,'#f97316')]},
-      options:{animation:false,interaction:{mode:'index',intersect:true},responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
-        scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
-      }
-    });
-  } else if (metric === 'cvr') {
-    const dataCvr  = labels.map(l => { const cl=dataMap[l]?.cl||0; return cl?Math.round((dataMap[l]?.orders||0)/cl*10000)/100:0; });
-    const dataCKw  = labels.map(l => { const clk=dataMap[l]?.clKw||0; return clk?Math.round((dataMap[l]?.ordersKw||0)/clk*10000)/100:0; });
-    const dataCvr20= labels.map(l => { const cl=dataMap[l]?.cl||0,clk=dataMap[l]?.clKw||0,ord=dataMap[l]?.orders||0,ork=dataMap[l]?.ordersKw||0; const cl20=Math.max(0,cl-clk),or20=Math.max(0,ord-ork); return cl20?Math.round(or20/cl20*10000)/100:0; });
-    _itemChartInstance = new Chart(canvas, {
-      type:'line', data:{labels:displayLabels, datasets:[lineDs('CVR■ (全体)',dataCvr,'#a78bfa'),lineDs('KW CVR',dataCKw,'#60a5fa'),lineDs('20円 CVR',dataCvr20,'#f97316')]},
-      options:{animation:false,interaction:{mode:'index',intersect:true},responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
-        scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'}}}
-      }
-    });
-  } else if (metric === 'sales') {
-    // 売上4本折れ線（全体・SEO・KW商品・20円）
-    // 全体売上はsalesRowsから
-    const getTotSales = (label) => {
-      if (_itemGraphPeriod === 'daily') {
-        return salesRows.filter(r => r.itemCode === _itemGraphCode && r.date === label.replace(/\//g, '-').replace(/^(\d+)-(\d+)$/, new Date().getFullYear() + '-$1-$2'))
-          .reduce((s,r)=>s+r.sales,0) ||
-          // ラベルがMM-DDの場合、全年から探す
-          salesRows.filter(r => r.itemCode === _itemGraphCode && r.date.slice(5) === label)
-          .reduce((s,r)=>s+r.sales,0);
-      } else {
-        // 月別: labelがYYYY/MMの形式
-        const ym = label.replace('/', '');
-        return salesRows.filter(r => r.itemCode === _itemGraphCode && r.ym === ym)
-          .reduce((s,r)=>s+r.sales,0);
-      }
-    };
-
-    const dataTot  = labels.map(l => getTotSales(displayLabels[labels.indexOf(l)] || l));
-    const dataRpp  = labels.map(l => Object.values(dataMap[l]||{}).length ? (dataMap[l]?.sales||0) : 0);
-    const dataKwS  = labels.map(l => dataMap[l]?.salesKw||0);
-    const data20S  = labels.map((l,i) => Math.max(0, (dataMap[l]?.sales||0) - (dataMap[l]?.salesKw||0)));
-    const dataSeo  = labels.map((l,i) => Math.max(0, dataTot[i] - dataRpp[i]));
-
-    const lineDs2 = (label, data, color) => ({
-      label, data, borderColor: color, backgroundColor: color+'22',
-      borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, fill: false,
-    });
-
-    _itemChartInstance = new Chart(canvas, {
-      type: 'line',
-      data: { labels: displayLabels, datasets: [
-        lineDs2('全体売上', dataTot, '#1d4ed8'),
-        lineDs2('SEO売上', dataSeo, '#7c3aed'),
-        lineDs2('KW商品売上', dataKwS, '#60a5fa'),
-        lineDs2('20円売上', data20S, '#f97316'),
-      ]},
-      options: { animation: false, interaction: { mode: 'index', intersect: true }, responsive:true, maintainAspectRatio:false,
-        plugins: { legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},
-          tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ¥${Math.round(ctx.raw).toLocaleString()}`}}},
-        scales: {
-          x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},
-          y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>'¥'+v.toLocaleString()}}
-        }
-      }
-    });
+  if (metric === 'sales') {
+    const getTot = (l) => salesRows.filter(r=>r.itemCode===code && (_itemGraphPeriod==='daily'? r.date===l : r.ym===l.replace('-',''))).reduce((s,r)=>s+(r.sales||0),0);
+    const dataTot = labels.map(getTot);
+    const dataRpp = labels.map(l => dataMap[l]?.sales||0);
+    const dataKwS = labels.map(l => dataMap[l]?.salesKw||0);
+    const data20S = labels.map(l => Math.max(0,(dataMap[l]?.sales||0)-(dataMap[l]?.salesKw||0)));
+    const dataSeo = labels.map((l,i)=> Math.max(0, dataTot[i]-dataRpp[i]));
+    const lds=(lb,d,c)=>({label:lb,data:d,borderColor:c,backgroundColor:c+'22',borderWidth:2.5,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false});
+    _itemChartInstance = new Chart(canvas,{type:'line',data:{labels:displayLabels,datasets:[lds('\u5168\u4f53\u58f2\u4e0a',dataTot,'#1d4ed8'),lds('SEO\u58f2\u4e0a',dataSeo,'#7c3aed'),lds('KW\u5546\u54c1\u58f2\u4e0a',dataKwS,'#60a5fa'),lds('20\u5186\u58f2\u4e0a',data20S,'#f97316')]},
+      options:{animation:false,interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': \u00a5'+Math.round(ctx.raw).toLocaleString()}}},
+        scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>'\u00a5'+v.toLocaleString()}}}}});
+    _drawRenewalChangeLines(_itemChartInstance, labels, code);
+    _renderItemToggles(false); _renderItemYearToggles(null);
+    _renderItemRichTable(labels, dataMap, code);
+    return;
   }
 
-  // 変更記録の縦線を描画
-  if (_itemChartInstance) _drawChangeLogLines(_itemChartInstance, displayLabels, _itemGraphCode);
+  let datasets, yCallback, tooltipLabel, chartLabels=displayLabels, yearMode=false, _fyYears=null;
+  if (metric === 'all') {
+    const keys=_renewalMetricKeys();
+    datasets = keys.map(k=>{ const meta=_RENEWAL_METRICS[k]; const raw=_renewalMetricValues(k,labels,dataMap,code); const nz=raw.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} const norm=raw.map(v=>mid>0?Math.round(v/mid*50*10)/10:0); return {label:meta.label,data:norm,_raw:raw,_fmt:meta.fmt,borderColor:meta.color,backgroundColor:meta.color+'22',borderWidth:2.2,pointRadius:3,pointHoverRadius:5,tension:0.3,fill:false}; });
+    yCallback=v=>v+'%';
+    tooltipLabel=ctx=>{const ds=ctx.dataset;const rr=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(rr):rr;return ' '+ds.label+': '+rs+'\uff08'+ctx.raw+'%\uff09';};
+  } else if (metric==='roas'||metric==='cvr'||metric==='ctr') {
+    const tri=_renewalTripleValues(metric,labels,dataMap);
+    const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:'#fbbf24'},{key:'kw',label:'ROAS-KW',color:'#f59e0b'},{key:'p20',label:'ROAS20',color:'#38bdf8'}]:(metric==='ctr')?[{key:'kw',label:'CTR-KW',color:'#34d399'}]:[{key:'all',label:'CVR\u5168\u4f53',color:'#a78bfa'},{key:'kw',label:'CVR(KW)',color:'#f59e0b'},{key:'p20',label:'CVR(20\u5186)',color:'#38bdf8'}];
+    datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:v=>v+'%',borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
+    yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+ctx.raw+'%';
+  } else {
+    const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas; const data=_renewalMetricValues(metric,labels,dataMap,code);
+    datasets=[{label:meta.label,data,_fmt:meta.fmt,borderColor:meta.color,backgroundColor:meta.color+'22',borderWidth:2.5,pointRadius:4,pointHoverRadius:6,tension:0.3,fill:false}];
+    yCallback=v=>meta.fmt(v); tooltipLabel=ctx=>' '+ctx.dataset.label+': '+meta.fmt(ctx.raw);
+  }
+  _renewalAllYearMode=false; _renewalSeries=null;
+  if (_itemGraphPeriod==='monthly') {
+    const _fyOf=ym=>+ym.slice(0,4); const _fmiOf=ym=>+ym.slice(5,7)-1;
+    const _years=[...new Set(labels.map(_fyOf))].sort((x,z)=>x-z);
+    const _fmLabels=['1\u6708','2\u6708','3\u6708','4\u6708','5\u6708','6\u6708','7\u6708','8\u6708','9\u6708','10\u6708','11\u6708','12\u6708'];
+    if (_years.length){
+      yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
+      let series, normalize=false;
+      if (metric==='all'){ series=_renewalMetricKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
+      else if (metric==='roas'||metric==='cvr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
+      else { const fmt=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).fmt; const lbl=(metric==='ctr')?'CTR-KW':(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).label; series=[{key:'_single',label:lbl,color:(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color,fmt,vals:_renewalRepValue(metric,labels,dataMap,code)}]; }
+      const multi=series.length>1; _renewalAllYearMode=multi; _renewalSeries=series; datasets=[];
+      series.forEach(se=>{ let pv=se.vals; if(normalize){const nz=se.vals.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} pv=se.vals.map(v=>mid>0?Math.round(v/mid*50*10)/10:0);} _years.forEach((fy,yi)=>{ const rec=_years.length-1-yi; const arr=new Array(12).fill(null),arrR=new Array(12).fill(null); labels.forEach((ym,idx)=>{ if(_fyOf(ym)!==fy)return; const fmi=_fmiOf(ym); arr[fmi]=pv[idx]; arrR[fmi]=se.vals[idx]; }); const color=multi?se.color:_RENEWAL_FY_PALETTE[yi%_RENEWAL_FY_PALETTE.length]; datasets.push({label:multi?(se.label+' '+fy):(fy+'\u5e74'),data:arr,_raw:arrR,_fmt:se.fmt,_mk:se.key,_fy:fy,borderColor:color,backgroundColor:color+'22',borderDash:_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length],borderWidth:rec===0?(multi?2.4:2.6):(multi?1.6:1.9),pointRadius:multi?2.5:3,pointHoverRadius:multi?5:6,tension:0.3,fill:false,spanGaps:true,hidden:_renewalHiddenMetric.has(se.key)||_renewalHiddenFY.has(fy)}); }); });
+      yCallback=normalize?(v=>v+'%'):(v=>series[0].fmt(v));
+      tooltipLabel=ctx=>{const ds=ctx.dataset;const r=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(r):r;return ' '+ds.label+': '+rs;};
+    }
+  }
+  _itemChartInstance = new Chart(canvas,{type:'line',data:{labels:chartLabels,datasets},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:!yearMode&&metric!=='all',position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:tooltipLabel}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:yCallback},beginAtZero:true}}}});
+  if (!yearMode) _drawRenewalChangeLines(_itemChartInstance, labels, code);
+  else _drawRenewalYearChanges(_itemChartInstance, code, _fyYears);
+  _renderItemToggles(metric==='all'||_renewalAllYearMode);
+  _renderItemYearToggles(yearMode?_fyYears:null);
+  _renderItemRichTable(labels, dataMap, code);
+}
 
-  // データテーブル表示
-  _renderItemGraphTable(displayLabels, labels, dataMap, metric);
+function _toggleItemFY(fy){ fy=+fy; if(_renewalHiddenFY.has(fy)) _renewalHiddenFY.delete(fy); else _renewalHiddenFY.add(fy); renderItemGraph(); }
+function _toggleItemMetricKey(mk){ if(_renewalHiddenMetric.has(mk)) _renewalHiddenMetric.delete(mk); else _renewalHiddenMetric.add(mk); renderItemGraph(); }
+function _toggleItemMetric(i){ const c=_itemChartInstance; if(!c) return; c.setDatasetVisibility(i,!c.isDatasetVisible(i)); c.update(); _renderItemToggles(true); }
+function _renderItemToggles(show){
+  const wrap=document.getElementById('itemGraphMetricToggles'); if(!wrap) return;
+  const chart=_itemChartInstance;
+  if(!show||!chart){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+  wrap.style.display='flex';
+  if(_renewalAllYearMode){
+    wrap.innerHTML=(_renewalSeries||[]).map(se=>{ const on=!_renewalHiddenMetric.has(se.key); const color=se.color; return '<button onclick="_toggleItemMetricKey(\''+se.key+'\')" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;border:2px solid '+color+';background:'+(on?color:'transparent')+';color:'+(on?'#fff':'var(--text3)')+';opacity:'+(on?'1':'0.55')+';text-decoration:'+(on?'none':'line-through')+';transition:all 0.12s"><span style="width:9px;height:9px;border-radius:50%;background:'+(on?'#fff':color)+';display:inline-block"></span>'+se.label+'</button>'; }).join('');
+    return;
+  }
+  wrap.innerHTML=chart.data.datasets.map((ds,i)=>{ const on=chart.isDatasetVisible(i); const color=ds.borderColor||'#888'; return '<button onclick="_toggleItemMetric('+i+')" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;border:2px solid '+color+';background:'+(on?color:'transparent')+';color:'+(on?'#fff':'var(--text3)')+';opacity:'+(on?'1':'0.55')+';text-decoration:'+(on?'none':'line-through')+';transition:all 0.12s"><span style="width:9px;height:9px;border-radius:50%;background:'+(on?'#fff':color)+';display:inline-block"></span>'+ds.label+'</button>'; }).join('');
+}
+function _renderItemYearToggles(years){
+  const wrap=document.getElementById('itemGraphYearToggles'); if(!wrap) return;
+  if(!years||!years.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+  wrap.style.display='flex';
+  const n=years.length;
+  wrap.innerHTML=years.map((fy,idx)=>{ const rec=n-1-idx; const dash=_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length]; const da=dash.length?dash.join(','):'0'; const on=!_renewalHiddenFY.has(fy); const lc=_renewalAllYearMode?'var(--text2)':_RENEWAL_FY_PALETTE[idx%_RENEWAL_FY_PALETTE.length]; return '<button onclick="_toggleItemFY('+fy+')" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);opacity:'+(on?'1':'0.45')+';text-decoration:'+(on?'none':'line-through')+'"><svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="'+(on?lc:'var(--text3)')+'" stroke-width="2.6" stroke-dasharray="'+da+'"/></svg>'+fy+'\u5e74</button>'; }).join('');
+}
+function _renderItemRichTable(labels, dataMap, code){
+  const wrap=document.getElementById('itemGraphDataTable'); if(!wrap) return;
+  if(!labels||!labels.length){ wrap.innerHTML=''; return; }
+  const daily=_itemGraphPeriod==='daily';
+  const logs=(productCache[code]?.changeLog||[]).filter(l=>l.date);
+  const logByKey={}; logs.forEach(l=>{ const key=daily?l.date:l.date.slice(0,7); (logByKey[key]||(logByKey[key]=[])).push(l); });
+  const keys=_renewalMetricKeys();
+  const vbm={}; keys.forEach(k=>vbm[k]=_renewalMetricValues(k,labels,dataMap,code));
+  const totSalesArr=_renewalMetricValues('totsales',labels,dataMap,code);
+  const SD={roas:1,cvr:1,totsales:1,cpc:1};
+  const order=labels.map((_,i)=>i).reverse();
+  const chip=l=>{ const c=l.type==='lp'?'#1a73e8':l.type==='thumb'?'#f4b400':l.type==='both'?'#9333ea':'#f97316'; const tl=l.type==='lp'?'LP\u5909\u66f4':l.type==='thumb'?'\u30b5\u30e0\u30cd\u5909\u66f4':l.type==='both'?'LP\u30fb\u30b5\u30e0\u30cd\u5909\u66f4':'\u5909\u66f4'; const nt=(l.note||'').trim()||tl; return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">'+l.date+' '+nt+'</span>'; };
+  const head='<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)"><th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">'+(daily?'\u65e5\u4ed8':'\u6708')+'</th>'+keys.map(k=>'<th style="padding:7px 10px;text-align:right;border-bottom:2px solid var(--border);font-weight:700;color:'+_RENEWAL_METRICS[k].color+';white-space:nowrap">'+_RENEWAL_METRICS[k].label+'</th>').join('')+'<th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">\u5909\u66f4\u8a18\u9332</th></tr></thead>';
+  const rows=order.map(i=>{ const key=labels[i]; const dispKey=daily?key.slice(5).replace('-','/'):key.slice(0,4)+'/'+key.slice(5,7); const hasLog=!!logByKey[key]; const bg=hasLog?'background:rgba(249,115,22,0.10)':''; const noSales=(totSalesArr[i]||0)===0; const cells=keys.map(k=>{ const v=vbm[k][i]; const show=(noSales&&SD[k])?'<span style="color:var(--text3)">\u2014</span>':_RENEWAL_METRICS[k].fmt(v); return '<td style="padding:6px 10px;text-align:right;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+bg+'">'+show+'</td>'; }).join(''); const logCell=hasLog?'<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);'+bg+'">'+logByKey[key].map(chip).join('')+'</td>':'<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>'; const ks=hasLog?'font-weight:700;color:#f97316':'color:var(--text)'; return '<tr><td style="padding:6px 10px;text-align:left;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+ks+';'+bg+'">'+dispKey+'</td>'+cells+logCell+'</tr>'; }).join('');
+  wrap.innerHTML='<table style="border-collapse:collapse;width:100%;font-size:12px">'+head+'<tbody>'+rows+'</tbody></table>';
 }
 
 // ── 商品グラフ データテーブル ──
@@ -6394,6 +6378,7 @@ function _renderRenewalYearToggles(years) {
 let _renewalChartInstance = null;
 
 function openRenewalGraph(code) {
+  _renewalHiddenFY.clear(); _renewalHiddenMetric.clear();
   _renewalGraphCode = code;
   _renewalGraphPeriod = 'monthly';
   const cached = productCache[code] || {};
