@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.512</span>
+    <span class="build-date">v1.513</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5814,37 +5814,34 @@ function _renewalRowHtml(code, mode) {
 }
 
 function _renewalHeaderHtml(mode) {
-  if (true) {
-    const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px';
-    return `<div class="col-header" style="grid-template-columns:${colW}">
-      <div class="ch" style="background:#f1f3f4">商品番号</div>
-      <div class="ch" style="background:#f1f3f4">商品管理番号</div>
-      <div class="ch" style="background:#f1f3f4;text-align:center">画像</div>
-      <div class="ch" style="background:#f1f3f4">商品</div>
-      <div class="ch" style="background:#fff3e0;text-align:right">金額全体</div>
-      <div class="ch" style="background:#fff3e0;text-align:right">金額-KW</div>
-      <div class="ch" style="background:#fff3e0;text-align:right">金額-20</div>
-      <div class="ch" style="background:#f3ecfb;text-align:right">割合-KW</div>
-      <div class="ch" style="background:#f3ecfb;text-align:right">割合-20</div>
-      <div class="ch" style="background:#e8f0fe;text-align:right">CTR全体</div>
-      <div class="ch" style="background:#e8f0fe;text-align:right">CTR-KW</div>
-      <div class="ch" style="background:#e8f0fe;text-align:right">CTR-20</div>
-      <div class="ch" style="background:#e6f4ea;text-align:right">CVR全体</div>
-      <div class="ch" style="background:#e6f4ea;text-align:right">CVR-KW</div>
-      <div class="ch" style="background:#e6f4ea;text-align:right">CVR-20</div>
-      <div class="ch" style="background:#fce8e6;border-left:1px solid var(--border)">変更記録</div>
-      <div class="ch" style="background:#fce8e6;text-align:center">操作</div>
-    </div>`;
-  }
-  const colW = '90px 76px 40px minmax(0,1fr) minmax(0,1.4fr) 120px';
-  return `<div class="col-header" style="grid-template-columns:${colW}">
-    <div class="ch">商品番号</div>
-    <div class="ch">商品管理番号</div>
-    <div class="ch" style="text-align:center">画像</div>
-    <div class="ch">商品</div>
-    <div class="ch" style="border-left:1px solid var(--border)">変更記録</div>
-    <div class="ch" style="text-align:center">操作</div>
-  </div>`;
+  const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px';
+  const cols = [
+    {k:'num',     label:'商品番号', bg:'#f1f3f4', align:'left'},
+    {k:'code',    label:'管理番号', bg:'#f1f3f4', align:'left'},
+    {k:'',        label:'画像',       bg:'#f1f3f4', align:'center'},
+    {k:'name',    label:'商品名',   bg:'#f1f3f4', align:'left'},
+    {k:'spendAll',label:'金額全体', bg:'#fff3e0', align:'right'},
+    {k:'spendKw', label:'金額-KW',  bg:'#fff3e0', align:'right'},
+    {k:'spend20', label:'金額-20',  bg:'#fff3e0', align:'right'},
+    {k:'ratioKw', label:'割合-KW',  bg:'#f3ecfb', align:'right'},
+    {k:'ratio20', label:'割合-20',  bg:'#f3ecfb', align:'right'},
+    {k:'ctrAll',  label:'CTR全体',  bg:'#e8f0fe', align:'right'},
+    {k:'ctrKw',   label:'CTR-KW',  bg:'#e8f0fe', align:'right'},
+    {k:'ctr20',   label:'CTR-20',  bg:'#e8f0fe', align:'right'},
+    {k:'cvrAll',  label:'CVR全体',  bg:'#e6f4ea', align:'right'},
+    {k:'cvrKw',   label:'CVR-KW',  bg:'#e6f4ea', align:'right'},
+    {k:'cvr20',   label:'CVR-20',  bg:'#e6f4ea', align:'right'},
+    {k:'log',     label:'変更記録', bg:'#fce8e6', align:'left', border:true},
+    {k:'',        label:'操作',     bg:'#fce8e6', align:'center'},
+  ];
+  const cells = cols.map(c => {
+    const click = c.k ? `onclick="_renewalSortBy('${c.k}')"` : '';
+    const cur = c.k ? 'cursor:pointer;' : '';
+    const bl = c.border ? 'border-left:1px solid var(--border);' : '';
+    const arrow = c.k ? _renewalArrow(c.k) : '';
+    return `<div class="ch" ${click} style="background:${c.bg};${cur}${bl}text-align:${c.align}">${c.label}${arrow}</div>`;
+  }).join('');
+  return `<div class="col-header" style="grid-template-columns:${colW}">${cells}</div>`;
 }
 
 // 実施前タブで選択中の月（YYYY-MM）。空なら最新月
@@ -5922,6 +5919,46 @@ function _renewalTypeChip(t) {
   if (t === 'both') return ' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#f3ecfb;color:#8e44ad">両方変更</span>';
   return '';
 }
+let _renewalSort = { key: '', dir: 'asc' };
+function _renewalArrow(k) {
+  if (_renewalSort.key !== k) return '';
+  return _renewalSort.dir === 'desc' ? ' ▼' : ' ▲';
+}
+function _renewalSortBy(key) {
+  if (_renewalSort.key === key) {
+    _renewalSort.dir = _renewalSort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    _renewalSort.key = key;
+    _renewalSort.dir = 'asc';
+  }
+  _renderCurrentRenewal();
+}
+function _renewalApplySort(codes) {
+  const k = _renewalSort.key;
+  if (!k) return codes;
+  const dir = _renewalSort.dir === 'desc' ? -1 : 1;
+  const val = (code) => {
+    const c = productCache[code] || {};
+    if (k === 'num') return (c.itemNumber || code);
+    if (k === 'code') return code;
+    if (k === 'name') return (c.manualName || c.name || '');
+    if (k === 'log') return ((c.changeLog||[]).map(l=>l.date).filter(Boolean).sort().pop() || '');
+    const m = _renewalTodoMetrics(code, _renewalTodoMonth);
+    return m[k];
+  };
+  const arr = codes.slice();
+  arr.sort((a,b) => {
+    const va = val(a), vb = val(b);
+    const na = (va === null || va === undefined || va === '');
+    const nb = (vb === null || vb === undefined || vb === '');
+    if (na && nb) return 0;
+    if (na) return 1;
+    if (nb) return -1;
+    if (typeof va === 'string' || typeof vb === 'string') return String(va).localeCompare(String(vb), 'ja', {numeric:true}) * dir;
+    return (va - vb) * dir;
+  });
+  return arr;
+}
 function _stickRenewalHeader(listId) {
   const list = document.getElementById(listId);
   if (!list) return;
@@ -5951,6 +5988,7 @@ function renderRenewalTodo() {
     const bn = productCache[b]?.itemNumber || b;
     return an.localeCompare(bn, 'ja', { numeric: true });
   });
+  codes = _renewalApplySort(codes);
   if (codes.length === 0) {
     inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
     return;
@@ -5997,6 +6035,7 @@ function renderRenewalDone() {
   if (q) codes = codes.filter(code => _renewalMatchQuery(code, q));
   codes = _renewalFilterEmpty(codes);
   codes.sort((a,b) => _renewalRecentSort(a,b));
+  codes = _renewalApplySort(codes);
   if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; _stickRenewalHeader('renewal-done-list'); return; }
   inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'done')).join('');
   _stickRenewalHeader('renewal-done-list');
@@ -6012,6 +6051,7 @@ function renderRenewalLp() {
   if (q) codes = codes.filter(code => _renewalMatchQuery(code, q));
   codes = _renewalFilterEmpty(codes);
   codes.sort((a,b) => _renewalRecentSort(a,b));
+  codes = _renewalApplySort(codes);
   if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; _stickRenewalHeader('renewal-lp-list'); return; }
   inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'lp')).join('');
   _stickRenewalHeader('renewal-lp-list');
@@ -6027,6 +6067,7 @@ function renderRenewalThumb() {
   if (q) codes = codes.filter(code => _renewalMatchQuery(code, q));
   codes = _renewalFilterEmpty(codes);
   codes.sort((a,b) => _renewalRecentSort(a,b));
+  codes = _renewalApplySort(codes);
   if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; _stickRenewalHeader('renewal-thumb-list'); return; }
   inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'thumb')).join('');
   _stickRenewalHeader('renewal-thumb-list');
