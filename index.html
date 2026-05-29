@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.522</span>
+    <span class="build-date">v1.523</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8423,12 +8423,12 @@ function _renderClRows(logs) {
       <input type="date" value="${log.date||''}" data-idx="${i}" data-field="date"
         onchange="_clUpdateRow(this)"
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
-      <select data-idx="${i}" data-field="type" onchange="_clUpdateRow(this)"
-        style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
+      <select data-idx="${i}" data-field="type" onchange="_clUpdateRow(this);_clRecolorType(this)"
+        style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;flex-shrink:0;font-weight:${log.type?'700':'400'};background:${log.type==='lp'?'#1a73e8':log.type==='thumb'?'#f4b400':log.type==='both'?'linear-gradient(90deg,#1a73e8 50%,#f4b400 50%)':'var(--surface)'};color:${log.type==='lp'||log.type==='both'?'#fff':log.type==='thumb'?'#111':'var(--text)'}">
         <option value=""${!log.type?' selected':''}>その他</option>
-        <option value="lp"${log.type==='lp'?' selected':''}>LP変更</option>
-        <option value="thumb"${log.type==='thumb'?' selected':''}>サムネ変更</option>
-        <option value="both"${log.type==='both'?' selected':''}>両方変更</option>
+        <option value="lp" style="background:#1a73e8;color:#fff"${log.type==='lp'?' selected':''}>LP変更</option>
+        <option value="thumb" style="background:#f4b400;color:#111"${log.type==='thumb'?' selected':''}>サムネ変更</option>
+        <option value="both" style="background:#1a73e8;color:#fff"${log.type==='both'?' selected':''}>両方変更</option>
       </select>
       <input type="text" value="${log.note||''}" data-idx="${i}" data-field="note"
         onchange="_clUpdateRow(this)" placeholder="内容を入力..."
@@ -8445,6 +8445,13 @@ function _clUpdateRow(el) {
   if (!productCache[_clCurrentCode].changeLog) productCache[_clCurrentCode].changeLog = [];
   productCache[_clCurrentCode].changeLog[idx][field] = el.value;
 }
+function _clRecolorType(el) {
+  const t = el.value;
+  el.style.background = t === 'lp' ? '#1a73e8' : t === 'thumb' ? '#f4b400' : t === 'both' ? 'linear-gradient(90deg,#1a73e8 50%,#f4b400 50%)' : 'var(--surface)';
+  el.style.color = (t === 'lp' || t === 'both') ? '#fff' : t === 'thumb' ? '#111' : 'var(--text)';
+  el.style.fontWeight = t ? '700' : '400';
+}
+
 
 function _clDeleteRow(idx) {
   if (!productCache[_clCurrentCode]?.changeLog) return;
