@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.506</span>
+    <span class="build-date">v1.507</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5788,7 +5788,7 @@ function _renewalRowHtml(code, mode) {
   // done(実施済)なら行クリックでグラフモーダル、todo(全体)なら変更記録ボタンで編集
   const rowClick = mode === 'done' ? `onclick="openRenewalGraph('${code}')" style="cursor:pointer"` : '';
   const colW = mode === 'todo'
-    ? '90px 76px 40px minmax(0,1.2fr) 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px'
+    ? '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px'
     : '90px 76px 40px minmax(0,1fr) minmax(0,1.4fr) 120px';
   let metricCells = '';
   if (mode === 'todo') {
@@ -5796,7 +5796,9 @@ function _renewalRowHtml(code, mode) {
     const dash = '<span style="color:var(--text3)">-</span>';
     const fmt = v => (v === null || v === undefined) ? dash : (v + '%');
     const cell = v => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap">${fmt(v)}</div>`;
-    metricCells = cell(mt.ctrAll) + cell(mt.ctrKw) + cell(mt.ctr20) + cell(mt.cvrAll) + cell(mt.cvrKw) + cell(mt.cvr20);
+    const fmtM = v => (!v || v <= 0) ? dash : fmtY(v);
+    const mcell = v => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap">${fmtM(v)}</div>`;
+    metricCells = mcell(mt.spendAll) + mcell(mt.spendKw) + mcell(mt.spend20) + cell(mt.ctrAll) + cell(mt.ctrKw) + cell(mt.ctr20) + cell(mt.cvrAll) + cell(mt.cvrKw) + cell(mt.cvr20);
   }
   const actionCell = mode === 'done'
     ? `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);cursor:pointer;font-weight:600;white-space:nowrap">📝 編集 (${logCount})</button></div>`
@@ -5817,12 +5819,15 @@ function _renewalRowHtml(code, mode) {
 
 function _renewalHeaderHtml(mode) {
   if (mode === 'todo') {
-    const colW = '90px 76px 40px minmax(0,1.2fr) 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px';
+    const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px';
     return `<div class="col-header" style="grid-template-columns:${colW}">
       <div class="ch" style="background:#f1f3f4">商品番号</div>
       <div class="ch" style="background:#f1f3f4">商品管理番号</div>
       <div class="ch" style="background:#f1f3f4;text-align:center">画像</div>
       <div class="ch" style="background:#f1f3f4">商品</div>
+      <div class="ch" style="background:#fff3e0;text-align:right">金額全体</div>
+      <div class="ch" style="background:#fff3e0;text-align:right">金額-KW</div>
+      <div class="ch" style="background:#fff3e0;text-align:right">金額-20</div>
       <div class="ch" style="background:#e8f0fe;text-align:right">CTR全体</div>
       <div class="ch" style="background:#e8f0fe;text-align:right">CTR-KW</div>
       <div class="ch" style="background:#e8f0fe;text-align:right">CTR-20</div>
@@ -5862,21 +5867,24 @@ function _renewalTodoMonths() {
 // 指定商品・指定月のCTR/CVRを 全体/KW/20 の6値で返す（%、無理なら null）
 function _renewalTodoMetrics(code, ym) {
   const days = itemDailyData[code] || {};
-  let cl = 0, clKw = 0, orders = 0, ordersKw = 0, imp = 0, impKw = 0;
+  let cl = 0, clKw = 0, orders = 0, ordersKw = 0, imp = 0, impKw = 0, spend = 0, spendKw = 0;
   Object.keys(days).forEach(d => {
     if (ym && !d.startsWith(ym)) return;
     const x = days[d] || {};
     cl += x.cl || 0; clKw += x.clKw || 0;
     orders += x.orders || 0; ordersKw += x.ordersKw || 0;
     imp += x.imp || 0; impKw += x.impKw || 0;
+    spend += x.spend || 0; spendKw += x.spendKw || 0;
   });
   const cl20 = Math.max(0, cl - clKw);
   const o20  = Math.max(0, orders - ordersKw);
   const imp20 = Math.max(0, imp - impKw);
+  const spend20 = Math.max(0, spend - spendKw);
   const pct = (n, d) => d > 0 ? Math.round(n / d * 10000) / 100 : null;
   return {
     ctrAll: pct(cl, imp),   ctrKw: pct(clKw, impKw),   ctr20: pct(cl20, imp20),
     cvrAll: pct(orders, cl), cvrKw: pct(ordersKw, clKw), cvr20: pct(o20, cl20),
+    spendAll: spend, spendKw: spendKw, spend20: spend20,
   };
 }
 
@@ -5973,6 +5981,7 @@ function renderRenewalLp() {
   const inner = document.getElementById('renewal-lp-inner');
   if (!inner) return;
   inner.innerHTML = '<div class="tab-coming-soon"><div class="icon">📄</div><div style="font-size:13px;color:var(--text3)">LP更新タブ<br>表示条件は後ほど設定します。</div></div>';
+  _stickRenewalHeader('renewal-lp-list');
 }
 
 // 【リニューアル：サムネ更新】表示条件は後ほど設定。今はプレースホルダー
@@ -5980,6 +5989,7 @@ function renderRenewalThumb() {
   const inner = document.getElementById('renewal-thumb-inner');
   if (!inner) return;
   inner.innerHTML = '<div class="tab-coming-soon"><div class="icon">🖼</div><div style="font-size:13px;color:var(--text3)">サムネ更新タブ<br>表示条件は後ほど設定します。</div></div>';
+  _stickRenewalHeader('renewal-thumb-list');
 }
 
 // 件数バッジ更新（タブの横）
