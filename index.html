@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.517</span>
+    <span class="build-date">v1.518</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5791,7 +5791,7 @@ function _renewalRowHtml(code, mode) {
 
   // done(実施済)なら行クリックでグラフモーダル、todo(全体)なら変更記録ボタンで編集
   const rowClick = '';
-  const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px';
+  const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px 64px 64px 64px 110px';
   let metricCells = '';
   {
     const mt = _renewalTodoMetrics(code, _renewalTodoMonth);
@@ -5810,9 +5810,16 @@ function _renewalRowHtml(code, mode) {
     const cell = (v, bg) => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;${bg?'background:'+bg+';color:#111':''}">${fmt(v)}</div>`;
     const fmtM = v => (!v || v <= 0) ? dash : fmtY(v);
     const mcell = (v, bg) => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;${bg?'background:'+bg+';color:#111':''}">${fmtM(v)}</div>`;
-    metricCells = mcell(mt.spendAll, '') + mcell(mt.spendKw, '') + mcell(mt.spend20, '') + cell(mt.ratioKw, cKw) + cell(mt.ratio20, c20) + cell(mt.ctrAll, '') + cell(mt.ctrKw, '') + cell(mt.ctr20, '') + cell(mt.cvrAll, '') + cell(mt.cvrKw, '') + cell(mt.cvr20, '');
+    metricCells = mcell(mt.spendAll, '') + mcell(mt.spendKw, '') + mcell(mt.spend20, '') + cell(mt.ratioKw, cKw) + cell(mt.ratio20, c20) + cell(mt.ctrAll, '') + cell(mt.ctrKw, '') + cell(mt.ctr20, '') + cell(mt.cvrAll, '') + cell(mt.cvrKw, '') + cell(mt.cvr20, '') + cell(mt.roasAll, '') + cell(mt.roasKw, '') + cell(mt.roas20, '');
   }
-  const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid ${logCount>0?'var(--green)':'var(--accent)'};background:var(--surface2);color:${logCount>0?'var(--green)':'var(--accent)'};cursor:pointer;font-weight:600;white-space:nowrap">📝 ${logCount>0?'記録 ('+logCount+')':'記録する'}</button></div>`;
+  const hasLp = logs.some(l => l.type === 'lp' || l.type === 'both');
+  const hasThumb = logs.some(l => l.type === 'thumb' || l.type === 'both');
+  let actBg, actColor, actBorder, actShadow = 'none';
+  if (hasLp && hasThumb) { actBg = 'linear-gradient(90deg,#1a73e8 50%,#f4b400 50%)'; actColor = '#fff'; actBorder = 'none'; actShadow = '0 0 2px rgba(0,0,0,.45)'; }
+  else if (hasLp) { actBg = '#1a73e8'; actColor = '#fff'; actBorder = 'none'; }
+  else if (hasThumb) { actBg = '#f4b400'; actColor = '#111'; actBorder = 'none'; }
+  else { actBg = 'var(--surface2)'; actColor = logCount>0?'var(--green)':'var(--accent)'; actBorder = '1px solid ' + (logCount>0?'var(--green)':'var(--accent)'); }
+  const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:${actBorder};background:${actBg};color:${actColor};cursor:pointer;font-weight:600;white-space:nowrap;text-shadow:${actShadow}">📝 ${logCount>0?'記録 ('+logCount+')':'記録する'}</button></div>`;
 
   return `<div class="item-row">
     <div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:50px;background:var(--surface)" ${rowClick}>
@@ -5821,14 +5828,13 @@ function _renewalRowHtml(code, mode) {
       <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
       <div style="padding:6px 8px;display:flex;align-items:center;overflow:hidden"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${name}">${name}</span></div>
       ${metricCells}
-      <div style="padding:6px 10px;overflow:hidden;border-left:1px solid var(--border)">${logPreview}</div>
       ${actionCell}
     </div>
   </div>`;
 }
 
 function _renewalHeaderHtml(mode) {
-  const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px';
+  const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px 64px 64px 64px 110px';
   const cols = [
     {k:'num',     label:'商品番号', bg:'#f1f3f4', align:'left'},
     {k:'code',    label:'管理番号', bg:'#f1f3f4', align:'left'},
@@ -5845,7 +5851,9 @@ function _renewalHeaderHtml(mode) {
     {k:'cvrAll',  label:'CVR全体',  bg:'#e6f4ea', align:'right'},
     {k:'cvrKw',   label:'CVR-KW',  bg:'#e6f4ea', align:'right'},
     {k:'cvr20',   label:'CVR-20',  bg:'#e6f4ea', align:'right'},
-    {k:'log',     label:'変更記録', bg:'#fce8e6', align:'left', border:true},
+    {k:'roasAll', label:'ROAS全体', bg:'#e0f2f1', align:'right', border:true},
+    {k:'roasKw',  label:'ROAS-KW',  bg:'#e0f2f1', align:'right'},
+    {k:'roas20',  label:'ROAS-20',  bg:'#e0f2f1', align:'right'},
     {k:'',        label:'操作',     bg:'#fce8e6', align:'center'},
   ];
   const cells = cols.map(c => {
@@ -5878,7 +5886,7 @@ function _renewalTodoMonths() {
 // 指定商品・指定月のCTR/CVRを 全体/KW/20 の6値で返す（%、無理なら null）
 function _renewalTodoMetrics(code, ym) {
   const days = itemDailyData[code] || {};
-  let cl = 0, clKw = 0, orders = 0, ordersKw = 0, imp = 0, impKw = 0, spend = 0, spendKw = 0;
+  let cl = 0, clKw = 0, orders = 0, ordersKw = 0, imp = 0, impKw = 0, spend = 0, spendKw = 0, sales = 0, salesKw = 0;
   Object.keys(days).forEach(d => {
     if (ym && !d.startsWith(ym)) return;
     const x = days[d] || {};
@@ -5886,11 +5894,13 @@ function _renewalTodoMetrics(code, ym) {
     orders += x.orders || 0; ordersKw += x.ordersKw || 0;
     imp += x.imp || 0; impKw += x.impKw || 0;
     spend += x.spend || 0; spendKw += x.spendKw || 0;
+    sales += x.sales || 0; salesKw += x.salesKw || 0;
   });
   const cl20 = Math.max(0, cl - clKw);
   const o20  = Math.max(0, orders - ordersKw);
   const imp20 = Math.max(0, imp - impKw);
   const spend20 = Math.max(0, spend - spendKw);
+  const sales20 = Math.max(0, sales - salesKw);
   const ratioKw = spend > 0 ? Math.round(spendKw / spend * 1000) / 10 : null;
   const ratio20 = spend > 0 ? Math.round(spend20 / spend * 1000) / 10 : null;
   const pct = (n, d) => d > 0 ? Math.round(n / d * 10000) / 100 : null;
@@ -5899,6 +5909,7 @@ function _renewalTodoMetrics(code, ym) {
     cvrAll: pct(orders, cl), cvrKw: pct(ordersKw, clKw), cvr20: pct(o20, cl20),
     spendAll: spend, spendKw: spendKw, spend20: spend20,
     ratioKw: ratioKw, ratio20: ratio20,
+    roasAll: pct(sales, spend), roasKw: pct(salesKw, spendKw), roas20: pct(sales20, spend20),
   };
 }
 
