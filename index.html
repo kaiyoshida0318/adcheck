@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.508</span>
+    <span class="build-date">v1.509</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5780,18 +5780,16 @@ function _renewalRowHtml(code, mode) {
     `<div style="font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:var(--accent);font-family:'DM Mono',monospace">${l.date||'—'}</span> ${l.note||''}</div>`
   ).join('') || '<span style="color:var(--text3);font-size:11px">記録なし</span>';
 
-  const imgClick = mode === 'todo' ? `onclick="event.stopPropagation();openRenewalGraph('${code}')"` : '';
+  const imgClick = `onclick="event.stopPropagation();openRenewalGraph('${code}')"`;
   const imgEl = imgSrc
-    ? `<img loading="lazy" src="${imgSrc}" ${imgClick} style="width:32px;height:32px;border-radius:6px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;${mode==='todo'?'cursor:pointer':''}">`
-    : `<div ${imgClick} style="width:32px;height:32px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;${mode==='todo'?'cursor:pointer':''}"></div>`;
+    ? `<img loading="lazy" src="${imgSrc}" ${imgClick} style="width:32px;height:32px;border-radius:6px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer">`
+    : `<div ${imgClick} style="width:32px;height:32px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer"></div>`;
 
   // done(実施済)なら行クリックでグラフモーダル、todo(全体)なら変更記録ボタンで編集
-  const rowClick = mode === 'done' ? `onclick="openRenewalGraph('${code}')" style="cursor:pointer"` : '';
-  const colW = mode === 'todo'
-    ? '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px'
-    : '90px 76px 40px minmax(0,1fr) minmax(0,1.4fr) 120px';
+  const rowClick = '';
+  const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px';
   let metricCells = '';
-  if (mode === 'todo') {
+  {
     const mt = _renewalTodoMetrics(code, _renewalTodoMonth);
     const dash = '<span style="color:var(--text3)">-</span>';
     const fmt = v => (v === null || v === undefined) ? dash : (v + '%');
@@ -5800,9 +5798,7 @@ function _renewalRowHtml(code, mode) {
     const mcell = v => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap">${fmtM(v)}</div>`;
     metricCells = mcell(mt.spendAll) + mcell(mt.spendKw) + mcell(mt.spend20) + cell(mt.ratioKw) + cell(mt.ratio20) + cell(mt.ctrAll) + cell(mt.ctrKw) + cell(mt.ctr20) + cell(mt.cvrAll) + cell(mt.cvrKw) + cell(mt.cvr20);
   }
-  const actionCell = mode === 'done'
-    ? `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--accent);background:var(--surface2);color:var(--accent);cursor:pointer;font-weight:600;white-space:nowrap">📝 編集 (${logCount})</button></div>`
-    : `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid ${logCount>0?'var(--green)':'var(--accent)'};background:var(--surface2);color:${logCount>0?'var(--green)':'var(--accent)'};cursor:pointer;font-weight:600;white-space:nowrap">📝 ${logCount>0?'記録 ('+logCount+')':'記録する'}</button></div>`;
+  const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid ${logCount>0?'var(--green)':'var(--accent)'};background:var(--surface2);color:${logCount>0?'var(--green)':'var(--accent)'};cursor:pointer;font-weight:600;white-space:nowrap">📝 ${logCount>0?'記録 ('+logCount+')':'記録する'}</button></div>`;
 
   return `<div class="item-row">
     <div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:50px;background:var(--surface)" ${rowClick}>
@@ -5818,7 +5814,7 @@ function _renewalRowHtml(code, mode) {
 }
 
 function _renewalHeaderHtml(mode) {
-  if (mode === 'todo') {
+  if (true) {
     const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px';
     return `<div class="col-header" style="grid-template-columns:${colW}">
       <div class="ch" style="background:#f1f3f4">商品番号</div>
@@ -5895,6 +5891,31 @@ function _renewalTodoMetrics(code, ym) {
 }
 
 // 【リニューアル：全体】現役商品を一覧表示。変更記録ボタンを各行に
+function _renderCurrentRenewal() {
+  if (_currentTab === 'renewal-todo') renderRenewalTodo();
+  else if (_currentTab === 'renewal-done') renderRenewalDone();
+  else if (_currentTab === 'renewal-lp') renderRenewalLp();
+  else if (_currentTab === 'renewal-thumb') renderRenewalThumb();
+}
+function _renewalMatchQuery(code, q) {
+  const c = productCache[code] || {};
+  return code.toLowerCase().includes(q) || (c.itemNumber||'').toLowerCase().includes(q) || (c.manualName||c.name||'').toLowerCase().includes(q);
+}
+function _hasChangeLogType(code, type) {
+  return (productCache[code]?.changeLog || []).some(l => l && l.type === type);
+}
+function _renewalRecentSort(a, b) {
+  const la = (productCache[a]?.changeLog||[]).map(l=>l.date).filter(Boolean).sort().pop() || '';
+  const lb = (productCache[b]?.changeLog||[]).map(l=>l.date).filter(Boolean).sort().pop() || '';
+  return lb.localeCompare(la);
+}
+function _renewalFilterEmpty(codes) {
+  if (!_renewalTodoHideEmpty) return codes;
+  return codes.filter(code => {
+    const m = _renewalTodoMetrics(code, _renewalTodoMonth);
+    return !(!m.spendAll && m.ctrAll===null && m.ctrKw===null && m.ctr20===null && m.cvrAll===null && m.cvrKw===null && m.cvr20===null);
+  });
+}
 function _stickRenewalHeader(listId) {
   const list = document.getElementById(listId);
   if (!list) return;
@@ -5918,12 +5939,7 @@ function renderRenewalTodo() {
     });
   }
   // 商品番号順
-  if (_renewalTodoHideEmpty) {
-    codes = codes.filter(code => {
-      const m = _renewalTodoMetrics(code, _renewalTodoMonth);
-      return !(!m.spendAll && m.ctrAll===null && m.ctrKw===null && m.ctr20===null && m.cvrAll===null && m.cvrKw===null && m.cvr20===null);
-    });
-  }
+  codes = _renewalFilterEmpty(codes);
   codes.sort((a,b) => {
     const an = productCache[a]?.itemNumber || a;
     const bn = productCache[b]?.itemNumber || b;
@@ -5938,8 +5954,8 @@ function renderRenewalTodo() {
 }
 
 // 実施前タブの月ドロップダウンを構築
-function _buildRenewalTodoMonthSelect() {
-  const wrap = document.querySelector('#tab-renewal-todo .toolbar-right');
+function _buildRenewalTodoMonthSelect(tabSel) {
+  const wrap = document.querySelector((tabSel || '#tab-renewal-todo') + ' .toolbar-right');
   if (!wrap) return;
   const months = _renewalTodoMonths();
   if (!_renewalTodoMonth || !months.includes(_renewalTodoMonth)) {
@@ -5957,55 +5973,56 @@ function _buildRenewalTodoMonthSelect() {
 
 function _onRenewalTodoMonthChange(v) {
   _renewalTodoMonth = v;
-  renderRenewalTodo();
+  _renderCurrentRenewal();
 }
 
 function _toggleRenewalTodoEmpty() {
   _renewalTodoHideEmpty = !_renewalTodoHideEmpty;
-  renderRenewalTodo();
+  _renderCurrentRenewal();
 }
 
 // 【リニューアル：実施済】変更記録が1件以上ある商品だけ。行クリックでグラフモーダル
 function renderRenewalDone() {
+  _buildRenewalTodoMonthSelect('#tab-renewal-done');
   const inner = document.getElementById('renewal-done-inner');
   if (!inner) return;
   const q = (document.getElementById('renewalDoneSearch')?.value || '').toLowerCase().trim();
   let codes = Object.keys(productCache).filter(code => _hasChangeLog(code) && !productCache[code]?.retired);
-  if (q) {
-    codes = codes.filter(code => {
-      const c = productCache[code] || {};
-      return code.toLowerCase().includes(q)
-        || (c.itemNumber||'').toLowerCase().includes(q)
-        || (c.manualName||c.name||'').toLowerCase().includes(q);
-    });
-  }
-  // 最新の変更記録日が新しい順
-  codes.sort((a,b) => {
-    const la = (productCache[a].changeLog||[]).map(l=>l.date).filter(Boolean).sort().pop() || '';
-    const lb = (productCache[b].changeLog||[]).map(l=>l.date).filter(Boolean).sort().pop() || '';
-    return lb.localeCompare(la);
-  });
-  if (codes.length === 0) {
-    inner.innerHTML = '<div class="tab-coming-soon"><div class="icon">✅</div><div style="font-size:13px;color:var(--text3)">変更記録のある商品がここに表示されます。<br>「実施前」タブで変更記録を追加すると、ここに移動します。</div></div>';
-    return;
-  }
-  inner.innerHTML = _renewalHeaderHtml() + codes.map(c => _renewalRowHtml(c, 'done')).join('');
+  if (q) codes = codes.filter(code => _renewalMatchQuery(code, q));
+  codes = _renewalFilterEmpty(codes);
+  codes.sort((a,b) => _renewalRecentSort(a,b));
+  if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; _stickRenewalHeader('renewal-done-list'); return; }
+  inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'done')).join('');
   _stickRenewalHeader('renewal-done-list');
 }
 
 // 【リニューアル：LP更新】表示条件は後ほど設定。今はプレースホルダー
 function renderRenewalLp() {
+  _buildRenewalTodoMonthSelect('#tab-renewal-lp');
   const inner = document.getElementById('renewal-lp-inner');
   if (!inner) return;
-  inner.innerHTML = '<div class="tab-coming-soon"><div class="icon">📄</div><div style="font-size:13px;color:var(--text3)">LP更新タブ<br>表示条件は後ほど設定します。</div></div>';
+  const q = (document.getElementById('renewalLpSearch')?.value || '').toLowerCase().trim();
+  let codes = Object.keys(productCache).filter(code => _hasChangeLogType(code, 'lp') && !productCache[code]?.retired);
+  if (q) codes = codes.filter(code => _renewalMatchQuery(code, q));
+  codes = _renewalFilterEmpty(codes);
+  codes.sort((a,b) => _renewalRecentSort(a,b));
+  if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; _stickRenewalHeader('renewal-lp-list'); return; }
+  inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'lp')).join('');
   _stickRenewalHeader('renewal-lp-list');
 }
 
 // 【リニューアル：サムネ更新】表示条件は後ほど設定。今はプレースホルダー
 function renderRenewalThumb() {
+  _buildRenewalTodoMonthSelect('#tab-renewal-thumb');
   const inner = document.getElementById('renewal-thumb-inner');
   if (!inner) return;
-  inner.innerHTML = '<div class="tab-coming-soon"><div class="icon">🖼</div><div style="font-size:13px;color:var(--text3)">サムネ更新タブ<br>表示条件は後ほど設定します。</div></div>';
+  const q = (document.getElementById('renewalThumbSearch')?.value || '').toLowerCase().trim();
+  let codes = Object.keys(productCache).filter(code => _hasChangeLogType(code, 'thumb') && !productCache[code]?.retired);
+  if (q) codes = codes.filter(code => _renewalMatchQuery(code, q));
+  codes = _renewalFilterEmpty(codes);
+  codes.sort((a,b) => _renewalRecentSort(a,b));
+  if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; _stickRenewalHeader('renewal-thumb-list'); return; }
+  inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'thumb')).join('');
   _stickRenewalHeader('renewal-thumb-list');
 }
 
@@ -6013,10 +6030,16 @@ function renderRenewalThumb() {
 function _updateRenewalCounts() {
   const all  = Object.keys(DB).filter(code => !productCache[code]?.retired).length;
   const done = Object.keys(productCache).filter(code => _hasChangeLog(code) && !productCache[code]?.retired).length;
+  const lp = Object.keys(productCache).filter(code => _hasChangeLogType(code, 'lp') && !productCache[code]?.retired).length;
+  const thumb = Object.keys(productCache).filter(code => _hasChangeLogType(code, 'thumb') && !productCache[code]?.retired).length;
   const e1 = document.getElementById('cnt-renewal-todo');
   const e2 = document.getElementById('cnt-renewal-done');
+  const e3 = document.getElementById('cnt-renewal-lp');
+  const e4 = document.getElementById('cnt-renewal-thumb');
   if (e1) e1.textContent = all  > 0 ? `(${all})`  : '';
   if (e2) e2.textContent = done > 0 ? `(${done})` : '';
+  if (e3) e3.textContent = lp > 0 ? `(${lp})` : '';
+  if (e4) e4.textContent = thumb > 0 ? `(${thumb})` : '';
 }
 
 // ══════════════════════════════════════════
@@ -8242,6 +8265,12 @@ function _renderClRows(logs) {
       <input type="date" value="${log.date||''}" data-idx="${i}" data-field="date"
         onchange="_clUpdateRow(this)"
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
+      <select data-idx="${i}" data-field="type" onchange="_clUpdateRow(this)"
+        style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
+        <option value=""${!log.type?' selected':''}>その他</option>
+        <option value="lp"${log.type==='lp'?' selected':''}>LP変更</option>
+        <option value="thumb"${log.type==='thumb'?' selected':''}>サムネ変更</option>
+      </select>
       <input type="text" value="${log.note||''}" data-idx="${i}" data-field="note"
         onchange="_clUpdateRow(this)" placeholder="内容を入力..."
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex:1">
