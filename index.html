@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.556</span>
+    <span class="build-date">v1.557</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4495,6 +4495,7 @@ let _itemGraphPeriod = 'monthly';
 let _itemGraphCode = null; // アクティブな商品コード
 let _itemGraphOn = false;
 let _itemGraphLastCode = null;
+let _itemGraphLastMetric = null;
 
 function _itemGraphSuggest(val) {
   const box = document.getElementById('itemGraphSuggest');
@@ -4824,7 +4825,8 @@ function renderItemGraph() {
   if (!canvas) return;
   if (!_itemGraphOn || !_itemGraphCode) { canvas.style.display='none'; empty.style.display='block'; _renderItemToggles(false); _renderItemYearToggles(null); return; }
   const code = _itemGraphCode;
-  if (code !== _itemGraphLastCode) { _renewalHiddenFY.clear(); _renewalHiddenMetric.clear(); _itemGraphLastCode = code; }
+  const _imet = document.getElementById('itemGraphMetric')?.value || 'all';
+  if (_imet !== _itemGraphLastMetric || code !== _itemGraphLastCode) { _renewalHiddenFY.clear(); _renewalHiddenMetric = (_imet === 'ctr') ? new Set(['all','p20']) : new Set(); _itemGraphLastMetric = _imet; _itemGraphLastCode = code; }
   _renewalGraphPeriod = _itemGraphPeriod;
   const byDate = itemDailyData[code] || {};
   const metric = document.getElementById('itemGraphMetric')?.value || 'all';
@@ -4884,8 +4886,8 @@ function renderItemGraph() {
     tooltipLabel=ctx=>{const ds=ctx.dataset;const rr=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(rr):rr;return ' '+ds.label+': '+rs+'\uff08'+ctx.raw+'%\uff09';};
   } else if (metric==='roas'||metric==='cvr'||metric==='ctr') {
     const tri=_renewalTripleValues(metric,labels,dataMap);
-    const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:'#fbbf24'},{key:'kw',label:'ROAS-KW',color:'#f59e0b'},{key:'p20',label:'ROAS20',color:'#38bdf8'}]:(metric==='ctr')?[{key:'kw',label:'CTR-KW',color:'#34d399'}]:[{key:'all',label:'CVR\u5168\u4f53',color:'#a78bfa'},{key:'kw',label:'CVR(KW)',color:'#f59e0b'},{key:'p20',label:'CVR(20\u5186)',color:'#38bdf8'}];
-    datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:v=>v+'%',borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
+    const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:'#fbbf24'},{key:'kw',label:'ROAS-KW',color:'#f59e0b'},{key:'p20',label:'ROAS20',color:'#38bdf8'}]:(metric==='ctr')?[{key:'all',label:'CTR\u5168\u4f53',color:'#34d399',hide:true},{key:'kw',label:'CTR-KW',color:'#f59e0b'},{key:'p20',label:'CTR20',color:'#38bdf8',hide:true}]:[{key:'all',label:'CVR\u5168\u4f53',color:'#a78bfa'},{key:'kw',label:'CVR(KW)',color:'#f59e0b'},{key:'p20',label:'CVR(20\u5186)',color:'#38bdf8'}];
+    datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:v=>v+'%',borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,hidden:!!d.hide}));
     yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+ctx.raw+'%';
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas; const data=_renewalMetricValues(metric,labels,dataMap,code);
@@ -4901,10 +4903,10 @@ function renderItemGraph() {
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
       if (metric==='all'){ series=_renewalOverviewKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
-      else if (metric==='roas'||metric==='cvr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
+      else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
       else { const fmt=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).fmt; const lbl=(metric==='ctr')?'CTR-KW':(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).label; series=[{key:'_single',label:lbl,color:(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color,fmt,vals:_renewalRepValue(metric,labels,dataMap,code)}]; }
       const multi=series.length>1; _renewalAllYearMode=multi; _renewalSeries=series; datasets=[];
-      series.forEach(se=>{ let pv=se.vals; if(normalize){const nz=se.vals.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} pv=se.vals.map(v=>mid>0?Math.round(v/mid*50*10)/10:0);} _years.forEach((fy,yi)=>{ const rec=_years.length-1-yi; const arr=new Array(12).fill(null),arrR=new Array(12).fill(null); labels.forEach((ym,idx)=>{ if(_fyOf(ym)!==fy)return; const fmi=_fmiOf(ym); arr[fmi]=pv[idx]; arrR[fmi]=se.vals[idx]; }); const color=multi?se.color:_RENEWAL_FY_PALETTE[yi%_RENEWAL_FY_PALETTE.length]; datasets.push({label:multi?(se.label+' '+fy):(fy+'\u5e74'),data:arr,_raw:arrR,_fmt:se.fmt,_mk:se.key,_fy:fy,borderColor:color,backgroundColor:color+'22',borderDash:_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length],borderWidth:rec===0?(multi?2.4:2.6):(multi?1.6:1.9),pointRadius:multi?2.5:3,pointHoverRadius:multi?5:6,tension:0.3,fill:false,spanGaps:true,hidden:_renewalHiddenMetric.has(se.key)||_renewalHiddenFY.has(fy)}); }); });
+      series.forEach(se=>{ let pv=se.vals; if(normalize){const nz=se.vals.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} pv=se.vals.map(v=>mid>0?Math.round(v/mid*50*10)/10:0);} _years.forEach((fy,yi)=>{ const rec=_years.length-1-yi; const arr=new Array(12).fill(null),arrR=new Array(12).fill(null); labels.forEach((ym,idx)=>{ if(_fyOf(ym)!==fy)return; const fmi=_fmiOf(ym); arr[fmi]=pv[idx]; arrR[fmi]=se.vals[idx]; }); const color=se.color; datasets.push({label:multi?(se.label+' '+fy):(fy+'\u5e74'),data:arr,_raw:arrR,_fmt:se.fmt,_mk:se.key,_fy:fy,borderColor:color,backgroundColor:color+'22',borderDash:_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length],borderWidth:rec===0?(multi?2.4:2.6):(multi?1.6:1.9),pointRadius:multi?2.5:3,pointHoverRadius:multi?5:6,tension:0.3,fill:false,spanGaps:true,hidden:_renewalHiddenMetric.has(se.key)||_renewalHiddenFY.has(fy)}); }); });
       yCallback=normalize?(v=>v+'%'):(v=>series[0].fmt(v));
       tooltipLabel=ctx=>{const ds=ctx.dataset;const r=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(r):r;return ' '+ds.label+': '+rs;};
     }
@@ -4936,7 +4938,7 @@ function _renderItemYearToggles(years){
   if(!years||!years.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
   wrap.style.display='flex';
   const n=years.length;
-  wrap.innerHTML=years.map((fy,idx)=>{ const rec=n-1-idx; const dash=_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length]; const da=dash.length?dash.join(','):'0'; const on=!_renewalHiddenFY.has(fy); const lc=_renewalAllYearMode?'var(--text2)':_RENEWAL_FY_PALETTE[idx%_RENEWAL_FY_PALETTE.length]; return '<button onclick="_toggleItemFY('+fy+')" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);opacity:'+(on?'1':'0.45')+';text-decoration:'+(on?'none':'line-through')+'"><svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="'+(on?lc:'var(--text3)')+'" stroke-width="2.6" stroke-dasharray="'+da+'"/></svg>'+fy+'\u5e74</button>'; }).join('');
+  wrap.innerHTML=years.map((fy,idx)=>{ const rec=n-1-idx; const dash=_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length]; const da=dash.length?dash.join(','):'0'; const on=!_renewalHiddenFY.has(fy); const lc='var(--text2)'; return '<button onclick="_toggleItemFY('+fy+')" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);opacity:'+(on?'1':'0.45')+';text-decoration:'+(on?'none':'line-through')+'"><svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="'+(on?lc:'var(--text3)')+'" stroke-width="2.6" stroke-dasharray="'+da+'"/></svg>'+fy+'\u5e74</button>'; }).join('');
 }
 function _renderItemRichTable(labels, dataMap, code){
   const wrap=document.getElementById('itemGraphDataTable'); if(!wrap) return;
