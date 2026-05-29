@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.521</span>
+    <span class="build-date">v1.522</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6090,16 +6090,16 @@ function _onRenewalTodoMonthChange(v) {
   _renderCurrentRenewal();
 }
 
-const _RENEWAL_CF_ORDER = ['all','bluered_all','b80','b60','mid','r60','r80','redblue_all'];
+const _RENEWAL_CF_ORDER = ['all','bluered_all','redblue_all','kw80','kw60','kw40','kw20','kw0'];
 const _RENEWAL_CF_INFO = {
   all:         {label:'全表示中',   bg:'#9aa0a6'},
   bluered_all: {label:'青赤全表示', bg:'linear-gradient(90deg,#2b6cb0 50%,#c0392b 50%)'},
-  b80:         {label:'青80～100',  bg:'#2b6cb0'},
-  b60:         {label:'青60-80',    bg:'#6fa8dc'},
-  mid:         {label:'青赤40-60',  bg:'linear-gradient(90deg,#6fa8dc 50%,#e57373 50%)'},
-  r60:         {label:'赤60-80',    bg:'#e57373'},
-  r80:         {label:'赤80-100',   bg:'#c0392b'},
   redblue_all: {label:'赤青全表示', bg:'linear-gradient(90deg,#c0392b 50%,#2b6cb0 50%)'},
+  kw80:        {label:'KW80-100', bg:'#2b6cb0'},
+  kw60:        {label:'KW60-80',  bg:'#6fa8dc'},
+  kw40:        {label:'KW40-60',  bg:'linear-gradient(90deg,#6fa8dc 50%,#e57373 50%)'},
+  kw20:        {label:'KW20-40',  bg:'#e57373'},
+  kw0:         {label:'KW0-20',   bg:'#c0392b'},
 };
 function _renewalColorBtn() {
   const info = _RENEWAL_CF_INFO[_renewalColorFilter] || _RENEWAL_CF_INFO.all;
@@ -6117,11 +6117,11 @@ function _renewalFilterColor(codes) {
     const r = _renewalTodoMetrics(code, _renewalTodoMonth).ratioKw;
     if (r === null || r === undefined) return false;
     if (f === 'bluered_all' || f === 'redblue_all') return true;
-    if (f === 'b80') return r >= 80;
-    if (f === 'b60') return r >= 60 && r < 80;
-    if (f === 'mid') return r >= 40 && r < 60;
-    if (f === 'r60') return r >= 20 && r < 40;
-    if (f === 'r80') return r < 20;
+    if (f === 'kw80') return r >= 80;
+    if (f === 'kw60') return r >= 60 && r < 80;
+    if (f === 'kw40') return r >= 40 && r < 60;
+    if (f === 'kw20') return r >= 20 && r < 40;
+    if (f === 'kw0') return r < 20;
     return true;
   });
 }
