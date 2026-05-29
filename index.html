@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.555</span>
+    <span class="build-date">v1.556</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -673,7 +673,7 @@ header + * { margin-top: 4px; }
               style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
           </div>
           <select id="itemGraphMetric" class="toolbar-month" onchange="renderItemGraph()" style="font-size:13px;padding:6px 12px">
-            <option value="all">全体(全項目)</option>
+            <option value="all">全体（CTR除く）</option>
             <option value="sales">売上(SEO内訳)</option>
             <option value="spend">実績額</option>
             <option value="roas">ROAS</option>
@@ -4878,7 +4878,7 @@ function renderItemGraph() {
 
   let datasets, yCallback, tooltipLabel, chartLabels=displayLabels, yearMode=false, _fyYears=null;
   if (metric === 'all') {
-    const keys=_renewalMetricKeys();
+    const keys=_renewalOverviewKeys();
     datasets = keys.map(k=>{ const meta=_RENEWAL_METRICS[k]; const raw=_renewalMetricValues(k,labels,dataMap,code); const nz=raw.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} const norm=raw.map(v=>mid>0?Math.round(v/mid*50*10)/10:0); return {label:meta.label,data:norm,_raw:raw,_fmt:meta.fmt,borderColor:meta.color,backgroundColor:meta.color+'22',borderWidth:2.2,pointRadius:3,pointHoverRadius:5,tension:0.3,fill:false}; });
     yCallback=v=>v+'%';
     tooltipLabel=ctx=>{const ds=ctx.dataset;const rr=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(rr):rr;return ' '+ds.label+': '+rs+'\uff08'+ctx.raw+'%\uff09';};
@@ -4900,7 +4900,7 @@ function renderItemGraph() {
     if (_years.length){
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
-      if (metric==='all'){ series=_renewalMetricKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
+      if (metric==='all'){ series=_renewalOverviewKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
       else if (metric==='roas'||metric==='cvr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
       else { const fmt=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).fmt; const lbl=(metric==='ctr')?'CTR-KW':(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).label; series=[{key:'_single',label:lbl,color:(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color,fmt,vals:_renewalRepValue(metric,labels,dataMap,code)}]; }
       const multi=series.length>1; _renewalAllYearMode=multi; _renewalSeries=series; datasets=[];
@@ -6498,6 +6498,9 @@ const _RENEWAL_METRICS = {
 function _renewalMetricKeys() {
   return ['roas','cvr','ctr','spend','totsales','orders','cpc'];
 }
+function _renewalOverviewKeys() {
+  return _renewalMetricKeys().filter(k => k !== 'ctr');
+}
 
 // 指定指標の値配列を返す（labels: 集計済みキー配列）
 function _renewalMetricValues(metric, labels, dataMap, code) {
@@ -6635,7 +6638,7 @@ function renderRenewalGraph() {
 
   if (metric === 'all') {
     // 全指標を0〜100%に正規化して重ねる（形状比較用）。実値はrawValueに保持しツールチップで表示
-    const keys = _renewalMetricKeys();
+    const keys = _renewalOverviewKeys();
     datasets = keys.map(k => {
       const meta = _RENEWAL_METRICS[k];
       const raw = _renewalMetricValues(k, labels, dataMap, code);
@@ -6710,7 +6713,7 @@ function renderRenewalGraph() {
       chartLabels = _fmLabels;
       let series, normalize = false;
       if (metric === 'all') {
-        series = _renewalMetricKeys().map(k => ({ key:k, label:_RENEWAL_METRICS[k].label, color:_RENEWAL_METRICS[k].color, fmt:_RENEWAL_METRICS[k].fmt, vals:_renewalMetricValues(k, labels, dataMap, code) }));
+        series = _renewalOverviewKeys().map(k => ({ key:k, label:_RENEWAL_METRICS[k].label, color:_RENEWAL_METRICS[k].color, fmt:_RENEWAL_METRICS[k].fmt, vals:_renewalMetricValues(k, labels, dataMap, code) }));
         normalize = true;
       } else if (metric === 'roas' || metric === 'cvr') {
         const tri = _renewalTripleValues(metric, labels, dataMap);
@@ -9867,7 +9870,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       </div>
       <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
       <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
-        <option value="all">全体(全項目)</option>
+        <option value="all">全体（CTR除く）</option>
         <option value="roas">ROAS</option>
         <option value="cvr">CVR</option>
         <option value="ctr">CTR</option>
