@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.519</span>
+    <span class="build-date">v1.520</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -841,7 +841,7 @@ header + * { margin-top: 4px; }
     <div style="padding:12px 16px">
       <div class="table-card">
         <div class="table-toolbar" style="flex-wrap:wrap;gap:6px">
-          <div id="monthlyItemYmBtns" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center"></div>
+          <div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;margin-right:6px"><span style="color:var(--text3);font-weight:700">配色:</span><span style="color:#1565C0;font-weight:700">上位10%</span><span style="color:#2E7D32;font-weight:700">上位20%</span><span style="color:#1a1a1a">中間</span><span style="color:#BA7517;font-weight:700">下位20%</span><span style="color:#A32D2D;font-weight:700">下位10%</span></div><div id="monthlyItemYmBtns" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center"></div>
           <input type="text" id="monthlyItemSearch" placeholder="商品名・商品管理番号・商品番号で絞り込む..." oninput="renderMonthlyItem()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:280px;outline:none">
           <div class="toolbar-right"></div>
         </div>
@@ -5807,10 +5807,11 @@ function _renewalRowHtml(code, mode) {
       return '#e06666';
     };
     const cKw = band(mt.ratioKw), c20 = band(mt.ratio20);
-    const cell = (v, bg) => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;${bg?'background:'+bg+';color:#111':''}">${fmt(v)}</div>`;
+    const cell = (v, bg, tc) => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;${bg?'background:'+bg+';color:#111':(tc?'color:'+tc+';font-weight:600':'')}">${fmt(v)}</div>`;
     const fmtM = v => (!v || v <= 0) ? dash : fmtY(v);
     const mcell = (v, bg) => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;${bg?'background:'+bg+';color:#111':''}">${fmtM(v)}</div>`;
-    metricCells = mcell(mt.spendAll, '') + mcell(mt.spendKw, '') + mcell(mt.spend20, '') + cell(mt.ratioKw, cKw) + cell(mt.ratio20, c20) + cell(mt.ctrAll, '') + cell(mt.ctrKw, '') + cell(mt.ctr20, '') + cell(mt.cvrAll, '') + cell(mt.cvrKw, '') + cell(mt.cvr20, '') + cell(mt.roasAll, '') + cell(mt.roasKw, '') + cell(mt.roas20, '');
+    const rk = (k, v) => _renewalRank5(v, _renewalRankCtx[k] || []);
+    metricCells = mcell(mt.spendAll, '') + mcell(mt.spendKw, '') + mcell(mt.spend20, '') + cell(mt.ratioKw, cKw) + cell(mt.ratio20, c20) + cell(mt.ctrAll, '', rk('ctrAll', mt.ctrAll)) + cell(mt.ctrKw, '', rk('ctrKw', mt.ctrKw)) + cell(mt.ctr20, '', rk('ctr20', mt.ctr20)) + cell(mt.cvrAll, '', rk('cvrAll', mt.cvrAll)) + cell(mt.cvrKw, '', rk('cvrKw', mt.cvrKw)) + cell(mt.cvr20, '', rk('cvr20', mt.cvr20)) + cell(mt.roasAll, '', rk('roasAll', mt.roasAll)) + cell(mt.roasKw, '', rk('roasKw', mt.roasKw)) + cell(mt.roas20, '', rk('roas20', mt.roas20));
   }
   const hasLp = logs.some(l => l.type === 'lp' || l.type === 'both');
   const hasThumb = logs.some(l => l.type === 'thumb' || l.type === 'both');
@@ -5870,6 +5871,7 @@ function _renewalHeaderHtml(mode) {
 let _renewalTodoMonth = '';
 let _renewalTodoHideEmpty = false;
 let _renewalColorFilter = 'all';
+let _renewalRankCtx = {};
 
 // 全商品のitemDailyDataに存在する月(YYYY-MM)を新しい順で返す
 function _renewalTodoMonths() {
@@ -5998,6 +6000,27 @@ function _renewalApplySort(codes) {
   }
   return arr;
 }
+function _renewalRank5(val, vals) {
+  if (val === null || val === undefined || !vals || vals.length === 0) return '';
+  const sorted = vals.slice().sort((a,b) => b - a);
+  let idx = sorted.indexOf(val);
+  if (idx < 0) idx = 0;
+  const n = sorted.length;
+  if (idx < Math.ceil(n*0.10)) return '#1565C0';
+  if (idx < Math.ceil(n*0.20)) return '#2E7D32';
+  if (idx >= Math.floor(n*0.90)) return '#A32D2D';
+  if (idx >= Math.floor(n*0.80)) return '#BA7517';
+  return '#1a1a1a';
+}
+function _renewalBuildRankCtx(codes) {
+  const keys = ['ctrAll','ctrKw','ctr20','cvrAll','cvrKw','cvr20','roasAll','roasKw','roas20'];
+  const ctx = {}; keys.forEach(k => ctx[k] = []);
+  codes.forEach(code => {
+    const m = _renewalTodoMetrics(code, _renewalTodoMonth);
+    keys.forEach(k => { const v = m[k]; if (v !== null && v !== undefined) ctx[k].push(v); });
+  });
+  _renewalRankCtx = ctx;
+}
 function _stickRenewalHeader(listId) {
   const list = document.getElementById(listId);
   if (!list) return;
@@ -6033,6 +6056,7 @@ function renderRenewalTodo() {
     inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>';
     return;
   }
+  _renewalBuildRankCtx(codes);
   inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'todo')).join('');
   _stickRenewalHeader('renewal-todo-list');
 }
@@ -6113,6 +6137,7 @@ function renderRenewalDone() {
   codes.sort((a,b) => _renewalRecentSort(a,b));
   codes = _renewalApplySort(codes);
   if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; _stickRenewalHeader('renewal-done-list'); return; }
+  _renewalBuildRankCtx(codes);
   inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'done')).join('');
   _stickRenewalHeader('renewal-done-list');
 }
@@ -6130,6 +6155,7 @@ function renderRenewalLp() {
   codes.sort((a,b) => _renewalRecentSort(a,b));
   codes = _renewalApplySort(codes);
   if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; _stickRenewalHeader('renewal-lp-list'); return; }
+  _renewalBuildRankCtx(codes);
   inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'lp')).join('');
   _stickRenewalHeader('renewal-lp-list');
 }
@@ -6147,6 +6173,7 @@ function renderRenewalThumb() {
   codes.sort((a,b) => _renewalRecentSort(a,b));
   codes = _renewalApplySort(codes);
   if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; _stickRenewalHeader('renewal-thumb-list'); return; }
+  _renewalBuildRankCtx(codes);
   inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'thumb')).join('');
   _stickRenewalHeader('renewal-thumb-list');
 }
