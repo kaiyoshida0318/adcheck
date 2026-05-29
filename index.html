@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.540</span>
+    <span class="build-date">v1.541</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6264,6 +6264,29 @@ let _renewalGraphImgSrc = null;
 let _renewalGraphCode = null;
 let _renewalGraphPeriod = 'monthly';
 let _renewalGraphCollapsed = false;
+let _renewalHiddenFY = new Set();
+const _RENEWAL_FY_PALETTE = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
+function _renewalRepValue(metric, labels, dataMap, code) {
+  if (metric === 'ctr') return _renewalTripleValues('ctr', labels, dataMap).kw;
+  if (metric === 'roas' || metric === 'cvr') return _renewalTripleValues(metric, labels, dataMap).all;
+  return _renewalMetricValues(metric, labels, dataMap, code);
+}
+function _toggleRenewalFY(fy) {
+  fy = +fy;
+  if (_renewalHiddenFY.has(fy)) _renewalHiddenFY.delete(fy); else _renewalHiddenFY.add(fy);
+  renderRenewalGraph();
+}
+function _renderRenewalYearToggles(years) {
+  const wrap = document.getElementById('renewalYearToggles');
+  if (!wrap) return;
+  if (!years || !years.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  wrap.style.display = 'flex';
+  wrap.innerHTML = years.map((fy, idx) => {
+    const color = _RENEWAL_FY_PALETTE[idx % _RENEWAL_FY_PALETTE.length];
+    const on = !_renewalHiddenFY.has(fy);
+    return `<button onclick="_toggleRenewalFY(${fy})" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;cursor:pointer;border:2px solid ${color};background:${on?color:'transparent'};color:${on?'#fff':'var(--text3)'};opacity:${on?'1':'0.5'};text-decoration:${on?'none':'line-through'}">${fy}\u5e74\u5ea6</button>`;
+  }).join('');
+}
 let _renewalChartInstance = null;
 
 function openRenewalGraph(code) {
@@ -6277,6 +6300,7 @@ function openRenewalGraph(code) {
   document.getElementById('renewalGraphSub').textContent = `${num}　|　${code}`;
   _renewalGraphImgSrc = imgSrc;
   _renewalGraphCollapsed = false;
+  _renewalHiddenFY = new Set();
   document.getElementById('renewalGraphImg').innerHTML = imgSrc
     ? `<img loading="lazy" src="${imgSrc}" onclick="_openImgLightbox()" title="クリックで拡大" style="width:40px;height:40px;border-radius:7px;object-fit:cover;border:1px solid var(--border);cursor:zoom-in">`
     : '';
@@ -6513,7 +6537,7 @@ function renderRenewalGraph() {
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const textColor = isDark ? '#a0aec0' : '#718096';
 
-  let datasets, yCallback, tooltipLabel;
+  let datasets, yCallback, tooltipLabel, chartLabels, yearMode = false, _fyYears = null;
 
   if (metric === 'all') {
     // 全指標を0〜100%に正規化して重ねる（形状比較用）。実値はrawValueに保持しツールチップで表示
@@ -6578,15 +6602,49 @@ function renderRenewalGraph() {
     tooltipLabel = ctx => ` ${ctx.dataset.label}: ${meta.fmt(ctx.raw)}`;
   }
 
+  chartLabels = displayLabels;
+  if (_renewalGraphPeriod === 'monthly' && metric !== 'all') {
+    const rep = _renewalRepValue(metric, labels, dataMap, code);
+    const fyData = {};
+    labels.forEach((ym, i) => {
+      const y = +ym.slice(0,4), mo = +ym.slice(5,7);
+      const fy = (mo >= 5) ? y : y - 1;
+      const fmi = (mo >= 5) ? (mo - 5) : (mo + 7);
+      if (!fyData[fy]) fyData[fy] = new Array(12).fill(null);
+      fyData[fy][fmi] = rep[i];
+    });
+    const years = Object.keys(fyData).map(Number).sort((x,z)=>x-z);
+    if (years.length) {
+      yearMode = true;
+      _fyYears = years;
+      const fmt = (_RENEWAL_METRICS[metric] || _RENEWAL_METRICS.roas).fmt;
+      chartLabels = ['5\u6708','6\u6708','7\u6708','8\u6708','9\u6708','10\u6708','11\u6708','12\u6708','1\u6708','2\u6708','3\u6708','4\u6708'];
+      datasets = years.map((fy, idx) => {
+        const color = _RENEWAL_FY_PALETTE[idx % _RENEWAL_FY_PALETTE.length];
+        return {
+          label: fy + '\u5e74\u5ea6',
+          data: fyData[fy],
+          _fmt: fmt,
+          borderColor: color,
+          backgroundColor: color + '22',
+          borderWidth: 2.3, pointRadius: 3, pointHoverRadius: 6, tension: 0.3, fill: false,
+          spanGaps: true,
+          hidden: _renewalHiddenFY.has(fy),
+        };
+      });
+      yCallback = v => fmt(v);
+      tooltipLabel = ctx => ` ${ctx.dataset.label}: ${ctx.dataset._fmt ? ctx.dataset._fmt(ctx.raw) : ctx.raw}`;
+    }
+  }
   _renewalChartInstance = new Chart(canvas, {
     type: 'line',
-    data: { labels: displayLabels, datasets },
+    data: { labels: chartLabels, datasets },
     options: {
       animation: false, responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
-          display: metric !== 'all', position: 'top',
+          display: !yearMode && metric !== 'all', position: 'top',
           labels: { color: textColor, font: { size: 12 }, usePointStyle: true }
         },
         tooltip: { callbacks: { label: tooltipLabel } }
@@ -6599,13 +6657,14 @@ function renderRenewalGraph() {
   });
 
   // 変更記録の起点を縦線で描画（_renewalGraphPeriodに合わせてラベル形式を合わせる）
-  _drawRenewalChangeLines(_renewalChartInstance, labels, code);
+  if (!yearMode) _drawRenewalChangeLines(_renewalChartInstance, labels, code);
 
   // グラフ下のデータ表も描画（同じlabels/dataMapを使う）
   _renderRenewalTable(labels, dataMap, code);
 
   // 「全体」モードのときだけ指標ON/OFFボタンを表示
   _renderRenewalToggles(metric === 'all');
+  _renderRenewalYearToggles(yearMode ? _fyYears : null);
   _applyRenewalGraphCollapse();
 }
 
@@ -9632,6 +9691,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     <div id="renewalMetricToggles" style="display:none;padding:0 24px 6px;flex-wrap:wrap;gap:6px"></div>
     <div style="padding:8px 24px 20px;flex:1;min-height:0;display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;align-items:stretch;overflow:hidden">
       <div id="renewalGraphArea" style="position:relative;flex:1 1 420px;min-width:340px;min-height:320px">
+        <div id="renewalYearToggles" style="position:absolute;top:4px;right:4px;z-index:5;display:none;flex-wrap:wrap;gap:5px;justify-content:flex-end;max-width:72%"></div>
         <canvas id="renewalGraphCanvas"></canvas>
       </div>
       <div id="renewalGraphEmpty" style="display:none;text-align:center;padding:50px;color:var(--text3);font-size:13px">この商品のデータがありません。</div>
