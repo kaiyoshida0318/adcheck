@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.504</span>
+    <span class="build-date">v1.505</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5819,18 +5819,18 @@ function _renewalHeaderHtml(mode) {
   if (mode === 'todo') {
     const colW = '90px 76px 40px minmax(0,1.2fr) 64px 64px 64px 64px 64px 64px minmax(0,1fr) 110px';
     return `<div class="col-header" style="grid-template-columns:${colW}">
-      <div class="ch">商品番号</div>
-      <div class="ch">商品管理番号</div>
-      <div class="ch" style="text-align:center">画像</div>
-      <div class="ch">商品</div>
-      <div class="ch" style="text-align:right">CTR全体</div>
-      <div class="ch" style="text-align:right">CTR-KW</div>
-      <div class="ch" style="text-align:right">CTR-20</div>
-      <div class="ch" style="text-align:right">CVR全体</div>
-      <div class="ch" style="text-align:right">CVR-KW</div>
-      <div class="ch" style="text-align:right">CVR-20</div>
-      <div class="ch" style="border-left:1px solid var(--border)">変更記録</div>
-      <div class="ch" style="text-align:center">操作</div>
+      <div class="ch" style="background:#f1f3f4">商品番号</div>
+      <div class="ch" style="background:#f1f3f4">商品管理番号</div>
+      <div class="ch" style="background:#f1f3f4;text-align:center">画像</div>
+      <div class="ch" style="background:#f1f3f4">商品</div>
+      <div class="ch" style="background:#e8f0fe;text-align:right">CTR全体</div>
+      <div class="ch" style="background:#e8f0fe;text-align:right">CTR-KW</div>
+      <div class="ch" style="background:#e8f0fe;text-align:right">CTR-20</div>
+      <div class="ch" style="background:#e6f4ea;text-align:right">CVR全体</div>
+      <div class="ch" style="background:#e6f4ea;text-align:right">CVR-KW</div>
+      <div class="ch" style="background:#e6f4ea;text-align:right">CVR-20</div>
+      <div class="ch" style="background:#fce8e6;border-left:1px solid var(--border)">変更記録</div>
+      <div class="ch" style="background:#fce8e6;text-align:center">操作</div>
     </div>`;
   }
   const colW = '90px 76px 40px minmax(0,1fr) minmax(0,1.4fr) 120px';
