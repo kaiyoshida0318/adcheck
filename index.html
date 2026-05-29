@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.527</span>
+    <span class="build-date">v1.528</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6030,12 +6030,19 @@ function _renewalBuildRankCtx(codes) {
 function _stickRenewalHeader(listId) {
   const list = document.getElementById(listId);
   if (!list || list.offsetParent === null) return;
+  list.style.overscrollBehavior = 'contain';
   const tb = list.querySelector('.table-toolbar');
   const ch = list.querySelector('.col-header');
   if (tb && ch && tb.offsetHeight) ch.style.top = tb.offsetHeight + 'px';
-  const absTop = list.getBoundingClientRect().top + window.scrollY;
-  const h = window.innerHeight - absTop - 16;
-  if (h > 220) list.style.maxHeight = h + 'px';
+  const apply = () => {
+    if (!list || list.offsetParent === null) return;
+    const rectTop = list.getBoundingClientRect().top;
+    const avail = Math.floor(window.innerHeight - rectTop - 20);
+    if (avail > 220) list.style.maxHeight = Math.min(avail, window.innerHeight - 20) + 'px';
+    const inner = list.querySelector('[id$="-inner"]');
+    if (inner) inner.style.paddingBottom = '28px';
+  };
+  requestAnimationFrame(() => requestAnimationFrame(apply));
 }
 window.addEventListener('resize', () => {
   ['renewal-todo-list','renewal-done-list','renewal-lp-list','renewal-thumb-list'].forEach(_stickRenewalHeader);
