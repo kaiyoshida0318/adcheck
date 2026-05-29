@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.511</span>
+    <span class="build-date">v1.512</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5777,7 +5777,7 @@ function _renewalRowHtml(code, mode) {
   const logCount = logs.length;
   // 変更記録プレビュー（最新3件）
   const logPreview = logs.slice(-3).reverse().map(l =>
-    `<div style="font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:var(--accent);font-family:'DM Mono',monospace">${l.date||'—'}</span> ${l.note||''}</div>`
+    `<div style="font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:var(--accent);font-family:'DM Mono',monospace">${l.date||'—'}</span>${_renewalTypeChip(l.type)} ${l.note||''}</div>`
   ).join('') || '<span style="color:var(--text3);font-size:11px">記録なし</span>';
 
   const imgClick = `onclick="event.stopPropagation();openRenewalGraph('${code}')"`;
@@ -5915,6 +5915,12 @@ function _renewalFilterEmpty(codes) {
     const empty = (!m.spendAll && m.ctrAll===null && m.ctrKw===null && m.ctr20===null && m.cvrAll===null && m.cvrKw===null && m.cvr20===null);
     return _renewalTodoHideEmpty ? empty : !empty;
   });
+}
+function _renewalTypeChip(t) {
+  if (t === 'lp') return ' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#e8f0fe;color:#1a73e8">LP変更</span>';
+  if (t === 'thumb') return ' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#fff3e0;color:#e8710a">サムネ変更</span>';
+  if (t === 'both') return ' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#f3ecfb;color:#8e44ad">両方変更</span>';
+  return '';
 }
 function _stickRenewalHeader(listId) {
   const list = document.getElementById(listId);
