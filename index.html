@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.530</span>
+    <span class="build-date">v1.531</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6047,6 +6047,23 @@ function _stickRenewalHeader(listId) {
 window.addEventListener('resize', () => {
   ['renewal-todo-list','renewal-done-list','renewal-lp-list','renewal-thumb-list'].forEach(_stickRenewalHeader);
 });
+
+// renewal: wheel anywhere scrolls the product list (headers/toolbars stay fixed)
+(function(){
+  const RENEWAL_PANELS = ['tab-renewal-todo','tab-renewal-done','tab-renewal-lp','tab-renewal-thumb'];
+  document.addEventListener('wheel', function(e){
+    const active = RENEWAL_PANELS.map(id => document.getElementById(id)).find(pn => pn && pn.offsetParent !== null);
+    if (!active) return;
+    const list = active.querySelector('[id^="renewal-"][id$="-list"]');
+    if (!list) return;
+    if (list.contains(e.target)) return;
+    let dy = e.deltaY;
+    if (e.deltaMode === 1) dy *= 16;
+    else if (e.deltaMode === 2) dy *= list.clientHeight;
+    list.scrollTop += dy;
+    e.preventDefault();
+  }, { passive: false });
+})();
 
 function renderRenewalTodo() {
   const inner = document.getElementById('renewal-todo-inner');
