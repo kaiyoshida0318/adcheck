@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.525</span>
+    <span class="build-date">v1.526</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2466,6 +2466,35 @@ function handleFiles(e) {
   setTimeout(() => { e.target.value = ''; }, 100);
 }
 
+async function _expandBundleFiles(filesArr) {
+  // 親ﾚﾝｷ ZIP（名前に rpp_ も _item_saleslist も含まない .zip = マトメzip）を展開して中身を個別ファイル化
+  const out = [];
+  for (const f of filesArr) {
+    const fname = f.name.toLowerCase();
+    if (fname.endsWith('.zip') && !fname.includes('rpp_') && !fname.includes('_item_saleslist')) {
+      try {
+        const buf = await f.arrayBuffer();
+        const zip = await JSZip.loadAsync(buf);
+        for (const [entryName, entry] of Object.entries(zip.files)) {
+          if (entry.dir) continue;
+          const baseName = entryName.split('/').pop();
+          if (!baseName || baseName.startsWith('.') || baseName.startsWith('__MACOSX')) continue;
+          const lower = baseName.toLowerCase();
+          if (!(lower.endsWith('.zip') || lower.endsWith('.csv'))) continue;
+          const blob = await entry.async('blob');
+          out.push(new File([blob], baseName, { type: blob.type }));
+        }
+      } catch(e) {
+        console.error('[ADcheck] 親ﾚZIP展開失敗:', e);
+        out.push(f);
+      }
+    } else {
+      out.push(f);
+    }
+  }
+  return out;
+}
+
 async function readFiles(files) {
   if (!files || files.length === 0) return;
   console.log('[ADcheck] readFiles START: count=', files.length, 'names=', Array.from(files).map(f=>f.name));
@@ -2482,30 +2511,7 @@ async function readFiles(files) {
     const _salesListResults = []; // { name, date, hasOrdersCol, rowCount, error }
 
     // フォルダZIP（中にrpp_等のファイルが入っているZIP）を展開してフラット化
-    const expandedFiles = [];
-    for (const f of Array.from(files)) {
-      const fname = f.name.toLowerCase();
-      if (fname.endsWith('.zip') && !fname.includes('rpp_') && !fname.includes('_item_saleslist')) {
-        // フォルダZIPとして展開
-        try {
-          const buf = await f.arrayBuffer();
-          const zip = await JSZip.loadAsync(buf);
-          for (const [entryName, entry] of Object.entries(zip.files)) {
-            if (entry.dir) continue;
-            const baseName = entryName.split('/').pop(); // フォルダ部分を除去
-            if (!baseName) continue;
-            const blob = await entry.async('blob');
-            const virtualFile = new File([blob], baseName, { type: blob.type });
-            expandedFiles.push(virtualFile);
-          }
-        } catch(e) {
-          console.error('[ADcheck] フォルダZIP展開エラー:', e);
-          expandedFiles.push(f); // 展開失敗時はそのまま
-        }
-      } else {
-        expandedFiles.push(f);
-      }
-    }
+    const expandedFiles = await _expandBundleFiles(Array.from(files));
 
     const _totalFiles = expandedFiles.length;
     let _curFile = 0;
@@ -7972,6 +7978,7 @@ function _stageFiles(files) {
 
 async function runDropZoneCheck() {
   if (!_stagedFiles) return;
+  _stagedFiles = await _expandBundleFiles(Array.from(_stagedFiles));
   const btn = document.getElementById('dropZoneCheckBtn');
   btn.disabled = true; btn.textContent = '🔍 チェック中...';
   const result = document.getElementById('dropZoneCheckResult');
