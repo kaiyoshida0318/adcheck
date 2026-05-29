@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.516</span>
+    <span class="build-date">v1.517</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6025,7 +6025,7 @@ function _buildRenewalTodoMonthSelect(tabSel) {
     const lbl = m.slice(0,4) + '/' + m.slice(5,7);
     return `<option value="${m}"${m===_renewalTodoMonth?' selected':''}>${lbl}</option>`;
   }).join('');
-  wrap.innerHTML = `<button onclick="_cycleRenewalColorFilter()" style="font-size:12px;font-weight:700;padding:6px 16px;border:none;border-radius:999px;cursor:pointer;margin-right:10px;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.15);background:${_renewalColorFilter==='blue'?'linear-gradient(90deg,#6fa8dc,#e06666)':_renewalColorFilter==='red'?'linear-gradient(90deg,#e06666,#6fa8dc)':'#9aa0a6'}">${_renewalColorFilter==='blue'?'青赤表示中':_renewalColorFilter==='red'?'赤青表示中':'全表示中'}</button><button onclick="_toggleRenewalTodoEmpty()" style="font-size:12px;font-weight:700;padding:6px 16px;border:none;border-radius:999px;cursor:pointer;margin-right:10px;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.15);background:${_renewalTodoHideEmpty?'#9aa0a6':'#34a853'}">${_renewalTodoHideEmpty?'広告未出稿分':'広告出稿分'}</button><label style="font-size:11px;color:var(--text3);margin-right:6px">表示月</label>`
+  wrap.innerHTML = `<button onclick="_cycleRenewalColorFilter()" style="font-size:12px;font-weight:700;padding:6px 16px;border:none;border-radius:999px;cursor:pointer;margin-right:10px;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.15);background:${_renewalColorFilter==='blue'?'linear-gradient(90deg,#6fa8dc 50%,#e06666 50%)':_renewalColorFilter==='red'?'linear-gradient(90deg,#e06666 50%,#6fa8dc 50%)':'#9aa0a6'}">${_renewalColorFilter==='blue'?'青赤表示中':_renewalColorFilter==='red'?'赤青表示中':'全表示中'}</button><button onclick="_toggleRenewalTodoEmpty()" style="font-size:12px;font-weight:700;padding:6px 16px;border:none;border-radius:999px;cursor:pointer;margin-right:10px;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.15);background:${_renewalTodoHideEmpty?'#9aa0a6':'#34a853'}">${_renewalTodoHideEmpty?'広告未出稿分':'広告出稿分'}</button><label style="font-size:11px;color:var(--text3);margin-right:6px">表示月</label>`
     + `<select id="renewalTodoMonth" onchange="_onRenewalTodoMonthChange(this.value)" style="font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">`
     + (opts || '<option value="">データなし</option>')
     + `</select>`;
