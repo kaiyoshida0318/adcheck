@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.537</span>
+    <span class="build-date">v1.538</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6263,6 +6263,7 @@ function _updateRenewalCounts() {
 let _renewalGraphImgSrc = null;
 let _renewalGraphCode = null;
 let _renewalGraphPeriod = 'monthly';
+let _renewalGraphCollapsed = false;
 let _renewalChartInstance = null;
 
 function openRenewalGraph(code) {
@@ -6275,6 +6276,7 @@ function openRenewalGraph(code) {
   document.getElementById('renewalGraphName').textContent = name;
   document.getElementById('renewalGraphSub').textContent = `${num}　|　${code}`;
   _renewalGraphImgSrc = imgSrc;
+  _renewalGraphCollapsed = false;
   document.getElementById('renewalGraphImg').innerHTML = imgSrc
     ? `<img loading="lazy" src="${imgSrc}" onclick="_openImgLightbox()" title="クリックで拡大" style="width:40px;height:40px;border-radius:7px;object-fit:cover;border:1px solid var(--border);cursor:zoom-in">`
     : '';
@@ -6301,6 +6303,20 @@ function _openImgLightbox(src) {
 function _closeImgLightbox() {
   const box = document.getElementById('imgLightbox');
   if (box) box.style.display = 'none';
+}
+function _toggleRenewalGraphCollapse() {
+  _renewalGraphCollapsed = !_renewalGraphCollapsed;
+  _applyRenewalGraphCollapse();
+}
+function _applyRenewalGraphCollapse() {
+  const area = document.getElementById('renewalGraphArea');
+  const empty = document.getElementById('renewalGraphEmpty');
+  const toggles = document.getElementById('renewalMetricToggles');
+  const btn = document.getElementById('renewalGraphCollapseBtn');
+  const collapsed = _renewalGraphCollapsed;
+  if (area) area.style.display = collapsed ? 'none' : 'block';
+  if (collapsed) { if (empty) empty.style.display = 'none'; if (toggles) toggles.style.display = 'none'; }
+  if (btn) btn.textContent = collapsed ? 'グラフを表示' : 'グラフを隠す';
 }
 function closeRenewalGraph() {
   document.getElementById('renewalGraphModal').style.display = 'none';
@@ -6590,6 +6606,7 @@ function renderRenewalGraph() {
 
   // 「全体」モードのときだけ指標ON/OFFボタンを表示
   _renderRenewalToggles(metric === 'all');
+  _applyRenewalGraphCollapse();
 }
 
 // 指標ON/OFFボタンを描画（全体モード専用）
@@ -9608,12 +9625,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         <option value="orders">個数(売上件数)</option>
         <option value="cpc">平均単価</option>
       </select>
+      <button id="renewalGraphCollapseBtn" onclick="_toggleRenewalGraphCollapse()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">グラフを隠す</button>
       <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較 ／ 平均単価 = 売上 ÷ 売上件数</span>
     </div>
     <!-- 全体モード時の指標ON/OFFボタン -->
     <div id="renewalMetricToggles" style="display:none;padding:0 24px 6px;flex-wrap:wrap;gap:6px"></div>
     <div style="padding:8px 24px 20px;flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">
-      <div style="position:relative;height:360px;flex-shrink:0">
+      <div id="renewalGraphArea" style="position:relative;height:360px;flex-shrink:0">
         <canvas id="renewalGraphCanvas"></canvas>
       </div>
       <div id="renewalGraphEmpty" style="display:none;text-align:center;padding:50px;color:var(--text3);font-size:13px">この商品のデータがありません。</div>
