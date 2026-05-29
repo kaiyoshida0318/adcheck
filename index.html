@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.550</span>
+    <span class="build-date">v1.551</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -711,6 +711,10 @@ header + * { margin-top: 4px; }
               style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
             <button id="graphPeriodDaily" onclick="setGraphPeriod('daily')"
               style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">日別</button>
+          </div>
+          <div id="graphFYStartBtns" style="display:flex;gap:4px">
+            <button id="graphFYStartCal" onclick="setGraphFYStart(1)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button>
+            <button id="graphFYStartFiscal" onclick="setGraphFYStart(5)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">5月始まり</button>
           </div>
           <select id="graphMetricSel" class="toolbar-month" onchange="renderGraph()" style="font-size:13px;padding:6px 12px">
             <option value="sales">売上（総売上/SEO/広告）</option>
@@ -5033,6 +5037,17 @@ let _graphHiddenSeries = new Set();
 let _graphYears = [];
 let _graphYearSeries = [];
 let _graphYearMode = false;
+let _graphFYStart = 1;
+function setGraphFYStart(m){ _graphFYStart=+m; _setGraphFYStartUI(_graphFYStart); renderGraph(); }
+function _setGraphFYStartUI(m){
+  const cal=document.getElementById('graphFYStartCal'), fis=document.getElementById('graphFYStartFiscal');
+  if(!cal||!fis) return;
+  const base='font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;';
+  const on='border:1px solid #f97316;background:#f97316;color:#fff;';
+  const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
+  cal.style.cssText=base+(m===1?on:off);
+  fis.style.cssText=base+(m===5?on:off);
+}
 function _toggleGraphFY(fy){ fy=+fy; if(_graphHiddenFY.has(fy)) _graphHiddenFY.delete(fy); else _graphHiddenFY.add(fy); renderGraph(); }
 function _toggleGraphSeries(lb){ if(_graphHiddenSeries.has(lb)) _graphHiddenSeries.delete(lb); else _graphHiddenSeries.add(lb); renderGraph(); }
 function _renderGraphYearToggles(years){
@@ -5047,7 +5062,7 @@ function _renderGraphYearToggles(years){
     const da=dash.length?dash.join(','):'0';
     const on=!_graphHiddenFY.has(fy);
     const lc= multi ? 'var(--text2)' : _RENEWAL_FY_PALETTE[idx % _RENEWAL_FY_PALETTE.length];
-    return `<button onclick="_toggleGraphFY(${fy})" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);opacity:${on?'1':'0.45'};text-decoration:${on?'none':'line-through'}"><svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="${on?lc:'var(--text3)'}" stroke-width="2.6" stroke-dasharray="${da}"/></svg>${fy}年</button>`;
+    return `<button onclick="_toggleGraphFY(${fy})" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);opacity:${on?'1':'0.45'};text-decoration:${on?'none':'line-through'}"><svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="${on?lc:'var(--text3)'}" stroke-width="2.6" stroke-dasharray="${da}"/></svg>${fy}${((_graphFYStart||1)===1)?'年':'年度'}</button>`;
   }).join('');
 }
 function _renderGraphSeriesToggles(series){
@@ -5068,11 +5083,13 @@ function _yearifyGraph(chart, labels){
   if(_graphPeriod!=='monthly'||!chart||!chart.data||!Array.isArray(labels)||!labels.length){ if(yt){yt.style.display='none';yt.innerHTML='';} return; }
   const parsed=labels.map(parse);
   if(parsed.some(x=>!x)){ if(yt){yt.style.display='none';yt.innerHTML='';} return; }
-  const years=[...new Set(parsed.map(x=>x.y))].sort((a,b)=>a-b);
+  const so=((_graphFYStart||1)-1);
+  parsed.forEach(x=>{ x.fi=(x.mi-so+12)%12; x.fy=(x.mi>=so)?x.y:x.y-1; });
+  const years=[...new Set(parsed.map(x=>x.fy))].sort((a,b)=>a-b);
   const orig=chart.data.datasets||[];
   if(!orig.length){ if(yt){yt.style.display='none';yt.innerHTML='';} return; }
   _graphYearMode=true; _graphYears=years; _graphYearSeries=orig.map(d=>d.label);
-  const monthLabels=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const monthLabels=Array.from({length:12},(_,k)=>(((so+k)%12)+1)+'月');
   const multi=orig.length>1;
   const newDs=[];
   orig.forEach(ds=>{
@@ -5080,9 +5097,9 @@ function _yearifyGraph(chart, labels){
     years.forEach((yr,yi)=>{
       const rec=years.length-1-yi;
       const arr=new Array(12).fill(null);
-      parsed.forEach((x,idx)=>{ if(x.y!==yr) return; arr[x.mi]=ds.data[idx]; });
+      parsed.forEach((x,idx)=>{ if(x.fy!==yr) return; arr[x.fi]=ds.data[idx]; });
       const color=multi?(ds.borderColor||'#888'):_RENEWAL_FY_PALETTE[yi % _RENEWAL_FY_PALETTE.length];
-      newDs.push({ label: multi?(ds.label+' '+yr):(yr+'年'), data: arr, borderColor: color, backgroundColor: color+'22', borderDash:_RENEWAL_FY_DASH[rec % _RENEWAL_FY_DASH.length], borderWidth: rec===0?2.6:1.8, pointRadius:3, pointHoverRadius:6, tension:0.3, fill:false, spanGaps:true, hidden:_graphHiddenFY.has(yr)||seriesHidden });
+      newDs.push({ label: multi?(ds.label+' '+yr):(yr+(so===0?'年':'年度')), data: arr, borderColor: color, backgroundColor: color+'22', borderDash:_RENEWAL_FY_DASH[rec % _RENEWAL_FY_DASH.length], borderWidth: rec===0?2.6:1.8, pointRadius:3, pointHoverRadius:6, tension:0.3, fill:false, spanGaps:true, hidden:_graphHiddenFY.has(yr)||seriesHidden });
     });
   });
   chart.data.labels=monthLabels;
