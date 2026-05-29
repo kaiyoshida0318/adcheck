@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.560</span>
+    <span class="build-date">v1.561</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4912,8 +4912,8 @@ function renderItemGraph() {
   _renderItemRichTable(labels, dataMap, code);
 }
 
-function _itemSalesArrays(labels, dataMap, code){
-  const getTot=(l)=>salesRows.filter(r=>r.itemCode===code && (_itemGraphPeriod==='daily'? r.date===l : r.ym===l.replace('-',''))).reduce((s,r)=>s+(r.sales||0),0);
+function _prodSalesArrays(labels, dataMap, code, daily){
+  const getTot=(l)=>salesRows.filter(r=>r.itemCode===code && (daily? r.date===l : r.ym===l.replace('-',''))).reduce((s,r)=>s+(r.sales||0),0);
   const tot=labels.map(getTot);
   const rpp=labels.map(l=>dataMap[l]?.sales||0);
   const kw=labels.map(l=>dataMap[l]?.salesKw||0);
@@ -4921,6 +4921,7 @@ function _itemSalesArrays(labels, dataMap, code){
   const seo=labels.map((l,i)=>Math.max(0,tot[i]-rpp[i]));
   return {tot,seo,kw,p20};
 }
+function _itemSalesArrays(labels, dataMap, code){ return _prodSalesArrays(labels, dataMap, code, _itemGraphPeriod==='daily'); }
 const _ITEM_SALES_DEFS=[{key:'tot',label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8'},{key:'seo',label:'SEO\u58f2\u4e0a',color:'#7c3aed'},{key:'kw',label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa'},{key:'p20',label:'20\u5186\u58f2\u4e0a',color:'#f97316'}];
 function _itemTriple(labels, dataMap, kAll, kKw){ const all=labels.map(l=>dataMap[l]?.[kAll]||0); const kw=labels.map(l=>dataMap[l]?.[kKw]||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i])); return {all,kw,p20}; }
 function _toggleItemFY(fy){ fy=+fy; if(_renewalHiddenFY.has(fy)) _renewalHiddenFY.delete(fy); else _renewalHiddenFY.add(fy); renderItemGraph(); }
@@ -6395,11 +6396,13 @@ function _renderRenewalYearToggles(years) {
     const dash = _RENEWAL_FY_DASH[rec % _RENEWAL_FY_DASH.length];
     const da = dash.length ? dash.join(',') : '0';
     const on = !_renewalHiddenFY.has(fy);
-    const lc = _renewalAllYearMode ? 'var(--text2)' : _RENEWAL_FY_PALETTE[idx % _RENEWAL_FY_PALETTE.length];
+    const lc = 'var(--text2)';
     return `<button onclick="_toggleRenewalFY(${fy})" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);opacity:${on?'1':'0.45'};text-decoration:${on?'none':'line-through'}"><svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="${on?lc:'var(--text3)'}" stroke-width="2.6" stroke-dasharray="${da}"/></svg>${fy}年</button>`;
   }).join('');
 }
 let _renewalChartInstance = null;
+let _renewalGraphLastMetric = null;
+let _renewalGraphLastCode = null;
 
 function openRenewalGraph(code) {
   _renewalHiddenFY.clear(); _renewalHiddenMetric.clear();
@@ -6615,6 +6618,7 @@ function renderRenewalGraph() {
   const code = _renewalGraphCode;
   const byDate = itemDailyData[code] || {};
   const metric = document.getElementById('renewalGraphMetric')?.value || 'all';
+  if (metric !== _renewalGraphLastMetric || code !== _renewalGraphLastCode) { _renewalHiddenFY.clear(); _renewalHiddenMetric = (metric==='ctr') ? new Set(['all','p20']) : new Set(); _renewalGraphLastMetric = metric; _renewalGraphLastCode = code; }
 
   // 期間ごとに集計
   let labels = [], dataMap = {};
@@ -6658,162 +6662,56 @@ function renderRenewalGraph() {
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const textColor = isDark ? '#a0aec0' : '#718096';
 
-  let datasets, yCallback, tooltipLabel, chartLabels, yearMode = false, _fyYears = null;
-
+  let datasets, yCallback, tooltipLabel, chartLabels=displayLabels, yearMode=false, _fyYears=null;
   if (metric === 'all') {
-    // 全指標を0〜100%に正規化して重ねる（形状比較用）。実値はrawValueに保持しツールチップで表示
-    const keys = _renewalOverviewKeys();
-    datasets = keys.map(k => {
-      const meta = _RENEWAL_METRICS[k];
-      const raw = _renewalMetricValues(k, labels, dataMap, code);
-      // 各指標の中央値（真ん中の数字）を50%に合わせて正規化（形状比較用）
-      const _nz = raw.filter(v => v > 0).slice().sort((a,b) => a - b);
-      let _mid = 0;
-      if (_nz.length) { const _m = Math.floor(_nz.length/2); _mid = _nz.length % 2 ? _nz[_m] : (_nz[_m-1] + _nz[_m]) / 2; }
-      const norm = raw.map(v => _mid > 0 ? Math.round(v / _mid * 50 * 10) / 10 : 0);
-      return {
-        label: meta.label,
-        data: norm,
-        _raw: raw,
-        _fmt: meta.fmt,
-        borderColor: meta.color,
-        backgroundColor: meta.color + '22',
-        borderWidth: 2.2, pointRadius: 3, pointHoverRadius: 5, tension: 0.3, fill: false,
-      };
-    });
-    yCallback = v => v + '%';
-    tooltipLabel = ctx => {
-      const ds = ctx.dataset;
-      const realRaw = ds._raw ? ds._raw[ctx.dataIndex] : ctx.raw;
-      const realStr = ds._fmt ? ds._fmt(realRaw) : realRaw;
-      return ` ${ds.label}: ${realStr}（${ctx.raw}%）`;
-    };
-  } else if (metric === 'roas' || metric === 'cvr' || metric === 'ctr') {
-    // CVR/CTR: overall / KW / 20yen(non-KW) = 3 lines
-    const triples = _renewalTripleValues(metric, labels, dataMap);
-    const defs = (metric === 'roas') ? [
-      { key:'all', label:'ROAS\u5168\u4f53', color:'#fbbf24' },
-      { key:'kw',  label:'ROAS-KW',           color:'#f59e0b' },
-      { key:'p20', label:'ROAS20',            color:'#38bdf8' },
-    ] : (metric === 'ctr') ? [
-      { key:'kw', label:'CTR-KW', color:'#34d399' },
-    ] : [
-      { key:'all', label:(metric==='cvr'?'CVR\u5168\u4f53':'CTR\u5168\u4f53'), color:(metric==='cvr'?'#a78bfa':'#34d399') },
-      { key:'kw',  label:(metric==='cvr'?'CVR(KW)':'CTR(KW)'),                 color:'#f59e0b' },
-      { key:'p20', label:(metric==='cvr'?'CVR(20\u5186)':'CTR(20\u5186)'),    color:'#38bdf8' },
-    ];
-    datasets = defs.map(def => ({
-      label: def.label,
-      data: triples[def.key],
-      _fmt: v => v + '%',
-      borderColor: def.color, backgroundColor: def.color + '22',
-      borderWidth: 2.3, pointRadius: 3, pointHoverRadius: 6, tension: 0.3, fill: false,
-    }));
-    yCallback = v => v + '%';
-    tooltipLabel = ctx => ` ${ctx.dataset.label}: ${ctx.raw}%`;
+    const keys=_renewalOverviewKeys();
+    datasets = keys.map(k=>{ const meta=_RENEWAL_METRICS[k]; const raw=_renewalMetricValues(k,labels,dataMap,code); const nz=raw.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} const norm=raw.map(v=>mid>0?Math.round(v/mid*50*10)/10:0); return {label:meta.label,data:norm,_raw:raw,_fmt:meta.fmt,borderColor:meta.color,backgroundColor:meta.color+'22',borderWidth:2.2,pointRadius:3,pointHoverRadius:5,tension:0.3,fill:false}; });
+    yCallback=v=>v+'%';
+    tooltipLabel=ctx=>{const ds=ctx.dataset;const rr=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(rr):rr;return ' '+ds.label+': '+rs+'\uff08'+ctx.raw+'%\uff09';};
+  } else if (metric==='roas'||metric==='cvr'||metric==='ctr') {
+    const tri=_renewalTripleValues(metric,labels,dataMap);
+    const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:'#fbbf24'},{key:'kw',label:'ROAS-KW',color:'#f59e0b'},{key:'p20',label:'ROAS20',color:'#38bdf8'}]:(metric==='ctr')?[{key:'all',label:'CTR\u5168\u4f53',color:'#34d399',hide:true},{key:'kw',label:'CTR-KW',color:'#f59e0b'},{key:'p20',label:'CTR20',color:'#38bdf8',hide:true}]:[{key:'all',label:'CVR\u5168\u4f53',color:'#a78bfa'},{key:'kw',label:'CVR(KW)',color:'#f59e0b'},{key:'p20',label:'CVR(20\u5186)',color:'#38bdf8'}];
+    datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:v=>v+'%',borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,hidden:!!d.hide}));
+    yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+ctx.raw+'%';
+  } else if (metric==='spend'||metric==='orders') {
+    const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa';
+    const defs=[{key:'all',label:un+'\u5168\u4f53',color:base},{key:'kw',label:un+'-KW',color:'#f59e0b'},{key:'p20',label:un+'-20',color:'#38bdf8'}];
+    datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:uf,borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
+    yCallback=uf; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+uf(ctx.raw);
+  } else if (metric === 'sales') {
+    const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const yf=v=>'\u00a5'+Math.round(v).toLocaleString();
+    datasets=_ITEM_SALES_DEFS.map(d=>({label:d.label,data:sa[d.key],_fmt:yf,borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.5,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
+    yCallback=yf; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+yf(ctx.raw);
   } else {
-    const meta = _RENEWAL_METRICS[metric] || _RENEWAL_METRICS.roas;
-    const data = _renewalMetricValues(metric, labels, dataMap, code);
-    datasets = [{
-      label: meta.label, data, _fmt: meta.fmt,
-      borderColor: meta.color, backgroundColor: meta.color + '22',
-      borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, fill: false,
-    }];
-    yCallback = v => meta.fmt(v);
-    tooltipLabel = ctx => ` ${ctx.dataset.label}: ${meta.fmt(ctx.raw)}`;
+    const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas; const data=_renewalMetricValues(metric,labels,dataMap,code);
+    datasets=[{label:meta.label,data,_fmt:meta.fmt,borderColor:meta.color,backgroundColor:meta.color+'22',borderWidth:2.5,pointRadius:4,pointHoverRadius:6,tension:0.3,fill:false}];
+    yCallback=v=>meta.fmt(v); tooltipLabel=ctx=>' '+ctx.dataset.label+': '+meta.fmt(ctx.raw);
   }
-
-  chartLabels = displayLabels;
-  _renewalAllYearMode = false;
-  _renewalSeries = null;
-  if (_renewalGraphPeriod === 'monthly') {
-    const _fyOf  = ym => +ym.slice(0,4);
-    const _fmiOf = ym => +ym.slice(5,7) - 1;
-    const _years = [...new Set(labels.map(_fyOf))].sort((x,z)=>x-z);
-    const _fmLabels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-    if (_years.length) {
-      yearMode = true;
-      _fyYears = _years;
-      chartLabels = _fmLabels;
-      let series, normalize = false;
-      if (metric === 'all') {
-        series = _renewalOverviewKeys().map(k => ({ key:k, label:_RENEWAL_METRICS[k].label, color:_RENEWAL_METRICS[k].color, fmt:_RENEWAL_METRICS[k].fmt, vals:_renewalMetricValues(k, labels, dataMap, code) }));
-        normalize = true;
-      } else if (metric === 'roas' || metric === 'cvr') {
-        const tri = _renewalTripleValues(metric, labels, dataMap);
-        const M = metric.toUpperCase();
-        const base = (_RENEWAL_METRICS[metric] || _RENEWAL_METRICS.roas).color;
-        series = [
-          { key:'all', label:M+'全体', color:base,      fmt:v=>v+'%', vals:tri.all },
-          { key:'kw',  label:M+'-KW',          color:'#f59e0b', fmt:v=>v+'%', vals:tri.kw  },
-          { key:'p20', label:M+'20',           color:'#38bdf8', fmt:v=>v+'%', vals:tri.p20 },
-        ];
-      } else {
-        const fmt = (_RENEWAL_METRICS[metric] || _RENEWAL_METRICS.roas).fmt;
-        const lbl = (metric === 'ctr') ? 'CTR-KW' : (_RENEWAL_METRICS[metric] || _RENEWAL_METRICS.roas).label;
-        series = [{ key:'_single', label:lbl, color:(_RENEWAL_METRICS[metric] || _RENEWAL_METRICS.roas).color, fmt, vals:_renewalRepValue(metric, labels, dataMap, code) }];
-      }
-      const multi = series.length > 1;
-      _renewalAllYearMode = multi;
-      _renewalSeries = series;
-      datasets = [];
-      series.forEach(se => {
-        let pv = se.vals;
-        if (normalize) {
-          const nz = se.vals.filter(v=>v>0).slice().sort((a,b)=>a-b);
-          let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;}
-          pv = se.vals.map(v => mid>0 ? Math.round(v/mid*50*10)/10 : 0);
-        }
-        _years.forEach((fy, yi) => {
-          const rec = _years.length - 1 - yi;
-          const arr = new Array(12).fill(null), arrR = new Array(12).fill(null);
-          labels.forEach((ym, idx) => { if (_fyOf(ym) !== fy) return; const fmi = _fmiOf(ym); arr[fmi] = pv[idx]; arrR[fmi] = se.vals[idx]; });
-          const color = multi ? se.color : _RENEWAL_FY_PALETTE[yi % _RENEWAL_FY_PALETTE.length];
-          datasets.push({
-            label: multi ? (se.label + ' ' + fy) : (fy + '年'),
-            data: arr, _raw: arrR, _fmt: se.fmt, _mk: se.key, _fy: fy,
-            borderColor: color, backgroundColor: color + '22',
-            borderDash: _RENEWAL_FY_DASH[rec % _RENEWAL_FY_DASH.length],
-            borderWidth: rec===0 ? (multi?2.4:2.6) : (multi?1.6:1.9),
-            pointRadius: multi?2.5:3, pointHoverRadius: multi?5:6, tension:0.3, fill:false, spanGaps:true,
-            hidden: _renewalHiddenMetric.has(se.key) || _renewalHiddenFY.has(fy),
-          });
-        });
-      });
-      yCallback = normalize ? (v => v + '%') : (v => series[0].fmt(v));
-      tooltipLabel = ctx => { const ds = ctx.dataset; const r = ds._raw ? ds._raw[ctx.dataIndex] : ctx.raw; const rs = ds._fmt ? ds._fmt(r) : r; return ` ${ds.label}: ${rs}`; };
+  _renewalAllYearMode=false; _renewalSeries=null;
+  if (_renewalGraphPeriod==='monthly') {
+    const _fyOf=ym=>+ym.slice(0,4); const _fmiOf=ym=>+ym.slice(5,7)-1;
+    const _years=[...new Set(labels.map(_fyOf))].sort((x,z)=>x-z);
+    const _fmLabels=['1\u6708','2\u6708','3\u6708','4\u6708','5\u6708','6\u6708','7\u6708','8\u6708','9\u6708','10\u6708','11\u6708','12\u6708'];
+    if (_years.length){
+      yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
+      let series, normalize=false;
+      if (metric==='all'){ series=_renewalOverviewKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
+      else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
+      else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa'; series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:'#f59e0b',fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:'#38bdf8',fmt:uf,vals:tri.p20}]; }
+      else if (metric==='sales'){ const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
+      else { const fmt=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).fmt; const lbl=(metric==='ctr')?'CTR-KW':(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).label; series=[{key:'_single',label:lbl,color:(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color,fmt,vals:_renewalRepValue(metric,labels,dataMap,code)}]; }
+      const multi=series.length>1; _renewalAllYearMode=multi; _renewalSeries=series; datasets=[];
+      series.forEach(se=>{ let pv=se.vals; if(normalize){const nz=se.vals.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} pv=se.vals.map(v=>mid>0?Math.round(v/mid*50*10)/10:0);} _years.forEach((fy,yi)=>{ const rec=_years.length-1-yi; const arr=new Array(12).fill(null),arrR=new Array(12).fill(null); labels.forEach((ym,idx)=>{ if(_fyOf(ym)!==fy)return; const fmi=_fmiOf(ym); arr[fmi]=pv[idx]; arrR[fmi]=se.vals[idx]; }); const color=se.color; datasets.push({label:multi?(se.label+' '+fy):(fy+'\u5e74'),data:arr,_raw:arrR,_fmt:se.fmt,_mk:se.key,_fy:fy,borderColor:color,backgroundColor:color+'22',borderDash:_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length],borderWidth:rec===0?(multi?2.4:2.6):(multi?1.6:1.9),pointRadius:multi?2.5:3,pointHoverRadius:multi?5:6,tension:0.3,fill:false,spanGaps:true,hidden:_renewalHiddenMetric.has(se.key)||_renewalHiddenFY.has(fy)}); }); });
+      yCallback=normalize?(v=>v+'%'):(v=>series[0].fmt(v));
+      tooltipLabel=ctx=>{const ds=ctx.dataset;const r=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(r):r;return ' '+ds.label+': '+rs;};
     }
   }
-  _renewalChartInstance = new Chart(canvas, {
-    type: 'line',
-    data: { labels: chartLabels, datasets },
-    options: {
-      animation: false, responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          display: !yearMode && metric !== 'all', position: 'top',
-          labels: { color: textColor, font: { size: 12 }, usePointStyle: true }
-        },
-        tooltip: { callbacks: { label: tooltipLabel } }
-      },
-      scales: {
-        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
-        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 }, callback: yCallback }, beginAtZero: true }
-      }
-    }
-  });
-
-  // 変更記録の起点を縦線で描画（_renewalGraphPeriodに合わせてラベル形式を合わせる）
+  _renewalChartInstance = new Chart(canvas,{type:'line',data:{labels:chartLabels,datasets},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:!yearMode&&metric!=='all',position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:tooltipLabel}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:yCallback},beginAtZero:true}}}});
   if (!yearMode) _drawRenewalChangeLines(_renewalChartInstance, labels, code);
   else _drawRenewalYearChanges(_renewalChartInstance, code, _fyYears);
-
-  // グラフ下のデータ表も描画（同じlabels/dataMapを使う）
+  _renderRenewalToggles(metric==='all'||_renewalAllYearMode);
+  _renderRenewalYearToggles(yearMode?_fyYears:null);
   _renderRenewalTable(labels, dataMap, code);
-
-  // 「全体」モードのときだけ指標ON/OFFボタンを表示
-  _renderRenewalToggles(metric === 'all' || _renewalAllYearMode);
-  _renderRenewalYearToggles(yearMode ? _fyYears : null);
   _applyRenewalGraphCollapse();
 }
 
@@ -6860,105 +6758,39 @@ function _toggleRenewalMetric(i) {
 }
 
 // 実施済モーダル：グラフ下のデータ表（5指標）。変更記録のある行はハイライト＋内容列
-function _renderRenewalTable(labels, dataMap, code) {
-  const table = document.getElementById('renewalGraphTable');
-  const periodLabel = document.getElementById('renewalTablePeriodLabel');
-  if (!table) return;
-  if (periodLabel) periodLabel.textContent = _renewalGraphPeriod === 'daily' ? '日別' : '月別';
-  if (!labels || labels.length === 0) { table.innerHTML = ''; return; }
-
-  // 変更記録を期間キー（YYYY-MM or YYYY-MM-DD）でまとめる
-  const logs = (productCache[code]?.changeLog || []).filter(l => l.date && l.note);
-  const logByKey = {};
-  logs.forEach(l => {
-    const key = _renewalGraphPeriod === 'daily' ? l.date : l.date.slice(0,7);
-    (logByKey[key] || (logByKey[key] = [])).push(l);
-  });
-
-  // 各指標の値配列
-  const metricKeys = _renewalMetricKeys();
-  const valuesByMetric = {};
-  metricKeys.forEach(k => { valuesByMetric[k] = _renewalMetricValues(k, labels, dataMap, code); });
-  // 売上総額の配列（売上0判定用。売上0の日は売上依存指標を「—」にする）
-  const totSalesArr = _renewalMetricValues('totsales', labels, dataMap, code);
-  // 売上に依存する指標（売上0なら意味を持たない）
-  const SALES_DEPENDENT = { roas:1, cvr:1, totsales:1, cpc:1 };
-
-  // 新しい行が上に来るよう逆順表示
-  const order = labels.map((_, i) => i).reverse();
-  const _gMetric = document.getElementById('renewalGraphMetric')?.value || 'all';
-  if (_gMetric === 'roas' || _gMetric === 'ctr' || _gMetric === 'cvr') {
-    const tri = _renewalTripleValues(_gMetric, labels, dataMap);
-    const M = _gMetric.toUpperCase();
-    const baseColor = (_RENEWAL_METRICS[_gMetric] || {}).color || '#888';
-    const fcols = (_gMetric === 'ctr') ? [
-      { label: M + '-KW', arr: tri.kw, color: baseColor },
-    ] : [
-      { label: M + '全体', arr: tri.all, color: baseColor },
-      { label: M + '-KW',          arr: tri.kw,  color: '#f59e0b' },
-      { label: M + '20',           arr: tri.p20, color: '#38bdf8' },
-    ];
-    const salesDep = (_gMetric !== 'ctr');
-    const fhead = `<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)">
-      <th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">${_renewalGraphPeriod==='daily'?'日付':'月'}</th>
-      ${fcols.map(c=>`<th style="padding:7px 10px;text-align:right;border-bottom:2px solid var(--border);font-weight:700;color:${c.color};white-space:nowrap">${c.label}</th>`).join('')}
-      <th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">変更記録</th>
-    </tr></thead>`;
-    const frows = order.map(i => {
-      const key = labels[i];
-      const dispKey = _renewalGraphPeriod === 'daily' ? key.slice(5).replace('-','/') : key.slice(0,4)+'/'+key.slice(5,7);
-      const hasLog = !!logByKey[key];
-      const bg = hasLog ? 'background:rgba(249,115,22,0.10)' : '';
-      const noSales = (totSalesArr[i] || 0) === 0;
-      const cells = fcols.map(c => {
-        const v = c.arr[i];
-        const show = (noSales && salesDep) ? '<span style="color:var(--text3)">—</span>' : v + '%';
-        return `<td style="padding:6px 10px;text-align:right;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);${bg}">${show}</td>`;
-      }).join('');
-      const logCell = hasLog
-        ? `<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);${bg}">${logByKey[key].map(l=>`<span style="display:inline-block;background:#f97316;color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">📝 ${l.date} ${l.note}</span>`).join('')}</td>`
-        : `<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>`;
-      const keyStyle = hasLog ? 'font-weight:700;color:#f97316' : 'color:var(--text)';
-      return `<tr>
-        <td style="padding:6px 10px;text-align:left;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);${keyStyle};${bg}">${hasLog?'📝 ':''}${dispKey}</td>
-        ${cells}${logCell}
-      </tr>`;
-    }).join('');
-    table.innerHTML = fhead + '<tbody>' + frows + '</tbody>';
-    return;
+function _renderRenewalTable(labels, dataMap, code){
+  const wrap=document.getElementById('renewalGraphTable'); if(!wrap) return;
+  if(!labels||!labels.length){ wrap.innerHTML=''; return; }
+  const daily=_renewalGraphPeriod==='daily';
+  const metric=document.getElementById('renewalGraphMetric')?.value||'all';
+  const logs=(productCache[code]?.changeLog||[]).filter(l=>l.date);
+  const logByKey={}; logs.forEach(l=>{ const key=daily?l.date:l.date.slice(0,7); (logByKey[key]||(logByKey[key]=[])).push(l); });
+  const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); const pf=v=>v+'%'; const cf=v=>v+'\u4ef6';
+  let cols;
+  if (metric==='roas'||metric==='cvr'||metric==='ctr'){
+    const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||{}).color||'#888'; const dep=(metric!=='ctr');
+    cols=[{label:M+'\u5168\u4f53',color:base,fmt:pf,vals:tri.all,dep},{label:M+'-KW',color:'#f59e0b',fmt:pf,vals:tri.kw,dep},{label:M+'20',color:'#38bdf8',fmt:pf,vals:tri.p20,dep}];
+  } else if (metric==='spend'){
+    const all=labels.map(l=>dataMap[l]?.spend||0); const kw=labels.map(l=>dataMap[l]?.spendKw||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i]));
+    cols=[{label:'\u5b9f\u7e3e\u984d\u5168\u4f53',color:'#ef4444',fmt:yf,vals:all},{label:'\u5b9f\u7e3e\u984d-KW',color:'#f59e0b',fmt:yf,vals:kw},{label:'\u5b9f\u7e3e\u984d-20',color:'#38bdf8',fmt:yf,vals:p20}];
+  } else if (metric==='orders'){
+    const all=labels.map(l=>dataMap[l]?.orders||0); const kw=labels.map(l=>dataMap[l]?.ordersKw||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i]));
+    cols=[{label:'\u500b\u6570\u5168\u4f53',color:'#60a5fa',fmt:cf,vals:all},{label:'\u500b\u6570-KW',color:'#f59e0b',fmt:cf,vals:kw},{label:'\u500b\u6570-20',color:'#38bdf8',fmt:cf,vals:p20}];
+  } else if (metric==='sales'){
+    const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily');
+    cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
+  } else if (metric==='all'){
+    cols=_renewalOverviewKeys().map(k=>({label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code),dep:(k==='roas'||k==='cvr'||k==='totsales'||k==='cpc')}));
+  } else {
+    const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
+    cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
   }
-
-  const head = `<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)">
-    <th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">${_renewalGraphPeriod==='daily'?'日付':'月'}</th>
-    ${metricKeys.map(k=>`<th style="padding:7px 10px;text-align:right;border-bottom:2px solid var(--border);font-weight:700;color:${_RENEWAL_METRICS[k].color};white-space:nowrap">${_RENEWAL_METRICS[k].label}</th>`).join('')}
-    <th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">変更記録</th>
-  </tr></thead>`;
-
-  const rows = order.map(i => {
-    const key = labels[i];
-    const dispKey = _renewalGraphPeriod === 'daily'
-      ? key.slice(5).replace('-','/')           // MM/DD
-      : key.slice(0,4)+'/'+key.slice(5,7);      // YYYY/MM
-    const hasLog = !!logByKey[key];
-    const bg = hasLog ? 'background:rgba(249,115,22,0.10)' : '';
-    const noSales = (totSalesArr[i] || 0) === 0; // その日/月の売上が0
-    const cells = metricKeys.map(k => {
-      const v = valuesByMetric[k][i];
-      // 売上0の日は売上依存指標を「—」にして区別
-      const show = (noSales && SALES_DEPENDENT[k]) ? '<span style="color:var(--text3)">—</span>' : _RENEWAL_METRICS[k].fmt(v);
-      return `<td style="padding:6px 10px;text-align:right;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);${bg}">${show}</td>`;
-    }).join('');
-    const logCell = hasLog
-      ? `<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);${bg}">${logByKey[key].map(l=>`<span style="display:inline-block;background:#f97316;color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">📝 ${l.date} ${l.note}</span>`).join('')}</td>`
-      : `<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>`;
-    const keyStyle = hasLog ? 'font-weight:700;color:#f97316' : 'color:var(--text)';
-    return `<tr>
-      <td style="padding:6px 10px;text-align:left;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);${keyStyle};${bg}">${hasLog?'📝 ':''}${dispKey}</td>
-      ${cells}${logCell}
-    </tr>`;
-  }).join('');
-
-  table.innerHTML = head + '<tbody>' + rows + '</tbody>';
+  const totSalesArr=_renewalMetricValues('totsales',labels,dataMap,code);
+  const order=labels.map((_,i)=>i).reverse();
+  const chip=l=>{ const c=l.type==='lp'?'#1a73e8':l.type==='thumb'?'#f4b400':l.type==='both'?'#9333ea':'#f97316'; const tl=l.type==='lp'?'LP\u5909\u66f4':l.type==='thumb'?'\u30b5\u30e0\u30cd\u5909\u66f4':l.type==='both'?'LP\u30fb\u30b5\u30e0\u30cd\u5909\u66f4':'\u5909\u66f4'; const nt=(l.note||'').trim()||tl; return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">'+l.date+' '+nt+'</span>'; };
+  const head='<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)"><th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">'+(daily?'\u65e5\u4ed8':'\u6708')+'</th>'+cols.map(c=>'<th style="padding:7px 10px;text-align:right;border-bottom:2px solid var(--border);font-weight:700;color:'+c.color+';white-space:nowrap">'+c.label+'</th>').join('')+'<th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">\u5909\u66f4\u8a18\u9332</th></tr></thead>';
+  const rows=order.map(i=>{ const key=labels[i]; const dispKey=daily?key.slice(5).replace('-','/'):key.slice(0,4)+'/'+key.slice(5,7); const hasLog=!!logByKey[key]; const bg=hasLog?'background:rgba(249,115,22,0.10)':''; const noSales=(totSalesArr[i]||0)===0; const cells=cols.map(c=>{ const v=c.vals[i]; const show=(c.dep&&noSales)?'<span style="color:var(--text3)">\u2014</span>':c.fmt(v); return '<td style="padding:6px 10px;text-align:right;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+bg+'">'+show+'</td>'; }).join(''); const logCell=hasLog?'<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);'+bg+'">'+logByKey[key].map(chip).join('')+'</td>':'<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>'; const ks=hasLog?'font-weight:700;color:#f97316':'color:var(--text)'; return '<tr><td style="padding:6px 10px;text-align:left;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+ks+';'+bg+'">'+dispKey+'</td>'+cells+logCell+'</tr>'; }).join('');
+  wrap.innerHTML='<table style="border-collapse:collapse;width:100%;font-size:12px">'+head+'<tbody>'+rows+'</tbody></table>';
 }
 
 // 実施済モーダル用：変更記録の縦線（日別=YYYY-MM-DDマッチ、月別=YYYY-MMマッチ）
@@ -9895,6 +9727,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
       <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
         <option value="all">全体（CTR除く）</option>
+        <option value="sales">売上(SEO内訳)</option>
         <option value="roas">ROAS</option>
         <option value="cvr">CVR</option>
         <option value="ctr">CTR</option>
