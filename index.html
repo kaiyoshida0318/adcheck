@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.531</span>
+    <span class="build-date">v1.532</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8162,13 +8162,13 @@ async function runDropZoneCheck() {
     if (g.item.length > 1) dupTypes.push('ITEM');
     if (g.sales.length > 1) dupTypes.push('売上');
     const hasDup = dupTypes.length > 0;
-    if (hasDup) { hasError = true; dupCount++; }
+    if (hasDup) { dupCount++; }
     const rowId = `dchk-row-${ki}`;
 
     // 展開部：各タイプの実ファイル名一覧
     const fileSection = (lbl, arr) => {
       if (arr.length === 0) return `<div style="padding:2px 0;color:var(--text3)"><span style="display:inline-block;min-width:48px;font-weight:700">${lbl}:</span> —</div>`;
-      return `<div style="padding:2px 0"><span style="display:inline-block;min-width:48px;font-weight:700;${arr.length>1?'color:var(--danger)':''}">${lbl}:</span> ${arr.map(n=>`<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);background:var(--surface2);padding:1px 6px;border-radius:3px;margin:1px 2px 1px 0;display:inline-block">${n}</span>`).join('')}${arr.length>1?` <span style="color:var(--danger);font-size:10px;font-weight:700">⚠️ ${arr.length}個重複</span>`:''}</div>`;
+      return `<div style="padding:2px 0"><span style="display:inline-block;min-width:48px;font-weight:700;${arr.length>1?'color:var(--danger)':''}">${lbl}:</span> ${arr.map(n=>`<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);background:var(--surface2);padding:1px 6px;border-radius:3px;margin:1px 2px 1px 0;display:inline-block">${n}</span>`).join('')}${arr.length>1?` <span style="color:var(--text3);font-size:10px;font-weight:700">${arr.length}件（上書き）</span>`:''}</div>`;
     };
     const detailBody = `<div id="${rowId}" style="display:none;padding:6px 10px 8px 88px;background:var(--surface2);font-size:11px;border-bottom:1px solid var(--border)">
       ${fileSection('RPP', g.rpp)}
@@ -8178,7 +8178,7 @@ async function runDropZoneCheck() {
     </div>`;
 
     detailHtml += `<div onclick="(function(){var d=document.getElementById('${rowId}');var open=d.style.display!=='none';d.style.display=open?'none':'block';var ar=this.querySelector('.dchk-arr');if(ar)ar.textContent=open?'▶':'▼';}).call(this)"
-      style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer;user-select:none${hasDup?';background:rgba(220,38,38,0.06)':''}">
+      style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer;user-select:none${hasDup?';background:rgba(245,158,11,0.08)':''}">
       <span class="dchk-arr" style="font-size:9px;color:var(--text3);width:10px">▶</span>
       <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);min-width:80px">${label}</span>
       <span title="rpp_reports">${rppOk ? '✅' : '❌'} RPP</span>
@@ -8186,7 +8186,7 @@ async function runDropZoneCheck() {
       <span title="item_reports">${g.item.length>0 ? '✅' : '—'} ITEM</span>
       <span title="saleslist">${g.sales.length>0 ? '✅' : '—'} 売上</span>
       ${!pairOk ? '<span style="color:var(--amber);font-size:10px">⚠️ RPP+KWの片方がありません</span>' : ''}
-      ${hasDup ? `<span style="color:var(--danger);font-size:10px;font-weight:700">⚠️ ${dupTypes.join('/')}が重複</span>` : ''}
+      ${hasDup ? `<span style="color:var(--text3);font-size:10px;font-weight:700">${dupTypes.join('/')} 重複（上書き）</span>` : ''}
     </div>${detailBody}`;
   });
 
@@ -8194,7 +8194,7 @@ async function runDropZoneCheck() {
 
   // サマリー + 折りたたみ詳細
   const totalCount = keys.length;
-  const summaryText = `📋 ${totalCount}件 (✅問題なし:${okCount}${errCount > 0 ? ' ⚠️片方のみ:'+errCount : ''}${dupCount > 0 ? ' 🔴重複あり:'+dupCount+'日' : ''})`;
+  const summaryText = `📋 ${totalCount}件 (✅問題なし:${okCount}${errCount > 0 ? ' ⚠️片方のみ:'+errCount : ''}${dupCount > 0 ? ' 重複・上書き:'+dupCount+'日' : ''})`;
   // 件数が10件以下、または重複・エラーがあればデフォルト展開
   const defaultOpen = totalCount <= 10 || dupCount > 0 || errCount > 0;
 
