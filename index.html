@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.538</span>
+    <span class="build-date">v1.539</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6551,7 +6551,7 @@ function renderRenewalGraph() {
       { key:'kw',  label:'ROAS-KW',           color:'#f59e0b' },
       { key:'p20', label:'ROAS20',            color:'#38bdf8' },
     ] : (metric === 'ctr') ? [
-      { key:'all', label:'CTR\u5168\u4f53', color:'#34d399' },
+      { key:'kw', label:'CTR-KW', color:'#34d399' },
     ] : [
       { key:'all', label:(metric==='cvr'?'CVR\u5168\u4f53':'CTR\u5168\u4f53'), color:(metric==='cvr'?'#a78bfa':'#34d399') },
       { key:'kw',  label:(metric==='cvr'?'CVR(KW)':'CTR(KW)'),                 color:'#f59e0b' },
@@ -6676,7 +6676,7 @@ function _renderRenewalTable(labels, dataMap, code) {
     const M = _gMetric.toUpperCase();
     const baseColor = (_RENEWAL_METRICS[_gMetric] || {}).color || '#888';
     const fcols = (_gMetric === 'ctr') ? [
-      { label: M + '全体', arr: tri.all, color: baseColor },
+      { label: M + '-KW', arr: tri.kw, color: baseColor },
     ] : [
       { label: M + '全体', arr: tri.all, color: baseColor },
       { label: M + '-KW',          arr: tri.kw,  color: '#f59e0b' },
