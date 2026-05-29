@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.549</span>
+    <span class="build-date">v1.550</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -748,6 +748,7 @@ header + * { margin-top: 4px; }
           </button>
         </div>
         <div id="graphMetricToggles" style="display:none;padding:0 0 10px;flex-wrap:wrap;gap:6px"></div>
+        <div id="graphYearToggles" style="display:none;padding:0 0 10px;flex-wrap:wrap;gap:6px"></div>
         <div style="position:relative;height:400px">
           <canvas id="graphCanvas"></canvas>
         </div>
@@ -5027,6 +5028,71 @@ function _renderItemGraphTable(displayLabels, labels, dataMap, metric) {
 
 // ── グラフ ──
 let _chartInstance = null;
+let _graphHiddenFY = new Set();
+let _graphHiddenSeries = new Set();
+let _graphYears = [];
+let _graphYearSeries = [];
+let _graphYearMode = false;
+function _toggleGraphFY(fy){ fy=+fy; if(_graphHiddenFY.has(fy)) _graphHiddenFY.delete(fy); else _graphHiddenFY.add(fy); renderGraph(); }
+function _toggleGraphSeries(lb){ if(_graphHiddenSeries.has(lb)) _graphHiddenSeries.delete(lb); else _graphHiddenSeries.add(lb); renderGraph(); }
+function _renderGraphYearToggles(years){
+  const wrap=document.getElementById('graphYearToggles');
+  if(!wrap) return;
+  if(!years||!years.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+  wrap.style.display='flex';
+  const n=years.length, multi=_graphYearSeries && _graphYearSeries.length>1;
+  wrap.innerHTML=years.map((fy,idx)=>{
+    const rec=n-1-idx;
+    const dash=_RENEWAL_FY_DASH[rec % _RENEWAL_FY_DASH.length];
+    const da=dash.length?dash.join(','):'0';
+    const on=!_graphHiddenFY.has(fy);
+    const lc= multi ? 'var(--text2)' : _RENEWAL_FY_PALETTE[idx % _RENEWAL_FY_PALETTE.length];
+    return `<button onclick="_toggleGraphFY(${fy})" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);opacity:${on?'1':'0.45'};text-decoration:${on?'none':'line-through'}"><svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="${on?lc:'var(--text3)'}" stroke-width="2.6" stroke-dasharray="${da}"/></svg>${fy}年</button>`;
+  }).join('');
+}
+function _renderGraphSeriesToggles(series){
+  const wrap=document.getElementById('graphMetricToggles');
+  if(!wrap) return;
+  if(!series||series.length<2){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+  wrap.style.display='flex';
+  wrap.innerHTML=series.map(se=>{
+    const on=!_graphHiddenSeries.has(se.label);
+    const color=se.color||'#888';
+    return `<button onclick="_toggleGraphSeries('${se.label}')" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;border:2px solid ${color};background:${on?color:'transparent'};color:${on?'#fff':'var(--text3)'};opacity:${on?'1':'0.55'};text-decoration:${on?'none':'line-through'};transition:all 0.12s"><span style="width:9px;height:9px;border-radius:50%;background:${on?'#fff':color};display:inline-block"></span>${se.label}</button>`;
+  }).join('');
+}
+function _yearifyGraph(chart, labels){
+  const yt=document.getElementById('graphYearToggles');
+  _graphYearMode=false; _graphYears=[]; _graphYearSeries=[];
+  const parse=lb=>{ const m=/^(\d{4})\/(\d{2})$/.exec(lb); return m?{y:+m[1],mi:+m[2]-1}:null; };
+  if(_graphPeriod!=='monthly'||!chart||!chart.data||!Array.isArray(labels)||!labels.length){ if(yt){yt.style.display='none';yt.innerHTML='';} return; }
+  const parsed=labels.map(parse);
+  if(parsed.some(x=>!x)){ if(yt){yt.style.display='none';yt.innerHTML='';} return; }
+  const years=[...new Set(parsed.map(x=>x.y))].sort((a,b)=>a-b);
+  const orig=chart.data.datasets||[];
+  if(!orig.length){ if(yt){yt.style.display='none';yt.innerHTML='';} return; }
+  _graphYearMode=true; _graphYears=years; _graphYearSeries=orig.map(d=>d.label);
+  const monthLabels=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const multi=orig.length>1;
+  const newDs=[];
+  orig.forEach(ds=>{
+    const seriesHidden=_graphHiddenSeries.has(ds.label);
+    years.forEach((yr,yi)=>{
+      const rec=years.length-1-yi;
+      const arr=new Array(12).fill(null);
+      parsed.forEach((x,idx)=>{ if(x.y!==yr) return; arr[x.mi]=ds.data[idx]; });
+      const color=multi?(ds.borderColor||'#888'):_RENEWAL_FY_PALETTE[yi % _RENEWAL_FY_PALETTE.length];
+      newDs.push({ label: multi?(ds.label+' '+yr):(yr+'年'), data: arr, borderColor: color, backgroundColor: color+'22', borderDash:_RENEWAL_FY_DASH[rec % _RENEWAL_FY_DASH.length], borderWidth: rec===0?2.6:1.8, pointRadius:3, pointHoverRadius:6, tension:0.3, fill:false, spanGaps:true, hidden:_graphHiddenFY.has(yr)||seriesHidden });
+    });
+  });
+  chart.data.labels=monthLabels;
+  chart.data.datasets=newDs;
+  chart._clLogs=[];
+  if(chart.options&&chart.options.plugins&&chart.options.plugins.legend) chart.options.plugins.legend.display=false;
+  chart.update('none');
+  _renderGraphYearToggles(years);
+  if(multi) _renderGraphSeriesToggles(orig.map(d=>({label:d.label,color:d.borderColor}))); else { const mt=document.getElementById('graphMetricToggles'); if(mt){mt.style.display='none';mt.innerHTML='';} }
+}
 
 function _initGraphRange() {
   if (_graphPeriod === 'monthly') {
@@ -5250,6 +5316,7 @@ function renderGraph() {
     canvas.style.display = 'none';
     empty.style.display = 'block';
     const tg = document.getElementById('graphMetricToggles'); if (tg) { tg.style.display='none'; tg.innerHTML=''; }
+    const yt0 = document.getElementById('graphYearToggles'); if (yt0) { yt0.style.display='none'; yt0.innerHTML=''; }
     return;
   }
   canvas.style.display = 'block';
@@ -5327,6 +5394,7 @@ function renderGraph() {
     _applyGlobalClLines(_chartInstance, labels);
     _renderGraphTable(labels, _chartInstance.data.datasets);
     _renderGraphToggles();
+    _yearifyGraph(_chartInstance, labels);
     return;
   }
 
@@ -5416,6 +5484,7 @@ function renderGraph() {
     _applyGlobalClLines(_chartInstance, labels);
     _renderGraphTable(labels, _chartInstance.data.datasets);
     _renderGraphToggles();
+    _yearifyGraph(_chartInstance, labels);
     return;
   }
 
@@ -5548,6 +5617,7 @@ function renderGraph() {
     _applyGlobalClLines(_chartInstance, labels);
     _renderGraphTable(labels, _chartInstance.data.datasets);
     _renderGraphToggles();
+    _yearifyGraph(_chartInstance, labels);
     return;
   }
 
@@ -5657,6 +5727,7 @@ function renderGraph() {
     _applyGlobalClLines(_chartInstance, labels);
     _renderGraphTable(labels, _chartInstance.data.datasets);
     _renderGraphToggles();
+    _yearifyGraph(_chartInstance, labels);
     return;
   }
 
@@ -5757,12 +5828,14 @@ function renderGraph() {
     _applyGlobalClLines(_chartInstance, labels);
     _renderGraphTable(labels, _chartInstance.data.datasets);
     _renderGraphToggles();
+    _yearifyGraph(_chartInstance, labels);
     return;
   }
 
   _applyGlobalClLines(_chartInstance, labels);
   _renderGraphTable(labels, _chartInstance.data.datasets);
     _renderGraphToggles();
+    _yearifyGraph(_chartInstance, labels);
 }
 let _memoEditCode = null;
 
