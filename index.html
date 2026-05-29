@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.528</span>
+    <span class="build-date">v1.529</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6120,9 +6120,9 @@ function _renewalColorBtn() {
     ['redblue_all','赤青全','linear-gradient(90deg,#c0392b 50%,#2b6cb0 50%)','割合-KWがある商品を全件・低い順（赤→青）'],
     ['kw80','80-100','#2b6cb0','割合-KW 80～100%'],
     ['kw60','60-80','#6fa8dc','割合-KW 60～80%'],
-    ['kw40','40-60','linear-gradient(90deg,#6fa8dc 50%,#e57373 50%)','割合-KW 40～60%'],
-    ['kw20','20-40','#e57373','割合-KW 20～40%'],
-    ['kw0','0-20','#c0392b','割合-KW 0～20%'],
+    ['kw40','40-60','#9aa0a6','割合-KW 40～60%'],
+    ['kw20','20-40','linear-gradient(90deg,#e57373 50%,#6fa8dc 50%)','割合-KW 20～40%'],
+    ['kw0','0-20','linear-gradient(90deg,#c0392b 50%,#2b6cb0 50%)','割合-KW 0～20%'],
   ];
   const cur = _renewalColorFilter;
   const html = btns.map(([key,label,bg,tip]) => {
