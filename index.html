@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.509</span>
+    <span class="build-date">v1.510</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5902,7 +5902,7 @@ function _renewalMatchQuery(code, q) {
   return code.toLowerCase().includes(q) || (c.itemNumber||'').toLowerCase().includes(q) || (c.manualName||c.name||'').toLowerCase().includes(q);
 }
 function _hasChangeLogType(code, type) {
-  return (productCache[code]?.changeLog || []).some(l => l && l.type === type);
+  return (productCache[code]?.changeLog || []).some(l => l && (l.type === type || l.type === 'both'));
 }
 function _renewalRecentSort(a, b) {
   const la = (productCache[a]?.changeLog||[]).map(l=>l.date).filter(Boolean).sort().pop() || '';
@@ -8270,6 +8270,7 @@ function _renderClRows(logs) {
         <option value=""${!log.type?' selected':''}>その他</option>
         <option value="lp"${log.type==='lp'?' selected':''}>LP変更</option>
         <option value="thumb"${log.type==='thumb'?' selected':''}>サムネ変更</option>
+        <option value="both"${log.type==='both'?' selected':''}>両方変更</option>
       </select>
       <input type="text" value="${log.note||''}" data-idx="${i}" data-field="note"
         onchange="_clUpdateRow(this)" placeholder="内容を入力..."
@@ -8308,7 +8309,8 @@ function saveChangeLog() {
   rows.forEach((row, i) => {
     const dateEl = row.querySelector('[data-field="date"]');
     const noteEl = row.querySelector('[data-field="note"]');
-    if (dateEl && noteEl) logs.push({ date: dateEl.value, note: noteEl.value });
+    const typeEl = row.querySelector('[data-field="type"]');
+    if (dateEl && noteEl) logs.push({ date: dateEl.value, note: noteEl.value, type: typeEl ? typeEl.value : '' });
   });
   if (!productCache[_clCurrentCode]) productCache[_clCurrentCode] = {};
   productCache[_clCurrentCode].changeLog = logs.filter(l => l.date || l.note);
@@ -8318,8 +8320,7 @@ function saveChangeLog() {
   renderTable(); // ボタンの件数表示を更新
   // リニューアルタブが開いていれば再描画（変更記録の有無で実施済へ移動）
   if (typeof _updateRenewalCounts === 'function') _updateRenewalCounts();
-  if (_currentTab === 'renewal-todo') renderRenewalTodo();
-  if (_currentTab === 'renewal-done') renderRenewalDone();
+  if (typeof _renderCurrentRenewal === 'function') _renderCurrentRenewal();
 }
 
 function toggleSummaryBar(innerId, btnId) {
