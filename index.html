@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.544</span>
+    <span class="build-date">v1.545</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1083,7 +1083,7 @@ header + * { margin-top: 4px; }
     <!-- STEP2: 変更項目選択 + 変更一覧 -->
     <div id="bulkStep2" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0">
       <div style="flex-shrink:0;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:10px">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">② 変更する項目を選択</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:3px">② 変更する項目を選択</div>
         <div style="display:flex;gap:16px">
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
             <input type="checkbox" id="bulkChkName" checked onchange="bulkRebuildList()"> 商品名
@@ -9712,7 +9712,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       </div>
       <button onclick="closeRenewalGraph()" style="border:none;background:rgba(0,0,0,0.08);cursor:pointer;font-size:16px;color:#333;line-height:1;padding:6px 11px;border-radius:50%;flex-shrink:0">✕</button>
     </div>
-    <div style="padding:14px 24px 8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="padding:8px 24px 4px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div style="display:flex;gap:4px">
         <button id="renewalGraphPeriodMonth" onclick="_setRenewalGraphPeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
         <button id="renewalGraphPeriodDaily" onclick="_setRenewalGraphPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
@@ -9731,8 +9731,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較 ／ 平均単価 = 売上 ÷ 売上件数</span>
     </div>
     <!-- 全体モード時の指標ON/OFFボタン -->
-    <div id="renewalMetricToggles" style="display:none;padding:0 24px 6px;flex-wrap:wrap;gap:6px"></div>
-    <div style="padding:8px 24px 20px;flex:1;min-height:0;display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;align-items:stretch;overflow:hidden">
+    <div id="renewalMetricToggles" style="display:none;padding:0 24px 2px;flex-wrap:wrap;gap:6px"></div>
+    <div style="padding:0 24px 14px;flex:1;min-height:0;display:flex;flex-direction:row;flex-wrap:wrap;gap:16px;align-items:stretch;overflow:hidden">
       <div id="renewalGraphArea" style="position:relative;flex:1 1 420px;min-width:340px;min-height:0;display:flex;flex-direction:column">
         <div id="renewalYearToggles" style="position:absolute;top:4px;right:4px;z-index:5;display:none;flex-wrap:wrap;gap:5px;justify-content:flex-end;max-width:72%"></div>
         <div style="position:relative;flex:1;min-height:260px">
