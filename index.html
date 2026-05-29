@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.513</span>
+    <span class="build-date">v1.514</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -876,6 +876,7 @@ header + * { margin-top: 4px; }
         <div id="renewal-todo-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
             <input type="text" id="renewalTodoSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalTodo()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+            <div style="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--text2);margin-left:8px"><span style="color:var(--text3);font-weight:600">割合:</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#6fa8dc"></span>80+</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#9fc5e8"></span>60-80</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#cfe2f7"></span>50-60</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#f4cccc"></span>40-50</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#ea9999"></span>20-40</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#e06666"></span>0-20</span></div>
             <div class="toolbar-right"></div>
           </div>
           <div id="renewal-todo-inner">
@@ -892,6 +893,7 @@ header + * { margin-top: 4px; }
         <div id="renewal-done-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
             <input type="text" id="renewalDoneSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalDone()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+            <div style="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--text2);margin-left:8px"><span style="color:var(--text3);font-weight:600">割合:</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#6fa8dc"></span>80+</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#9fc5e8"></span>60-80</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#cfe2f7"></span>50-60</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#f4cccc"></span>40-50</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#ea9999"></span>20-40</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#e06666"></span>0-20</span></div>
             <div class="toolbar-right"></div>
           </div>
           <div id="renewal-done-inner">
@@ -908,6 +910,7 @@ header + * { margin-top: 4px; }
         <div id="renewal-lp-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
             <input type="text" id="renewalLpSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalLp()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+            <div style="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--text2);margin-left:8px"><span style="color:var(--text3);font-weight:600">割合:</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#6fa8dc"></span>80+</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#9fc5e8"></span>60-80</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#cfe2f7"></span>50-60</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#f4cccc"></span>40-50</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#ea9999"></span>20-40</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#e06666"></span>0-20</span></div>
             <div class="toolbar-right"></div>
           </div>
           <div id="renewal-lp-inner">
@@ -924,6 +927,7 @@ header + * { margin-top: 4px; }
         <div id="renewal-thumb-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
             <input type="text" id="renewalThumbSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalThumb()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+            <div style="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--text2);margin-left:8px"><span style="color:var(--text3);font-weight:600">割合:</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#6fa8dc"></span>80+</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#9fc5e8"></span>60-80</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#cfe2f7"></span>50-60</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#f4cccc"></span>40-50</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#ea9999"></span>20-40</span><span style="display:inline-flex;align-items:center;gap:2px"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#e06666"></span>0-20</span></div>
             <div class="toolbar-right"></div>
           </div>
           <div id="renewal-thumb-inner">
@@ -5793,10 +5797,20 @@ function _renewalRowHtml(code, mode) {
     const mt = _renewalTodoMetrics(code, _renewalTodoMonth);
     const dash = '<span style="color:var(--text3)">-</span>';
     const fmt = v => (v === null || v === undefined) ? dash : (v + '%');
-    const cell = v => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap">${fmt(v)}</div>`;
+    const band = r => {
+      if (r === null || r === undefined) return '';
+      if (r >= 80) return '#6fa8dc';
+      if (r >= 60) return '#9fc5e8';
+      if (r >= 50) return '#cfe2f7';
+      if (r >= 40) return '#f4cccc';
+      if (r >= 20) return '#ea9999';
+      return '#e06666';
+    };
+    const cKw = band(mt.ratioKw), c20 = band(mt.ratio20);
+    const cell = (v, bg) => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;${bg?'background:'+bg+';color:#111':''}">${fmt(v)}</div>`;
     const fmtM = v => (!v || v <= 0) ? dash : fmtY(v);
-    const mcell = v => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap">${fmtM(v)}</div>`;
-    metricCells = mcell(mt.spendAll) + mcell(mt.spendKw) + mcell(mt.spend20) + cell(mt.ratioKw) + cell(mt.ratio20) + cell(mt.ctrAll) + cell(mt.ctrKw) + cell(mt.ctr20) + cell(mt.cvrAll) + cell(mt.cvrKw) + cell(mt.cvr20);
+    const mcell = (v, bg) => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;${bg?'background:'+bg+';color:#111':''}">${fmtM(v)}</div>`;
+    metricCells = mcell(mt.spendAll, '') + mcell(mt.spendKw, cKw) + mcell(mt.spend20, c20) + cell(mt.ratioKw, cKw) + cell(mt.ratio20, c20) + cell(mt.ctrAll, '') + cell(mt.ctrKw, cKw) + cell(mt.ctr20, c20) + cell(mt.cvrAll, '') + cell(mt.cvrKw, cKw) + cell(mt.cvr20, c20);
   }
   const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid ${logCount>0?'var(--green)':'var(--accent)'};background:var(--surface2);color:${logCount>0?'var(--green)':'var(--accent)'};cursor:pointer;font-weight:600;white-space:nowrap">📝 ${logCount>0?'記録 ('+logCount+')':'記録する'}</button></div>`;
 
