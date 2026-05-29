@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.557</span>
+    <span class="build-date">v1.558</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4860,24 +4860,6 @@ function renderItemGraph() {
   const displayLabels = labels.map(l => _itemGraphPeriod==='daily' ? l.slice(5) : l.slice(0,4)+'/'+l.slice(5,7));
   if (_itemChartInstance) { _itemChartInstance.destroy(); _itemChartInstance = null; }
 
-  if (metric === 'sales') {
-    const getTot = (l) => salesRows.filter(r=>r.itemCode===code && (_itemGraphPeriod==='daily'? r.date===l : r.ym===l.replace('-',''))).reduce((s,r)=>s+(r.sales||0),0);
-    const dataTot = labels.map(getTot);
-    const dataRpp = labels.map(l => dataMap[l]?.sales||0);
-    const dataKwS = labels.map(l => dataMap[l]?.salesKw||0);
-    const data20S = labels.map(l => Math.max(0,(dataMap[l]?.sales||0)-(dataMap[l]?.salesKw||0)));
-    const dataSeo = labels.map((l,i)=> Math.max(0, dataTot[i]-dataRpp[i]));
-    const lds=(lb,d,c)=>({label:lb,data:d,borderColor:c,backgroundColor:c+'22',borderWidth:2.5,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false});
-    _itemChartInstance = new Chart(canvas,{type:'line',data:{labels:displayLabels,datasets:[lds('\u5168\u4f53\u58f2\u4e0a',dataTot,'#1d4ed8'),lds('SEO\u58f2\u4e0a',dataSeo,'#7c3aed'),lds('KW\u5546\u54c1\u58f2\u4e0a',dataKwS,'#60a5fa'),lds('20\u5186\u58f2\u4e0a',data20S,'#f97316')]},
-      options:{animation:false,interaction:{mode:'index',intersect:false},responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': \u00a5'+Math.round(ctx.raw).toLocaleString()}}},
-        scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>'\u00a5'+v.toLocaleString()}}}}});
-    _drawRenewalChangeLines(_itemChartInstance, labels, code);
-    _renderItemToggles(false); _renderItemYearToggles(null);
-    _renderItemRichTable(labels, dataMap, code);
-    return;
-  }
-
   let datasets, yCallback, tooltipLabel, chartLabels=displayLabels, yearMode=false, _fyYears=null;
   if (metric === 'all') {
     const keys=_renewalOverviewKeys();
@@ -4889,6 +4871,10 @@ function renderItemGraph() {
     const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:'#fbbf24'},{key:'kw',label:'ROAS-KW',color:'#f59e0b'},{key:'p20',label:'ROAS20',color:'#38bdf8'}]:(metric==='ctr')?[{key:'all',label:'CTR\u5168\u4f53',color:'#34d399',hide:true},{key:'kw',label:'CTR-KW',color:'#f59e0b'},{key:'p20',label:'CTR20',color:'#38bdf8',hide:true}]:[{key:'all',label:'CVR\u5168\u4f53',color:'#a78bfa'},{key:'kw',label:'CVR(KW)',color:'#f59e0b'},{key:'p20',label:'CVR(20\u5186)',color:'#38bdf8'}];
     datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:v=>v+'%',borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,hidden:!!d.hide}));
     yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+ctx.raw+'%';
+  } else if (metric === 'sales') {
+    const sa=_itemSalesArrays(labels,dataMap,code); const yf=v=>'\u00a5'+Math.round(v).toLocaleString();
+    datasets=_ITEM_SALES_DEFS.map(d=>({label:d.label,data:sa[d.key],_fmt:yf,borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.5,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
+    yCallback=yf; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+yf(ctx.raw);
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas; const data=_renewalMetricValues(metric,labels,dataMap,code);
     datasets=[{label:meta.label,data,_fmt:meta.fmt,borderColor:meta.color,backgroundColor:meta.color+'22',borderWidth:2.5,pointRadius:4,pointHoverRadius:6,tension:0.3,fill:false}];
@@ -4904,6 +4890,7 @@ function renderItemGraph() {
       let series, normalize=false;
       if (metric==='all'){ series=_renewalOverviewKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
       else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
+      else if (metric==='sales'){ const sa=_itemSalesArrays(labels,dataMap,code); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
       else { const fmt=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).fmt; const lbl=(metric==='ctr')?'CTR-KW':(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).label; series=[{key:'_single',label:lbl,color:(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color,fmt,vals:_renewalRepValue(metric,labels,dataMap,code)}]; }
       const multi=series.length>1; _renewalAllYearMode=multi; _renewalSeries=series; datasets=[];
       series.forEach(se=>{ let pv=se.vals; if(normalize){const nz=se.vals.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} pv=se.vals.map(v=>mid>0?Math.round(v/mid*50*10)/10:0);} _years.forEach((fy,yi)=>{ const rec=_years.length-1-yi; const arr=new Array(12).fill(null),arrR=new Array(12).fill(null); labels.forEach((ym,idx)=>{ if(_fyOf(ym)!==fy)return; const fmi=_fmiOf(ym); arr[fmi]=pv[idx]; arrR[fmi]=se.vals[idx]; }); const color=se.color; datasets.push({label:multi?(se.label+' '+fy):(fy+'\u5e74'),data:arr,_raw:arrR,_fmt:se.fmt,_mk:se.key,_fy:fy,borderColor:color,backgroundColor:color+'22',borderDash:_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length],borderWidth:rec===0?(multi?2.4:2.6):(multi?1.6:1.9),pointRadius:multi?2.5:3,pointHoverRadius:multi?5:6,tension:0.3,fill:false,spanGaps:true,hidden:_renewalHiddenMetric.has(se.key)||_renewalHiddenFY.has(fy)}); }); });
@@ -4919,6 +4906,16 @@ function renderItemGraph() {
   _renderItemRichTable(labels, dataMap, code);
 }
 
+function _itemSalesArrays(labels, dataMap, code){
+  const getTot=(l)=>salesRows.filter(r=>r.itemCode===code && (_itemGraphPeriod==='daily'? r.date===l : r.ym===l.replace('-',''))).reduce((s,r)=>s+(r.sales||0),0);
+  const tot=labels.map(getTot);
+  const rpp=labels.map(l=>dataMap[l]?.sales||0);
+  const kw=labels.map(l=>dataMap[l]?.salesKw||0);
+  const p20=labels.map(l=>Math.max(0,(dataMap[l]?.sales||0)-(dataMap[l]?.salesKw||0)));
+  const seo=labels.map((l,i)=>Math.max(0,tot[i]-rpp[i]));
+  return {tot,seo,kw,p20};
+}
+const _ITEM_SALES_DEFS=[{key:'tot',label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8'},{key:'seo',label:'SEO\u58f2\u4e0a',color:'#7c3aed'},{key:'kw',label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa'},{key:'p20',label:'20\u5186\u58f2\u4e0a',color:'#f97316'}];
 function _toggleItemFY(fy){ fy=+fy; if(_renewalHiddenFY.has(fy)) _renewalHiddenFY.delete(fy); else _renewalHiddenFY.add(fy); renderItemGraph(); }
 function _toggleItemMetricKey(mk){ if(_renewalHiddenMetric.has(mk)) _renewalHiddenMetric.delete(mk); else _renewalHiddenMetric.add(mk); renderItemGraph(); }
 function _toggleItemMetric(i){ const c=_itemChartInstance; if(!c) return; c.setDatasetVisibility(i,!c.isDatasetVisible(i)); c.update(); _renderItemToggles(true); }
