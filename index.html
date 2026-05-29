@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.554</span>
+    <span class="build-date">v1.555</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8799,6 +8799,7 @@ function _setLockProgress(opts) {
 
 // ── 変更記録 ──
 let _clCurrentCode = null;
+let _clDraft = [];
 
 function openChangeLog(code) {
   _clCurrentCode = code;
@@ -8807,14 +8808,14 @@ function openChangeLog(code) {
   const num = cached.itemNumber || code;
   document.getElementById('clModalTitle').textContent = '変更記録';
   document.getElementById('clModalSub').textContent = `${num}  ${name}`;
-  const logs = cached.changeLog || [];
-  _renderClRows(logs);
+  _clDraft = JSON.parse(JSON.stringify(cached.changeLog || []));
+  _renderClRows(_clDraft);
   document.getElementById('changeLogModal').style.display = 'flex';
 }
 
 function closeChangeLog() {
   document.getElementById('changeLogModal').style.display = 'none';
-  _clCurrentCode = null;
+  _clCurrentCode = null; _clDraft = [];
 }
 
 function _renderClRows(logs) {
@@ -8824,7 +8825,7 @@ function _renderClRows(logs) {
       <input type="date" value="${log.date||''}" data-idx="${i}" data-field="date"
         onchange="_clUpdateRow(this)"
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
-      <div style="display:flex;gap:3px;flex-shrink:0">${[['','その他','#6b7280'],['lp','LP','#1a73e8'],['thumb','サムネ','#f4b400'],['both','両方','#9333ea']].map(([v,lb,c])=>{const on=(log.type||'')===v;const dk=(c==='#f4b400');return `<button type="button" onclick="_clSetType(${i},'${v}')" style="padding:5px 9px;border-radius:5px;font-size:11px;font-weight:${on?'700':'600'};cursor:pointer;border:1.5px solid ${c};background:${on?c:c+'22'};color:${on?(dk?'#111':'#fff'):c};transition:all .12s">${lb}</button>`;}).join('')}</div>
+      <div style="display:flex;gap:3px;flex-shrink:0">${[['lp','LP','#1a73e8'],['thumb','サムネ','#f4b400'],['both','両方','#9333ea']].map(([v,lb,c])=>{const on=(log.type||'')===v;const dk=(c==='#f4b400');return `<button type="button" onclick="_clSetType(${i},'${v}')" style="padding:5px 9px;border-radius:5px;font-size:11px;font-weight:${on?'700':'600'};cursor:pointer;border:1.5px solid ${c};background:${on?c:c+'22'};color:${on?(dk?'#111':'#fff'):c};transition:all .12s">${lb}</button>`;}).join('')}</div>
       <input type="text" value="${log.note||''}" data-idx="${i}" data-field="note"
         onchange="_clUpdateRow(this)" placeholder="内容を入力..."
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex:1">
@@ -8833,18 +8834,25 @@ function _renderClRows(logs) {
   `).join('');
 }
 
+function _clSyncFromDom() {
+  const rows = document.querySelectorAll('#clRows > div');
+  rows.forEach((row, i) => {
+    if (!_clDraft[i]) return;
+    const d = row.querySelector('[data-field="date"]');
+    const n = row.querySelector('[data-field="note"]');
+    if (d) _clDraft[i].date = d.value;
+    if (n) _clDraft[i].note = n.value;
+  });
+}
 function _clUpdateRow(el) {
   const idx = +el.dataset.idx;
   const field = el.dataset.field;
-  if (!productCache[_clCurrentCode]) productCache[_clCurrentCode] = {};
-  if (!productCache[_clCurrentCode].changeLog) productCache[_clCurrentCode].changeLog = [];
-  productCache[_clCurrentCode].changeLog[idx][field] = el.value;
+  if (_clDraft[idx]) _clDraft[idx][field] = el.value;
 }
 function _clSetType(i, val){
-  if (!productCache[_clCurrentCode]) productCache[_clCurrentCode] = {};
-  if (!productCache[_clCurrentCode].changeLog) productCache[_clCurrentCode].changeLog = [];
-  if (productCache[_clCurrentCode].changeLog[i]) productCache[_clCurrentCode].changeLog[i].type = val;
-  _renderClRows(productCache[_clCurrentCode].changeLog);
+  _clSyncFromDom();
+  if (_clDraft[i]) _clDraft[i].type = val;
+  _renderClRows(_clDraft);
 }
 function _clRecolorType(el) {
   const t = el.value;
@@ -8855,36 +8863,25 @@ function _clRecolorType(el) {
 
 
 function _clDeleteRow(idx) {
-  if (!productCache[_clCurrentCode]?.changeLog) return;
-  productCache[_clCurrentCode].changeLog.splice(idx, 1);
-  _renderClRows(productCache[_clCurrentCode].changeLog);
+  _clSyncFromDom();
+  _clDraft.splice(idx, 1);
+  _renderClRows(_clDraft);
 }
 
 function addChangeLogRow() {
-  if (!productCache[_clCurrentCode]) productCache[_clCurrentCode] = {};
-  if (!productCache[_clCurrentCode].changeLog) productCache[_clCurrentCode].changeLog = [];
-  productCache[_clCurrentCode].changeLog.push({ date: new Date().toISOString().slice(0,10), note: 'リニューアル' });
-  _renderClRows(productCache[_clCurrentCode].changeLog);
+  _clSyncFromDom();
+  _clDraft.push({ date: new Date().toISOString().slice(0,10), note: '', type: '' });
+  _renderClRows(_clDraft);
 }
 
 function saveChangeLog() {
-  // 入力中の値を取得
-  const inputs = document.querySelectorAll('#clRows input');
-  const logs = [];
-  const rows = document.querySelectorAll('#clRows > div');
-  rows.forEach((row, i) => {
-    const dateEl = row.querySelector('[data-field="date"]');
-    const noteEl = row.querySelector('[data-field="note"]');
-    const typeEl = row.querySelector('[data-field="type"]');
-    if (dateEl && noteEl) logs.push({ date: dateEl.value, note: noteEl.value, type: typeEl ? typeEl.value : '' });
-  });
+  _clSyncFromDom();
   if (!productCache[_clCurrentCode]) productCache[_clCurrentCode] = {};
-  productCache[_clCurrentCode].changeLog = logs.filter(l => l.date || l.note);
+  productCache[_clCurrentCode].changeLog = _clDraft.filter(l => l.date || l.note || l.type);
   saveProductCache();
   saveToGitHub();
   closeChangeLog();
-  renderTable(); // ボタンの件数表示を更新
-  // リニューアルタブが開いていれば再描画（変更記録の有無で実施済へ移動）
+  renderTable();
   if (typeof _updateRenewalCounts === 'function') _updateRenewalCounts();
   if (typeof _renderCurrentRenewal === 'function') _renderCurrentRenewal();
 }
@@ -9795,7 +9792,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   </div>
 </div>
 <div id="changeLogModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9000;align-items:center;justify-content:center">
-  <div style="background:var(--surface);border-radius:12px;width:480px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
+  <div style="background:var(--surface);border-radius:12px;width:680px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
     <!-- ヘッダー（固定） -->
     <div style="padding:20px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;justify-content:space-between;align-items:center">
