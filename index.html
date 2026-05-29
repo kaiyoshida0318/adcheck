@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.559</span>
+    <span class="build-date">v1.560</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4871,6 +4871,11 @@ function renderItemGraph() {
     const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:'#fbbf24'},{key:'kw',label:'ROAS-KW',color:'#f59e0b'},{key:'p20',label:'ROAS20',color:'#38bdf8'}]:(metric==='ctr')?[{key:'all',label:'CTR\u5168\u4f53',color:'#34d399',hide:true},{key:'kw',label:'CTR-KW',color:'#f59e0b'},{key:'p20',label:'CTR20',color:'#38bdf8',hide:true}]:[{key:'all',label:'CVR\u5168\u4f53',color:'#a78bfa'},{key:'kw',label:'CVR(KW)',color:'#f59e0b'},{key:'p20',label:'CVR(20\u5186)',color:'#38bdf8'}];
     datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:v=>v+'%',borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,hidden:!!d.hide}));
     yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+ctx.raw+'%';
+  } else if (metric==='spend'||metric==='orders') {
+    const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa';
+    const defs=[{key:'all',label:un+'\u5168\u4f53',color:base},{key:'kw',label:un+'-KW',color:'#f59e0b'},{key:'p20',label:un+'-20',color:'#38bdf8'}];
+    datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:uf,borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
+    yCallback=uf; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+uf(ctx.raw);
   } else if (metric === 'sales') {
     const sa=_itemSalesArrays(labels,dataMap,code); const yf=v=>'\u00a5'+Math.round(v).toLocaleString();
     datasets=_ITEM_SALES_DEFS.map(d=>({label:d.label,data:sa[d.key],_fmt:yf,borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.5,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
@@ -4890,6 +4895,7 @@ function renderItemGraph() {
       let series, normalize=false;
       if (metric==='all'){ series=_renewalOverviewKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
       else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
+      else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa'; series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:'#f59e0b',fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:'#38bdf8',fmt:uf,vals:tri.p20}]; }
       else if (metric==='sales'){ const sa=_itemSalesArrays(labels,dataMap,code); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
       else { const fmt=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).fmt; const lbl=(metric==='ctr')?'CTR-KW':(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).label; series=[{key:'_single',label:lbl,color:(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color,fmt,vals:_renewalRepValue(metric,labels,dataMap,code)}]; }
       const multi=series.length>1; _renewalAllYearMode=multi; _renewalSeries=series; datasets=[];
@@ -4916,6 +4922,7 @@ function _itemSalesArrays(labels, dataMap, code){
   return {tot,seo,kw,p20};
 }
 const _ITEM_SALES_DEFS=[{key:'tot',label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8'},{key:'seo',label:'SEO\u58f2\u4e0a',color:'#7c3aed'},{key:'kw',label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa'},{key:'p20',label:'20\u5186\u58f2\u4e0a',color:'#f97316'}];
+function _itemTriple(labels, dataMap, kAll, kKw){ const all=labels.map(l=>dataMap[l]?.[kAll]||0); const kw=labels.map(l=>dataMap[l]?.[kKw]||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i])); return {all,kw,p20}; }
 function _toggleItemFY(fy){ fy=+fy; if(_renewalHiddenFY.has(fy)) _renewalHiddenFY.delete(fy); else _renewalHiddenFY.add(fy); renderItemGraph(); }
 function _toggleItemMetricKey(mk){ if(_renewalHiddenMetric.has(mk)) _renewalHiddenMetric.delete(mk); else _renewalHiddenMetric.add(mk); renderItemGraph(); }
 function _toggleItemMetric(i){ const c=_itemChartInstance; if(!c) return; c.setDatasetVisibility(i,!c.isDatasetVisible(i)); c.update(); _renderItemToggles(true); }
