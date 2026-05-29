@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.558</span>
+    <span class="build-date">v1.559</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4941,16 +4941,34 @@ function _renderItemRichTable(labels, dataMap, code){
   const wrap=document.getElementById('itemGraphDataTable'); if(!wrap) return;
   if(!labels||!labels.length){ wrap.innerHTML=''; return; }
   const daily=_itemGraphPeriod==='daily';
+  const metric=document.getElementById('itemGraphMetric')?.value||'all';
   const logs=(productCache[code]?.changeLog||[]).filter(l=>l.date);
   const logByKey={}; logs.forEach(l=>{ const key=daily?l.date:l.date.slice(0,7); (logByKey[key]||(logByKey[key]=[])).push(l); });
-  const keys=_renewalMetricKeys();
-  const vbm={}; keys.forEach(k=>vbm[k]=_renewalMetricValues(k,labels,dataMap,code));
+  const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); const pf=v=>v+'%'; const cf=v=>v+'\u4ef6';
+  let cols;
+  if (metric==='roas'||metric==='cvr'||metric==='ctr'){
+    const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||{}).color||'#888'; const dep=(metric!=='ctr');
+    cols=[{label:M+'\u5168\u4f53',color:base,fmt:pf,vals:tri.all,dep},{label:M+'-KW',color:'#f59e0b',fmt:pf,vals:tri.kw,dep},{label:M+'20',color:'#38bdf8',fmt:pf,vals:tri.p20,dep}];
+  } else if (metric==='spend'){
+    const all=labels.map(l=>dataMap[l]?.spend||0); const kw=labels.map(l=>dataMap[l]?.spendKw||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i]));
+    cols=[{label:'\u5b9f\u7e3e\u984d\u5168\u4f53',color:'#ef4444',fmt:yf,vals:all},{label:'\u5b9f\u7e3e\u984d-KW',color:'#f59e0b',fmt:yf,vals:kw},{label:'\u5b9f\u7e3e\u984d-20',color:'#38bdf8',fmt:yf,vals:p20}];
+  } else if (metric==='orders'){
+    const all=labels.map(l=>dataMap[l]?.orders||0); const kw=labels.map(l=>dataMap[l]?.ordersKw||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i]));
+    cols=[{label:'\u500b\u6570\u5168\u4f53',color:'#60a5fa',fmt:cf,vals:all},{label:'\u500b\u6570-KW',color:'#f59e0b',fmt:cf,vals:kw},{label:'\u500b\u6570-20',color:'#38bdf8',fmt:cf,vals:p20}];
+  } else if (metric==='sales'){
+    const sa=_itemSalesArrays(labels,dataMap,code);
+    cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
+  } else if (metric==='all'){
+    cols=_renewalOverviewKeys().map(k=>({label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code),dep:(k==='roas'||k==='cvr'||k==='totsales'||k==='cpc')}));
+  } else {
+    const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
+    cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
+  }
   const totSalesArr=_renewalMetricValues('totsales',labels,dataMap,code);
-  const SD={roas:1,cvr:1,totsales:1,cpc:1};
   const order=labels.map((_,i)=>i).reverse();
   const chip=l=>{ const c=l.type==='lp'?'#1a73e8':l.type==='thumb'?'#f4b400':l.type==='both'?'#9333ea':'#f97316'; const tl=l.type==='lp'?'LP\u5909\u66f4':l.type==='thumb'?'\u30b5\u30e0\u30cd\u5909\u66f4':l.type==='both'?'LP\u30fb\u30b5\u30e0\u30cd\u5909\u66f4':'\u5909\u66f4'; const nt=(l.note||'').trim()||tl; return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">'+l.date+' '+nt+'</span>'; };
-  const head='<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)"><th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">'+(daily?'\u65e5\u4ed8':'\u6708')+'</th>'+keys.map(k=>'<th style="padding:7px 10px;text-align:right;border-bottom:2px solid var(--border);font-weight:700;color:'+_RENEWAL_METRICS[k].color+';white-space:nowrap">'+_RENEWAL_METRICS[k].label+'</th>').join('')+'<th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">\u5909\u66f4\u8a18\u9332</th></tr></thead>';
-  const rows=order.map(i=>{ const key=labels[i]; const dispKey=daily?key.slice(5).replace('-','/'):key.slice(0,4)+'/'+key.slice(5,7); const hasLog=!!logByKey[key]; const bg=hasLog?'background:rgba(249,115,22,0.10)':''; const noSales=(totSalesArr[i]||0)===0; const cells=keys.map(k=>{ const v=vbm[k][i]; const show=(noSales&&SD[k])?'<span style="color:var(--text3)">\u2014</span>':_RENEWAL_METRICS[k].fmt(v); return '<td style="padding:6px 10px;text-align:right;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+bg+'">'+show+'</td>'; }).join(''); const logCell=hasLog?'<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);'+bg+'">'+logByKey[key].map(chip).join('')+'</td>':'<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>'; const ks=hasLog?'font-weight:700;color:#f97316':'color:var(--text)'; return '<tr><td style="padding:6px 10px;text-align:left;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+ks+';'+bg+'">'+dispKey+'</td>'+cells+logCell+'</tr>'; }).join('');
+  const head='<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)"><th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">'+(daily?'\u65e5\u4ed8':'\u6708')+'</th>'+cols.map(c=>'<th style="padding:7px 10px;text-align:right;border-bottom:2px solid var(--border);font-weight:700;color:'+c.color+';white-space:nowrap">'+c.label+'</th>').join('')+'<th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">\u5909\u66f4\u8a18\u9332</th></tr></thead>';
+  const rows=order.map(i=>{ const key=labels[i]; const dispKey=daily?key.slice(5).replace('-','/'):key.slice(0,4)+'/'+key.slice(5,7); const hasLog=!!logByKey[key]; const bg=hasLog?'background:rgba(249,115,22,0.10)':''; const noSales=(totSalesArr[i]||0)===0; const cells=cols.map(c=>{ const v=c.vals[i]; const show=(c.dep&&noSales)?'<span style="color:var(--text3)">\u2014</span>':c.fmt(v); return '<td style="padding:6px 10px;text-align:right;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+bg+'">'+show+'</td>'; }).join(''); const logCell=hasLog?'<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);'+bg+'">'+logByKey[key].map(chip).join('')+'</td>':'<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>'; const ks=hasLog?'font-weight:700;color:#f97316':'color:var(--text)'; return '<tr><td style="padding:6px 10px;text-align:left;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+ks+';'+bg+'">'+dispKey+'</td>'+cells+logCell+'</tr>'; }).join('');
   wrap.innerHTML='<table style="border-collapse:collapse;width:100%;font-size:12px">'+head+'<tbody>'+rows+'</tbody></table>';
 }
 
