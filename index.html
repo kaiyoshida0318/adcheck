@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.543</span>
+    <span class="build-date">v1.544</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6268,6 +6268,7 @@ let _renewalHiddenFY = new Set();
 let _renewalHiddenMetric = new Set();
 let _renewalAllYearMode = false;
 const _RENEWAL_FY_PALETTE = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
+const _RENEWAL_FY_DASH = [[], [7,4], [2,4], [11,4,2,4], [7,4,2,4], [2,5,9,5]];
 function _renewalRepValue(metric, labels, dataMap, code) {
   if (metric === 'ctr') return _renewalTripleValues('ctr', labels, dataMap).kw;
   if (metric === 'roas' || metric === 'cvr') return _renewalTripleValues(metric, labels, dataMap).all;
@@ -6287,10 +6288,14 @@ function _renderRenewalYearToggles(years) {
   if (!wrap) return;
   if (!years || !years.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
   wrap.style.display = 'flex';
+  const n = years.length;
   wrap.innerHTML = years.map((fy, idx) => {
-    const color = _RENEWAL_FY_PALETTE[idx % _RENEWAL_FY_PALETTE.length];
+    const rec = n - 1 - idx;
+    const dash = _RENEWAL_FY_DASH[rec % _RENEWAL_FY_DASH.length];
+    const da = dash.length ? dash.join(',') : '0';
     const on = !_renewalHiddenFY.has(fy);
-    return `<button onclick="_toggleRenewalFY(${fy})" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;cursor:pointer;border:2px solid ${color};background:${on?color:'transparent'};color:${on?'#fff':'var(--text3)'};opacity:${on?'1':'0.5'};text-decoration:${on?'none':'line-through'}">${fy}\u5e74\u5ea6</button>`;
+    const lc = _renewalAllYearMode ? 'var(--text2)' : _RENEWAL_FY_PALETTE[idx % _RENEWAL_FY_PALETTE.length];
+    return `<button onclick="_toggleRenewalFY(${fy})" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);opacity:${on?'1':'0.45'};text-decoration:${on?'none':'line-through'}"><svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="${on?lc:'var(--text3)'}" stroke-width="2.6" stroke-dasharray="${da}"/></svg>${fy}年</button>`;
   }).join('');
 }
 let _renewalChartInstance = null;
@@ -6612,10 +6617,10 @@ function renderRenewalGraph() {
   chartLabels = displayLabels;
   _renewalAllYearMode = false;
   if (_renewalGraphPeriod === 'monthly') {
-    const _fyOf  = ym => { const yy=+ym.slice(0,4), mo=+ym.slice(5,7); return (mo>=5)?yy:yy-1; };
-    const _fmiOf = ym => { const mo=+ym.slice(5,7); return (mo>=5)?(mo-5):(mo+7); };
+    const _fyOf  = ym => +ym.slice(0,4);
+    const _fmiOf = ym => +ym.slice(5,7) - 1;
     const _years = [...new Set(labels.map(_fyOf))].sort((x,z)=>x-z);
-    const _fmLabels = ['5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月','4月'];
+    const _fmLabels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
     if (_years.length) {
       yearMode = true;
       _fyYears = _years;
@@ -6641,8 +6646,8 @@ function renderRenewalGraph() {
               label: meta.label + ' ' + fy,
               data: arrN, _raw: arrR, _fmt: meta.fmt, _mk: k, _fy: fy,
               borderColor: meta.color, backgroundColor: meta.color + '22',
-              borderDash: (yi === _years.length-1) ? [] : [5,4],
-              borderWidth: (yi === _years.length-1) ? 2.4 : 1.5,
+              borderDash: _RENEWAL_FY_DASH[(_years.length-1-yi) % _RENEWAL_FY_DASH.length],
+              borderWidth: (yi === _years.length-1) ? 2.4 : 1.6,
               pointRadius: 2.5, pointHoverRadius: 5, tension: 0.3, fill: false, spanGaps: true,
               hidden: _renewalHiddenMetric.has(k) || _renewalHiddenFY.has(fy),
             });
@@ -6657,7 +6662,8 @@ function renderRenewalGraph() {
         const fmt = (_RENEWAL_METRICS[metric] || _RENEWAL_METRICS.roas).fmt;
         datasets = _years.map((fy, idx) => {
           const color = _RENEWAL_FY_PALETTE[idx % _RENEWAL_FY_PALETTE.length];
-          return { label: fy + '年度', data: fyData[fy], _fmt: fmt, borderColor: color, backgroundColor: color + '22', borderWidth: 2.3, pointRadius: 3, pointHoverRadius: 6, tension: 0.3, fill: false, spanGaps: true, hidden: _renewalHiddenFY.has(fy) };
+          const _rec = _years.length - 1 - idx;
+          return { label: fy + '年', data: fyData[fy], _fmt: fmt, borderColor: color, backgroundColor: color + '22', borderDash: _RENEWAL_FY_DASH[_rec % _RENEWAL_FY_DASH.length], borderWidth: _rec===0?2.6:1.9, pointRadius: 3, pointHoverRadius: 6, tension: 0.3, fill: false, spanGaps: true, hidden: _renewalHiddenFY.has(fy) };
         });
         yCallback = v => fmt(v);
         tooltipLabel = ctx => ` ${ctx.dataset.label}: ${ctx.dataset._fmt ? ctx.dataset._fmt(ctx.raw) : ctx.raw}`;
