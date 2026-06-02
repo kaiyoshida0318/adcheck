@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.567</span>
+    <span class="build-date">v1.568</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -766,11 +766,17 @@ header + * { margin-top: 4px; }
         <div id="graphEmpty" style="display:none;text-align:center;padding:60px;color:var(--text3);font-size:13px">
           データがありません。月別データをアップロードしてください。
         </div>
-        <div id="graphTableColorBtns" style="margin-top:20px;display:flex;justify-content:flex-end;gap:4px;flex-wrap:wrap">
+        <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="display:flex;gap:4px">
+            <button id="gtmNormal" onclick="setGraphTableMode('normal')" style="font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">通常</button>
+            <button id="gtmYoy" onclick="setGraphTableMode('yoy')" style="font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前年同月比</button>
+          </div>
+          <div id="graphTableColorBtns" style="display:flex;gap:4px;flex-wrap:wrap">
           <button id="gtcRecent" onclick="setGraphTableColor('recent12')" style="font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">直近1年</button>
           <button id="gtcFiscal" onclick="setGraphTableColor('fiscal')" style="font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">年度区切り</button>
           <button id="gtcCal" onclick="setGraphTableColor('calendar')" style="font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">年区切り</button>
           <button id="gtcNone" onclick="setGraphTableColor('none')" style="font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">なし</button>
+          </div>
         </div>
         <div id="graphDataTable" style="margin-top:8px;overflow-x:auto"></div>
       </div>
@@ -5056,6 +5062,17 @@ let _graphYearMode = false;
 let _graphFYStart = 1;
 let _graphView2y = false;
 let _graphTableColor = 'recent12';
+let _graphTableMode = 'normal';
+function setGraphTableMode(m){ _graphTableMode=m; _setGraphTableModeUI(); renderGraph(); }
+function _setGraphTableModeUI(){
+  const base='font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;';
+  const on='border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
+  const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
+  const nb=document.getElementById('gtmNormal'), yb=document.getElementById('gtmYoy');
+  if(nb) nb.style.cssText=base+(((_graphTableMode||'normal')==='normal')?on:off);
+  if(yb) yb.style.cssText=base+((_graphTableMode==='yoy')?on:off);
+  const cb=document.getElementById('graphTableColorBtns'); if(cb) cb.style.display=((_graphTableMode==='yoy')?'none':'flex');
+}
 function setGraphTableColor(m){ _graphTableColor=m; _setGraphTableColorUI(); renderGraph(); }
 function _setGraphTableColorUI(){
   const ids={recent12:'gtcRecent',fiscal:'gtcFiscal',calendar:'gtcCal',none:'gtcNone'};
@@ -5278,6 +5295,8 @@ function _renderGraphTable(labels, datasets) {
   const thStyle = 'padding:6px 10px;text-align:right;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)';
   const tdStyle = 'padding:6px 10px;text-align:right;font-size:11px;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);white-space:nowrap';
 
+  if (_graphPeriod === 'monthly' && _graphTableMode === 'yoy') { _renderGraphTableYoy(labels, datasets, fmtVal, thStyle, tdStyle, wrap); _setGraphTableModeUI(); return; }
+
   const headerRow = `<tr>
     <th style="${thStyle};text-align:left;background:var(--surface2)">${_graphPeriod === 'daily' ? '日付' : '月'}</th>
     ${datasets.map(ds => `<th style="${thStyle};color:${ds.borderColor||'var(--text3)'}">${ds.label}</th>`).join('')}
@@ -5322,6 +5341,38 @@ function _renderGraphTable(labels, datasets) {
     <thead>${headerRow}</thead>
     <tbody>${dataRows}</tbody>
   </table>`;
+}
+
+function _renderGraphTableYoy(labels, datasets, fmtVal, thStyle, tdStyle, wrap){
+  const idxByYM = {};
+  labels.forEach((lbl, i) => { idxByYM[lbl] = i; });
+  const sorted = [...labels].sort();
+  const latest = sorted[sorted.length - 1];
+  const y1 = +latest.slice(0,4), lm = +latest.slice(5,7);
+  const y0 = y1 - 1;
+  const pad = m => String(m).padStart(2,'0');
+  const monthsSet = new Set();
+  for (let m=1;m<=12;m++){ if (idxByYM[y1+'/'+pad(m)]!==undefined || idxByYM[y0+'/'+pad(m)]!==undefined) monthsSet.add(m); }
+  const months = [...monthsSet].sort((a,b)=> (((a-lm-1+12)%12)) - (((b-lm-1+12)%12)) );
+  const dash = '<span style=\'color:var(--text3)\'>\u2014</span>';
+  const header = '<tr><th style="'+thStyle+';text-align:left;background:var(--surface2)"></th><th style="'+thStyle+';text-align:left;background:var(--surface2)"></th>'+datasets.map(ds=>'<th style="'+thStyle+';color:'+(ds.borderColor||'var(--text3)')+'">'+ds.label+'</th>').join('')+'</tr>';
+  let body='';
+  months.forEach((m, gi)=>{
+    const tint = (gi%2===0) ? 'rgba(59,130,246,0.06)' : 'transparent';
+    const tb = 'border-top:2px solid var(--border);';
+    const i1 = idxByYM[y1+'/'+pad(m)];
+    const i0 = idxByYM[y0+'/'+pad(m)];
+    body += '<tr>'
+      + '<td rowspan="2" style="'+tdStyle+';text-align:center;font-weight:700;color:var(--text);vertical-align:middle;'+tb+'background:'+tint+'">'+m+'\u6708</td>'
+      + '<td style="'+tdStyle+';text-align:right;color:var(--text2);'+tb+'background:'+tint+'">'+y1+'\u5e74</td>'
+      + datasets.map(ds=>'<td style="'+tdStyle+';'+tb+'background:'+tint+'">'+(i1!==undefined?fmtVal(ds.data[i1],ds):dash)+'</td>').join('')
+      + '</tr>'
+      + '<tr>'
+      + '<td style="'+tdStyle+';text-align:right;color:var(--text2);background:'+tint+'">'+y0+'\u5e74</td>'
+      + datasets.map(ds=>'<td style="'+tdStyle+';background:'+tint+'">'+(i0!==undefined?fmtVal(ds.data[i0],ds):dash)+'</td>').join('')
+      + '</tr>';
+  });
+  wrap.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--surface)"><thead>'+header+'</thead><tbody>'+body+'</tbody></table>';
 }
 
 // 全-日月別グラフ：凡例クリックは無効（下のボタンで操作）
