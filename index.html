@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.569</span>
+    <span class="build-date">v1.570</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -812,6 +812,7 @@ header + * { margin-top: 4px; }
       </div>
       <div class="table-card">
         <div class="table-toolbar">
+          <div style="display:flex;gap:4px;margin-right:10px"><button id="mtmNormal" onclick="setMonthlyTableMode('normal')" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">通常</button><button id="mtmYoy" onclick="setMonthlyTableMode('yoy')" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前年同月比</button></div>
           <span id="monthly-run-status" style="font-size:11px;color:var(--text3)"></span><div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;margin-right:6px"><span style="color:var(--text3);font-weight:700">配色:</span><span style="color:#1565C0;font-weight:700">上位10%</span><span style="color:#2E7D32;font-weight:700">上位20%</span><span style="color:#1a1a1a">中間</span><span style="color:#BA7517;font-weight:700">下位20%</span><span style="color:#A32D2D;font-weight:700">下位10%</span></div>
           <div class="toolbar-right">
             <button class="summary-toggle-btn" id="monthlySummaryBarBtn" onclick="toggleSummaryBar('monthlySummaryBarInner','monthlySummaryBarBtn')">▼ 開く</button>
@@ -4138,7 +4139,60 @@ function _renderTable(mode, rows) {
 }
 
 // 後方互換（古い呼び出しに対応）
-function _renderMonthlyTable(rows) { _renderTable('monthly', rows); }
+let _monthlyTableMode = 'normal';
+let _monthlyLastRows = null;
+function setMonthlyTableMode(m){ _monthlyTableMode=m; _renderMonthlyTable(_monthlyLastRows || []); }
+function _setMonthlyTableModeUI(){
+  const base='font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;';
+  const on='border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
+  const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
+  const nb=document.getElementById('mtmNormal'), yb=document.getElementById('mtmYoy');
+  if(nb) nb.style.cssText=base+(((_monthlyTableMode||'normal')==='normal')?on:off);
+  if(yb) yb.style.cssText=base+((_monthlyTableMode==='yoy')?on:off);
+}
+function _renderMonthlyTable(rows) {
+  _monthlyLastRows = rows;
+  if (_monthlyTableMode === 'yoy') { _renderMonthlyYoyTable(); } else { _renderTable('monthly', rows); }
+  _setMonthlyTableModeUI();
+}
+function _renderMonthlyYoyTable(){
+  const wrap=document.getElementById('monthly-table-wrap');
+  const colH=document.getElementById('monthly-col-header');
+  if(colH) colH.style.display='none';
+  if(!wrap) return;
+  const mset=new Set();
+  Object.values(itemDailyData).forEach(byDate=>{ Object.keys(byDate).forEach(d=>mset.add(d.slice(0,7))); });
+  const now=new Date(); const cur=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  let months=[...mset].filter(m=>m<cur).sort();
+  if(!months.length){ wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>'; return; }
+  const agg={};
+  months.forEach(ym=>{ const ma=getMonthAgg(ym); let tot=0,rpp=0,spend=0; Object.values(ma).forEach(a=>{ tot+=a.totSales||0; rpp+=a.rppSales||0; spend+=a.spend||0; }); agg[ym]={tot,rpp,seo:Math.max(0,tot-rpp),spend}; });
+  const latest=months[months.length-1]; const y1=+latest.slice(0,4), lm=+latest.slice(5,7); const y0=y1-1;
+  const pad=m=>String(m).padStart(2,'0');
+  const mSet=new Set(); for(let m=1;m<=12;m++){ if(agg[y1+'-'+pad(m)]||agg[y0+'-'+pad(m)]) mSet.add(m); }
+  const mlist=[...mSet].sort((a,b)=>(((lm-a+12)%12))-(((lm-b+12)%12)));
+  const cols=[{k:'tot',label:'\u7dcf\u58f2\u4e0a',color:'#1d4ed8'},{k:'seo',label:'SEO\u58f2\u4e0a',color:'#7c3aed'},{k:'rpp',label:'\u5e83\u544a\u58f2\u4e0a',color:'#0ea5e9'},{k:'spend',label:'\u5b9f\u7e3e\u984d',color:'#ef4444'}];
+  const yf=v=> (v>0?'\u00a5'+Math.round(v).toLocaleString():'<span style=\'color:var(--text3)\'>\u2014</span>');
+  const th='padding:8px 14px;text-align:right;font-size:11px;font-weight:700;color:var(--text3);border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);position:sticky;top:0;z-index:2';
+  const td='padding:8px 14px;text-align:right;font-size:12px;font-family:monospace;border-bottom:1px solid var(--border);white-space:nowrap';
+  let head='<tr><th style="'+th+';text-align:center">\u6708</th><th style="'+th+';text-align:center">\u5e74</th>'+cols.map(c=>'<th style="'+th+';color:'+c.color+'">'+c.label+'</th>').join('')+'</tr>';
+  let body='';
+  mlist.forEach((m,gi)=>{
+    const tint=(gi%2===0)?'rgba(59,130,246,0.06)':'transparent';
+    const tb='border-top:2px solid var(--border);';
+    const a1=agg[y1+'-'+pad(m)]; const a0=agg[y0+'-'+pad(m)];
+    body+='<tr>'
+      +'<td rowspan="2" style="'+td+';text-align:center;font-weight:700;color:var(--text);vertical-align:middle;'+tb+'background:'+tint+'">'+m+'\u6708</td>'
+      +'<td style="'+td+';text-align:center;color:var(--text2);'+tb+'background:'+tint+'">'+y1+'\u5e74</td>'
+      +cols.map(c=>'<td style="'+td+';'+tb+'background:'+tint+'">'+(a1?yf(a1[c.k]):yf(0))+'</td>').join('')
+      +'</tr>'
+      +'<tr>'
+      +'<td style="'+td+';text-align:center;color:var(--text2);background:'+tint+'">'+y0+'\u5e74</td>'
+      +cols.map(c=>'<td style="'+td+';background:'+tint+'">'+(a0?yf(a0[c.k]):yf(0))+'</td>').join('')
+      +'</tr>';
+  });
+  wrap.innerHTML='<table style="width:100%;border-collapse:collapse;background:var(--surface)"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+}
 
 // 日別データの月セレクターを更新（月が増えると自動追加）
 let _miSelectedYms = [];
