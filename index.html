@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.571</span>
+    <span class="build-date">v1.572</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4126,7 +4126,7 @@ function _renderTable(mode, rows) {
       _fmtRoasCell(roasKw_r, roasKw_r,  vRoasKw),
       _fmtRoasCell(r.roas20, r.roas20,  vRoas20),
     ];
-    html += `<tr style="border-bottom:1px solid var(--border)">
+    html += `<tr style="border-bottom:1px solid var(--border);${r._grpTop ? 'border-top:3px solid var(--text2);' : ''}">
       <td style="padding:7px 6px;font-weight:600;white-space:nowrap;font-size:11px">${r.label}</td>
       ${cells.map((c,i) => `<td style="padding:7px 6px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;background:${BG[i]}">${c}</td>`).join('')}
     </tr>`;
@@ -4161,13 +4161,15 @@ function _monthlyYoyOrder(rows){
   Object.keys(byMonth).forEach(k => byMonth[k].sort((a,b) => getYm(b).localeCompare(getYm(a))));
   const months = Object.keys(byMonth).map(Number).sort((a,b) => (((lm-a+12)%12)) - (((lm-b+12)%12)));
   const out = [];
-  months.forEach(m => byMonth[m].forEach(r => out.push(r)));
-  rows.filter(r => !getYm(r)).forEach(r => out.push(r));
+  months.forEach((m, gi) => byMonth[m].forEach((r, ri) => { r._grpTop = (ri === 0 && gi > 0); out.push(r); }));
+  rows.filter(r => !getYm(r)).forEach(r => { r._grpTop = false; out.push(r); });
   return out;
 }
 function _renderMonthlyTable(rows){
   _monthlyLastRows = rows;
-  const data = (_monthlyTableMode === 'yoy') ? _monthlyYoyOrder(rows) : rows;
+  let data;
+  if (_monthlyTableMode === 'yoy') { data = _monthlyYoyOrder(rows); }
+  else { rows.forEach(r => { r._grpTop = false; }); data = rows; }
   _renderTable('monthly', data);
   _setMonthlyTableModeUI();
 }
