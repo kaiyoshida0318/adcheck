@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.568</span>
+    <span class="build-date">v1.569</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5353,7 +5353,7 @@ function _renderGraphTableYoy(labels, datasets, fmtVal, thStyle, tdStyle, wrap){
   const pad = m => String(m).padStart(2,'0');
   const monthsSet = new Set();
   for (let m=1;m<=12;m++){ if (idxByYM[y1+'/'+pad(m)]!==undefined || idxByYM[y0+'/'+pad(m)]!==undefined) monthsSet.add(m); }
-  const months = [...monthsSet].sort((a,b)=> (((a-lm-1+12)%12)) - (((b-lm-1+12)%12)) );
+  const months = [...monthsSet].sort((a,b)=> (((lm-a+12)%12)) - (((lm-b+12)%12)) );
   const dash = '<span style=\'color:var(--text3)\'>\u2014</span>';
   const header = '<tr><th style="'+thStyle+';text-align:left;background:var(--surface2)"></th><th style="'+thStyle+';text-align:left;background:var(--surface2)"></th>'+datasets.map(ds=>'<th style="'+thStyle+';color:'+(ds.borderColor||'var(--text3)')+'">'+ds.label+'</th>').join('')+'</tr>';
   let body='';
