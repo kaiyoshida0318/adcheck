@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.566</span>
+    <span class="build-date">v1.567</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -766,7 +766,13 @@ header + * { margin-top: 4px; }
         <div id="graphEmpty" style="display:none;text-align:center;padding:60px;color:var(--text3);font-size:13px">
           データがありません。月別データをアップロードしてください。
         </div>
-        <div id="graphDataTable" style="margin-top:20px;overflow-x:auto"></div>
+        <div id="graphTableColorBtns" style="margin-top:20px;display:flex;justify-content:flex-end;gap:4px;flex-wrap:wrap">
+          <button id="gtcRecent" onclick="setGraphTableColor('recent12')" style="font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">直近1年</button>
+          <button id="gtcFiscal" onclick="setGraphTableColor('fiscal')" style="font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">年度区切り</button>
+          <button id="gtcCal" onclick="setGraphTableColor('calendar')" style="font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">年区切り</button>
+          <button id="gtcNone" onclick="setGraphTableColor('none')" style="font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">なし</button>
+        </div>
+        <div id="graphDataTable" style="margin-top:8px;overflow-x:auto"></div>
       </div>
     </div>
   </div>
@@ -5049,6 +5055,15 @@ let _graphYearSeries = [];
 let _graphYearMode = false;
 let _graphFYStart = 1;
 let _graphView2y = false;
+let _graphTableColor = 'recent12';
+function setGraphTableColor(m){ _graphTableColor=m; _setGraphTableColorUI(); renderGraph(); }
+function _setGraphTableColorUI(){
+  const ids={recent12:'gtcRecent',fiscal:'gtcFiscal',calendar:'gtcCal',none:'gtcNone'};
+  const base='font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;';
+  const on='border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
+  const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
+  Object.keys(ids).forEach(m=>{ const el=document.getElementById(ids[m]); if(el) el.style.cssText=base+(((_graphTableColor||'recent12')===m)?on:off); });
+}
 function setGraphFYStart(m){ _graphFYStart=+m; _graphView2y=false; _setGraphFYStartUI(); renderGraph(); }
 function setGraph2y(){ _graphView2y=true; _setGraphFYStartUI(); renderGraph(); }
 function _setGraphFYStartUI(){
@@ -5279,11 +5294,23 @@ function _renderGraphTable(labels, datasets) {
     }).join('');
   } else {
     const rev = labels.map((lbl, idx) => ({ lbl, idx })).reverse();
+    const mode = _graphTableColor || 'recent12';
     const hi = 'rgba(59,130,246,0.10)';
     const lo = 'rgba(0,0,0,0.02)';
+    const tints = ['rgba(59,130,246,0.09)', 'rgba(249,115,22,0.09)'];
+    let grp = -1, cur = null;
     dataRows = rev.map(({ lbl, idx }, i) => {
-      const bg = (i < 12) ? hi : lo;
-      const divider = (i === 12) ? 'border-top:2px solid #3b82f6;' : '';
+      let bg = '', divider = '';
+      if (mode === 'recent12') {
+        bg = (i < 12) ? hi : lo;
+        if (i === 12) divider = 'border-top:2px solid #3b82f6;';
+      } else if (mode === 'fiscal' || mode === 'calendar') {
+        const y = +lbl.slice(0,4), mi = +lbl.slice(5,7) - 1;
+        const so = (mode === 'fiscal') ? 4 : 0;
+        const fy = (mi >= so) ? y : y - 1;
+        if (fy !== cur) { cur = fy; grp++; if (i !== 0) divider = 'border-top:2px solid var(--border);'; }
+        bg = tints[grp % 2];
+      }
       return `<tr>
       <td style="${tdStyle};text-align:left;font-weight:600;color:var(--text);background:${bg};${divider}">${lbl}</td>
       ${datasets.map(ds => `<td style="${tdStyle};background:${bg};${divider}">${fmtVal(ds.data[idx], ds)}</td>`).join('')}
