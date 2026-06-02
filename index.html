@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.570</span>
+    <span class="build-date">v1.571</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1970,7 +1970,7 @@ async function loadFromGitHub() {
         const dailyPart   = allRows.filter(r => r.isPeriod !== true);
         if (monthlyPart.length > 0) {
           nichinichiRows = monthlyPart;
-          _renderTable('monthly', nichinichiRows);
+          _renderMonthlyTable(nichinichiRows);
         }
         if (dailyPart.length > 0) {
           dailyRows = dailyPart;
@@ -4141,7 +4141,7 @@ function _renderTable(mode, rows) {
 // 後方互換（古い呼び出しに対応）
 let _monthlyTableMode = 'normal';
 let _monthlyLastRows = null;
-function setMonthlyTableMode(m){ _monthlyTableMode=m; _renderMonthlyTable(_monthlyLastRows || []); }
+function setMonthlyTableMode(m){ _monthlyTableMode = m; _renderMonthlyTable(_monthlyLastRows || []); }
 function _setMonthlyTableModeUI(){
   const base='font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;';
   const on='border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
@@ -4150,48 +4150,26 @@ function _setMonthlyTableModeUI(){
   if(nb) nb.style.cssText=base+(((_monthlyTableMode||'normal')==='normal')?on:off);
   if(yb) yb.style.cssText=base+((_monthlyTableMode==='yoy')?on:off);
 }
-function _renderMonthlyTable(rows) {
-  _monthlyLastRows = rows;
-  if (_monthlyTableMode === 'yoy') { _renderMonthlyYoyTable(); } else { _renderTable('monthly', rows); }
-  _setMonthlyTableModeUI();
+function _monthlyYoyOrder(rows){
+  const getYm = r => r.ym || (r.code ? String(r.code).slice(0,6) : '');
+  const valid = rows.filter(r => getYm(r));
+  if (valid.length < 2) return rows;
+  const latest = valid.map(getYm).sort().slice(-1)[0];
+  const lm = +latest.slice(4,6);
+  const byMonth = {};
+  valid.forEach(r => { const m = +getYm(r).slice(4,6); (byMonth[m] || (byMonth[m] = [])).push(r); });
+  Object.keys(byMonth).forEach(k => byMonth[k].sort((a,b) => getYm(b).localeCompare(getYm(a))));
+  const months = Object.keys(byMonth).map(Number).sort((a,b) => (((lm-a+12)%12)) - (((lm-b+12)%12)));
+  const out = [];
+  months.forEach(m => byMonth[m].forEach(r => out.push(r)));
+  rows.filter(r => !getYm(r)).forEach(r => out.push(r));
+  return out;
 }
-function _renderMonthlyYoyTable(){
-  const wrap=document.getElementById('monthly-table-wrap');
-  const colH=document.getElementById('monthly-col-header');
-  if(colH) colH.style.display='none';
-  if(!wrap) return;
-  const mset=new Set();
-  Object.values(itemDailyData).forEach(byDate=>{ Object.keys(byDate).forEach(d=>mset.add(d.slice(0,7))); });
-  const now=new Date(); const cur=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-  let months=[...mset].filter(m=>m<cur).sort();
-  if(!months.length){ wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>'; return; }
-  const agg={};
-  months.forEach(ym=>{ const ma=getMonthAgg(ym); let tot=0,rpp=0,spend=0; Object.values(ma).forEach(a=>{ tot+=a.totSales||0; rpp+=a.rppSales||0; spend+=a.spend||0; }); agg[ym]={tot,rpp,seo:Math.max(0,tot-rpp),spend}; });
-  const latest=months[months.length-1]; const y1=+latest.slice(0,4), lm=+latest.slice(5,7); const y0=y1-1;
-  const pad=m=>String(m).padStart(2,'0');
-  const mSet=new Set(); for(let m=1;m<=12;m++){ if(agg[y1+'-'+pad(m)]||agg[y0+'-'+pad(m)]) mSet.add(m); }
-  const mlist=[...mSet].sort((a,b)=>(((lm-a+12)%12))-(((lm-b+12)%12)));
-  const cols=[{k:'tot',label:'\u7dcf\u58f2\u4e0a',color:'#1d4ed8'},{k:'seo',label:'SEO\u58f2\u4e0a',color:'#7c3aed'},{k:'rpp',label:'\u5e83\u544a\u58f2\u4e0a',color:'#0ea5e9'},{k:'spend',label:'\u5b9f\u7e3e\u984d',color:'#ef4444'}];
-  const yf=v=> (v>0?'\u00a5'+Math.round(v).toLocaleString():'<span style=\'color:var(--text3)\'>\u2014</span>');
-  const th='padding:8px 14px;text-align:right;font-size:11px;font-weight:700;color:var(--text3);border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);position:sticky;top:0;z-index:2';
-  const td='padding:8px 14px;text-align:right;font-size:12px;font-family:monospace;border-bottom:1px solid var(--border);white-space:nowrap';
-  let head='<tr><th style="'+th+';text-align:center">\u6708</th><th style="'+th+';text-align:center">\u5e74</th>'+cols.map(c=>'<th style="'+th+';color:'+c.color+'">'+c.label+'</th>').join('')+'</tr>';
-  let body='';
-  mlist.forEach((m,gi)=>{
-    const tint=(gi%2===0)?'rgba(59,130,246,0.06)':'transparent';
-    const tb='border-top:2px solid var(--border);';
-    const a1=agg[y1+'-'+pad(m)]; const a0=agg[y0+'-'+pad(m)];
-    body+='<tr>'
-      +'<td rowspan="2" style="'+td+';text-align:center;font-weight:700;color:var(--text);vertical-align:middle;'+tb+'background:'+tint+'">'+m+'\u6708</td>'
-      +'<td style="'+td+';text-align:center;color:var(--text2);'+tb+'background:'+tint+'">'+y1+'\u5e74</td>'
-      +cols.map(c=>'<td style="'+td+';'+tb+'background:'+tint+'">'+(a1?yf(a1[c.k]):yf(0))+'</td>').join('')
-      +'</tr>'
-      +'<tr>'
-      +'<td style="'+td+';text-align:center;color:var(--text2);background:'+tint+'">'+y0+'\u5e74</td>'
-      +cols.map(c=>'<td style="'+td+';background:'+tint+'">'+(a0?yf(a0[c.k]):yf(0))+'</td>').join('')
-      +'</tr>';
-  });
-  wrap.innerHTML='<table style="width:100%;border-collapse:collapse;background:var(--surface)"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+function _renderMonthlyTable(rows){
+  _monthlyLastRows = rows;
+  const data = (_monthlyTableMode === 'yoy') ? _monthlyYoyOrder(rows) : rows;
+  _renderTable('monthly', data);
+  _setMonthlyTableModeUI();
 }
 
 // 日別データの月セレクターを更新（月が増えると自動追加）
@@ -4496,7 +4474,7 @@ function _aggregateDailyToMonthly(dRows) {
 
 async function monthlyRun() {
   if (_nichinichiFiles.length === 0) {
-    if (nichinichiRows.length > 0) _renderTable('monthly', nichinichiRows);
+    if (nichinichiRows.length > 0) _renderMonthlyTable(nichinichiRows);
     if (dailyRows.length > 0) _renderTable('daily', dailyRows);
     return;
   }
@@ -4535,7 +4513,7 @@ async function monthlyRun() {
     }
   });
   nichinichiRows = Object.values(mByCode).sort((a, b) => b.code.localeCompare(a.code));
-  _renderTable('monthly', nichinichiRows);
+  _renderMonthlyTable(nichinichiRows);
   populateDailyMonthSel();
   renderDailyFiltered();
   populateKwMonthSel();
@@ -8078,7 +8056,7 @@ function switchTab(tab) {
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'formula') { _initFormulaMonthSel(); renderFormulaBrowser(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
-  if (tab === 'monthly') { _renderTable('monthly', nichinichiRows); }
+  if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
   if (tab === 'daily') { renderDailyFiltered(); }
   renderMonthlySubTab(tab);
 }
