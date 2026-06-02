@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.562</span>
+    <span class="build-date">v1.563</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -721,6 +721,7 @@ header + * { margin-top: 4px; }
           <div id="graphFYStartBtns" style="display:flex;gap:4px">
             <button id="graphFYStartCal" onclick="setGraphFYStart(1)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button>
             <button id="graphFYStartFiscal" onclick="setGraphFYStart(5)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">5月始まり</button>
+            <button id="graphView2y" onclick="setGraph2y()" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">2年横並び</button>
           </div>
           <select id="graphMetricSel" class="toolbar-month" onchange="renderGraph()" style="font-size:13px;padding:6px 12px">
             <option value="sales">売上（総売上/SEO/広告）</option>
@@ -5047,15 +5048,17 @@ let _graphYears = [];
 let _graphYearSeries = [];
 let _graphYearMode = false;
 let _graphFYStart = 1;
-function setGraphFYStart(m){ _graphFYStart=+m; _setGraphFYStartUI(_graphFYStart); renderGraph(); }
-function _setGraphFYStartUI(m){
-  const cal=document.getElementById('graphFYStartCal'), fis=document.getElementById('graphFYStartFiscal');
-  if(!cal||!fis) return;
+let _graphView2y = false;
+function setGraphFYStart(m){ _graphFYStart=+m; _graphView2y=false; _setGraphFYStartUI(); renderGraph(); }
+function setGraph2y(){ _graphView2y=true; _setGraphFYStartUI(); renderGraph(); }
+function _setGraphFYStartUI(){
+  const cal=document.getElementById('graphFYStartCal'), fis=document.getElementById('graphFYStartFiscal'), two=document.getElementById('graphView2y');
   const base='font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;';
   const on='border:1px solid #f97316;background:#f97316;color:#fff;';
   const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
-  cal.style.cssText=base+(m===1?on:off);
-  fis.style.cssText=base+(m===5?on:off);
+  if(cal) cal.style.cssText=base+((!_graphView2y&&_graphFYStart===1)?on:off);
+  if(fis) fis.style.cssText=base+((!_graphView2y&&_graphFYStart===5)?on:off);
+  if(two) two.style.cssText=base+(_graphView2y?on:off);
 }
 function _toggleGraphFY(fy){ fy=+fy; if(_graphHiddenFY.has(fy)) _graphHiddenFY.delete(fy); else _graphHiddenFY.add(fy); renderGraph(); }
 function _toggleGraphSeries(lb){ if(_graphHiddenSeries.has(lb)) _graphHiddenSeries.delete(lb); else _graphHiddenSeries.add(lb); renderGraph(); }
@@ -5092,6 +5095,15 @@ function _yearifyGraph(chart, labels){
   if(_graphPeriod!=='monthly'||!chart||!chart.data||!Array.isArray(labels)||!labels.length){ if(yt){yt.style.display='none';yt.innerHTML='';} return; }
   const parsed=labels.map(parse);
   if(parsed.some(x=>!x)){ if(yt){yt.style.display='none';yt.innerHTML='';} return; }
+  if (_graphView2y) {
+    const keep=Math.min(24,labels.length); const st=labels.length-keep;
+    chart.data.labels=labels.slice(st);
+    chart.data.datasets.forEach(ds=>{ ds.data=ds.data.slice(st); });
+    chart._clLabels=chart.data.labels;
+    chart.update('none');
+    if(yt){ yt.style.display='none'; yt.innerHTML=''; }
+    return;
+  }
   const so=((_graphFYStart||1)-1);
   parsed.forEach(x=>{ x.fi=(x.mi-so+12)%12; x.fy=(x.mi>=so)?x.y:x.y-1; });
   const years=[...new Set(parsed.map(x=>x.fy))].sort((a,b)=>a-b);
