@@ -374,7 +374,7 @@ header + * { margin-top: 4px; }
 .s-mid2 { color: #E65100; }   /* 中立広告無し オレンジ */
 .s-warn { color: #C62828; }   /* 撤退検討▲  赤 */
 .s-out  { color: #6D1111; }   /* 撤退■      エンジ */
-.tab-btn-all { background: #e8f4fb; padding: 7px 11px; font-size: 12px; }
+.tab-btn-all { background: #e8f4fb; padding: 7px 11px; }
 .tab-btn-all:hover { background: #d4ecf7; }
 .tab-btn-all.active { background: #e8f4fb; }
 .tab-panel { display: none; }
@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.575</span>
+    <span class="build-date">v1.577</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -788,7 +788,13 @@ header + * { margin-top: 4px; }
 
   <!-- 全-計算式 -->
   <div class="tab-panel" id="tab-yoy">
-    <div style="padding:40px;text-align:center;color:var(--text3);font-size:14px">全-1年前比較（これから作成）</div>
+    <div style="padding:14px 18px">
+      <div style="display:flex;gap:6px;margin-bottom:16px">
+        <button id="yoyModeYoy" onclick="setYoyMode('yoy')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">前年同月比</button>
+        <button id="yoyModeMom" onclick="setYoyMode('mom')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前月比較</button>
+      </div>
+      <div id="yoyCompareArea" style="position:relative;overflow-x:auto"></div>
+    </div>
   </div>
   <div class="tab-panel" id="tab-formula">
     <div style="padding:20px 24px;max-width:860px">
@@ -8038,6 +8044,79 @@ function _onLogoClick(e) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+let _yoyMode = 'yoy';
+function setYoyMode(m){ _yoyMode = m; _setYoyModeUI(); renderYoy(); }
+function _setYoyModeUI(){
+  const base='font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;';
+  const on='border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
+  const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
+  const a=document.getElementById('yoyModeYoy'), b=document.getElementById('yoyModeMom');
+  if(a) a.style.cssText=base+((_yoyMode==='yoy')?on:off);
+  if(b) b.style.cssText=base+((_yoyMode==='mom')?on:off);
+}
+function _ymAdd(ym, d){ let y=+ym.slice(0,4), m=+ym.slice(4,6)-1+d; y+=Math.floor(m/12); m=((m%12)+12)%12; return String(y)+String(m+1).padStart(2,'0'); }
+function _yoySalesByItem(ym){ const map={}; salesRows.forEach(r=>{ if(r.ym===ym){ map[r.itemCode]=(map[r.itemCode]||0)+(r.sales||0); } }); return map; }
+function renderYoy(){
+  _setYoyModeUI();
+  const area=document.getElementById('yoyCompareArea');
+  if(!area) return;
+  const yms=[...new Set((salesRows||[]).map(r=>r.ym))].filter(Boolean).sort();
+  const now=new Date(); const curYm=String(now.getFullYear())+String(now.getMonth()+1).padStart(2,'0');
+  const completed=yms.filter(m=>m<curYm);
+  if(!completed.length){ area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>'; return; }
+  const later=completed[completed.length-1];
+  const earlier=_ymAdd(later, _yoyMode==='yoy'?-12:-1);
+  const salesL=_yoySalesByItem(later), salesE=_yoySalesByItem(earlier);
+  const codes=new Set([...Object.keys(salesL), ...Object.keys(salesE)]);
+  let prods=[...codes].map(code=>{ const pc=productCache[code]||{}; return { code, name:(pc.manualName||pc.name||code), img:(pc.manualImg||pc.img||''), sl:salesL[code]||0, se:salesE[code]||0 }; }).filter(p=> p.sl>0 || p.se>0);
+  if(!prods.length){ area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">\u6bd4\u8f03\u3067\u304d\u308b\u58f2\u4e0a\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>'; return; }
+  const N=20;
+  const top=[...prods].sort((a,b)=>b.sl-a.sl).slice(0,N);
+  const leftOrder=[...top].sort((a,b)=>b.se-a.se);
+  const rightOrder=[...top].sort((a,b)=>b.sl-a.sl);
+  const rowH=46, headerH=30, gapW=96, labelH=27;
+  const idxL={}; leftOrder.forEach((p,i)=>idxL[p.code]=i);
+  const idxR={}; rightOrder.forEach((p,i)=>idxR[p.code]=i);
+  const fmt=v=> v>0?'\u00a5'+Math.round(v).toLocaleString():'<span style="color:var(--text3)">\u2014</span>';
+  const lblL=earlier.slice(0,4)+'/'+earlier.slice(4,6);
+  const lblR=later.slice(0,4)+'/'+later.slice(4,6);
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const tableHtml=(rows,vk)=>{
+    let h='<div style="display:flex;height:'+headerH+'px;align-items:center;border-bottom:2px solid var(--border);font-size:11px;font-weight:700;color:var(--text3);background:var(--surface2)">'
+      +'<div style="width:52px;text-align:center">\u753b\u50cf</div>'
+      +'<div style="flex:1;padding-left:6px">\u5546\u54c1\u540d</div>'
+      +'<div style="width:88px;text-align:right;padding-right:8px">\u5546\u54c1\u58f2\u4e0a</div></div>';
+    rows.forEach(p=>{
+      const im=p.img?'<img src="'+esc(p.img)+'" style="width:38px;height:38px;object-fit:contain;border-radius:4px">':'<div style="width:38px;height:38px;background:var(--surface2);border-radius:4px"></div>';
+      h+='<div style="display:flex;height:'+rowH+'px;align-items:center;border-bottom:1px solid var(--border)">'
+        +'<div style="width:52px;display:flex;justify-content:center">'+im+'</div>'
+        +'<div style="flex:1;padding-left:6px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</div>'
+        +'<div style="width:88px;text-align:right;padding-right:8px;font-family:monospace;font-size:12px">'+fmt(p[vk])+'</div></div>';
+    });
+    return h;
+  };
+  const totalH=headerH+top.length*rowH;
+  let lines='';
+  top.forEach(p=>{
+    const yL=headerH+idxL[p.code]*rowH+rowH/2;
+    const yR=headerH+idxR[p.code]*rowH+rowH/2;
+    const same=idxR[p.code]===idxL[p.code];
+    const up=idxR[p.code]<idxL[p.code];
+    const col=same?'#9ca3af':(up?'#16a34a':'#dc2626');
+    lines+='<path d="M0,'+yL+' C'+(gapW*0.45)+','+yL+' '+(gapW*0.55)+','+yR+' '+gapW+','+yR+'" stroke="'+col+'" stroke-width="2.6" fill="none" opacity="0.85"/>';
+  });
+  const svg='<svg width="'+gapW+'" height="'+totalH+'" style="display:block">'+lines+'</svg>';
+  const lblStyle='text-align:center;font-weight:700;font-size:12px;height:'+labelH+'px;line-height:'+labelH+'px;color:var(--text2)';
+  area.innerHTML='<div style="display:flex;align-items:flex-start;min-width:660px">'
+    +'<div style="width:280px;flex-shrink:0">'
+    +'<div style="'+lblStyle+'">'+lblL+'\uff08\u4ee5\u524d\uff09</div>'
+    +'<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">'+tableHtml(leftOrder,'se')+'</div></div>'
+    +'<div style="width:'+gapW+'px;flex-shrink:0;padding-top:'+(labelH+1)+'px">'+svg+'</div>'
+    +'<div style="width:280px;flex-shrink:0">'
+    +'<div style="'+lblStyle+'">'+lblR+'\uff08\u5f8c\uff09</div>'
+    +'<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">'+tableHtml(rightOrder,'sl')+'</div></div>'
+    +'</div>';
+}
 function switchTab(tab) {
   _currentTab = tab;
   // 全ボタンのactive解除
@@ -8060,6 +8139,7 @@ function switchTab(tab) {
   if (tab === 'renewal-lp') renderRenewalLp();
   if (tab === 'renewal-thumb') renderRenewalThumb();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
+  if (tab === 'yoy') renderYoy();
   if (tab === 'formula') { _initFormulaMonthSel(); renderFormulaBrowser(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
   if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
