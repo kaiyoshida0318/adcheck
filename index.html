@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.582</span>
+    <span class="build-date">v1.583</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8102,11 +8102,13 @@ function renderYoy(){
   const tableHtml=(ord,k)=>{
     let h=colH;
     ord.forEach(p=>{ const vv=p.v[k];
+      const ps=(k>0)?(p.v[k-1].s||0):0;
+      let salesCell; if(vv.s<=0){ salesCell=fmt(vv.s); } else if(k>0 && ps>0 && vv.s!==ps){ salesCell='<span style="color:'+(vv.s>ps?'#2563eb':'#dc2626')+';font-weight:700">'+yen(vv.s)+'</span>'; } else { salesCell=yen(vv.s); }
       const im=p.img?'<img src="'+esc(p.img)+'" style="width:36px;height:36px;object-fit:contain;border-radius:4px">':'<div style="width:36px;height:36px;background:var(--surface2);border-radius:4px"></div>';
       h+='<div style="display:flex;height:'+rowH+'px;align-items:center;border-bottom:1px solid var(--border)">'
         +'<div style="width:48px;display:flex;justify-content:center">'+im+'</div>'
         +'<div style="flex:1;padding-left:6px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</div>'
-        +'<div style="width:76px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+fmt(vv.s)+'</div>'
+        +'<div style="width:76px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+salesCell+'</div>'
         +'<div style="width:72px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+fmt(vv.sp)+'</div>'
         +'<div style="width:80px;text-align:right;padding-right:8px;font-family:monospace;font-size:11px">'+fmtP(vv.pf)+'</div></div>';
     });
