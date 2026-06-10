@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.587</span>
+    <span class="build-date">v1.588</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8049,8 +8049,8 @@ function _onLogoClick(e) {
 
 let _yoyMode = 'yoy';
 let _yoyMonth = '';
-function setYoyMode(m){ _yoyMode = m; _setYoyModeUI(); renderYoy(); }
-function setYoyMonth(v){ _yoyMonth = v; renderYoy(); }
+function setYoyMode(m){ _yoyMode = m; _yoyFocus=null; _setYoyModeUI(); renderYoy(); }
+function setYoyMonth(v){ _yoyMonth = v; _yoyFocus=null; renderYoy(); }
 function _setYoyModeUI(){
   const base='font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;';
   const on='border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
@@ -8062,6 +8062,8 @@ function _setYoyModeUI(){
 function _ymAdd(ym, d){ let y=+ym.slice(0,4), m=+ym.slice(4,6)-1+d; y+=Math.floor(m/12); m=((m%12)+12)%12; return String(y)+String(m+1).padStart(2,'0'); }
 let _yoyHideUp=false;
 let _yoyHideDown=false;
+let _yoyFocus=null;
+function setYoyFocus(code){ _yoyFocus=(_yoyFocus===code)?null:code; renderYoy(); }
 function toggleYoyLine(t){ if(t==='up') _yoyHideUp=!_yoyHideUp; else _yoyHideDown=!_yoyHideDown; renderYoy(); }
 function _setYoyLineUI(){
   const base='font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;';
@@ -8095,7 +8097,7 @@ function renderYoy(){
   const maps=periods.map(pm=>{ const agg=getMonthAgg(ymDash(pm))||{}; const mp={}; Object.keys(agg).forEach(code=>{ const a=agg[code]; const st=_yoyMonthStats(code, ymDash(pm)); mp[code]={ s:a?(a.totSales||0):0, sp:st.spend, pf:Math.round((st.sales720||0)*0.45-st.spend) }; }); return mp; });
   const allCodes=new Set(); maps.forEach(mp=>Object.keys(mp).forEach(c=>allCodes.add(c)));
   let prods=[...allCodes].map(code=>{ const pc=productCache[code]||{}; const v=maps.map(mp=>mp[code]||{s:0,sp:0,pf:0}); return { code, name:(pc.manualName||pc.name||code), img:(pc.manualImg||pc.img||''), v }; })
-    .filter(p=> p.v.some(x=>x.s>0||x.sp>0));
+    .filter(p=> p.v[2].s>1000);
   if(!prods.length){ area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">比較できる売上データがありません</div>'; return; }
   const top=[...prods].sort((a,b)=>b.v[2].s-a.v[2].s);
   const rowH=44, headerH=30, gapW=84, labelH=27, TW=400;
@@ -8117,7 +8119,8 @@ function renderYoy(){
       const ps=(k>0)?(p.v[k-1].s||0):0;
       let salesCell; if(vv.s<=0){ salesCell=fmt(vv.s); } else if(k>0 && ps>0 && vv.s!==ps){ salesCell='<span style="color:'+(vv.s>ps?'#2563eb':'#dc2626')+';font-weight:700">'+yen(vv.s)+'</span>'; } else { salesCell=yen(vv.s); }
       const im=p.img?'<img src="'+esc(p.img)+'" style="width:36px;height:36px;object-fit:contain;border-radius:4px">':'<div style="width:36px;height:36px;background:var(--surface2);border-radius:4px"></div>';
-      h+='<div style="display:flex;height:'+rowH+'px;align-items:center;border-bottom:1px solid var(--border)">'
+      const foc=(_yoyFocus===p.code);
+      h+='<div onclick="setYoyFocus(\''+p.code+'\')" style="display:flex;height:'+rowH+'px;align-items:center;border-bottom:1px solid var(--border);cursor:pointer;'+(foc?'background:#fef9c3;':'')+'">'
         +'<div style="width:48px;display:flex;justify-content:center">'+im+'</div>'
         +'<div style="flex:1;padding-left:6px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</div>'
         +'<div style="width:76px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+salesCell+'</div>'
@@ -8135,9 +8138,11 @@ function renderYoy(){
       const yR=headerH+idxs[kR][p.code]*rowH+rowH/2;
       const same=idxs[kR][p.code]===idxs[kL][p.code];
       const up=idxs[kR][p.code]<idxs[kL][p.code];
-      if(!same){ if(up && _yoyHideUp) return; if(!up && _yoyHideDown) return; }
+      if(_yoyFocus){ if(p.code!==_yoyFocus) return; }
+      else if(!same){ if(up && _yoyHideUp) return; if(!up && _yoyHideDown) return; }
       const col=same?'#9ca3af':(up?'#16a34a':'#dc2626');
-      lines+='<line x1="0" y1="'+yL+'" x2="'+gapW+'" y2="'+yR+'" stroke="'+col+'" stroke-width="2.4" opacity="0.8"/>';
+      const sw=(_yoyFocus===p.code)?3.6:2.4, op=(_yoyFocus===p.code)?'1':'0.8';
+      lines+='<line x1="0" y1="'+yL+'" x2="'+gapW+'" y2="'+yR+'" stroke="'+col+'" stroke-width="'+sw+'" opacity="'+op+'"/>';
     });
     return '<svg width="'+gapW+'" height="'+totalH+'" style="display:block">'+lines+'</svg>';
   };
