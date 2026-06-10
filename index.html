@@ -487,7 +487,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.593</span>
+    <span class="build-date">v1.594</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -800,9 +800,10 @@ header + * { margin-top: 4px; }
         <button id="yoyTglUp" onclick="toggleYoyLine('up')" style="margin-left:12px;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #16a34a;background:#16a34a;color:#fff;">上昇線</button>
         <button id="yoyTglDown" onclick="toggleYoyLine('down')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #dc2626;background:#dc2626;color:#fff;">下降線</button>
         <button id="yoyColBlue" onclick="toggleYoyColor('blue')" style="margin-left:12px;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">青商品</button>
+        <button id="yoyColGreen" onclick="toggleYoyColor('green')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">緑商品</button>
         <button id="yoyColYellow" onclick="toggleYoyColor('yellow')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">黄色商品</button>
         <button id="yoyColRed" onclick="toggleYoyColor('red')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">赤商品</button>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text2);flex-wrap:wrap"><span style="font-weight:600">売上 前期比</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2563eb;margin-right:3px;vertical-align:middle"></span>上昇</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ca8a04;margin-right:3px;vertical-align:middle"></span>減少(2割以内)</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dc2626;margin-right:3px;vertical-align:middle"></span>2割超の減少</span></div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text2);flex-wrap:wrap"><span style="font-weight:600">売上 前期比</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2563eb;margin-right:3px;vertical-align:middle"></span>上昇</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#16a34a;margin-right:3px;vertical-align:middle"></span>上昇(2割以内)</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ca8a04;margin-right:3px;vertical-align:middle"></span>減少(2割以内)</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dc2626;margin-right:3px;vertical-align:middle"></span>2割超の減少</span></div>
       </div>
       <div id="yoyCompareArea" style="position:relative;overflow:auto;max-height:72vh"></div>
     </div>
@@ -8075,11 +8076,13 @@ function setYoyFocus(code){ _yoyFocus=(_yoyFocus===code)?null:code; renderYoy();
 function toggleYoyLine(t){ if(t==='up') _yoyHideUp=!_yoyHideUp; else _yoyHideDown=!_yoyHideDown; renderYoy(); }
 let _yoyColorFilter = new Set();
 function toggleYoyColor(c){ if(_yoyColorFilter.has(c)) _yoyColorFilter.delete(c); else _yoyColorFilter.add(c); renderYoy(); }
-function _yoyLatestColor(p){ const cur=p.v[2].s, prev=p.v[1].s; if(cur<=0||prev<=0) return null; if(cur>prev) return 'blue'; if(cur<prev) return (cur>=prev*0.8)?'yellow':'red'; return null; }
+const _YOYCOL={blue:'#2563eb',green:'#16a34a',yellow:'#ca8a04',red:'#dc2626'};
+function _yoyCat(cur, prev){ if(cur<=0||prev<=0) return null; if(cur>=prev*1.2) return 'blue'; if(cur>prev) return 'green'; if(cur===prev) return null; if(cur>=prev*0.8) return 'yellow'; return 'red'; }
+function _yoyLatestColor(p){ return _yoyCat(p.v[2].s, p.v[1].s); }
 function _setYoyColorUI(){
   const base='font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;';
   const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
-  const map={blue:['yoyColBlue','#2563eb'],yellow:['yoyColYellow','#ca8a04'],red:['yoyColRed','#dc2626']};
+  const map={blue:['yoyColBlue','#2563eb'],green:['yoyColGreen','#16a34a'],yellow:['yoyColYellow','#ca8a04'],red:['yoyColRed','#dc2626']};
   Object.keys(map).forEach(c=>{ const id=map[c][0], col=map[c][1]; const el=document.getElementById(id); if(!el) return; const ml=(c==='blue')?'margin-left:12px;':''; el.style.cssText=ml+base+(_yoyColorFilter.has(c)?('border:1px solid '+col+';background:'+col+';color:#fff;'):off); });
 }
 function _setYoyLineUI(){
@@ -8137,8 +8140,7 @@ function renderYoy(){
       const ps=(k>0)?(p.v[k-1].s||0):0;
       let salesCell;
       if(vv.s<=0){ salesCell=fmt(vv.s); }
-      else if(k>0 && ps>0 && vv.s!==ps){ const _c=(vv.s>ps)?'#2563eb':((vv.s>=ps*0.8)?'#ca8a04':'#dc2626'); salesCell='<span style="color:'+_c+';font-weight:700">'+yen(vv.s)+'</span>'; }
-      else { salesCell=yen(vv.s); }
+      else { const _cat=(k>0)?_yoyCat(vv.s, ps):null; salesCell=_cat?('<span style="color:'+_YOYCOL[_cat]+';font-weight:700">'+yen(vv.s)+'</span>'):yen(vv.s); }
       const im=p.img?'<img src="'+esc(p.img)+'" style="width:36px;height:36px;object-fit:contain;border-radius:4px">':'<div style="width:36px;height:36px;background:var(--surface2);border-radius:4px"></div>';
       const foc=(_yoyFocus===p.code);
       h+='<div onclick="setYoyFocus(\''+p.code+'\')" style="display:flex;height:'+rowH+'px;align-items:center;border-bottom:1px solid var(--border);cursor:pointer;'+(foc?'background:#fef9c3;':'')+'">'
