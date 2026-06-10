@@ -487,7 +487,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.597</span>
+    <span class="build-date">v1.599</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6530,7 +6530,14 @@ function _renewalFilterColor(codes) {
   const f = _renewalColorFilter;
   if (f === 'all') return codes;
   return codes.filter(code => {
-    const r = _renewalTodoMetrics(code, _renewalTodoMonth).ratioKw;
+    let r;
+    if (_currentTab === 'renewal-todoseo') {
+      const agg = (getMonthAgg(_renewalTodoMonth)||{})[code];
+      const tot = agg ? (agg.totSales||0) : 0, rpp = agg ? (agg.rppSales||0) : 0;
+      r = tot > 0 ? Math.round(rpp / tot * 1000) / 10 : null;
+    } else {
+      r = _renewalTodoMetrics(code, _renewalTodoMonth).ratioKw;
+    }
     if (r === null || r === undefined) return false;
     if (f === 'bluered_all' || f === 'redblue_all') return r >= 50;
     if (f === 'kw80') return r >= 80;
@@ -6610,10 +6617,12 @@ function _updateRenewalCounts() {
   const e2 = document.getElementById('cnt-renewal-done');
   const e3 = document.getElementById('cnt-renewal-lp');
   const e4 = document.getElementById('cnt-renewal-thumb');
+  const e5 = document.getElementById('cnt-renewal-todoseo');
   if (e1) e1.textContent = all  > 0 ? `(${all})`  : '';
   if (e2) e2.textContent = done > 0 ? `(${done})` : '';
   if (e3) e3.textContent = lp > 0 ? `(${lp})` : '';
   if (e4) e4.textContent = thumb > 0 ? `(${thumb})` : '';
+  if (e5) e5.textContent = all  > 0 ? `(${all})`  : '';
 }
 
 // ══════════════════════════════════════════
