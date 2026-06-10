@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.580</span>
+    <span class="build-date">v1.581</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8073,74 +8073,63 @@ function renderYoy(){
   const now=new Date(); const curYm=String(now.getFullYear())+String(now.getMonth()+1).padStart(2,'0');
   const completed=yms.filter(m=>m<curYm);
   const sel=document.getElementById('yoySel');
-  if(!completed.length){ if(sel) sel.innerHTML=''; area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>'; return; }
+  if(!completed.length){ if(sel) sel.innerHTML=''; area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; return; }
   const later=(_yoyMonth && completed.includes(_yoyMonth))?_yoyMonth:completed[completed.length-1];
   if(sel){ sel.innerHTML=[...completed].reverse().map(m=>'<option value="'+m+'"'+(m===later?' selected':'')+'>'+m.slice(0,4)+'/'+m.slice(4,6)+'</option>').join(''); }
-  const earlier=_ymAdd(later, _yoyMode==='yoy'?-12:-1);
+  const delta=_yoyMode==='yoy'?12:1;
+  const periods=[_ymAdd(later,-2*delta), _ymAdd(later,-delta), later];
   const ymDash=m=>m.slice(0,4)+'-'+m.slice(4,6);
-  const aggL=getMonthAgg(ymDash(later))||{}, aggE=getMonthAgg(ymDash(earlier))||{};
-  const codes=new Set([...Object.keys(aggL), ...Object.keys(aggE)]);
-  const dL=ymDash(later), dE=ymDash(earlier);
-  let prods=[...codes].map(code=>{ const pc=productCache[code]||{}; const al=aggL[code], ae=aggE[code];
-    const stL=_yoyMonthStats(code,dL), stE=_yoyMonthStats(code,dE);
-    return { code, name:(pc.manualName||pc.name||code), img:(pc.manualImg||pc.img||''),
-      sL:al?(al.totSales||0):0, spL:stL.spend, pfL:Math.round((stL.sales720||0)*0.45-stL.spend),
-      sE:ae?(ae.totSales||0):0, spE:stE.spend, pfE:Math.round((stE.sales720||0)*0.45-stE.spend) }; })
-    .filter(p=> p.sL>0||p.sE>0||p.spL>0||p.spE>0);
-  if(!prods.length){ area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">\u6bd4\u8f03\u3067\u304d\u308b\u58f2\u4e0a\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>'; return; }
-  const N=20;
-  const top=[...prods].sort((a,b)=>b.sL-a.sL).slice(0,N);
-  const leftOrder=[...top].sort((a,b)=>b.sE-a.sE);
-  const rightOrder=[...top].sort((a,b)=>b.sL-a.sL);
-  const rowH=46, headerH=30, gapW=96, labelH=27, TW=420;
-  const idxL={}; leftOrder.forEach((p,i)=>idxL[p.code]=i);
-  const idxR={}; rightOrder.forEach((p,i)=>idxR[p.code]=i);
-  const yen=v=> '\u00a5'+Math.round(v).toLocaleString();
-  const fmt=v=> v>0?yen(v):'<span style="color:var(--text3)">\u2014</span>';
-  const fmtP=v=> v>0?'<span style="color:#16a34a">'+yen(v)+'</span>':(v<0?'<span style="color:#dc2626">-'+yen(-v)+'</span>':'<span style="color:var(--text3)">\u2014</span>');
-  const lblL=earlier.slice(0,4)+'/'+earlier.slice(4,6);
-  const lblR=later.slice(0,4)+'/'+later.slice(4,6);
+  const maps=periods.map(pm=>{ const agg=getMonthAgg(ymDash(pm))||{}; const mp={}; Object.keys(agg).forEach(code=>{ const a=agg[code]; const st=_yoyMonthStats(code, ymDash(pm)); mp[code]={ s:a?(a.totSales||0):0, sp:st.spend, pf:Math.round((st.sales720||0)*0.45-st.spend) }; }); return mp; });
+  const allCodes=new Set(); maps.forEach(mp=>Object.keys(mp).forEach(c=>allCodes.add(c)));
+  let prods=[...allCodes].map(code=>{ const pc=productCache[code]||{}; const v=maps.map(mp=>mp[code]||{s:0,sp:0,pf:0}); return { code, name:(pc.manualName||pc.name||code), img:(pc.manualImg||pc.img||''), v }; })
+    .filter(p=> p.v.some(x=>x.s>0||x.sp>0));
+  if(!prods.length){ area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">比較できる売上データがありません</div>'; return; }
+  const N=50;
+  const top=[...prods].sort((a,b)=>b.v[2].s-a.v[2].s).slice(0,N);
+  const rowH=44, headerH=30, gapW=84, labelH=27, TW=400;
+  const orders=[0,1,2].map(k=> [...top].sort((a,b)=>b.v[k].s-a.v[k].s));
+  const idxs=orders.map(ord=>{ const m={}; ord.forEach((p,i)=>m[p.code]=i); return m; });
+  const yen=v=>'¥'+Math.round(v).toLocaleString();
+  const fmt=v=> v>0?yen(v):'<span style="color:var(--text3)">—</span>';
+  const fmtP=v=> v>0?'<span style="color:#16a34a">'+yen(v)+'</span>':(v<0?'<span style="color:#dc2626">-'+yen(-v)+'</span>':'<span style="color:var(--text3)">—</span>');
   const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const colH='<div style="display:flex;height:'+headerH+'px;align-items:center;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--text3);background:var(--surface2)">'
-    +'<div style="width:50px;text-align:center">\u753b\u50cf</div>'
-    +'<div style="flex:1;padding-left:6px">\u5546\u54c1\u540d</div>'
-    +'<div style="width:78px;text-align:right;padding-right:6px">\u5546\u54c1\u58f2\u4e0a</div>'
-    +'<div style="width:74px;text-align:right;padding-right:6px">\u5e83\u544a\u8cbb</div>'
-    +'<div style="width:82px;text-align:right;padding-right:8px">\u7c97\u5e83\u544a\u5229\u76ca</div></div>';
-  const tableHtml=(rows,sk)=>{
+    +'<div style="width:48px;text-align:center">画像</div>'
+    +'<div style="flex:1;padding-left:6px">商品名</div>'
+    +'<div style="width:76px;text-align:right;padding-right:6px">商品売上</div>'
+    +'<div style="width:72px;text-align:right;padding-right:6px">広告費</div>'
+    +'<div style="width:80px;text-align:right;padding-right:8px">粗広告利益</div></div>';
+  const tableHtml=(ord,k)=>{
     let h=colH;
-    rows.forEach(p=>{
-      const im=p.img?'<img src="'+esc(p.img)+'" style="width:38px;height:38px;object-fit:contain;border-radius:4px">':'<div style="width:38px;height:38px;background:var(--surface2);border-radius:4px"></div>';
+    ord.forEach(p=>{ const vv=p.v[k];
+      const im=p.img?'<img src="'+esc(p.img)+'" style="width:36px;height:36px;object-fit:contain;border-radius:4px">':'<div style="width:36px;height:36px;background:var(--surface2);border-radius:4px"></div>';
       h+='<div style="display:flex;height:'+rowH+'px;align-items:center;border-bottom:1px solid var(--border)">'
-        +'<div style="width:50px;display:flex;justify-content:center">'+im+'</div>'
+        +'<div style="width:48px;display:flex;justify-content:center">'+im+'</div>'
         +'<div style="flex:1;padding-left:6px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</div>'
-        +'<div style="width:78px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+fmt(p['s'+sk])+'</div>'
-        +'<div style="width:74px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+fmt(p['sp'+sk])+'</div>'
-        +'<div style="width:82px;text-align:right;padding-right:8px;font-family:monospace;font-size:11px">'+fmtP(p['pf'+sk])+'</div></div>';
+        +'<div style="width:76px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+fmt(vv.s)+'</div>'
+        +'<div style="width:72px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+fmt(vv.sp)+'</div>'
+        +'<div style="width:80px;text-align:right;padding-right:8px;font-family:monospace;font-size:11px">'+fmtP(vv.pf)+'</div></div>';
     });
     return h;
   };
   const totalH=headerH+top.length*rowH;
-  let lines='';
-  top.forEach(p=>{
-    const yL=headerH+idxL[p.code]*rowH+rowH/2;
-    const yR=headerH+idxR[p.code]*rowH+rowH/2;
-    const same=idxR[p.code]===idxL[p.code];
-    const up=idxR[p.code]<idxL[p.code];
-    const col=same?'#9ca3af':(up?'#16a34a':'#dc2626');
-    lines+='<path d="M0,'+yL+' C'+(gapW*0.45)+','+yL+' '+(gapW*0.55)+','+yR+' '+gapW+','+yR+'" stroke="'+col+'" stroke-width="2.6" fill="none" opacity="0.85"/>';
-  });
-  const svg='<svg width="'+gapW+'" height="'+totalH+'" style="display:block">'+lines+'</svg>';
+  const svgBetween=(kL,kR)=>{
+    let lines='';
+    top.forEach(p=>{
+      const yL=headerH+idxs[kL][p.code]*rowH+rowH/2;
+      const yR=headerH+idxs[kR][p.code]*rowH+rowH/2;
+      const same=idxs[kR][p.code]===idxs[kL][p.code];
+      const up=idxs[kR][p.code]<idxs[kL][p.code];
+      const col=same?'#9ca3af':(up?'#16a34a':'#dc2626');
+      lines+='<path d="M0,'+yL+' C'+(gapW*0.45)+','+yL+' '+(gapW*0.55)+','+yR+' '+gapW+','+yR+'" stroke="'+col+'" stroke-width="2.4" fill="none" opacity="0.8"/>';
+    });
+    return '<svg width="'+gapW+'" height="'+totalH+'" style="display:block">'+lines+'</svg>';
+  };
+  const note=_yoyMode==='yoy'?['2年前','1年前','選択月']:['2ヶ月前','前月','選択月'];
   const lblStyle='text-align:center;font-weight:700;font-size:12px;height:'+labelH+'px;line-height:'+labelH+'px;color:var(--text2)';
-  area.innerHTML='<div style="display:flex;align-items:flex-start;min-width:'+(TW*2+gapW)+'px">'
-    +'<div style="width:'+TW+'px;flex-shrink:0">'
-    +'<div style="'+lblStyle+'">'+lblL+'\uff08\u4ee5\u524d\uff09</div>'
-    +'<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">'+tableHtml(leftOrder,'E')+'</div></div>'
-    +'<div style="width:'+gapW+'px;flex-shrink:0;padding-top:'+(labelH+1)+'px">'+svg+'</div>'
-    +'<div style="width:'+TW+'px;flex-shrink:0">'
-    +'<div style="'+lblStyle+'">'+lblR+'\uff08\u5f8c\uff09</div>'
-    +'<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">'+tableHtml(rightOrder,'L')+'</div></div>'
-    +'</div>';
+  const tbl=k=>'<div style="width:'+TW+'px;flex-shrink:0"><div style="'+lblStyle+'">'+periods[k].slice(0,4)+'/'+periods[k].slice(4,6)+'（'+note[k]+'）</div><div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">'+tableHtml(orders[k],k)+'</div></div>';
+  const mid=(kL,kR)=>'<div style="width:'+gapW+'px;flex-shrink:0;padding-top:'+(labelH+1)+'px">'+svgBetween(kL,kR)+'</div>';
+  area.innerHTML='<div style="display:flex;align-items:flex-start;min-width:'+(TW*3+gapW*2)+'px">'+tbl(0)+mid(0,1)+tbl(1)+mid(1,2)+tbl(2)+'</div>';
 }
 function switchTab(tab) {
   _currentTab = tab;
