@@ -487,7 +487,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.591</span>
+    <span class="build-date">v1.592</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -798,6 +798,9 @@ header + * { margin-top: 4px; }
         <select id="yoySel" onchange="setYoyMonth(this.value)" style="margin-left:10px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select>
         <button id="yoyTglUp" onclick="toggleYoyLine('up')" style="margin-left:12px;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #16a34a;background:#16a34a;color:#fff;">上昇線</button>
         <button id="yoyTglDown" onclick="toggleYoyLine('down')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #dc2626;background:#dc2626;color:#fff;">下降線</button>
+        <button id="yoyColBlue" onclick="toggleYoyColor('blue')" style="margin-left:12px;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">青商品</button>
+        <button id="yoyColYellow" onclick="toggleYoyColor('yellow')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">黄色商品</button>
+        <button id="yoyColRed" onclick="toggleYoyColor('red')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">赤商品</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text2);flex-wrap:wrap"><span style="font-weight:600">売上 前期比</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2563eb;margin-right:3px;vertical-align:middle"></span>上昇</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ca8a04;margin-right:3px;vertical-align:middle"></span>減少(2割以内)</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dc2626;margin-right:3px;vertical-align:middle"></span>2割超の減少</span></div>
       </div>
       <div id="yoyCompareArea" style="position:relative;overflow:auto;max-height:72vh"></div>
@@ -8069,6 +8072,15 @@ let _yoyHideDown=false;
 let _yoyFocus=null;
 function setYoyFocus(code){ _yoyFocus=(_yoyFocus===code)?null:code; renderYoy(); }
 function toggleYoyLine(t){ if(t==='up') _yoyHideUp=!_yoyHideUp; else _yoyHideDown=!_yoyHideDown; renderYoy(); }
+let _yoyColorFilter = new Set();
+function toggleYoyColor(c){ if(_yoyColorFilter.has(c)) _yoyColorFilter.delete(c); else _yoyColorFilter.add(c); renderYoy(); }
+function _yoyLatestColor(p){ const cur=p.v[2].s, prev=p.v[1].s; if(cur<=0||prev<=0) return null; if(cur>prev) return 'blue'; if(cur<prev) return (cur>=prev*0.8)?'yellow':'red'; return null; }
+function _setYoyColorUI(){
+  const base='font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;';
+  const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
+  const map={blue:['yoyColBlue','#2563eb'],yellow:['yoyColYellow','#ca8a04'],red:['yoyColRed','#dc2626']};
+  Object.keys(map).forEach(c=>{ const id=map[c][0], col=map[c][1]; const el=document.getElementById(id); if(!el) return; const ml=(c==='blue')?'margin-left:12px;':''; el.style.cssText=ml+base+(_yoyColorFilter.has(c)?('border:1px solid '+col+';background:'+col+';color:#fff;'):off); });
+}
 function _setYoyLineUI(){
   const base='font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;';
   const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);text-decoration:line-through;';
@@ -8086,6 +8098,7 @@ function _yoyMonthStats(code, ym){
 function renderYoy(){
   _setYoyModeUI();
   _setYoyLineUI();
+  _setYoyColorUI();
   const area=document.getElementById('yoyCompareArea');
   if(!area) return;
   const yms=[...new Set((salesRows||[]).map(r=>r.ym))].filter(Boolean).sort();
@@ -8146,7 +8159,7 @@ function renderYoy(){
       const same=idxs[kR][p.code]===idxs[kL][p.code];
       const up=idxs[kR][p.code]<idxs[kL][p.code];
       if(_yoyFocus){ if(p.code!==_yoyFocus) return; }
-      else if(!same){ if(up && _yoyHideUp) return; if(!up && _yoyHideDown) return; }
+      else { if(!same){ if(up && _yoyHideUp) return; if(!up && _yoyHideDown) return; } if(_yoyColorFilter.size){ const lc=_yoyLatestColor(p); if(!lc || !_yoyColorFilter.has(lc)) return; } }
       const col=same?'#9ca3af':(up?'#16a34a':'#dc2626');
       const sw=(_yoyFocus===p.code)?3.6:2.4, op=(_yoyFocus===p.code)?'1':'0.8';
       lines+='<line x1="0" y1="'+yL+'" x2="'+gapW+'" y2="'+yR+'" stroke="'+col+'" stroke-width="'+sw+'" opacity="'+op+'"/>';
