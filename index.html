@@ -487,7 +487,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.609</span>
+    <span class="build-date">v1.610</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6071,7 +6071,7 @@ function _renewalRowHtml(code, mode) {
 
   // done(実施済)なら行クリックでグラフモーダル、todo(全体)なら変更記録ボタンで編集
   const rowClick = '';
-  const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px 64px 64px 64px 110px';
+  const colW = '90px 76px 40px minmax(0,1.2fr) 60px 60px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 110px';
   let metricCells = '';
   {
     const mt = _renewalTodoMetrics(code, _renewalTodoMonth);
@@ -6091,7 +6091,7 @@ function _renewalRowHtml(code, mode) {
     const fmtM = v => (!v || v <= 0) ? dash : fmtY(v);
     const mcell = (v, bg) => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;${bg?'background:'+bg+';color:#111':''}">${fmtM(v)}</div>`;
     const rk = (k, v) => _renewalRank5(v, _renewalRankCtx[k] || []);
-    metricCells = mcell(mt.spendAll, '') + mcell(mt.spendKw, '') + mcell(mt.spend20, '') + cell(mt.ratioKw, cKw) + cell(mt.ratio20, c20) + cell(mt.ctrAll, '', rk('ctrAll', mt.ctrAll)) + cell(mt.ctrKw, '', rk('ctrKw', mt.ctrKw)) + cell(mt.ctr20, '', rk('ctr20', mt.ctr20)) + cell(mt.cvrAll, '', rk('cvrAll', mt.cvrAll)) + cell(mt.cvrKw, '', rk('cvrKw', mt.cvrKw)) + cell(mt.cvr20, '', rk('cvr20', mt.cvr20)) + cell(mt.roasAll, '', rk('roasAll', mt.roasAll)) + cell(mt.roasKw, '', rk('roasKw', mt.roasKw)) + cell(mt.roas20, '', rk('roas20', mt.roas20));
+    metricCells = cell(mt.ratioKw, cKw) + cell(mt.ratio20, c20) + mcell(mt.spendAll, '') + mcell(mt.spendKw, '') + mcell(mt.spend20, '') + cell(mt.ctrAll, '', rk('ctrAll', mt.ctrAll)) + cell(mt.ctrKw, '', rk('ctrKw', mt.ctrKw)) + cell(mt.ctr20, '', rk('ctr20', mt.ctr20)) + cell(mt.cvrAll, '', rk('cvrAll', mt.cvrAll)) + cell(mt.cvrKw, '', rk('cvrKw', mt.cvrKw)) + cell(mt.cvr20, '', rk('cvr20', mt.cvr20)) + cell(mt.roasAll, '', rk('roasAll', mt.roasAll)) + cell(mt.roasKw, '', rk('roasKw', mt.roasKw)) + cell(mt.roas20, '', rk('roas20', mt.roas20));
   }
   const hasLp = logs.some(l => l.type === 'lp' || l.type === 'both');
   const hasThumb = logs.some(l => l.type === 'thumb' || l.type === 'both');
@@ -6115,17 +6115,17 @@ function _renewalRowHtml(code, mode) {
 }
 
 function _renewalHeaderHtml(mode) {
-  const colW = '90px 76px 40px minmax(0,1.2fr) 76px 76px 76px 60px 60px 64px 64px 64px 64px 64px 64px 64px 64px 64px 110px';
+  const colW = '90px 76px 40px minmax(0,1.2fr) 60px 60px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 110px';
   const cols = [
     {k:'num',     label:'商品番号', bg:'#f1f3f4', align:'left'},
     {k:'code',    label:'管理番号', bg:'#f1f3f4', align:'left'},
     {k:'',        label:'画像',       bg:'#f1f3f4', align:'center'},
     {k:'name',    label:'商品名',   bg:'#f1f3f4', align:'left'},
+    {k:'ratioKw', label:'割合-KW',  bg:'#f3ecfb', align:'right'},
+    {k:'ratio20', label:'割合-20',  bg:'#f3ecfb', align:'right'},
     {k:'spendAll',label:'広告費全体', bg:'#fff3e0', align:'right'},
     {k:'spendKw', label:'広告費-KW',  bg:'#fff3e0', align:'right'},
     {k:'spend20', label:'広告費-20',  bg:'#fff3e0', align:'right'},
-    {k:'ratioKw', label:'割合-KW',  bg:'#f3ecfb', align:'right'},
-    {k:'ratio20', label:'割合-20',  bg:'#f3ecfb', align:'right'},
     {k:'ctrAll',  label:'CTR全体',  bg:'#e8f0fe', align:'right'},
     {k:'ctrKw',   label:'CTR-KW',  bg:'#e8f0fe', align:'right'},
     {k:'ctr20',   label:'CTR-20',  bg:'#e8f0fe', align:'right'},
