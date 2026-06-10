@@ -487,7 +487,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.607</span>
+    <span class="build-date">v1.608</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6197,15 +6197,16 @@ function _renewalTodoMetrics(code, ym) {
 
 // 【リニューアル：全体】現役商品を一覧表示。変更記録ボタンを各行に
 function _renewalSeoHeaderHtml() {
-  const colW = '90px 76px 40px minmax(0,1.2fr) 90px 90px 90px 76px 76px 70px 70px 76px 110px';
+  const colW = '90px 76px 40px minmax(0,1.2fr) 90px 90px 90px 90px 76px 76px 70px 70px 76px 110px';
   const cols = [
     {k:'num',     label:'\u5546\u54c1\u756a\u53f7', bg:'#f1f3f4', align:'left'},
     {k:'code',    label:'\u5546\u54c1ID', bg:'#f1f3f4', align:'left'},
     {k:'',        label:'\u753b\u50cf', bg:'#f1f3f4', align:'center'},
     {k:'name',    label:'\u5546\u54c1\u540d', bg:'#f1f3f4', align:'left'},
+    {k:'totSales',label:'\u5168\u4f53\u58f2\u4e0a', bg:'#fff3e0', align:'right'},
     {k:'seoSales',label:'SEO\u58f2\u4e0a', bg:'#fff3e0', align:'right'},
     {k:'adSales', label:'\u5e83\u544a\u58f2\u4e0a', bg:'#fff3e0', align:'right'},
-    {k:'totSales',label:'\u91d1\u984d\u5168\u4f53', bg:'#fff3e0', align:'right'},
+    {k:'spendAll',label:'\u5e83\u544a\u8cbb\u5168\u4f53', bg:'#fff3e0', align:'right'},
     {k:'ratioSeo',label:'\u5272\u5408-SEO', bg:'#f3ecfb', align:'right'},
     {k:'ratioAd', label:'\u5272\u5408-\u5e83\u544a', bg:'#f3ecfb', align:'right'},
     {k:'ctrAll',  label:'CTR\u5168\u4f53', bg:'#e8f0fe', align:'right'},
@@ -6246,7 +6247,7 @@ function _renewalSeoRowHtml(code) {
   const cell = (v,bg,tc) => `<div style="padding:6px 8px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;${bg?'background:'+bg+';color:#111':(tc?'color:'+tc+';font-weight:600':'')}">${fmtP(v)}</div>`;
   const mcell = (v,bg) => `<div style="padding:6px 10px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;${bg?'background:'+bg+';color:#111':''}">${(!v||v<=0)?dash:fmtY(v)}</div>`;
   const rk = (k,v) => _renewalRank5(v, _renewalRankCtx[k] || []);
-  const metricCells = mcell(seo,'') + mcell(rpp,'') + mcell(tot,'') + cell(ratioSeo, band(ratioSeo)) + cell(ratioAd, band(ratioAd)) + cell(mt.ctrAll,'',rk('ctrAll',mt.ctrAll)) + cell(mt.cvrAll,'',rk('cvrAll',mt.cvrAll)) + cell(mt.roasAll,'',rk('roasAll',mt.roasAll));
+  const metricCells = mcell(tot,'') + mcell(seo,'') + mcell(rpp,'') + mcell(mt.spendAll,'') + cell(ratioSeo, band(ratioSeo)) + cell(ratioAd, band(ratioAd)) + cell(mt.ctrAll,'',rk('ctrAll',mt.ctrAll)) + cell(mt.cvrAll,'',rk('cvrAll',mt.cvrAll)) + cell(mt.roasAll,'',rk('roasAll',mt.roasAll));
   const hasLp = logs.some(l => l.type === 'lp' || l.type === 'both');
   const hasThumb = logs.some(l => l.type === 'thumb' || l.type === 'both');
   let actBg, actColor, actBorder, actShadow = 'none';
@@ -6255,7 +6256,7 @@ function _renewalSeoRowHtml(code) {
   else if (hasThumb) { actBg = '#f4b400'; actColor = '#111'; actBorder = 'none'; }
   else { actBg = 'var(--surface2)'; actColor = logCount>0?'var(--green)':'var(--accent)'; actBorder = '1px solid ' + (logCount>0?'var(--green)':'var(--accent)'); }
   const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:${actBorder};background:${actBg};color:${actColor};cursor:pointer;font-weight:600;white-space:nowrap;text-shadow:${actShadow}">\u8a18\u9332${logCount>0?' ('+logCount+')':''}</button></div>`;
-  const colW = '90px 76px 40px minmax(0,1.2fr) 90px 90px 90px 76px 76px 70px 70px 76px 110px';
+  const colW = '90px 76px 40px minmax(0,1.2fr) 90px 90px 90px 90px 76px 76px 70px 70px 76px 110px';
   return `<div class="item-row"><div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:50px;background:var(--surface)">
     <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${num}</div>
     <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${code}</div>
