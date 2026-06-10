@@ -487,7 +487,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.599</span>
+    <span class="build-date">v1.600</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6199,20 +6199,25 @@ function _renewalTodoMetrics(code, ym) {
 function _renewalSeoHeaderHtml() {
   const colW = '90px 76px 40px minmax(0,1.2fr) 90px 90px 76px 76px 70px 70px 76px 110px';
   const cols = [
-    {label:'\u5546\u54c1\u756a\u53f7', bg:'#f1f3f4', align:'left'},
-    {label:'\u5546\u54c1ID', bg:'#f1f3f4', align:'left'},
-    {label:'\u753b\u50cf', bg:'#f1f3f4', align:'center'},
-    {label:'\u5546\u54c1\u540d', bg:'#f1f3f4', align:'left'},
-    {label:'SEO\u58f2\u4e0a', bg:'#fff3e0', align:'right'},
-    {label:'\u5e83\u544a\u58f2\u4e0a', bg:'#fff3e0', align:'right'},
-    {label:'\u5272\u5408-SEO', bg:'#f3ecfb', align:'right'},
-    {label:'\u5272\u5408-\u5e83\u544a', bg:'#f3ecfb', align:'right'},
-    {label:'CTR\u5168\u4f53', bg:'#e8f0fe', align:'right'},
-    {label:'CVR\u5168\u4f53', bg:'#e6f4ea', align:'right'},
-    {label:'ROAS\u5168\u4f53', bg:'#e0f2f1', align:'right'},
-    {label:'\u72b6\u614b', bg:'#fce8e6', align:'center'},
+    {k:'num',     label:'\u5546\u54c1\u756a\u53f7', bg:'#f1f3f4', align:'left'},
+    {k:'code',    label:'\u5546\u54c1ID', bg:'#f1f3f4', align:'left'},
+    {k:'',        label:'\u753b\u50cf', bg:'#f1f3f4', align:'center'},
+    {k:'name',    label:'\u5546\u54c1\u540d', bg:'#f1f3f4', align:'left'},
+    {k:'seoSales',label:'SEO\u58f2\u4e0a', bg:'#fff3e0', align:'right'},
+    {k:'adSales', label:'\u5e83\u544a\u58f2\u4e0a', bg:'#fff3e0', align:'right'},
+    {k:'ratioSeo',label:'\u5272\u5408-SEO', bg:'#f3ecfb', align:'right'},
+    {k:'ratioAd', label:'\u5272\u5408-\u5e83\u544a', bg:'#f3ecfb', align:'right'},
+    {k:'ctrAll',  label:'CTR\u5168\u4f53', bg:'#e8f0fe', align:'right'},
+    {k:'cvrAll',  label:'CVR\u5168\u4f53', bg:'#e6f4ea', align:'right'},
+    {k:'roasAll', label:'ROAS\u5168\u4f53', bg:'#e0f2f1', align:'right'},
+    {k:'',        label:'\u72b6\u614b', bg:'#fce8e6', align:'center'},
   ];
-  const cells = cols.map(c => `<div class="ch" style="background:${c.bg};text-align:${c.align}">${c.label}</div>`).join('');
+  const cells = cols.map(c => {
+    const click = c.k ? `onclick="_renewalSortBy('${c.k}')"` : '';
+    const cur = c.k ? 'cursor:pointer;' : '';
+    const arrow = c.k ? _renewalArrow(c.k) : '';
+    return `<div class="ch" ${click} style="background:${c.bg};${cur}text-align:${c.align}">${c.label}${arrow}</div>`;
+  }).join('');
   return `<div class="col-header" style="grid-template-columns:${colW}">${cells}</div>`;
 }
 function _renewalSeoRowHtml(code) {
@@ -6272,6 +6277,7 @@ function renderRenewalTodoSeo() {
     const bn = productCache[b]?.itemNumber || b;
     return an.localeCompare(bn, 'ja', { numeric: true });
   });
+  codes = _renewalApplySort(codes);
   if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">\u8a72\u5f53\u3059\u308b\u5546\u54c1\u304c\u3042\u308a\u307e\u305b\u3093</div>'; return; }
   _renewalBuildRankCtx(codes);
   inner.innerHTML = _renewalSeoHeaderHtml() + codes.map(c => _renewalSeoRowHtml(c)).join('');
@@ -6335,6 +6341,14 @@ function _renewalApplySort(codes) {
       if (k === 'code') return code;
       if (k === 'name') return (c.manualName || c.name || '');
       if (k === 'log') return ((c.changeLog||[]).map(l=>l.date).filter(Boolean).sort().pop() || '');
+      if (k === 'seoSales' || k === 'adSales' || k === 'ratioSeo' || k === 'ratioAd') {
+        const agg = (getMonthAgg(_renewalTodoMonth)||{})[code];
+        const tot = agg ? (agg.totSales||0) : 0, rpp = agg ? (agg.rppSales||0) : 0, seo = Math.max(0, tot-rpp);
+        if (k === 'seoSales') return seo;
+        if (k === 'adSales') return rpp;
+        if (k === 'ratioSeo') return tot>0 ? (seo/tot) : null;
+        return tot>0 ? (rpp/tot) : null;
+      }
       const m = _renewalTodoMetrics(code, _renewalTodoMonth);
       return m[k];
     };
