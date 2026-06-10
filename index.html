@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.573</span>
+    <span class="build-date">v1.574</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -516,6 +516,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">📊 全-月別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-daily" onclick="switchTab('daily')">📊 全-日別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-graph" onclick="switchTab('graph')">📈 全-日月別グラフ</button>
+  <button class="tab-btn tab-btn-all" id="tab-btn-yoy" onclick="switchTab('yoy')">📊 全-1年前比較</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-formula" onclick="switchTab('formula')">📐 全-計算式</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-2">
@@ -786,6 +787,9 @@ header + * { margin-top: 4px; }
 </div>
 
   <!-- 全-計算式 -->
+  <div class="tab-panel" id="tab-yoy">
+    <div style="padding:40px;text-align:center;color:var(--text3);font-size:14px">全-1年前比較（これから作成）</div>
+  </div>
   <div class="tab-panel" id="tab-formula">
     <div style="padding:20px 24px;max-width:860px">
       <div style="font-size:18px;font-weight:700;margin-bottom:20px">📐 全-計算式</div>
