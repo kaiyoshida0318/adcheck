@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.589</span>
+    <span class="build-date">v1.590</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -790,12 +790,13 @@ header + * { margin-top: 4px; }
   <!-- 全-計算式 -->
   <div class="tab-panel" id="tab-yoy">
     <div style="padding:14px 18px">
-      <div style="display:flex;gap:6px;margin-bottom:16px">
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
         <button id="yoyModeYoy" onclick="setYoyMode('yoy')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">前年同月比</button>
         <button id="yoyModeMom" onclick="setYoyMode('mom')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前月比較</button>
         <select id="yoySel" onchange="setYoyMonth(this.value)" style="margin-left:10px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select>
         <button id="yoyTglUp" onclick="toggleYoyLine('up')" style="margin-left:12px;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #16a34a;background:#16a34a;color:#fff;">上昇線</button>
         <button id="yoyTglDown" onclick="toggleYoyLine('down')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #dc2626;background:#dc2626;color:#fff;">下降線</button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text2);flex-wrap:wrap"><span style="font-weight:600">売上 前期比</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2563eb;margin-right:3px;vertical-align:middle"></span>上昇</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ca8a04;margin-right:3px;vertical-align:middle"></span>減少(2割以内)</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dc2626;margin-right:3px;vertical-align:middle"></span>2割超の減少</span></div>
       </div>
       <div id="yoyCompareArea" style="position:relative;overflow:auto;max-height:72vh"></div>
     </div>
@@ -8118,7 +8119,10 @@ function renderYoy(){
     let h='';
     ord.forEach(p=>{ const vv=p.v[k];
       const ps=(k>0)?(p.v[k-1].s||0):0;
-      let salesCell; if(vv.s<=0){ salesCell=fmt(vv.s); } else if(k>0 && ps>0 && vv.s!==ps){ salesCell='<span style="color:'+(vv.s>ps?'#2563eb':'#dc2626')+';font-weight:700">'+yen(vv.s)+'</span>'; } else { salesCell=yen(vv.s); }
+      let salesCell;
+      if(vv.s<=0){ salesCell=fmt(vv.s); }
+      else if(k>0 && ps>0 && vv.s!==ps){ const _c=(vv.s>ps)?'#2563eb':((vv.s>=ps*0.8)?'#ca8a04':'#dc2626'); salesCell='<span style="color:'+_c+';font-weight:700">'+yen(vv.s)+'</span>'; }
+      else { salesCell=yen(vv.s); }
       const im=p.img?'<img src="'+esc(p.img)+'" style="width:36px;height:36px;object-fit:contain;border-radius:4px">':'<div style="width:36px;height:36px;background:var(--surface2);border-radius:4px"></div>';
       const foc=(_yoyFocus===p.code);
       h+='<div onclick="setYoyFocus(\''+p.code+'\')" style="display:flex;height:'+rowH+'px;align-items:center;border-bottom:1px solid var(--border);cursor:pointer;'+(foc?'background:#fef9c3;':'')+'">'
