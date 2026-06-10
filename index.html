@@ -449,6 +449,7 @@ header + * { margin-top: 4px; }
   </div>
 </div>
 
+<div id="topChrome">
 <header id="appHeader">
   <div class="header-left">
     <div class="logo" onclick="_onLogoClick(event)" style="cursor:pointer" title="クリック:トップへ / Ctrl+クリック:新しいタブで開く">
@@ -486,7 +487,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.590</span>
+    <span class="build-date">v1.591</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -546,8 +547,9 @@ header + * { margin-top: 4px; }
   <button class="tab-btn" id="tab-btn-ss-sep" onclick="switchTab('ss-sep')">9月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-sep"></span></button>
   <button class="tab-btn" id="tab-btn-ss-dec" onclick="switchTab('ss-dec')">12月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-dec"></span></button>
   <div style="flex:1"></div>
-  <button id="topChromeBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:4px 11px;margin:0 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap">上部を隠す</button>
 </nav>
+</div>
+<div id="topChromeBar" style="display:flex;justify-content:flex-end;padding:2px 16px;border-bottom:1px solid var(--border);background:var(--surface)"><button id="topChromeBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 11px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap">上部を隠す</button></div>
 
 <!-- Main Screen -->
 <div id="mainScreen">
@@ -8164,9 +8166,9 @@ function renderYoy(){
   area.innerHTML='<div style="position:relative">'+head+body+'</div>';
 }
 function toggleTopChrome(){
-  const h=document.getElementById('appHeader'); if(!h) return;
-  const collapsed = h.style.display==='none';
-  h.style.display = collapsed ? '' : 'none';
+  const t=document.getElementById('topChrome'); if(!t) return;
+  const collapsed = t.style.display==='none';
+  t.style.display = collapsed ? '' : 'none';
   const btn=document.getElementById('topChromeBtn'); if(btn) btn.textContent = collapsed ? '上部を隠す' : '上部を表示';
 }
 function switchTab(tab) {
