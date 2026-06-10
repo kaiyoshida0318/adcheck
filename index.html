@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.577</span>
+    <span class="build-date">v1.578</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -792,6 +792,7 @@ header + * { margin-top: 4px; }
       <div style="display:flex;gap:6px;margin-bottom:16px">
         <button id="yoyModeYoy" onclick="setYoyMode('yoy')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">前年同月比</button>
         <button id="yoyModeMom" onclick="setYoyMode('mom')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前月比較</button>
+        <select id="yoySel" onchange="setYoyMonth(this.value)" style="margin-left:10px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select>
       </div>
       <div id="yoyCompareArea" style="position:relative;overflow-x:auto"></div>
     </div>
@@ -8045,7 +8046,9 @@ function _onLogoClick(e) {
 }
 
 let _yoyMode = 'yoy';
+let _yoyMonth = '';
 function setYoyMode(m){ _yoyMode = m; _setYoyModeUI(); renderYoy(); }
+function setYoyMonth(v){ _yoyMonth = v; renderYoy(); }
 function _setYoyModeUI(){
   const base='font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;';
   const on='border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
@@ -8055,7 +8058,6 @@ function _setYoyModeUI(){
   if(b) b.style.cssText=base+((_yoyMode==='mom')?on:off);
 }
 function _ymAdd(ym, d){ let y=+ym.slice(0,4), m=+ym.slice(4,6)-1+d; y+=Math.floor(m/12); m=((m%12)+12)%12; return String(y)+String(m+1).padStart(2,'0'); }
-function _yoySalesByItem(ym){ const map={}; salesRows.forEach(r=>{ if(r.ym===ym){ map[r.itemCode]=(map[r.itemCode]||0)+(r.sales||0); } }); return map; }
 function renderYoy(){
   _setYoyModeUI();
   const area=document.getElementById('yoyCompareArea');
@@ -8063,35 +8065,50 @@ function renderYoy(){
   const yms=[...new Set((salesRows||[]).map(r=>r.ym))].filter(Boolean).sort();
   const now=new Date(); const curYm=String(now.getFullYear())+String(now.getMonth()+1).padStart(2,'0');
   const completed=yms.filter(m=>m<curYm);
-  if(!completed.length){ area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>'; return; }
-  const later=completed[completed.length-1];
+  const sel=document.getElementById('yoySel');
+  if(!completed.length){ if(sel) sel.innerHTML=''; area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>'; return; }
+  const later=(_yoyMonth && completed.includes(_yoyMonth))?_yoyMonth:completed[completed.length-1];
+  if(sel){ sel.innerHTML=[...completed].reverse().map(m=>'<option value="'+m+'"'+(m===later?' selected':'')+'>'+m.slice(0,4)+'/'+m.slice(4,6)+'</option>').join(''); }
   const earlier=_ymAdd(later, _yoyMode==='yoy'?-12:-1);
-  const salesL=_yoySalesByItem(later), salesE=_yoySalesByItem(earlier);
-  const codes=new Set([...Object.keys(salesL), ...Object.keys(salesE)]);
-  let prods=[...codes].map(code=>{ const pc=productCache[code]||{}; return { code, name:(pc.manualName||pc.name||code), img:(pc.manualImg||pc.img||''), sl:salesL[code]||0, se:salesE[code]||0 }; }).filter(p=> p.sl>0 || p.se>0);
+  const ymDash=m=>m.slice(0,4)+'-'+m.slice(4,6);
+  const aggL=getMonthAgg(ymDash(later))||{}, aggE=getMonthAgg(ymDash(earlier))||{};
+  const codes=new Set([...Object.keys(aggL), ...Object.keys(aggE)]);
+  const gp=a=> a? Math.round((a.sales720||0)*0.45-(a.spend||0)) : 0;
+  let prods=[...codes].map(code=>{ const pc=productCache[code]||{}; const al=aggL[code], ae=aggE[code];
+    return { code, name:(pc.manualName||pc.name||code), img:(pc.manualImg||pc.img||''),
+      sL:al?(al.totSales||0):0, spL:al?(al.spend||0):0, pfL:gp(al),
+      sE:ae?(ae.totSales||0):0, spE:ae?(ae.spend||0):0, pfE:gp(ae) }; })
+    .filter(p=> p.sL>0||p.sE>0);
   if(!prods.length){ area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">\u6bd4\u8f03\u3067\u304d\u308b\u58f2\u4e0a\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>'; return; }
   const N=20;
-  const top=[...prods].sort((a,b)=>b.sl-a.sl).slice(0,N);
-  const leftOrder=[...top].sort((a,b)=>b.se-a.se);
-  const rightOrder=[...top].sort((a,b)=>b.sl-a.sl);
-  const rowH=46, headerH=30, gapW=96, labelH=27;
+  const top=[...prods].sort((a,b)=>b.sL-a.sL).slice(0,N);
+  const leftOrder=[...top].sort((a,b)=>b.sE-a.sE);
+  const rightOrder=[...top].sort((a,b)=>b.sL-a.sL);
+  const rowH=46, headerH=30, gapW=96, labelH=27, TW=420;
   const idxL={}; leftOrder.forEach((p,i)=>idxL[p.code]=i);
   const idxR={}; rightOrder.forEach((p,i)=>idxR[p.code]=i);
-  const fmt=v=> v>0?'\u00a5'+Math.round(v).toLocaleString():'<span style="color:var(--text3)">\u2014</span>';
+  const yen=v=> '\u00a5'+Math.round(v).toLocaleString();
+  const fmt=v=> v>0?yen(v):'<span style="color:var(--text3)">\u2014</span>';
+  const fmtP=v=> v>0?'<span style="color:#16a34a">'+yen(v)+'</span>':(v<0?'<span style="color:#dc2626">-'+yen(-v)+'</span>':'<span style="color:var(--text3)">\u2014</span>');
   const lblL=earlier.slice(0,4)+'/'+earlier.slice(4,6);
   const lblR=later.slice(0,4)+'/'+later.slice(4,6);
   const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const tableHtml=(rows,vk)=>{
-    let h='<div style="display:flex;height:'+headerH+'px;align-items:center;border-bottom:2px solid var(--border);font-size:11px;font-weight:700;color:var(--text3);background:var(--surface2)">'
-      +'<div style="width:52px;text-align:center">\u753b\u50cf</div>'
-      +'<div style="flex:1;padding-left:6px">\u5546\u54c1\u540d</div>'
-      +'<div style="width:88px;text-align:right;padding-right:8px">\u5546\u54c1\u58f2\u4e0a</div></div>';
+  const colH='<div style="display:flex;height:'+headerH+'px;align-items:center;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--text3);background:var(--surface2)">'
+    +'<div style="width:50px;text-align:center">\u753b\u50cf</div>'
+    +'<div style="flex:1;padding-left:6px">\u5546\u54c1\u540d</div>'
+    +'<div style="width:78px;text-align:right;padding-right:6px">\u5546\u54c1\u58f2\u4e0a</div>'
+    +'<div style="width:74px;text-align:right;padding-right:6px">\u5e83\u544a\u8cbb</div>'
+    +'<div style="width:82px;text-align:right;padding-right:8px">\u7c97\u5e83\u544a\u5229\u76ca</div></div>';
+  const tableHtml=(rows,sk)=>{
+    let h=colH;
     rows.forEach(p=>{
       const im=p.img?'<img src="'+esc(p.img)+'" style="width:38px;height:38px;object-fit:contain;border-radius:4px">':'<div style="width:38px;height:38px;background:var(--surface2);border-radius:4px"></div>';
       h+='<div style="display:flex;height:'+rowH+'px;align-items:center;border-bottom:1px solid var(--border)">'
-        +'<div style="width:52px;display:flex;justify-content:center">'+im+'</div>'
-        +'<div style="flex:1;padding-left:6px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</div>'
-        +'<div style="width:88px;text-align:right;padding-right:8px;font-family:monospace;font-size:12px">'+fmt(p[vk])+'</div></div>';
+        +'<div style="width:50px;display:flex;justify-content:center">'+im+'</div>'
+        +'<div style="flex:1;padding-left:6px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</div>'
+        +'<div style="width:78px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+fmt(p['s'+sk])+'</div>'
+        +'<div style="width:74px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+fmt(p['sp'+sk])+'</div>'
+        +'<div style="width:82px;text-align:right;padding-right:8px;font-family:monospace;font-size:11px">'+fmtP(p['pf'+sk])+'</div></div>';
     });
     return h;
   };
@@ -8107,14 +8124,14 @@ function renderYoy(){
   });
   const svg='<svg width="'+gapW+'" height="'+totalH+'" style="display:block">'+lines+'</svg>';
   const lblStyle='text-align:center;font-weight:700;font-size:12px;height:'+labelH+'px;line-height:'+labelH+'px;color:var(--text2)';
-  area.innerHTML='<div style="display:flex;align-items:flex-start;min-width:660px">'
-    +'<div style="width:280px;flex-shrink:0">'
+  area.innerHTML='<div style="display:flex;align-items:flex-start;min-width:'+(TW*2+gapW)+'px">'
+    +'<div style="width:'+TW+'px;flex-shrink:0">'
     +'<div style="'+lblStyle+'">'+lblL+'\uff08\u4ee5\u524d\uff09</div>'
-    +'<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">'+tableHtml(leftOrder,'se')+'</div></div>'
+    +'<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">'+tableHtml(leftOrder,'E')+'</div></div>'
     +'<div style="width:'+gapW+'px;flex-shrink:0;padding-top:'+(labelH+1)+'px">'+svg+'</div>'
-    +'<div style="width:280px;flex-shrink:0">'
+    +'<div style="width:'+TW+'px;flex-shrink:0">'
     +'<div style="'+lblStyle+'">'+lblR+'\uff08\u5f8c\uff09</div>'
-    +'<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">'+tableHtml(rightOrder,'sl')+'</div></div>'
+    +'<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">'+tableHtml(rightOrder,'L')+'</div></div>'
     +'</div>';
 }
 function switchTab(tab) {
