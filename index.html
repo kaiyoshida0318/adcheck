@@ -486,7 +486,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.584</span>
+    <span class="build-date">v1.585</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8084,8 +8084,7 @@ function renderYoy(){
   let prods=[...allCodes].map(code=>{ const pc=productCache[code]||{}; const v=maps.map(mp=>mp[code]||{s:0,sp:0,pf:0}); return { code, name:(pc.manualName||pc.name||code), img:(pc.manualImg||pc.img||''), v }; })
     .filter(p=> p.v.some(x=>x.s>0||x.sp>0));
   if(!prods.length){ area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">比較できる売上データがありません</div>'; return; }
-  const N=50;
-  const top=[...prods].sort((a,b)=>b.v[2].s-a.v[2].s).slice(0,N);
+  const top=[...prods].sort((a,b)=>b.v[2].s-a.v[2].s);
   const rowH=44, headerH=30, gapW=84, labelH=27, TW=400;
   const orders=[0,1,2].map(k=> [...top].sort((a,b)=>b.v[k].s-a.v[k].s));
   const idxs=orders.map(ord=>{ const m={}; ord.forEach((p,i)=>m[p.code]=i); return m; });
