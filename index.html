@@ -487,7 +487,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.615</span>
+    <span class="build-date">v1.616</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -578,8 +578,7 @@ header + * { margin-top: 4px; }
           <div id="products-scroll-area" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
             <select class="toolbar-month" id="monthSel" onchange="_onMonthChange()" style="transition:opacity 0.2s"></select>
-            <button id="multiMonthToggle" class="tbtn" onclick="toggleDayMode()" style="font-size:11px;white-space:nowrap">📅 日選択</button>
-            <div id="multiMonthPicker" style="display:none;align-items:center;gap:6px;flex-wrap:wrap"></div>
+            <select id="daySel" class="toolbar-month" onchange="onDaySelChange()" style="font-size:12px"></select>
             <input type="text" class="toolbar-search" id="searchBox" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderTable()">
             <select class="toolbar-select" id="sortSel" onchange="renderTable()" style="display:none"></select>
             <div class="toolbar-right">
@@ -9054,40 +9053,31 @@ function _daysWithData(ym){
   return Object.keys(set).sort();
 }
 function _onMonthChange(){
-  if (_dayMode){ const ds=_daysWithData(getSelectedMonth()); _selectedDay = ds.length ? ds[ds.length-1] : ''; }
+  _dayMode = false; _selectedDay = '';
   renderAll();
-  if (_dayMode) _updateDayPicker();
+  _updateDayDropdown();
 }
-function toggleDayMode(){
-  _dayMode = !_dayMode;
-  const btn = document.getElementById('multiMonthToggle');
-  const picker = document.getElementById('multiMonthPicker');
-  if (_dayMode){
-    if (btn){ btn.style.background='var(--accent)'; btn.style.color='#fff'; }
-    if (picker){ picker.style.display='flex'; }
-    const ds=_daysWithData(getSelectedMonth());
-    if (!_selectedDay || _selectedDay.slice(0,7)!==getSelectedMonth()) _selectedDay = ds.length ? ds[ds.length-1] : '';
-    _updateDayPicker();
-  } else {
-    if (btn){ btn.style.background=''; btn.style.color=''; }
-    if (picker){ picker.style.display='none'; picker.innerHTML=''; }
-    _selectedDay='';
-  }
+function onDaySelChange(){
+  const sel = document.getElementById('daySel');
+  const v = sel ? sel.value : '';
+  if (v){ _dayMode = true; _selectedDay = v; }
+  else { _dayMode = false; _selectedDay = ''; }
   renderTable();
 }
-function selectDay(d){ _selectedDay=d; _updateDayPicker(); renderTable(); }
-function _updateDayPicker(){
-  const picker = document.getElementById('multiMonthPicker');
-  if (!picker) return;
+function _updateDayDropdown(){
+  const sel = document.getElementById('daySel');
+  if (!sel) return;
   const ym = getSelectedMonth();
   const days = _daysWithData(ym);
-  if (!days.length){ picker.innerHTML = '<span style="font-size:11px;color:var(--text3)">この月の日次データがありません</span>'; return; }
   const mo = +ym.slice(5,7);
-  picker.innerHTML = days.map(d => {
-    const sel = _selectedDay===d;
+  if (_selectedDay && _selectedDay.slice(0,7)!==ym){ _selectedDay=''; _dayMode=false; }
+  let html = '<option value="">日選択</option>';
+  html += days.map(d => {
     const dn = +d.slice(8,10);
-    return `<button onclick="selectDay('${d}')" style="font-size:11px;cursor:pointer;white-space:nowrap;padding:3px 9px;border-radius:4px;border:1px solid ${sel?'var(--accent)':'var(--border)'};background:${sel?'#e8f0fe':'var(--surface2)'};color:${sel?'var(--accent)':'var(--text)'}">${mo}/${dn}</button>`;
+    return `<option value="${d}"${_selectedDay===d?' selected':''}>${mo}/${dn}</option>`;
   }).join('');
+  sel.innerHTML = html;
+  sel.value = _selectedDay || '';
 }
 
 
@@ -9332,6 +9322,7 @@ function populateMonthSel() {
   const cur = sel.value;
   sel.innerHTML = months.map(m => `<option value="${m}">${m.replace('-','年')}月</option>`).join('');
   sel.value = months.includes(cur) ? cur : months[0];
+  try { _updateDayDropdown(); } catch(e){}
 }
 
 // ── Render ──
