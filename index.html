@@ -487,7 +487,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.618</span>
+    <span class="build-date">v1.619</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -569,11 +569,6 @@ header + * { margin-top: 4px; }
         <p style="margin-top:12px;font-size:11px;color:var(--text3)">対応形式：楽天RMS →「検索連動型広告（RPP）」→「パフォーマンスレポート」→「全商品レポートダウンロード」</p>
       </div>
       <div id="dataArea" style="display:none">
-        <div class="summary-bar-wrap" id="summaryBarWrap">
-          <div class="summary-bar-inner collapsed" id="summaryBarInner">
-            <div class="summary-bar" id="summaryBar"></div>
-          </div>
-        </div>
         <div class="table-card">
           <div id="products-scroll-area" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
@@ -582,7 +577,6 @@ header + * { margin-top: 4px; }
             <input type="text" class="toolbar-search" id="searchBox" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderTable()">
             <select class="toolbar-select" id="sortSel" onchange="renderTable()" style="display:none"></select>
             <div class="toolbar-right">
-              <button class="summary-toggle-btn" id="summaryBarBtn" onclick="toggleSummaryBar('summaryBarInner','summaryBarBtn')">▼ 開く</button>
               <button class="tbtn" onclick="exportCSV()">CSV出力</button>
             </div>
           </div>
@@ -9416,7 +9410,7 @@ function renderSummary(ym) {
   const roasKw = spendKw > 0 ? Math.round(salesKw/spendKw*100) : 0;
   const rc = v => v>=500?'var(--green)':v>=300?'var(--amber)':v>0?'var(--danger)':'var(--text3)';
 
-  document.getElementById('summaryBar').innerHTML = `
+  const _sbEl=document.getElementById('summaryBar'); if(_sbEl) _sbEl.innerHTML = `
     <div class="scard scard-accent">
       <div class="scard-label">月間使用金額合計</div>
       <div class="scard-val">${fmtY(totalSpend)}</div>
