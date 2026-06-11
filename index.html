@@ -487,7 +487,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.613</span>
+    <span class="build-date">v1.614</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -584,8 +584,6 @@ header + * { margin-top: 4px; }
             <select class="toolbar-select" id="sortSel" onchange="renderTable()" style="display:none"></select>
             <div class="toolbar-right">
               <button class="summary-toggle-btn" id="summaryBarBtn" onclick="toggleSummaryBar('summaryBarInner','summaryBarBtn')">▼ 開く</button>
-              <button class="tbtn" onclick="expandAll()">全展開</button>
-              <button class="tbtn" onclick="collapseAll()">全折りたたみ</button>
               <button class="tbtn" onclick="exportCSV()">CSV出力</button>
             </div>
           </div>
@@ -10063,6 +10061,7 @@ function clearAll() {
 }
 
 function exportCSV() {
+  if (_dayMode && _selectedDay) { exportCSVDay(); return; }
   const ym = getSelectedMonth();
   const data = getSorted(ym);
   const dates = getDatesForMonth(ym);
@@ -10076,6 +10075,23 @@ function exportCSV() {
   });
   const blob = new Blob(['\uFEFF'+header+'\n'+rows.join('\n')], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`adcheck_rpp_${ym}.csv`; a.click();
+}
+
+function exportCSVDay() {
+  const d = _selectedDay;
+  const ym = getSelectedMonth();
+  const data = getSorted(ym);
+  const header = ['商品管理番号','商品番号','商品名','商品URL','日付','広告費','クリック数','ROAS(720h)%','売上(720h)','全体売上','SEO売上','広告売上(RPP)','広告費-KW','売上-KW'].join(',');
+  const rows = data.map(p => {
+    const cached = productCache[p.id];
+    const name = cached ? `"${(cached.manualName||cached.name||'').replace(/"/g,'""')}"` : p.id;
+    const itemNum = cached?.itemNumber || '';
+    const ag = _dayAgg(p.id, d);
+    const seo = Math.max(0, ag.totSales - ag.rppSales);
+    return [p.id, itemNum, name, `"${p.url||''}"`, d, ag.spend, ag.clicks, Math.round(p.avgRoas), ag.sales720, ag.totSales, seo, ag.rppSales, ag.kwSpend, ag.kwSales].join(',');
+  });
+  const blob = new Blob(['\uFEFF'+header+'\n'+rows.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`adcheck_rpp_day_${d}.csv`; a.click();
 }
 
 // ── Init ──
