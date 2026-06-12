@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.626</span>
+    <span class="build-date">v1.627</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6251,11 +6251,11 @@ function _renderKwBasicTable(){
     return y.spend - x.spend;
   });
   const cnt = document.getElementById('kwBasicCount'); if (cnt) cnt.textContent = rows.length + '件';
-  const TH = 'border:1px solid var(--border);padding:8px 10px;background:var(--surface2);font-weight:600;text-align:center;position:sticky;top:0;z-index:1;white-space:nowrap';
-  const TD = 'border:1px solid var(--border);padding:6px 10px;text-align:center';
+  const TH = 'border:1px solid var(--border);padding:5px 7px;background:var(--surface2);font-weight:600;text-align:center;position:sticky;top:0;z-index:1;white-space:nowrap';
+  const TD = 'border:1px solid var(--border);padding:3px 7px;text-align:center';
   const yenc = n => '¥' + Math.round(n).toLocaleString();
   const pctc = n => (n==null ? '—' : n.toFixed(2)+'%');
-  let html = `<table style="border-collapse:collapse;width:100%;font-size:12px;min-width:900px">
+  let html = `<table style="border-collapse:collapse;font-size:11px">
     <thead><tr>
       <th style="${TH}">商品画像</th>
       <th style="${TH};text-align:left">キーワード</th>
@@ -6267,15 +6267,19 @@ function _renderKwBasicTable(){
       <th style="${TH}">CVR<br><span style="font-weight:400;font-size:10px;color:var(--text3)">(合計720時間)(%)</span></th>
       <th style="${TH}">ROAS<br><span style="font-weight:400;font-size:10px;color:var(--text3)">(合計720時間)(%)</span></th>
     </tr></thead><tbody>`;
+  let _prevCode = null;
   rows.forEach(a => {
     const cached = productCache[a.itemCode] || {};
     const pname = cached.manualName || cached.name || a.itemCode;
     const img = cached.manualImg || cached.img || null;
-    const imgCell = img ? `<img src="${img}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;display:block;margin:0 auto">` : '<div style="width:40px;height:40px;background:var(--surface2);border-radius:4px;margin:0 auto"></div>';
-    html += `<tr>
+    const isFirst = a.itemCode !== _prevCode;
+    _prevCode = a.itemCode;
+    const imgCell = !isFirst ? '' : (img ? `<img src="${img}" style="width:38px;height:38px;object-fit:cover;border-radius:4px;display:block;margin:0 auto">` : '<div style="width:38px;height:38px;background:var(--surface2);border-radius:4px;margin:0 auto"></div>');
+    const sep = isFirst ? 'border-top:2px solid var(--border2);' : '';
+    html += `<tr style="${sep}">
       <td style="${TD}">${imgCell}</td>
-      <td style="${TD};text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.kw}">${a.kw}</td>
-      <td style="${TD};text-align:left;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${pname}">${pname}</td>
+      <td style="${TD};text-align:left;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.kw}">${a.kw}</td>
+      <td style="${TD};text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${pname}">${isFirst ? pname : ''}</td>
       <td style="${TD}">${pctc(a.ctr)}</td>
       <td style="${TD}">${a.mcpc==null ? '—' : yenc(a.mcpc)}</td>
       <td style="${TD}">${yenc(a.spend)}</td>
