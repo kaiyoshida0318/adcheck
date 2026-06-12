@@ -375,6 +375,7 @@ header + * { margin-top: 4px; }
 .s-warn { color: #C62828; }   /* 撤退検討▲  赤 */
 .s-out  { color: #6D1111; }   /* 撤退■      エンジ */
 .tab-btn-all { background: #e8f4fb; padding: 7px 11px; }
+    .tab-btn-basic { padding: 7px 11px; }
 .tab-btn-all:hover { background: #d4ecf7; }
 .tab-btn-all.active { background: #e8f4fb; }
 .tab-panel { display: none; }
@@ -487,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.620</span>
+    <span class="build-date">v1.621</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -514,10 +515,12 @@ header + * { margin-top: 4px; }
 <!-- タブバー -->
 <nav class="tab-bar tab-sub-row" style="background:#ffffff;border-bottom:1px solid var(--border)">
   <span class="tab-row-label" style="color:#5C6BC0">【基本】</span>
-  <button class="tab-btn" id="tab-btn-products" onclick="switchTab('products')">📊 商品-基本データ</button>
-  <button class="tab-btn" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">📊 商品-月別データ</button>
-  <button class="tab-btn" id="tab-btn-item-graph" onclick="switchTab('item-graph')">📈 商品-グラフ</button>
-  <button class="tab-btn" id="tab-btn-retired" onclick="switchTab('retired')">🗂 引退済商品</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-products" onclick="switchTab('products')">📊 商品-基本データ</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">📊 商品-月別データ</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-item-graph" onclick="switchTab('item-graph')">📈 商品-グラフ</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-retired" onclick="switchTab('retired')">🗂 引退済商品</button>
+  <span class="tab-row-label" style="color:#00897B;padding-left:16px">【KW】</span>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-基本データ</button>
   <span class="tab-row-label" id="label-zentai" style="color:#0288D1;padding-left:16px">【全体】</span>
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">📊 全-月別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-daily" onclick="switchTab('daily')">📊 全-日別データ</button>
@@ -881,6 +884,9 @@ header + * { margin-top: 4px; }
   </div>
 
   <!-- 商品-月別データ -->
+  <div class="tab-panel" id="tab-kw-basic">
+    <div style="padding:40px 24px;color:var(--text3);font-size:14px;line-height:1.8">KW-基本データ（準備中）<br>表示したい内容が決まったら教えてください。</div>
+  </div>
   <div class="tab-panel" id="tab-monthly-item">
     <div style="padding:12px 16px">
       <div class="table-card">
