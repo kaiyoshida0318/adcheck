@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.621</span>
+    <span class="build-date">v1.623</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -496,14 +496,7 @@ header + * { margin-top: 4px; }
     </div>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
         <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
-    <div class="header-menu" style="position:relative;display:inline-block">
-      <button class="header-btn" onclick="toggleHeaderMenu(event)">⚙ 設定 ▾</button>
-      <div id="settingsMenu" style="display:none;position:absolute;right:0;top:100%;margin-top:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,0.18);z-index:2000;min-width:190px;padding:5px;text-align:left">
-        <button onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'" onclick="closeHeaderMenu();openSettings()" style="display:block;width:100%;text-align:left;background:none;border:none;padding:9px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text)">⚙ 基礎情報入力</button>
-        <button onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'" onclick="closeHeaderMenu();openBulkNameModal()" style="display:block;width:100%;text-align:left;background:none;border:none;padding:9px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text)">📋 商品名一括更新</button>
-        <button onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'" onclick="closeHeaderMenu();confirmClearAll()" style="display:block;width:100%;text-align:left;background:none;border:none;padding:9px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--danger)">🗑 データ削除</button>
-      </div>
-    </div>
+    <button class="header-btn" onclick="openSettingsMenu()">⚙ 設定 ▾</button>
     <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
   </div>
@@ -837,7 +830,6 @@ header + * { margin-top: 4px; }
           <div style="display:flex;gap:4px;margin-right:10px"><button id="mtmNormal" onclick="setMonthlyTableMode('normal')" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">通常</button><button id="mtmYoy" onclick="setMonthlyTableMode('yoy')" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前年同月比</button></div>
           <span id="monthly-run-status" style="font-size:11px;color:var(--text3)"></span><div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;margin-right:6px"><span style="color:var(--text3);font-weight:700">配色:</span><span style="color:#1565C0;font-weight:700">上位10%</span><span style="color:#2E7D32;font-weight:700">上位20%</span><span style="color:#1a1a1a">中間</span><span style="color:#BA7517;font-weight:700">下位20%</span><span style="color:#A32D2D;font-weight:700">下位10%</span></div>
           <div class="toolbar-right">
-            <button class="summary-toggle-btn" id="monthlySummaryBarBtn" onclick="toggleSummaryBar('monthlySummaryBarInner','monthlySummaryBarBtn')">▼ 開く</button>
           </div>
         </div>
         <div id="monthly-col-header"></div>
@@ -1284,6 +1276,20 @@ header + * { margin-top: 4px; }
     </ol>
     <div class="modal-actions" style="justify-content:flex-end;margin-top:16px">
       <button class="modal-btn save" onclick="closeImportGuide()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settingsMenuModal" onclick="if(event.target===this)closeSettingsMenu()">
+  <div class="modal" style="max-width:340px">
+    <h3>⚙ 設定</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
+      <button class="header-btn" onclick="closeSettingsMenu();openSettings()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">⚙ 基礎情報入力</button>
+      <button class="header-btn" onclick="closeSettingsMenu();openBulkNameModal()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">📋 商品名一括更新</button>
+      <button class="header-btn danger-btn" onclick="closeSettingsMenu();confirmClearAll()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">🗑 データ削除</button>
+    </div>
+    <div style="margin-top:20px;text-align:right">
+      <button class="header-btn" onclick="closeSettingsMenu()" style="font-size:13px">閉じる</button>
     </div>
   </div>
 </div>
@@ -9250,9 +9256,8 @@ function saveChangeLog() {
   if (typeof _renderCurrentRenewal === 'function') _renderCurrentRenewal();
 }
 
-function toggleHeaderMenu(e){ if(e&&e.stopPropagation) e.stopPropagation(); const m=document.getElementById("settingsMenu"); if(!m) return; m.style.display=(m.style.display==="block")?"none":"block"; }
-function closeHeaderMenu(){ const m=document.getElementById("settingsMenu"); if(m) m.style.display="none"; }
-document.addEventListener("click", function(e){ const m=document.getElementById("settingsMenu"); if(m && m.style.display==="block"){ if(!e.target.closest(".header-menu")) m.style.display="none"; } });
+function openSettingsMenu(){ const m=document.getElementById("settingsMenuModal"); if(m) m.classList.add("open"); }
+function closeSettingsMenu(){ const m=document.getElementById("settingsMenuModal"); if(m) m.classList.remove("open"); }
 function toggleSummaryBar(innerId, btnId) {
   const inner = document.getElementById(innerId);
   const btn   = document.getElementById(btnId);
