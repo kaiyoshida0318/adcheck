@@ -487,17 +487,22 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.619</span>
+    <span class="build-date">v1.620</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
       <button onclick="adjustZoom(+0.02)" style="border:none;background:none;cursor:pointer;font-size:15px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を大きく">A+</button>
     </div>
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
-    <button class="header-btn" onclick="openSettings()">⚙ 設定</button>
-    <button class="header-btn" onclick="openBulkNameModal()">📋 商品名一括更新</button>
         <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
-    <button class="header-btn danger-btn" onclick="confirmClearAll()">🗑 データ削除</button>
+    <div class="header-menu" style="position:relative;display:inline-block">
+      <button class="header-btn" onclick="toggleHeaderMenu(event)">⚙ 設定 ▾</button>
+      <div id="settingsMenu" style="display:none;position:absolute;right:0;top:100%;margin-top:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,0.18);z-index:2000;min-width:190px;padding:5px;text-align:left">
+        <button onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'" onclick="closeHeaderMenu();openSettings()" style="display:block;width:100%;text-align:left;background:none;border:none;padding:9px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text)">⚙ 基礎情報入力</button>
+        <button onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'" onclick="closeHeaderMenu();openBulkNameModal()" style="display:block;width:100%;text-align:left;background:none;border:none;padding:9px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text)">📋 商品名一括更新</button>
+        <button onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'" onclick="closeHeaderMenu();confirmClearAll()" style="display:block;width:100%;text-align:left;background:none;border:none;padding:9px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--danger)">🗑 データ削除</button>
+      </div>
+    </div>
     <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
   </div>
@@ -9239,6 +9244,9 @@ function saveChangeLog() {
   if (typeof _renderCurrentRenewal === 'function') _renderCurrentRenewal();
 }
 
+function toggleHeaderMenu(e){ if(e&&e.stopPropagation) e.stopPropagation(); const m=document.getElementById("settingsMenu"); if(!m) return; m.style.display=(m.style.display==="block")?"none":"block"; }
+function closeHeaderMenu(){ const m=document.getElementById("settingsMenu"); if(m) m.style.display="none"; }
+document.addEventListener("click", function(e){ const m=document.getElementById("settingsMenu"); if(m && m.style.display==="block"){ if(!e.target.closest(".header-menu")) m.style.display="none"; } });
 function toggleSummaryBar(innerId, btnId) {
   const inner = document.getElementById(innerId);
   const btn   = document.getElementById(btnId);
