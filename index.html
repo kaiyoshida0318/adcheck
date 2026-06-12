@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.635</span>
+    <span class="build-date">v1.637</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -893,16 +893,22 @@ header + * { margin-top: 4px; }
     <div style="padding:12px 16px">
       <div class="table-card">
         <div class="table-toolbar" style="display:flex;flex-direction:column;gap:8px;padding:10px 12px">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <span style="font-size:13px;font-weight:600;color:var(--text2)">月</span>
-            <select id="kwCompareMonthSel" class="toolbar-month" onchange="renderKwCompare()" style="font-size:12px;padding:4px 8px;cursor:pointer"></select>
-            <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp1" type="text" placeholder="商品1 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(1)" onblur="_kwCmpBlur(1)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug1" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
-            <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp2" type="text" placeholder="商品2 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(2)" onblur="_kwCmpBlur(2)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug2" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
-            <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp3" type="text" placeholder="商品3 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(3)" onblur="_kwCmpBlur(3)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug3" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
-            <button onclick="_kwCmpSaveSet()" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);cursor:pointer;white-space:nowrap">保存</button>
-            <select id="kwCmpSavedSel" onchange="_kwCmpLoadSet(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;max-width:200px"><option value="">保存した組み合わせ</option></select>
-            <button onclick="_kwCmpDeleteSet()" title="選択中を削除" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap;color:#c0392b">削除</button>
-            <span id="kwCompareCount" style="font-size:12px;color:var(--text3);white-space:nowrap"></span>
+          <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px;flex:none">
+              <span style="font-size:13px;font-weight:600;color:var(--text2)">月</span>
+              <select id="kwCompareMonthSel" class="toolbar-month" onchange="renderKwCompare()" style="font-size:12px;padding:4px 8px;cursor:pointer"></select>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0">
+              <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp1" type="text" placeholder="商品1 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(1)" onblur="_kwCmpBlur(1)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug1" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
+              <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp2" type="text" placeholder="商品2 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(2)" onblur="_kwCmpBlur(2)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug2" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
+              <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp3" type="text" placeholder="商品3 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(3)" onblur="_kwCmpBlur(3)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug3" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
+              <button onclick="_kwCmpClear()" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap">クリア</button>
+              <button onclick="_kwCmpSaveSet()" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);cursor:pointer;white-space:nowrap">保存</button>
+              <select id="kwCmpSavedSel" onchange="_kwCmpLoadSet(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;max-width:200px"><option value="">保存した組み合わせ</option></select>
+              <button onclick="openKwCmpReorder()" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap">並び替え</button>
+              <button onclick="_kwCmpDeleteSet()" title="選択中を削除" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap;color:#c0392b">削除</button>
+              <span id="kwCompareCount" style="font-size:12px;color:var(--text3);white-space:nowrap"></span>
+            </div>
           </div>
           <div id="kwCmpResolved" style="font-size:11px;color:var(--text3)"></div>
         </div>
@@ -1307,6 +1313,16 @@ header + * { margin-top: 4px; }
     </ol>
     <div class="modal-actions" style="justify-content:flex-end;margin-top:16px">
       <button class="modal-btn save" onclick="closeImportGuide()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="kwCmpReorderModal" onclick="if(event.target===this)closeKwCmpReorder()">
+  <div class="modal" style="max-width:440px">
+    <h3>組み合わせの並び替え</h3>
+    <div id="kwCmpReorderList" style="display:flex;flex-direction:column;gap:8px;margin-top:16px;max-height:60vh;overflow:auto"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:18px">
+      <button class="modal-btn save" onclick="closeKwCmpReorder()">閉じる</button>
     </div>
   </div>
 </div>
@@ -6364,6 +6380,47 @@ function _kwCmpDeleteSet(){
   const arr=_kwCmpGetSaved(); const it=arr[+idx]; if(!it) return;
   if(!confirm('\u300c'+(it.name||'')+'\u300d\u3092\u524a\u9664\u3057\u307e\u3059\u304b?')) return;
   arr.splice(+idx,1); _kwCmpSetSaved(arr); _kwCmpRefreshSavedSel();
+}
+function openKwCmpReorder(){
+  const arr=_kwCmpGetSaved();
+  if(!arr.length){ alert('\u4fdd\u5b58\u3055\u308c\u305f\u7d44\u307f\u5408\u308f\u305b\u304c\u3042\u308a\u307e\u305b\u3093\u3002'); return; }
+  _kwCmpRenderReorder();
+  const m=document.getElementById('kwCmpReorderModal'); if(m) m.classList.add('open');
+}
+function closeKwCmpReorder(){ const m=document.getElementById('kwCmpReorderModal'); if(m) m.classList.remove('open'); }
+function _kwCmpRenderReorder(){
+  const box=document.getElementById('kwCmpReorderList'); if(!box) return;
+  const arr=_kwCmpGetSaved();
+  if(!arr.length){ box.innerHTML='<div style="color:var(--text3);font-size:13px;padding:10px">\u7d44\u307f\u5408\u308f\u305b\u304c\u3042\u308a\u307e\u305b\u3093\u3002</div>'; return; }
+  const bs='font-size:13px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);cursor:pointer;flex:none';
+  const ds='font-size:12px;padding:4px 9px;border:1px solid var(--border);border-radius:5px;background:var(--surface);cursor:pointer;color:#c0392b;flex:none';
+  box.innerHTML = arr.map((it,idx)=>{
+    const nm=(it.name||('\u7d44'+(idx+1))).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const up = idx===0 ? '' : '<button onclick="_kwCmpMove('+idx+',-1)" title="\u4e0a\u3078" style="'+bs+'">\u25b2</button>';
+    const dn = idx===arr.length-1 ? '' : '<button onclick="_kwCmpMove('+idx+',1)" title="\u4e0b\u3078" style="'+bs+'">\u25bc</button>';
+    return '<div style="display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface)">'
+      +'<span style="flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+nm+'">'+nm+'</span>'
+      +up+dn
+      +'<button onclick="_kwCmpDeleteAt('+idx+')" title="\u524a\u9664" style="'+ds+'">\u524a\u9664</button>'
+      +'</div>';
+  }).join('');
+}
+function _kwCmpMove(idx, dir){
+  const arr=_kwCmpGetSaved();
+  const j=idx+dir;
+  if(j<0||j>=arr.length) return;
+  const t=arr[idx]; arr[idx]=arr[j]; arr[j]=t;
+  _kwCmpSetSaved(arr); _kwCmpRenderReorder(); _kwCmpRefreshSavedSel();
+}
+function _kwCmpDeleteAt(idx){
+  const arr=_kwCmpGetSaved(); const it=arr[idx]; if(!it) return;
+  if(!confirm('\u300c'+(it.name||'')+'\u300d\u3092\u524a\u9664\u3057\u307e\u3059\u304b?')) return;
+  arr.splice(idx,1); _kwCmpSetSaved(arr); _kwCmpRenderReorder(); _kwCmpRefreshSavedSel();
+}
+function _kwCmpClear(){
+  [1,2,3].forEach(n=>{ const el=document.getElementById('kwCmp'+n); if(el) el.value=''; const sg=document.getElementById('kwCmpSug'+n); if(sg){sg.style.display='none';sg.innerHTML='';} });
+  const sel=document.getElementById('kwCmpSavedSel'); if(sel) sel.value='';
+  renderKwCompare();
 }
 function _kwCmpProducts(){
   const seen={}; const arr=[];
