@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.624</span>
+    <span class="build-date">v1.625</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3047,6 +3047,7 @@ function _parseKwRows(text) {
       kwRows[existingIdx].orders = parseFloat(vals[col('売上件数(合計720時間)')]) || 0;
       kwRows[existingIdx].cl     = parseFloat(vals[col('クリック数(合計)')]) || 0;
       kwRows[existingIdx].ctr    = parseFloat(vals[col('CTR(%)')]) || 0;
+      kwRows[existingIdx].mcpc   = parseFloat(vals[col('目安CPC')]) || 0;
     } else {
       kwRows.push({
         code, date: dateStr, ym: `${dm[1]}${dm[2]}`, itemCode, kw,
@@ -3055,6 +3056,7 @@ function _parseKwRows(text) {
         orders: parseFloat(vals[col('売上件数(合計720時間)')]) || 0,
         cl:     parseFloat(vals[col('クリック数(合計)')]) || 0,
         ctr:    parseFloat(vals[col('CTR(%)')]) || 0,
+        mcpc:   parseFloat(vals[col('目安CPC')]) || 0,
       });
     }
   }
@@ -6211,59 +6213,64 @@ function _renewalTodoMetrics(code, ym) {
 
 let _kwBasicMonth = '';
 function onKwBasicMonth(v){ _kwBasicMonth = v; _renderKwBasicTable(); }
-function _kwBasicAgg(code, ym){
-  const days = itemDailyData[code] || {};
-  let clKw=0, impKw=0, ordersKw=0, spendKw=0, salesKw=0;
-  for (const d in days){ if (ym && !d.startsWith(ym)) continue; const x=days[d]||{}; clKw+=x.clKw||0; impKw+=x.impKw||0; ordersKw+=x.ordersKw||0; spendKw+=x.spendKw||0; salesKw+=x.salesKw||0; }
-  return {
-    clKw, impKw, ordersKw, spendKw, salesKw,
-    ctr: impKw>0 ? clKw/impKw*100 : null,
-    cpc: clKw>0 ? spendKw/clKw : null,
-    cvr: clKw>0 ? ordersKw/clKw*100 : null,
-    roas: spendKw>0 ? salesKw/spendKw*100 : null,
-  };
-}
 function renderKwBasic(){
   const sel = document.getElementById('kwBasicMonthSel');
-  const months = getMonths().slice().reverse();
+  const months = [...new Set(kwRows.map(r => r.ym))].sort().reverse();
   if (!_kwBasicMonth || !months.includes(_kwBasicMonth)) _kwBasicMonth = months[0] || '';
-  if (sel){ sel.innerHTML = months.map(m => `<option value="${m}">${m.slice(0,4)}/${m.slice(5,7)}</option>`).join(''); sel.value = _kwBasicMonth; }
+  if (sel){ sel.innerHTML = months.map(m => `<option value="${m}">${m.slice(0,4)}/${m.slice(4,6)}</option>`).join(''); sel.value = _kwBasicMonth; }
   _renderKwBasicTable();
 }
 function _renderKwBasicTable(){
   const list = document.getElementById('kwBasicList');
   if (!list) return;
   const ym = _kwBasicMonth;
-  const codes = Object.keys(itemDailyData).filter(c => c !== '__global__');
-  const rows = codes.map(c => ({ code:c, ...(_kwBasicAgg(c, ym)) })).filter(r => (r.spendKw||0) > 0);
-  rows.sort((a,b) => b.spendKw - a.spendKw);
+  if (!ym || kwRows.length === 0){ list.innerHTML = '<div style="padding:30px;color:var(--text3);font-size:13px">KWデータがありません。レポート追加から rpp_keyword_reports を取り込んでください。</div>'; return; }
+  const map = {};
+  for (const r of kwRows){
+    if (r.ym !== ym) continue;
+    const key = r.itemCode + '' + r.kw;
+    let a = map[key];
+    if (!a){ a = map[key] = { itemCode:r.itemCode, kw:r.kw, spend:0, sales:0, orders:0, cl:0, imp:0, mcpcSum:0, mcpcN:0 }; }
+    a.spend += r.spend||0; a.sales += r.sales||0; a.orders += r.orders||0; a.cl += r.cl||0;
+    if ((r.ctr||0) > 0 && (r.cl||0) > 0) a.imp += r.cl * 100 / r.ctr;
+    if ((r.mcpc||0) > 0){ a.mcpcSum += r.mcpc; a.mcpcN++; }
+  }
+  let rows = Object.values(map).filter(a => (a.spend>0 || a.cl>0));
+  rows.forEach(a => {
+    a.ctr  = a.imp>0 ? a.cl/a.imp*100 : null;
+    a.mcpc = a.mcpcN>0 ? a.mcpcSum/a.mcpcN : null;
+    a.cvr  = a.cl>0 ? a.orders/a.cl*100 : null;
+    a.roas = a.spend>0 ? a.sales/a.spend*100 : null;
+  });
+  rows.sort((x,y) => y.spend - x.spend);
   const cnt = document.getElementById('kwBasicCount'); if (cnt) cnt.textContent = rows.length + '件';
-  if (!rows.length){ list.innerHTML = '<div style="padding:30px;color:var(--text3);font-size:13px">この月のKWデータがありません</div>'; return; }
   const TH = 'border:1px solid var(--border);padding:8px 10px;background:var(--surface2);font-weight:600;text-align:center;position:sticky;top:0;z-index:1;white-space:nowrap';
   const TD = 'border:1px solid var(--border);padding:6px 10px;text-align:center';
   const yenc = n => '¥' + Math.round(n).toLocaleString();
   const pctc = n => (n==null ? '—' : n.toFixed(2)+'%');
-  let html = `<table style="border-collapse:collapse;width:100%;font-size:12px;min-width:640px">
+  let html = `<table style="border-collapse:collapse;width:100%;font-size:12px;min-width:760px">
     <thead><tr>
       <th style="${TH}">商品画像</th>
+      <th style="${TH};text-align:left">キーワード</th>
       <th style="${TH};text-align:left">商品名</th>
       <th style="${TH}">CTR</th>
       <th style="${TH}">目安CPC</th>
       <th style="${TH}">CVR<br><span style="font-weight:400;font-size:10px;color:var(--text3)">(合計720時間)(%)</span></th>
       <th style="${TH}">ROAS<br><span style="font-weight:400;font-size:10px;color:var(--text3)">(合計720時間)(%)</span></th>
     </tr></thead><tbody>`;
-  rows.forEach(r => {
-    const cached = productCache[r.code] || {};
-    const name = cached.manualName || cached.name || r.code;
+  rows.forEach(a => {
+    const cached = productCache[a.itemCode] || {};
+    const pname = cached.manualName || cached.name || a.itemCode;
     const img = cached.manualImg || cached.img || null;
-    const imgCell = img ? `<img src="${img}" style="width:42px;height:42px;object-fit:cover;border-radius:4px;display:block;margin:0 auto">` : '<div style="width:42px;height:42px;background:var(--surface2);border-radius:4px;margin:0 auto"></div>';
+    const imgCell = img ? `<img src="${img}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;display:block;margin:0 auto">` : '<div style="width:40px;height:40px;background:var(--surface2);border-radius:4px;margin:0 auto"></div>';
     html += `<tr>
       <td style="${TD}">${imgCell}</td>
-      <td style="${TD};text-align:left">${name}</td>
-      <td style="${TD}">${pctc(r.ctr)}</td>
-      <td style="${TD}">${r.cpc==null ? '—' : yenc(r.cpc)}</td>
-      <td style="${TD}">${pctc(r.cvr)}</td>
-      <td style="${TD}">${r.roas==null ? '—' : Math.round(r.roas)+'%'}</td>
+      <td style="${TD};text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.kw}">${a.kw}</td>
+      <td style="${TD};text-align:left;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${pname}">${pname}</td>
+      <td style="${TD}">${pctc(a.ctr)}</td>
+      <td style="${TD}">${a.mcpc==null ? '—' : yenc(a.mcpc)}</td>
+      <td style="${TD}">${pctc(a.cvr)}</td>
+      <td style="${TD}">${a.roas==null ? '—' : Math.round(a.roas)+'%'}</td>
     </tr>`;
   });
   html += '</tbody></table>';
