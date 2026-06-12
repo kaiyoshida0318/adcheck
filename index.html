@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.644</span>
+    <span class="build-date">v1.645</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -903,7 +903,7 @@ header + * { margin-top: 4px; }
               <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp2" type="text" placeholder="商品2 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(2)" onblur="_kwCmpBlur(2)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug2" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
               <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp3" type="text" placeholder="商品3 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(3)" onblur="_kwCmpBlur(3)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug3" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
               <button onclick="_kwCmpClear()" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap">クリア</button>
-              <button onclick="_kwCmpSaveSet()" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);cursor:pointer;white-space:nowrap">保存</button>
+              <button id="kwCmpSaveBtn" onclick="_kwCmpSaveSet()" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);cursor:pointer;white-space:nowrap">保存</button>
               <select id="kwCmpSavedSel" onchange="_kwCmpLoadSet(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;max-width:200px"><option value="">保存した組み合わせ</option></select>
               <button onclick="openKwCmpReorder()" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap">並び替え</button>
               <button onclick="_kwCmpDeleteSet()" title="選択中を削除" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap;color:#c0392b">削除</button>
@@ -6345,8 +6345,9 @@ function renderKwCompare(){
   _renderKwCompareTable();
 }
 var KWCMP_SAVE_KEY='adcheck_kwcmp_saved';
-var _kwCmpMigrated=false, _kwCmpSaveTimer=null;
-function _kwCmpSyncSave(){ if(_kwCmpSaveTimer) clearTimeout(_kwCmpSaveTimer); _kwCmpSaveTimer=setTimeout(()=>{ try{ saveToGitHub(); }catch(e){} }, 1200); }
+var _kwCmpMigrated=false;
+function _kwCmpSyncSave(){ try{ return Promise.resolve(saveToGitHub()); }catch(e){ return Promise.resolve(); } }
+function _kwCmpSaveFlash(msg, revert){ const b=document.getElementById('kwCmpSaveBtn'); if(!b) return; b.textContent=msg; if(revert){ setTimeout(()=>{ const bb=document.getElementById('kwCmpSaveBtn'); if(bb) bb.textContent='\u4fdd\u5b58'; }, 1600); } }
 function _kwCmpGetSaved(){
   const g=productCache['__global__'];
   if(g && Array.isArray(g.kwCmpSaved)) return g.kwCmpSaved;
@@ -6364,7 +6365,7 @@ function _kwCmpSetSaved(arr){
   productCache['__global__'].kwCmpSaved=arr;
   try{ saveProductCache(); }catch(e){}
   try{ localStorage.setItem(KWCMP_SAVE_KEY, JSON.stringify(arr)); }catch(e){}
-  _kwCmpSyncSave();
+  return _kwCmpSyncSave();
 }
 var _kwCmpSelIdx='';
 function _kwCmpRefreshSavedSel(){
@@ -6373,7 +6374,7 @@ function _kwCmpRefreshSavedSel(){
   sel.innerHTML='<option value="">\u4fdd\u5b58\u3057\u305f\u7d44\u307f\u5408\u308f\u305b</option>'+arr.map((it,idx)=>{ const nm=(it.name||('\u7d44'+(idx+1))).replace(/&/g,'&amp;').replace(/</g,'&lt;'); return '<option value="'+idx+'">'+nm+'</option>'; }).join('');
   const c=_kwCmpSelIdx; sel.value=(c!==''&&+c>=0&&+c<arr.length)?String(c):''; if(sel.value==='') _kwCmpSelIdx='';
 }
-function _kwCmpSaveSet(){
+async function _kwCmpSaveSet(){
   const qs=[1,2,3].map(n=>{ const el=document.getElementById('kwCmp'+n); return el?el.value.trim():''; });
   const codes=qs.map(q=>q?_resolveProduct(q):null);
   if(!codes.some(c=>c)){ alert('\u4fdd\u5b58\u3059\u308b\u5546\u54c1\u304c\u5165\u529b\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002'); return; }
@@ -6384,9 +6385,12 @@ function _kwCmpSaveSet(){
   nm=(input.trim()||nm);
   const arr=_kwCmpGetSaved();
   arr.push({name:nm, codes:codes.map(c=>c||'')});
-  _kwCmpSetSaved(arr);
   _kwCmpSelIdx=String(arr.length-1);
+  const _pr=_kwCmpSetSaved(arr);
   _kwCmpRefreshSavedSel();
+  _kwCmpSaveFlash('\u4fdd\u5b58\u4e2d\u2026', false);
+  try{ await _pr; _kwCmpSaveFlash('\u4fdd\u5b58\u6e08 \u2713', true); }
+  catch(e){ _kwCmpSaveFlash('\u4fdd\u5b58\u5931\u6557', true); }
 }
 function _kwCmpLoadSet(idx){
   if(idx===''||idx==null) return;
