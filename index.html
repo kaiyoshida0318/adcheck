@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.642</span>
+    <span class="build-date">v1.643</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6535,23 +6535,27 @@ function _renderKwCompareTable(){
     body+='</tr>';
   });
   const ymDash = ym.slice(0,4)+'-'+ym.slice(4,6);
-  const TD20='border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px 7px;text-align:center;background:var(--surface2);font-weight:600';
-  let r20=`<tr><td style="${TD20};text-align:left;position:sticky;left:0;z-index:1">20\u5186\u5b9f\u7e3e\u5206</td>`;
-  codes.forEach(code=>{
+  const tintS=i=>{const c=PRGB[i%PRGB.length];return 'rgba('+c[0]+','+c[1]+','+c[2]+',0.20)';};
+  const dbl='border-top:3px double var(--text3)';
+  const TD20base='border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px 7px;text-align:center;font-weight:700';
+  let r20=`<tr><td style="${TD20base};${dbl};text-align:left;position:sticky;left:0;z-index:1;background:var(--surface);border-left:4px solid #ef8e3a">20\u5186\u5b9f\u7e3e\u5206</td>`;
+  codes.forEach((code,ci)=>{
     const a=getItemMonthAgg(code, ymDash);
     const sp20=(a.spend||0)-(a.kwSpend||0);
     const sa20=(a.sales720||0)-(a.kwSales||0);
     const ro20= sp20>0 ? Math.round(sa20/sp20*100) : null;
-    r20+=`<td style="${TD20};color:var(--text3)">\u2014</td><td style="${TD20};color:var(--text3)">\u2014</td><td style="${TD20}">${yenc(sp20)}</td><td style="${TD20}">${yenc(sa20)}</td><td style="${TD20};color:var(--text3)">\u2014</td><td style="${TD20}">${ro20==null?'\u2014':ro20+'%'}</td>`;
+    const st=`${TD20base};${dbl};background:${tintS(ci)}`;
+    r20+=`<td style="${st};color:var(--text3)">\u2014</td><td style="${st};color:var(--text3)">\u2014</td><td style="${st}">${yenc(sp20)}</td><td style="${st}">${yenc(sa20)}</td><td style="${st};color:var(--text3)">\u2014</td><td style="${st}">${ro20==null?'\u2014':ro20+'%'}</td>`;
   });
   r20+='</tr>';
   body+=r20;
-  const TDS='border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px 7px;text-align:center;background:rgba(76,175,80,0.14);font-weight:600';
-  let rSeo=`<tr><td style="${TDS};text-align:left;position:sticky;left:0;z-index:1">SEO\u58f2\u4e0a\u5206</td>`;
-  codes.forEach(code=>{
+  const TDSbase='border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px 7px;text-align:center;font-weight:700';
+  let rSeo=`<tr><td style="${TDSbase};text-align:left;position:sticky;left:0;z-index:1;background:var(--surface);border-left:4px solid #4CAF50">SEO\u58f2\u4e0a\u5206</td>`;
+  codes.forEach((code,ci)=>{
     const a=getItemMonthAgg(code, ymDash);
     const seo=Math.max(0,(a.totSales||0)-(a.rppSales||0));
-    rSeo+=`<td style="${TDS};color:var(--text3)">\u2014</td><td style="${TDS};color:var(--text3)">\u2014</td><td style="${TDS};color:var(--text3)">\u2014</td><td style="${TDS}">${yenc(seo)}</td><td style="${TDS};color:var(--text3)">\u2014</td><td style="${TDS};color:var(--text3)">\u2014</td>`;
+    const st=`${TDSbase};background:${tintS(ci)}`;
+    rSeo+=`<td style="${st};color:var(--text3)">\u2014</td><td style="${st};color:var(--text3)">\u2014</td><td style="${st};color:var(--text3)">\u2014</td><td style="${st}">${yenc(seo)}</td><td style="${st};color:var(--text3)">\u2014</td><td style="${st};color:var(--text3)">\u2014</td>`;
   });
   rSeo+='</tr>';
   body+=rSeo;
