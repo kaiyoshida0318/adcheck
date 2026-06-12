@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.643</span>
+    <span class="build-date">v1.644</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6345,8 +6345,27 @@ function renderKwCompare(){
   _renderKwCompareTable();
 }
 var KWCMP_SAVE_KEY='adcheck_kwcmp_saved';
-function _kwCmpGetSaved(){ try{ return JSON.parse(localStorage.getItem(KWCMP_SAVE_KEY)||'[]'); }catch(e){ return []; } }
-function _kwCmpSetSaved(arr){ try{ localStorage.setItem(KWCMP_SAVE_KEY, JSON.stringify(arr)); }catch(e){} }
+var _kwCmpMigrated=false, _kwCmpSaveTimer=null;
+function _kwCmpSyncSave(){ if(_kwCmpSaveTimer) clearTimeout(_kwCmpSaveTimer); _kwCmpSaveTimer=setTimeout(()=>{ try{ saveToGitHub(); }catch(e){} }, 1200); }
+function _kwCmpGetSaved(){
+  const g=productCache['__global__'];
+  if(g && Array.isArray(g.kwCmpSaved)) return g.kwCmpSaved;
+  let ls=[]; try{ ls=JSON.parse(localStorage.getItem(KWCMP_SAVE_KEY)||'[]'); }catch(e){}
+  if(Array.isArray(ls) && ls.length){
+    if(!productCache['__global__']) productCache['__global__']={};
+    productCache['__global__'].kwCmpSaved=ls;
+    if(!_kwCmpMigrated){ _kwCmpMigrated=true; try{ saveProductCache(); }catch(e){} _kwCmpSyncSave(); }
+    return ls;
+  }
+  return [];
+}
+function _kwCmpSetSaved(arr){
+  if(!productCache['__global__']) productCache['__global__']={};
+  productCache['__global__'].kwCmpSaved=arr;
+  try{ saveProductCache(); }catch(e){}
+  try{ localStorage.setItem(KWCMP_SAVE_KEY, JSON.stringify(arr)); }catch(e){}
+  _kwCmpSyncSave();
+}
 var _kwCmpSelIdx='';
 function _kwCmpRefreshSavedSel(){
   const sel=document.getElementById('kwCmpSavedSel'); if(!sel) return;
