@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.634</span>
+    <span class="build-date">v1.635</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -899,6 +899,9 @@ header + * { margin-top: 4px; }
             <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp1" type="text" placeholder="商品1 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(1)" onblur="_kwCmpBlur(1)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug1" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
             <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp2" type="text" placeholder="商品2 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(2)" onblur="_kwCmpBlur(2)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug2" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
             <div style="position:relative;flex:1;min-width:170px"><input id="kwCmp3" type="text" placeholder="商品3 (商品名/管理番号/商品番号)" autocomplete="off" oninput="onKwCmpInput(3)" onblur="_kwCmpBlur(3)" style="width:100%;box-sizing:border-box;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px"><div id="kwCmpSug3" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:50;max-height:240px;overflow:auto"></div></div>
+            <button onclick="_kwCmpSaveSet()" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);cursor:pointer;white-space:nowrap">保存</button>
+            <select id="kwCmpSavedSel" onchange="_kwCmpLoadSet(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;max-width:200px"><option value="">保存した組み合わせ</option></select>
+            <button onclick="_kwCmpDeleteSet()" title="選択中を削除" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap;color:#c0392b">削除</button>
             <span id="kwCompareCount" style="font-size:12px;color:var(--text3);white-space:nowrap"></span>
           </div>
           <div id="kwCmpResolved" style="font-size:11px;color:var(--text3)"></div>
@@ -6322,7 +6325,45 @@ function renderKwCompare(){
   if (sel && sel.value) _kwCompareMonth = sel.value;
   if (!_kwCompareMonth || !months.includes(_kwCompareMonth)) _kwCompareMonth = months[0] || '';
   if (sel) sel.value = _kwCompareMonth;
+  _kwCmpRefreshSavedSel();
   _renderKwCompareTable();
+}
+var KWCMP_SAVE_KEY='adcheck_kwcmp_saved';
+function _kwCmpGetSaved(){ try{ return JSON.parse(localStorage.getItem(KWCMP_SAVE_KEY)||'[]'); }catch(e){ return []; } }
+function _kwCmpSetSaved(arr){ try{ localStorage.setItem(KWCMP_SAVE_KEY, JSON.stringify(arr)); }catch(e){} }
+function _kwCmpRefreshSavedSel(){
+  const sel=document.getElementById('kwCmpSavedSel'); if(!sel) return;
+  const arr=_kwCmpGetSaved();
+  sel.innerHTML='<option value="">\u4fdd\u5b58\u3057\u305f\u7d44\u307f\u5408\u308f\u305b</option>'+arr.map((it,idx)=>{ const nm=(it.name||('\u7d44'+(idx+1))).replace(/&/g,'&amp;').replace(/</g,'&lt;'); return '<option value="'+idx+'">'+nm+'</option>'; }).join('');
+}
+function _kwCmpSaveSet(){
+  const qs=[1,2,3].map(n=>{ const el=document.getElementById('kwCmp'+n); return el?el.value.trim():''; });
+  const codes=qs.map(q=>q?_resolveProduct(q):null);
+  if(!codes.some(c=>c)){ alert('\u4fdd\u5b58\u3059\u308b\u5546\u54c1\u304c\u5165\u529b\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002'); return; }
+  const parts=codes.map(c=>{ if(!c) return null; const x=productCache[c]||{}; return (x.itemNumber||c); }).filter(Boolean);
+  let nm=parts.join(' / ');
+  const input=prompt('\u3053\u306e\u7d44\u307f\u5408\u308f\u305b\u306e\u540d\u524d', nm);
+  if(input===null) return;
+  nm=(input.trim()||nm);
+  const arr=_kwCmpGetSaved();
+  arr.push({name:nm, codes:codes.map(c=>c||'')});
+  _kwCmpSetSaved(arr);
+  _kwCmpRefreshSavedSel();
+  const sel=document.getElementById('kwCmpSavedSel'); if(sel) sel.value=String(arr.length-1);
+}
+function _kwCmpLoadSet(idx){
+  if(idx===''||idx==null) return;
+  const arr=_kwCmpGetSaved(); const it=arr[+idx]; if(!it) return;
+  const codes=it.codes||[];
+  [1,2,3].forEach(n=>{ const el=document.getElementById('kwCmp'+n); if(el) el.value=codes[n-1]||''; const sg=document.getElementById('kwCmpSug'+n); if(sg){sg.style.display='none';sg.innerHTML='';} });
+  renderKwCompare();
+}
+function _kwCmpDeleteSet(){
+  const sel=document.getElementById('kwCmpSavedSel'); if(!sel) return;
+  const idx=sel.value; if(idx===''){ alert('\u524a\u9664\u3059\u308b\u7d44\u307f\u5408\u308f\u305b\u3092\u30c9\u30ed\u30c3\u30d7\u30c0\u30a6\u30f3\u3067\u9078\u3093\u3067\u304f\u3060\u3055\u3044\u3002'); return; }
+  const arr=_kwCmpGetSaved(); const it=arr[+idx]; if(!it) return;
+  if(!confirm('\u300c'+(it.name||'')+'\u300d\u3092\u524a\u9664\u3057\u307e\u3059\u304b?')) return;
+  arr.splice(+idx,1); _kwCmpSetSaved(arr); _kwCmpRefreshSavedSel();
 }
 function _kwCmpProducts(){
   const seen={}; const arr=[];
