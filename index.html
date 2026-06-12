@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.632</span>
+    <span class="build-date">v1.633</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -892,10 +892,18 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-kw-compare">
     <div style="padding:12px 16px">
       <div class="table-card">
-        <div class="table-toolbar" style="display:flex;align-items:center;gap:10px;padding:10px 12px;flex-wrap:wrap">
-          <span style="font-size:13px;font-weight:600;color:var(--text2)">月</span>
-          <select id="kwCompareMonthSel" class="toolbar-month" onchange="renderKwCompare()" style="font-size:12px;padding:4px 8px;cursor:pointer"></select>
-          <span id="kwCompareCount" style="font-size:12px;color:var(--text3)"></span>
+        <div class="table-toolbar" style="display:flex;flex-direction:column;gap:8px;padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:600;color:var(--text2)">月</span>
+            <select id="kwCompareMonthSel" class="toolbar-month" onchange="renderKwCompare()" style="font-size:12px;padding:4px 8px;cursor:pointer"></select>
+            <span id="kwCompareCount" style="font-size:12px;color:var(--text3)"></span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="kwCmp1" type="text" placeholder="商品1 (商品名/管理番号/商品番号)" oninput="renderKwCompare()" style="flex:1;min-width:200px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px">
+            <input id="kwCmp2" type="text" placeholder="商品2 (商品名/管理番号/商品番号)" oninput="renderKwCompare()" style="flex:1;min-width:200px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px">
+            <input id="kwCmp3" type="text" placeholder="商品3 (商品名/管理番号/商品番号)" oninput="renderKwCompare()" style="flex:1;min-width:200px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px">
+          </div>
+          <div id="kwCmpResolved" style="font-size:11px;color:var(--text3)"></div>
         </div>
         <div id="kwCompareList" style="overflow:auto;max-height:74vh;padding:0 12px 16px"></div>
       </div>
@@ -6318,78 +6326,78 @@ function renderKwCompare(){
   if (sel) sel.value = _kwCompareMonth;
   _renderKwCompareTable();
 }
+function _resolveProduct(q){
+  q=(q||'').trim(); if(!q) return null;
+  if(q!=='__global__' && productCache[q]) return q;
+  const ql=q.toLowerCase();
+  let byNum=null, byCode=null, byName=null;
+  for(const code in productCache){
+    if(code==='__global__') continue;
+    const c=productCache[code]||{};
+    const num=String(c.itemNumber||'');
+    const name=String(c.manualName||c.name||'');
+    if(!byNum && num && num.toLowerCase()===ql) byNum=code;
+    if(!byCode && String(code).includes(q)) byCode=code;
+    if(!byName && name && name.toLowerCase().includes(ql)) byName=code;
+  }
+  return byNum || byCode || byName || null;
+}
 function _renderKwCompareTable(){
   const list = document.getElementById('kwCompareList');
   if (!list) return;
   const ym = _kwCompareMonth;
   const cnt = document.getElementById('kwCompareCount');
-  const byKw = {};
-  for (const r of kwRows){
-    if (r.ym !== ym) continue;
-    let k = byKw[r.kw]; if(!k) k = byKw[r.kw] = {};
-    let a = k[r.itemCode]; if(!a) a = k[r.itemCode] = { code:r.itemCode, spend:0, sales:0, orders:0, cl:0, imp:0, mcpcSum:0, mcpcN:0 };
-    a.spend+=r.spend||0; a.sales+=r.sales||0; a.orders+=r.orders||0; a.cl+=r.cl||0;
-    if((r.ctr||0)>0 && (r.cl||0)>0) a.imp += r.cl*100/r.ctr;
-    if((r.mcpc||0)>0){ a.mcpcSum+=r.mcpc; a.mcpcN++; }
-  }
-  const groups = [];
-  for (const kw in byKw){
-    const prods = Object.values(byKw[kw]).filter(a => a.spend>0 || a.cl>0);
-    if (prods.length >= 2){
-      const total = prods.reduce((s,a)=>s+a.spend,0);
-      prods.sort((x,y)=>y.spend-x.spend);
-      groups.push({ kw, prods, total });
-    }
-  }
-  groups.sort((a,b)=>b.total-a.total);
-  if(cnt) cnt.textContent = groups.length + '\u500b\u306e\u5171\u901aKW';
-  if(!groups.length){ list.innerHTML='<div style="padding:30px;color:var(--text3);font-size:13px">2\u5546\u54c1\u4ee5\u4e0a\u3067\u5171\u901a\u3059\u308b\u30ad\u30fc\u30ef\u30fc\u30c9\u304c\u3042\u308a\u307e\u305b\u3093\u3002</div>'; return; }
-  const yenc = n => '\u00a5'+Math.round(n).toLocaleString();
-  const pctc = n => (n==null?'\u2014':n.toFixed(2)+'%');
-  const roasc = n => (n==null?'\u2014':Math.round(n)+'%');
-  const TH='border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:5px 8px;background:var(--surface2);font-weight:600;text-align:center;white-space:nowrap';
-  const LB='border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px 8px;text-align:left;font-weight:600;background:var(--surface2);white-space:nowrap';
-  const TD='border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px 10px;text-align:right;white-space:nowrap';
-  let html='';
-  groups.forEach(g => {
-    const ms = g.prods.map(a => ({
-      a,
-      ctr: a.imp>0?a.cl/a.imp*100:null,
-      mcpc: a.mcpcN>0?a.mcpcSum/a.mcpcN:null,
-      spend: a.spend, sales: a.sales,
-      cvr: a.cl>0?a.orders/a.cl*100:null,
-      roas: a.spend>0?a.sales/a.spend*100:null,
-    }));
-    html += `<div style="margin:0 0 22px">`;
-    html += `<div style="font-weight:700;font-size:13px;padding:6px 2px 8px;color:var(--text)">${g.kw} <span style="font-weight:400;color:var(--text3);font-size:11px">(${g.prods.length}\u5546\u54c1)</span></div>`;
-    html += `<table style="border-collapse:separate;border-spacing:0;border-top:1px solid var(--border);border-left:1px solid var(--border);font-size:11px">`;
-    // 商品ヘッダ（横並び）
-    html += `<thead><tr><th style="${LB}"></th>`;
-    ms.forEach(({a}) => {
-      const cached = productCache[a.code] || {};
-      const pname = cached.manualName || cached.name || a.code;
-      const num = cached.itemNumber || a.code;
-      const img = cached.manualImg || cached.img || null;
-      const imgEl = img ? `<img src="${img}" style="width:46px;height:46px;object-fit:cover;border-radius:4px;display:block;margin:0 auto 4px">` : '<div style="width:46px;height:46px;background:var(--surface2);border-radius:4px;margin:0 auto 4px"></div>';
-      html += `<th style="${TH};min-width:130px">${imgEl}<div style="font-weight:700">${num}</div><div style="font-weight:400;font-size:10px;color:var(--text3);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 auto">${pname}</div></th>`;
-    });
-    html += `</tr></thead><tbody>`;
-    const rowsDef = [
-      ['CTR', m=>pctc(m.ctr)],
-      ['\u76ee\u5b89CPC', m=>(m.mcpc==null?'\u2014':yenc(m.mcpc))],
-      ['\u5b9f\u7e3e\u984d', m=>yenc(m.spend)],
-      ['\u58f2\u4e0a\u984d', m=>yenc(m.sales)],
-      ['CVR (720\u6642\u9593)', m=>pctc(m.cvr)],
-      ['ROAS (720\u6642\u9593)', m=>roasc(m.roas)],
-    ];
-    rowsDef.forEach(([label, fn]) => {
-      html += `<tr><td style="${LB}">${label}</td>`;
-      ms.forEach(m => { html += `<td style="${TD}">${fn(m)}</td>`; });
-      html += `</tr>`;
-    });
-    html += `</tbody></table></div>`;
+  const resEl = document.getElementById('kwCmpResolved');
+  const queries = ['kwCmp1','kwCmp2','kwCmp3'].map(id => { const el=document.getElementById(id); return el?el.value.trim():''; });
+  const codes=[]; const labels=[];
+  queries.forEach(q => {
+    if(!q) return;
+    const code=_resolveProduct(q);
+    if(code && !codes.includes(code)){ codes.push(code); const c=productCache[code]||{}; labels.push((c.itemNumber||code)+' '+(c.manualName||c.name||'')); }
+    else if(!code){ labels.push(q+' \u2192 \u8a72\u5f53\u306a\u3057'); }
   });
-  list.innerHTML = html;
+  if(resEl) resEl.textContent = labels.length ? ('\u9078\u629e: '+labels.join('   /   ')) : '';
+  if(!codes.length){ list.innerHTML='<div style="padding:30px;color:var(--text3);font-size:13px">\u4e0a\u306e\u6b04\u306b\u5546\u54c1\u540d\u30fb\u7ba1\u7406\u756a\u53f7\u30fb\u5546\u54c1\u756a\u53f7\u306e\u3044\u305a\u308c\u304b\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</div>'; if(cnt)cnt.textContent=''; return; }
+  const agg={}; const kwSet={};
+  for(const r of kwRows){
+    if(r.ym!==ym) continue;
+    if(!codes.includes(r.itemCode)) continue;
+    let ac=agg[r.itemCode]; if(!ac) ac=agg[r.itemCode]={};
+    let a=ac[r.kw]; if(!a) a=ac[r.kw]={spend:0,sales:0,orders:0,cl:0,imp:0,mcpcSum:0,mcpcN:0};
+    a.spend+=r.spend||0; a.sales+=r.sales||0; a.orders+=r.orders||0; a.cl+=r.cl||0;
+    if((r.ctr||0)>0&&(r.cl||0)>0) a.imp+=r.cl*100/r.ctr;
+    if((r.mcpc||0)>0){a.mcpcSum+=r.mcpc;a.mcpcN++;}
+    kwSet[r.kw]=(kwSet[r.kw]||0)+(r.spend||0);
+  }
+  const kws=Object.keys(kwSet).sort((x,y)=>kwSet[y]-kwSet[x]);
+  if(cnt) cnt.textContent = kws.length+'KW \u00d7 '+codes.length+'\u5546\u54c1';
+  if(!kws.length){ list.innerHTML='<div style="padding:30px;color:var(--text3);font-size:13px">\u3053\u306e\u6708\u306b\u8a72\u5f53\u3059\u308b\u30ad\u30fc\u30ef\u30fc\u30c9\u304c\u3042\u308a\u307e\u305b\u3093\u3002</div>'; return; }
+  const fin=a=>{ if(!a) return null; return {ctr:a.imp>0?a.cl/a.imp*100:null,mcpc:a.mcpcN>0?a.mcpcSum/a.mcpcN:null,spend:a.spend,sales:a.sales,cvr:a.cl>0?a.orders/a.cl*100:null,roas:a.spend>0?a.sales/a.spend*100:null}; };
+  const yenc=n=>'\u00a5'+Math.round(n).toLocaleString();
+  const pctc=n=>(n==null?'\u2014':n.toFixed(2)+'%');
+  const TH='border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:5px 7px;background:var(--surface2);font-weight:600;text-align:center;white-space:nowrap;position:sticky;top:0;z-index:1';
+  const TD='border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px 7px;text-align:center';
+  let h1=`<th style="${TH};left:0;z-index:3" rowspan="2">\u30ad\u30fc\u30ef\u30fc\u30c9</th>`;
+  codes.forEach(code=>{
+    const c=productCache[code]||{};
+    const pname=c.manualName||c.name||code; const num=c.itemNumber||code;
+    const img=c.manualImg||c.img||null;
+    const imgEl=img?`<img src="${img}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:6px">`:'';
+    h1+=`<th style="${TH}" colspan="6"><div style="display:flex;align-items:center;justify-content:center;gap:6px">${imgEl}<div style="text-align:left"><div style="font-weight:700">${num}</div><div style="font-weight:400;font-size:10px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pname}</div></div></div></th>`;
+  });
+  let h2='';
+  codes.forEach(()=>{ h2+=`<th style="${TH}">CTR</th><th style="${TH}">\u76ee\u5b89CPC</th><th style="${TH}">\u5b9f\u7e3e\u984d</th><th style="${TH}">\u58f2\u4e0a\u984d</th><th style="${TH}">CVR<br><span style="font-weight:400;font-size:9px;color:var(--text3)">720\u6642\u9593(%)</span></th><th style="${TH}">ROAS<br><span style="font-weight:400;font-size:9px;color:var(--text3)">720\u6642\u9593(%)</span></th>`; });
+  let body='';
+  kws.forEach(kw=>{
+    body+=`<tr><td style="${TD};text-align:left;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:sticky;left:0;background:var(--surface);z-index:1" title="${kw}">${kw}</td>`;
+    codes.forEach(code=>{
+      const m=fin(agg[code]&&agg[code][kw]);
+      if(!m){ body+=`<td style="${TD};color:var(--text3)" colspan="6">\u2014</td>`; return; }
+      body+=`<td style="${TD}">${pctc(m.ctr)}</td><td style="${TD}">${m.mcpc==null?'\u2014':yenc(m.mcpc)}</td><td style="${TD}">${yenc(m.spend)}</td><td style="${TD}">${yenc(m.sales)}</td><td style="${TD}">${pctc(m.cvr)}</td><td style="${TD}">${m.roas==null?'\u2014':Math.round(m.roas)+'%'}</td>`;
+    });
+    body+='</tr>';
+  });
+  list.innerHTML=`<table style="border-collapse:separate;border-spacing:0;border-top:1px solid var(--border);border-left:1px solid var(--border);font-size:11px"><thead><tr>${h1}</tr><tr>${h2}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
 // 【リニューアル：全体】現役商品を一覧表示。変更記録ボタンを各行に
