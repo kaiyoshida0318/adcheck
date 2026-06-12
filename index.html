@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.637</span>
+    <span class="build-date">v1.639</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6347,10 +6347,12 @@ function renderKwCompare(){
 var KWCMP_SAVE_KEY='adcheck_kwcmp_saved';
 function _kwCmpGetSaved(){ try{ return JSON.parse(localStorage.getItem(KWCMP_SAVE_KEY)||'[]'); }catch(e){ return []; } }
 function _kwCmpSetSaved(arr){ try{ localStorage.setItem(KWCMP_SAVE_KEY, JSON.stringify(arr)); }catch(e){} }
+var _kwCmpSelIdx='';
 function _kwCmpRefreshSavedSel(){
   const sel=document.getElementById('kwCmpSavedSel'); if(!sel) return;
   const arr=_kwCmpGetSaved();
   sel.innerHTML='<option value="">\u4fdd\u5b58\u3057\u305f\u7d44\u307f\u5408\u308f\u305b</option>'+arr.map((it,idx)=>{ const nm=(it.name||('\u7d44'+(idx+1))).replace(/&/g,'&amp;').replace(/</g,'&lt;'); return '<option value="'+idx+'">'+nm+'</option>'; }).join('');
+  const c=_kwCmpSelIdx; sel.value=(c!==''&&+c>=0&&+c<arr.length)?String(c):''; if(sel.value==='') _kwCmpSelIdx='';
 }
 function _kwCmpSaveSet(){
   const qs=[1,2,3].map(n=>{ const el=document.getElementById('kwCmp'+n); return el?el.value.trim():''; });
@@ -6364,12 +6366,13 @@ function _kwCmpSaveSet(){
   const arr=_kwCmpGetSaved();
   arr.push({name:nm, codes:codes.map(c=>c||'')});
   _kwCmpSetSaved(arr);
+  _kwCmpSelIdx=String(arr.length-1);
   _kwCmpRefreshSavedSel();
-  const sel=document.getElementById('kwCmpSavedSel'); if(sel) sel.value=String(arr.length-1);
 }
 function _kwCmpLoadSet(idx){
   if(idx===''||idx==null) return;
   const arr=_kwCmpGetSaved(); const it=arr[+idx]; if(!it) return;
+  _kwCmpSelIdx=String(idx);
   const codes=it.codes||[];
   [1,2,3].forEach(n=>{ const el=document.getElementById('kwCmp'+n); if(el) el.value=codes[n-1]||''; const sg=document.getElementById('kwCmpSug'+n); if(sg){sg.style.display='none';sg.innerHTML='';} });
   renderKwCompare();
@@ -6379,7 +6382,7 @@ function _kwCmpDeleteSet(){
   const idx=sel.value; if(idx===''){ alert('\u524a\u9664\u3059\u308b\u7d44\u307f\u5408\u308f\u305b\u3092\u30c9\u30ed\u30c3\u30d7\u30c0\u30a6\u30f3\u3067\u9078\u3093\u3067\u304f\u3060\u3055\u3044\u3002'); return; }
   const arr=_kwCmpGetSaved(); const it=arr[+idx]; if(!it) return;
   if(!confirm('\u300c'+(it.name||'')+'\u300d\u3092\u524a\u9664\u3057\u307e\u3059\u304b?')) return;
-  arr.splice(+idx,1); _kwCmpSetSaved(arr); _kwCmpRefreshSavedSel();
+  const di=+idx; arr.splice(di,1); _kwCmpSetSaved(arr); const cur=_kwCmpSelIdx===''?-1:+_kwCmpSelIdx; if(cur===di) _kwCmpSelIdx=''; else if(cur>di) _kwCmpSelIdx=String(cur-1); _kwCmpRefreshSavedSel();
 }
 function openKwCmpReorder(){
   const arr=_kwCmpGetSaved();
@@ -6410,16 +6413,20 @@ function _kwCmpMove(idx, dir){
   const j=idx+dir;
   if(j<0||j>=arr.length) return;
   const t=arr[idx]; arr[idx]=arr[j]; arr[j]=t;
+  const cur=_kwCmpSelIdx===''?-1:+_kwCmpSelIdx;
+  if(cur===idx) _kwCmpSelIdx=String(j); else if(cur===j) _kwCmpSelIdx=String(idx);
   _kwCmpSetSaved(arr); _kwCmpRenderReorder(); _kwCmpRefreshSavedSel();
 }
 function _kwCmpDeleteAt(idx){
   const arr=_kwCmpGetSaved(); const it=arr[idx]; if(!it) return;
   if(!confirm('\u300c'+(it.name||'')+'\u300d\u3092\u524a\u9664\u3057\u307e\u3059\u304b?')) return;
+  const cur=_kwCmpSelIdx===''?-1:+_kwCmpSelIdx;
+  if(cur===idx) _kwCmpSelIdx=''; else if(cur>idx) _kwCmpSelIdx=String(cur-1);
   arr.splice(idx,1); _kwCmpSetSaved(arr); _kwCmpRenderReorder(); _kwCmpRefreshSavedSel();
 }
 function _kwCmpClear(){
   [1,2,3].forEach(n=>{ const el=document.getElementById('kwCmp'+n); if(el) el.value=''; const sg=document.getElementById('kwCmpSug'+n); if(sg){sg.style.display='none';sg.innerHTML='';} });
-  const sel=document.getElementById('kwCmpSavedSel'); if(sel) sel.value='';
+  _kwCmpSelIdx='';
   renderKwCompare();
 }
 function _kwCmpProducts(){
@@ -6427,7 +6434,7 @@ function _kwCmpProducts(){
   for(const r of kwRows){ if(seen[r.itemCode]) continue; seen[r.itemCode]=1; const c=productCache[r.itemCode]||{}; arr.push({code:r.itemCode, name:(c.manualName||c.name||''), num:String(c.itemNumber||''), img:(c.manualImg||c.img||null)}); }
   return arr;
 }
-function onKwCmpInput(n){ _kwCmpSuggest(n); renderKwCompare(); }
+function onKwCmpInput(n){ _kwCmpSelIdx=''; _kwCmpSuggest(n); renderKwCompare(); }
 function _kwCmpBlur(n){ setTimeout(()=>{ const e=document.getElementById('kwCmpSug'+n); if(e){ e.style.display='none'; } }, 160); }
 function _kwCmpSuggest(n){
   const inp=document.getElementById('kwCmp'+n);
@@ -6449,6 +6456,7 @@ function _kwCmpPick(n, code){
   const sug=document.getElementById('kwCmpSug'+n);
   if(inp) inp.value=code;
   if(sug){ sug.style.display='none'; sug.innerHTML=''; }
+  _kwCmpSelIdx='';
   renderKwCompare();
 }
 function _resolveProduct(q){
@@ -6522,6 +6530,18 @@ function _renderKwCompareTable(){
     });
     body+='</tr>';
   });
+  const ymDash = ym.slice(0,4)+'-'+ym.slice(4,6);
+  const TD20='border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px 7px;text-align:center;background:var(--surface2);font-weight:600';
+  let r20=`<tr><td style="${TD20};text-align:left;position:sticky;left:0;z-index:1">20\u5186\u5b9f\u7e3e\u5206</td>`;
+  codes.forEach(code=>{
+    const a=getItemMonthAgg(code, ymDash);
+    const sp20=(a.spend||0)-(a.kwSpend||0);
+    const sa20=(a.sales720||0)-(a.kwSales||0);
+    const ro20= sp20>0 ? Math.round(sa20/sp20*100) : null;
+    r20+=`<td style="${TD20};color:var(--text3)">\u2014</td><td style="${TD20};color:var(--text3)">\u2014</td><td style="${TD20}">${yenc(sp20)}</td><td style="${TD20}">${yenc(sa20)}</td><td style="${TD20};color:var(--text3)">\u2014</td><td style="${TD20}">${ro20==null?'\u2014':ro20+'%'}</td>`;
+  });
+  r20+='</tr>';
+  body+=r20;
   list.innerHTML=`<table style="border-collapse:separate;border-spacing:0;border-top:1px solid var(--border);border-left:1px solid var(--border);font-size:11px"><thead><tr>${h1}</tr><tr>${h2}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
