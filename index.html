@@ -94,7 +94,7 @@ header + * { margin-top: 4px; }
 
 /* ── Table ── */
 .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);  box-shadow: var(--shadow); }
-.table-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; position: sticky; top: 60px; z-index: 50; background: var(--surface); }
+.table-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; background: var(--surface); }
 /* ヘッダーが大きくなる場合(ボタン2段化等)を考慮して余裕を持たせる */
 @media (max-width: 1200px) {
   .table-toolbar { top: 80px; }
@@ -107,7 +107,7 @@ header + * { margin-top: 4px; }
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 92px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 92px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
 .col-header.with-status { grid-template-columns: 90px 80px minmax(0,1fr) 92px 92px 102px 92px 72px 72px 72px 72px 72px 90px 110px 70px 28px; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.649</span>
+    <span class="build-date">v1.650</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
