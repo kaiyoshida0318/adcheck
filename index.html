@@ -489,7 +489,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.654</span>
+    <span class="build-date">v1.655</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -508,7 +508,7 @@ header + * { margin-top: 4px; }
 
 <!-- タブバー -->
 <nav class="tab-bar tab-sub-row" style="background:#ffffff;border-bottom:1px solid var(--border)">
-  <span class="tab-row-label" style="color:#5C6BC0">【基本】</span>
+  <span class="tab-row-label" style="color:#2563eb">【基本】</span>
   <button class="tab-btn tab-btn-basic" id="tab-btn-products" onclick="switchTab('products')">📊 商品-基本データ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">📊 商品-月別データ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-item-graph" onclick="switchTab('item-graph')">📈 商品-グラフ</button>
@@ -516,7 +516,7 @@ header + * { margin-top: 4px; }
   <span class="tab-row-label" style="color:#00897B;padding-left:7px">【KW】</span>
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-基本データ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
-  <span class="tab-row-label" id="label-zentai" style="color:#0288D1;padding-left:7px">【全体】</span>
+  <span class="tab-row-label" id="label-zentai" style="color:#dc2626;padding-left:7px">【全体】</span>
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">📊 全-月別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-daily" onclick="switchTab('daily')">📊 全-日別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-graph" onclick="switchTab('graph')">📈 全-日月別グラフ</button>
@@ -524,17 +524,17 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-all" id="tab-btn-formula" onclick="switchTab('formula')">📐 全-計算式</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-2">
-  <span class="tab-row-label" style="color:#00897B">【リニューアル】</span>
+  <span class="tab-row-label" style="color:#16a34a">【リニューアル】</span>
   <button class="tab-btn" id="tab-btn-renewal-todoseo" onclick="switchTab('renewal-todoseo')">実施前-SEO＆広告<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-todoseo"></span></button>
   <button class="tab-btn" id="tab-btn-renewal-todo" onclick="switchTab('renewal-todo')">実施前-KW＆20<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-todo"></span></button>
   <button class="tab-btn" id="tab-btn-renewal-done" onclick="switchTab('renewal-done')">実施済-全体<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-done"></span></button>
   <button class="tab-btn" id="tab-btn-renewal-lp" onclick="switchTab('renewal-lp')">LP更新済<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-lp"></span></button>
   <button class="tab-btn" id="tab-btn-renewal-thumb" onclick="switchTab('renewal-thumb')">サムネ更新済<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-thumb"></span></button>
-  <span class="tab-row-label" id="label-taiou" style="color:#7B3FA0">【対応検討】</span>
+  <span class="tab-row-label" id="label-taiou" style="color:#ea580c">【対応検討】</span>
   <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近4ヶ月</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3">
-  <span class="tab-row-label red">【状態】</span>
+  <span class="tab-row-label red" style="color:#9333ea">【状態】</span>
   <button class="tab-btn" id="tab-btn-monthly-all" onclick="switchTab('monthly-all')">全体<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-all"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-g1" onclick="switchTab('monthly-g1')">健常◎<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-g1"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-g2" onclick="switchTab('monthly-g2')">健常-要注意◯<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-g2"></span></button>
@@ -545,7 +545,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退検討▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warn"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-out"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-unset"></span></button>
-  <span class="tab-row-label blue" style="padding-left:16px">【SS】</span>
+  <span class="tab-row-label blue" style="color:#db2777;padding-left:16px">【SS】</span>
   <button class="tab-btn" id="tab-btn-ss-mar" onclick="switchTab('ss-mar')">3月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-mar"></span></button>
   <button class="tab-btn" id="tab-btn-ss-jun" onclick="switchTab('ss-jun')">6月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-jun"></span></button>
   <button class="tab-btn" id="tab-btn-ss-sep" onclick="switchTab('ss-sep')">9月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-sep"></span></button>
@@ -6512,17 +6512,33 @@ var _ANALYZE_OPTS=[
  {v:'商品-月別データ',b:'【基本】',r:'商品-月別データ',c:'#2563eb'},
  {v:'商品-グラフ',b:'【基本】',r:'商品-グラフ',c:'#2563eb'},
  {v:'引退済商品',b:'【基本】',r:'引退済商品',c:'#2563eb'},
- {v:'KW-基本データ',b:'【基本】',r:'KW-基本データ',c:'#2563eb'},
- {v:'KW-比較',b:'【基本】',r:'KW-比較',c:'#2563eb'},
+ {v:'KW-基本データ',b:'【KW】',r:'KW-基本データ',c:'#00897B'},
+ {v:'KW-比較',b:'【KW】',r:'KW-比較',c:'#00897B'},
  {v:'全-月別データ',b:'【全体】',r:'全-月別データ',c:'#dc2626'},
  {v:'全-日別データ',b:'【全体】',r:'全-日別データ',c:'#dc2626'},
  {v:'全-日月別グラフ',b:'【全体】',r:'全-日月別グラフ',c:'#dc2626'},
  {v:'全-比較',b:'【全体】',r:'全-比較',c:'#dc2626'},
  {v:'全-計算式',b:'【全体】',r:'全-計算式',c:'#dc2626'},
- {v:'リニューアル',b:'【リニューアル】',r:'',c:'#16a34a'},
- {v:'対応検討',b:'【対応検討】',r:'',c:'#ea580c'},
- {v:'状態',b:'【状態】',r:'',c:'#9333ea'},
- {v:'SS',b:'【SS】',r:'',c:'#db2777'}
+ {v:'実施前-SEO＆広告',b:'【リニューアル】',r:'実施前-SEO＆広告',c:'#16a34a'},
+ {v:'実施前-KW＆20',b:'【リニューアル】',r:'実施前-KW＆20',c:'#16a34a'},
+ {v:'実施済-全体',b:'【リニューアル】',r:'実施済-全体',c:'#16a34a'},
+ {v:'LP更新済',b:'【リニューアル】',r:'LP更新済',c:'#16a34a'},
+ {v:'サムネ更新済',b:'【リニューアル】',r:'サムネ更新済',c:'#16a34a'},
+ {v:'粗広告利益-直近4ヶ月',b:'【対応検討】',r:'粗広告利益-直近4ヶ月',c:'#ea580c'},
+ {v:'全体',b:'【状態】',r:'全体',c:'#9333ea'},
+ {v:'健常◎',b:'【状態】',r:'健常◎',c:'#9333ea'},
+ {v:'健常-要注意◯',b:'【状態】',r:'健常-要注意◯',c:'#9333ea'},
+ {v:'健常-広告無し',b:'【状態】',r:'健常-広告無し',c:'#9333ea'},
+ {v:'新商品',b:'【状態】',r:'新商品',c:'#9333ea'},
+ {v:'中立□',b:'【状態】',r:'中立□',c:'#9333ea'},
+ {v:'中立-広告無し',b:'【状態】',r:'中立-広告無し',c:'#9333ea'},
+ {v:'撤退検討▲',b:'【状態】',r:'撤退検討▲',c:'#9333ea'},
+ {v:'撤退■',b:'【状態】',r:'撤退■',c:'#9333ea'},
+ {v:'選択前■',b:'【状態】',r:'選択前■',c:'#9333ea'},
+ {v:'3月',b:'【SS】',r:'3月',c:'#db2777'},
+ {v:'6月',b:'【SS】',r:'6月',c:'#db2777'},
+ {v:'9月',b:'【SS】',r:'9月',c:'#db2777'},
+ {v:'12月',b:'【SS】',r:'12月',c:'#db2777'}
 ];
 var _ANALYZE_DEFAULT=[
  {place:'全-月別データ',place2:'通常 / 前年同月比',item:'売上・実績・獲得単価・CVR・ROASで明確な悪化がないかのチェック'},
