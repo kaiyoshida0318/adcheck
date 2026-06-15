@@ -489,7 +489,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.653</span>
+    <span class="build-date">v1.654</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6507,11 +6507,22 @@ function _kwCmpPick(n, code){
   _kwCmpSelIdx='';
   renderKwCompare();
 }
-var _ANALYZE_GROUPS=[
- {label:'【基本】',color:'#5C6BC0',items:['商品-基本データ','商品-月別データ','商品-グラフ','引退済商品']},
- {label:'【KW】',color:'#00897B',items:['KW-基本データ','KW-比較']},
- {label:'【全体】',color:'#0288D1',items:['全-月別データ','全-日別データ','全-日月別グラフ','全-比較','全-計算式']},
- {label:'【リニューアル】',color:'#00897B',items:['リニューアル','状態']}
+var _ANALYZE_OPTS=[
+ {v:'商品-基本データ',b:'【基本】',r:'商品-基本データ',c:'#2563eb'},
+ {v:'商品-月別データ',b:'【基本】',r:'商品-月別データ',c:'#2563eb'},
+ {v:'商品-グラフ',b:'【基本】',r:'商品-グラフ',c:'#2563eb'},
+ {v:'引退済商品',b:'【基本】',r:'引退済商品',c:'#2563eb'},
+ {v:'KW-基本データ',b:'【基本】',r:'KW-基本データ',c:'#2563eb'},
+ {v:'KW-比較',b:'【基本】',r:'KW-比較',c:'#2563eb'},
+ {v:'全-月別データ',b:'【全体】',r:'全-月別データ',c:'#dc2626'},
+ {v:'全-日別データ',b:'【全体】',r:'全-日別データ',c:'#dc2626'},
+ {v:'全-日月別グラフ',b:'【全体】',r:'全-日月別グラフ',c:'#dc2626'},
+ {v:'全-比較',b:'【全体】',r:'全-比較',c:'#dc2626'},
+ {v:'全-計算式',b:'【全体】',r:'全-計算式',c:'#dc2626'},
+ {v:'リニューアル',b:'【リニューアル】',r:'',c:'#16a34a'},
+ {v:'対応検討',b:'【対応検討】',r:'',c:'#ea580c'},
+ {v:'状態',b:'【状態】',r:'',c:'#9333ea'},
+ {v:'SS',b:'【SS】',r:'',c:'#db2777'}
 ];
 var _ANALYZE_DEFAULT=[
  {place:'全-月別データ',place2:'通常 / 前年同月比',item:'売上・実績・獲得単価・CVR・ROASで明確な悪化がないかのチェック'},
@@ -6539,7 +6550,7 @@ function _analyzeSave(arr){
 }
 function _analyzeHtml(){
   return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ADcheck 確認メモ</title>
-<style>*{box-sizing:border-box}body{font-family:system-ui,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;margin:0;padding:18px;background:#f6f7f9;color:#1a1a1a}h2{font-size:17px;margin:0 0 12px}.bar{display:flex;align-items:center;gap:12px;margin-bottom:12px}.bar button{font-size:13px;padding:7px 14px;border:none;border-radius:6px;background:#5C6BC0;color:#fff;cursor:pointer;font-weight:600}#status{font-size:12px;color:#2E7D32}table{border-collapse:collapse;width:100%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-radius:8px;overflow:hidden}th{background:#eef0f5;font-size:12px;padding:9px 10px;text-align:left;border-bottom:2px solid #dfe3eb;white-space:nowrap}td{border-bottom:1px solid #eceef2;padding:6px 8px;vertical-align:top}td.ops{white-space:nowrap;text-align:center;width:128px}select.f-place{min-width:150px;font-size:13px;padding:5px 6px;border:1px solid #d4d7de;border-radius:5px}input.f-place2{width:100%;min-width:120px;font-size:13px;padding:5px 6px;border:1px solid #d4d7de;border-radius:5px}textarea.f-item{width:100%;min-width:260px;min-height:48px;font-size:13px;padding:5px 6px;border:1px solid #d4d7de;border-radius:5px;font-family:inherit;resize:vertical;line-height:1.5}.ops button{font-size:13px;padding:4px 8px;margin:0 1px;border:1px solid #d4d7de;border-radius:5px;background:#f8f9fb;cursor:pointer}.ops button.del{color:#c0392b}th.c1{width:170px}th.c2{width:150px}</style></head><body>
+<style>*{box-sizing:border-box}body{font-family:system-ui,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;margin:0;padding:18px;background:#f6f7f9;color:#1a1a1a}h2{font-size:17px;margin:0 0 12px}.bar{display:flex;align-items:center;gap:12px;margin-bottom:12px}.bar button{font-size:13px;padding:7px 14px;border:none;border-radius:6px;background:#5C6BC0;color:#fff;cursor:pointer;font-weight:600}#status{font-size:12px;color:#2E7D32}table{border-collapse:collapse;width:100%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-radius:8px}th{background:#eef0f5;font-size:12px;padding:9px 10px;text-align:left;border-bottom:2px solid #dfe3eb;white-space:nowrap}td{border-bottom:1px solid #eceef2;padding:6px 8px;vertical-align:top}td.ops{white-space:nowrap;text-align:center;width:128px}.dd{font-size:13px;padding:6px 8px;border:1px solid #d4d7de;border-radius:5px;min-width:170px;cursor:pointer;background:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ddmenu{display:none;position:absolute;top:100%;left:0;z-index:50;min-width:210px;max-height:320px;overflow:auto;background:#fff;border:1px solid #d4d7de;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);margin-top:2px}.ddo{font-size:13px;padding:7px 10px;cursor:pointer;border-bottom:1px solid #f0f1f4;white-space:nowrap}.ddo:hover{background:#f3f4f8}input.f-place2{width:100%;min-width:120px;font-size:13px;padding:5px 6px;border:1px solid #d4d7de;border-radius:5px}textarea.f-item{width:100%;min-width:260px;min-height:48px;font-size:13px;padding:5px 6px;border:1px solid #d4d7de;border-radius:5px;font-family:inherit;resize:vertical;line-height:1.5}.ops button{font-size:13px;padding:4px 8px;margin:0 1px;border:1px solid #d4d7de;border-radius:5px;background:#f8f9fb;cursor:pointer}.ops button.del{color:#c0392b}th.c1{width:190px}th.c2{width:150px}</style></head><body>
 <h2>ADcheck 確認メモ</h2>
 <div class="bar"><button onclick="_add()">+ 行を追加</button><span id="status">自動保存</span></div>
 <table><thead><tr><th class="c1">確認場所</th><th class="c2">確認場所２</th><th>確認項目</th><th>操作</th></tr></thead><tbody id="tbody"></tbody></table>
@@ -6549,17 +6560,22 @@ function _analyzeHtml(){
  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
  function escA(s){return esc(s).replace(/"/g,'&quot;');}
  function getData(){try{if(op&&op._analyzeGet){var d=op._analyzeGet();if(Array.isArray(d))return d.map(function(r){return {place:r.place||'',place2:r.place2||'',item:r.item||''};});}}catch(e){} try{var ls=JSON.parse(localStorage.getItem(KEY)||'null');if(Array.isArray(ls))return ls;}catch(e){} try{if(op&&op._ANALYZE_DEFAULT)return op._ANALYZE_DEFAULT.map(function(r){return {place:r.place,place2:r.place2,item:r.item};});}catch(e){} return [];}
- function getGroups(){try{if(op&&op._ANALYZE_GROUPS)return op._ANALYZE_GROUPS;}catch(e){} return [];}
- var DATA=getData(); var GROUPS=getGroups();
- function colorOf(place){for(var k=0;k<GROUPS.length;k++){if(GROUPS[k].items.indexOf(place)>=0)return GROUPS[k].color;}return '#1a1a1a';}
- function buildOpts(selected){var h='<option value=""></option>';GROUPS.forEach(function(g){h+='<optgroup label="'+escA(g.label)+'">';g.items.forEach(function(it){h+='<option value="'+escA(it)+'"'+(it===selected?' selected':'')+' style="color:'+g.color+'">'+esc(g.label+it)+'</option>';});h+='</optgroup>';});return h;}
- function persist(){try{localStorage.setItem(KEY,JSON.stringify(DATA));}catch(e){} try{if(op&&op._analyzeSave)op._analyzeSave(DATA);}catch(e){} var st=document.getElementById('status'); if(st){st.textContent='保存しました'; setTimeout(function(){if(st)st.textContent='自動保存';},1100);}}
- function collect(){var trs=document.querySelectorAll('#tbody tr');var arr=[];trs.forEach(function(tr){var pp=tr.querySelector('.f-place'),p2=tr.querySelector('.f-place2'),it=tr.querySelector('.f-item');arr.push({place:pp?pp.value:'',place2:p2?p2.value:'',item:it?it.value:''});});DATA=arr;}
- function render(){var rows=DATA.map(function(r,i){var opts=buildOpts(r.place);return '<tr><td><select class="f-place" style="color:'+colorOf(r.place)+';font-weight:600" onchange="_ed(this)">'+opts+'</select></td><td><input class="f-place2" value="'+escA(r.place2)+'" oninput="_ed()"></td><td><textarea class="f-item" oninput="_ed()">'+esc(r.item)+'</textarea></td><td class="ops"><button onclick="_mv('+i+',-1)" title="上へ">&#8593;</button><button onclick="_mv('+i+',1)" title="下へ">&#8595;</button><button class="del" onclick="_del('+i+')">削除</button></td></tr>';}).join('');document.getElementById('tbody').innerHTML=rows;}
- window._ed=function(el){if(el&&el.className&&el.className.indexOf('f-place')>=0){el.style.color=colorOf(el.value);}collect();persist();};
- window._mv=function(i,d){collect();var j=i+d;if(j<0||j>=DATA.length)return;var t=DATA[i];DATA[i]=DATA[j];DATA[j]=t;persist();render();};
- window._del=function(i){collect();DATA.splice(i,1);persist();render();};
- window._add=function(){collect();DATA.push({place:((GROUPS[0]&&GROUPS[0].items[0])||''),place2:'',item:''});persist();render();};
+ function getOpts(){try{if(op&&op._ANALYZE_OPTS)return op._ANALYZE_OPTS;}catch(e){} return [];}
+ var DATA=getData(); var OPTS=getOpts();
+ function findOpt(v){for(var i=0;i<OPTS.length;i++){if(OPTS[i].v===v)return OPTS[i];}return null;}
+ function trig(v){var o=findOpt(v);if(!o)return '<span style="color:#000">'+esc(v||'(未選択)')+'</span>';return '<span style="color:'+o.c+';font-weight:700">'+esc(o.b)+'</span>'+(o.r?'<span style="color:#000">'+esc(o.r)+'</span>':'');}
+ function menu(i){var h='';OPTS.forEach(function(o){h+='<div class="ddo" data-v="'+escA(o.v)+'" onmousedown="_ddPick('+i+',event)"><span style="color:'+o.c+';font-weight:700">'+esc(o.b)+'</span>'+(o.r?'<span style="color:#000">'+esc(o.r)+'</span>':'')+'</div>';});return h;}
+ function persist(){try{localStorage.setItem(KEY,JSON.stringify(DATA));}catch(e){} try{if(op&&op._analyzeSave)op._analyzeSave(DATA);}catch(e){} var st=document.getElementById('status');if(st){st.textContent='保存しました';setTimeout(function(){if(st)st.textContent='自動保存';},1100);}}
+ function collect(){var trs=document.querySelectorAll('#tbody tr');var arr=[];trs.forEach(function(tr){var dd=tr.querySelector('.dd');var p2=tr.querySelector('.f-place2');var it=tr.querySelector('.f-item');arr.push({place:dd?(dd.getAttribute('data-v')||''):'',place2:p2?p2.value:'',item:it?it.value:''});});DATA=arr;}
+ function render(){var rows=DATA.map(function(r,i){return '<tr><td style="position:relative"><div class="dd" data-v="'+escA(r.place)+'" onclick="_ddTog('+i+',event)">'+trig(r.place)+'</div><div class="ddmenu" id="ddm-'+i+'">'+menu(i)+'</div></td><td><input class="f-place2" value="'+escA(r.place2)+'" oninput="_ed()"></td><td><textarea class="f-item" oninput="_ed()">'+esc(r.item)+'</textarea></td><td class="ops"><button onclick="_mv('+i+',-1)" title="上へ">&#8593;</button><button onclick="_mv('+i+',1)" title="下へ">&#8595;</button><button class="del" onclick="_del('+i+')">削除</button></td></tr>';}).join('');document.getElementById('tbody').innerHTML=rows;}
+ function closeMenus(){var ms=document.querySelectorAll('.ddmenu');for(var k=0;k<ms.length;k++){ms[k].style.display='none';}}
+ window._ddTog=function(i,e){if(e){e.stopPropagation();}var m=document.getElementById('ddm-'+i);var isOpen=(m.style.display==='block');closeMenus();m.style.display=isOpen?'none':'block';};
+ window._ddPick=function(i,e){if(e){e.preventDefault();e.stopPropagation();}var v=e.currentTarget.getAttribute('data-v');var trs=document.querySelectorAll('#tbody tr');var tr=trs[i];if(tr){var dd=tr.querySelector('.dd');if(dd){dd.setAttribute('data-v',v);dd.innerHTML=trig(v);}}closeMenus();collect();persist();};
+ window._ed=function(){collect();persist();};
+ window._mv=function(i,d){closeMenus();collect();var j=i+d;if(j<0||j>=DATA.length)return;var t=DATA[i];DATA[i]=DATA[j];DATA[j]=t;persist();render();};
+ window._del=function(i){closeMenus();collect();DATA.splice(i,1);persist();render();};
+ window._add=function(){closeMenus();collect();DATA.push({place:((OPTS[0]&&OPTS[0].v)||''),place2:'',item:''});persist();render();};
+ document.addEventListener('click',closeMenus);
  render();
 })();
 <\/script></body></html>`;
