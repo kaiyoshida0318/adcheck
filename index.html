@@ -489,7 +489,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.656</span>
+    <span class="build-date">v1.657</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6508,23 +6508,29 @@ function _kwCmpPick(n, code){
   renderKwCompare();
 }
 var _ANALYZE_OPTS=[
+ {v:'【基本】全体',b:'【基本】',r:'全体',c:'#2563eb',full:true},
  {v:'商品-基本データ',b:'【基本】',r:'商品-基本データ',c:'#2563eb'},
  {v:'商品-月別データ',b:'【基本】',r:'商品-月別データ',c:'#2563eb'},
  {v:'商品-グラフ',b:'【基本】',r:'商品-グラフ',c:'#2563eb'},
  {v:'引退済商品',b:'【基本】',r:'引退済商品',c:'#2563eb'},
+ {v:'【KW】全体',b:'【KW】',r:'全体',c:'#00897B',full:true},
  {v:'KW-基本データ',b:'【KW】',r:'KW-基本データ',c:'#00897B'},
  {v:'KW-比較',b:'【KW】',r:'KW-比較',c:'#00897B'},
+ {v:'【全体】全体',b:'【全体】',r:'全体',c:'#dc2626',full:true},
  {v:'全-月別データ',b:'【全体】',r:'全-月別データ',c:'#dc2626'},
  {v:'全-日別データ',b:'【全体】',r:'全-日別データ',c:'#dc2626'},
  {v:'全-日月別グラフ',b:'【全体】',r:'全-日月別グラフ',c:'#dc2626'},
  {v:'全-比較',b:'【全体】',r:'全-比較',c:'#dc2626'},
  {v:'全-計算式',b:'【全体】',r:'全-計算式',c:'#dc2626'},
+ {v:'【リニューアル】全体',b:'【リニューアル】',r:'全体',c:'#16a34a',full:true},
  {v:'実施前-SEO＆広告',b:'【リニューアル】',r:'実施前-SEO＆広告',c:'#16a34a'},
  {v:'実施前-KW＆20',b:'【リニューアル】',r:'実施前-KW＆20',c:'#16a34a'},
  {v:'実施済-全体',b:'【リニューアル】',r:'実施済-全体',c:'#16a34a'},
  {v:'LP更新済',b:'【リニューアル】',r:'LP更新済',c:'#16a34a'},
  {v:'サムネ更新済',b:'【リニューアル】',r:'サムネ更新済',c:'#16a34a'},
+ {v:'【対応検討】全体',b:'【対応検討】',r:'全体',c:'#ea580c',full:true},
  {v:'粗広告利益-直近4ヶ月',b:'【対応検討】',r:'粗広告利益-直近4ヶ月',c:'#ea580c'},
+ {v:'【状態】全体',b:'【状態】',r:'全体',c:'#9333ea',full:true},
  {v:'全体',b:'【状態】',r:'全体',c:'#9333ea'},
  {v:'健常◎',b:'【状態】',r:'健常◎',c:'#9333ea'},
  {v:'健常-要注意◯',b:'【状態】',r:'健常-要注意◯',c:'#9333ea'},
@@ -6535,6 +6541,7 @@ var _ANALYZE_OPTS=[
  {v:'撤退検討▲',b:'【状態】',r:'撤退検討▲',c:'#9333ea'},
  {v:'撤退■',b:'【状態】',r:'撤退■',c:'#9333ea'},
  {v:'選択前■',b:'【状態】',r:'選択前■',c:'#9333ea'},
+ {v:'【SS】全体',b:'【SS】',r:'全体',c:'#db2777',full:true},
  {v:'3月',b:'【SS】',r:'3月',c:'#db2777'},
  {v:'6月',b:'【SS】',r:'6月',c:'#db2777'},
  {v:'9月',b:'【SS】',r:'9月',c:'#db2777'},
@@ -6580,8 +6587,8 @@ function _analyzeHtml(){
  function getOpts(){try{if(op&&op._ANALYZE_OPTS)return op._ANALYZE_OPTS;}catch(e){} return [];}
  var DATA=getData(); var OPTS=getOpts();
  function findOpt(v){for(var i=0;i<OPTS.length;i++){if(OPTS[i].v===v)return OPTS[i];}return null;}
- function trig(v){var o=findOpt(v);if(!o)return '<span style="color:#000">'+esc(v||'(未選択)')+'</span>';return '<span style="color:'+o.c+';font-weight:700">'+esc(o.b)+'</span>'+(o.r?'<span style="color:#000">'+esc(o.r)+'</span>':'');}
- function menu(i){var h='';OPTS.forEach(function(o){h+='<div class="ddo" data-v="'+escA(o.v)+'" onmousedown="_ddPick('+i+',event)"><span style="color:'+o.c+';font-weight:700">'+esc(o.b)+'</span>'+(o.r?'<span style="color:#000">'+esc(o.r)+'</span>':'')+'</div>';});return h;}
+ function disp(o){if(o.full)return '<span style="color:'+o.c+';font-weight:700">'+esc(o.b+(o.r||''))+'</span>';return '<span style="color:'+o.c+';font-weight:700">'+esc(o.b)+'</span>'+(o.r?'<span style="color:#000">'+esc(o.r)+'</span>':'');} function trig(v){var o=findOpt(v);if(!o)return '<span style="color:#000">'+esc(v||'(未選択)')+'</span>';return disp(o);}
+ function menu(i){var h='';OPTS.forEach(function(o){h+='<div class="ddo" data-v="'+escA(o.v)+'" onmousedown="_ddPick('+i+',event)">'+disp(o)+'</div>';});return h;}
  var BASE=JSON.stringify(DATA); var dirty=false; function setStatus(){var st=document.getElementById('status');if(!st)return;if(dirty){st.textContent='未保存の変更があります';st.className='dirty';}else{st.textContent='保存済み';st.className='';}} function markDirty(){dirty=true;setStatus();}
  function collect(){var trs=document.querySelectorAll('#tbody tr');var arr=[];trs.forEach(function(tr){var dd=tr.querySelector('.dd');var p2=tr.querySelector('.f-place2');var it=tr.querySelector('.f-item');arr.push({place:dd?(dd.getAttribute('data-v')||''):'',place2:p2?p2.value:'',item:it?it.value:''});});DATA=arr;}
  function render(){var rows=DATA.map(function(r,i){return '<tr><td style="position:relative"><div class="dd" data-v="'+escA(r.place)+'" onclick="_ddTog('+i+',event)">'+trig(r.place)+'</div><div class="ddmenu" id="ddm-'+i+'">'+menu(i)+'</div></td><td><input class="f-place2" value="'+escA(r.place2)+'" oninput="_ed()"></td><td><textarea class="f-item" oninput="_ed()">'+esc(r.item)+'</textarea></td><td class="ops"><button onclick="_mv('+i+',-1)" title="上へ">&#8593;</button><button onclick="_mv('+i+',1)" title="下へ">&#8595;</button><button class="del" onclick="_del('+i+')">削除</button></td></tr>';}).join('');document.getElementById('tbody').innerHTML=rows;}
