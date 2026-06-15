@@ -488,7 +488,7 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <span class="build-date">v1.648</span>
+    <span class="build-date">v1.649</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6588,10 +6588,10 @@ function _renderKwCompareTable(){
   let rKw=`<tr><td style="${TDsumBase};${dbl};text-align:left;position:sticky;left:0;z-index:1;background:var(--surface);border-left:4px solid #00897B">KW\u5408\u8a08\u5206</td>`;
   codes.forEach((code,ci)=>{
     const ac=agg[code]||{};
-    let spend=0,sales=0,orders=0,cl=0,imp=0,mcpcW=0,mcpcWcl=0;
-    Object.values(ac).forEach(a=>{ spend+=a.spend; sales+=a.sales; orders+=a.orders; cl+=a.cl; imp+=a.imp; const mc=a.mcpcN>0?a.mcpcSum/a.mcpcN:null; if(mc!=null&&a.cl>0){ mcpcW+=mc*a.cl; mcpcWcl+=a.cl; } });
+    let spend=0,sales=0,orders=0,cl=0,imp=0,mcpcW=0,mcpcWsp=0;
+    Object.values(ac).forEach(a=>{ spend+=a.spend; sales+=a.sales; orders+=a.orders; cl+=a.cl; imp+=a.imp; const mc=a.mcpcN>0?a.mcpcSum/a.mcpcN:null; if(mc!=null&&a.spend>0){ mcpcW+=mc*a.spend; mcpcWsp+=a.spend; } });
     const ctr=imp>0?cl/imp*100:null;
-    const mcpc=mcpcWcl>0?mcpcW/mcpcWcl:null;
+    const mcpc=mcpcWsp>0?mcpcW/mcpcWsp:null;
     const cvr=cl>0?orders/cl*100:null;
     const roas=spend>0?sales/spend*100:null;
     const st=`${TDsumBase};${dbl};background:${tintS(ci)}`;
