@@ -330,7 +330,7 @@ header + * { margin-top: 4px; }
 /* ── Tab Navigation ── */
 /* ズーム時に sticky の top がCSS指定値ピッタリ計算されないため、JSから --z-tab*-top をズーム倍率補正で注入する */
 .tab-bar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 8px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 2px; position: sticky; top: var(--z-tab1-top, 52px); z-index: 199; min-height: 34px; box-sizing: border-box; }
-.tab-btn { font-size: 13px; font-weight: 500; padding: 6px 7px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+.tab-btn { font-size: 12px; font-weight: 500; padding: 6px 6px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
 .tab-sub-row-3 .tab-btn { padding: 6px 10px; font-size: 12px; }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.678</span>
+    <span class="build-date">v1.679</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
