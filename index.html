@@ -494,7 +494,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.705</span>
+    <span class="build-date">v1.706</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5126,13 +5126,13 @@ function _allOverviewSeries(labels, dataMap, code){
   const spend20=labels.map(l=>{const d=dataMap[l]||{};return Math.max(0,(d.spend||0)-(d.spendKw||0));});
   const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); const pf=v=>v+'%';
   return [
-    {key:'tot',      label:'\u7dcf\u58f2\u4e0a',     color:'#1d4ed8', fmt:yf, vals:sa.tot},
-    {key:'salesRoas',label:'\u7dcf\u58f2\u4e0aROAS', color:'#10b981', fmt:pf, vals:salesRoas, roas:true},
-    {key:'kw',       label:'\u5546\u54c1\u58f2\u4e0a-KW', color:'#60a5fa', fmt:yf, vals:sa.kw},
-    {key:'spendKw',  label:'\u5b9f\u7e3e\u984d-KW',  color:'#f59e0b', fmt:yf, vals:spendKw},
-    {key:'p20',      label:'\u58f2\u4e0a-20\u5186',  color:'#38bdf8', fmt:yf, vals:sa.p20},
-    {key:'spend20',  label:'\u5b9f\u7e3e\u984d-20\u5186', color:'#fb923c', fmt:yf, vals:spend20},
-    {key:'roasAll',  label:'ROAS-\u5168\u4f53',      color:'#fbbf24', fmt:pf, vals:roasAll, roas:true},
+    {key:'tot',      label:'\u7dcf\u58f2\u4e0a',     color:'#1d4ed8', fmt:yf, vals:sa.tot, grp:'a'},
+    {key:'salesRoas',label:'\u7dcf\u58f2\u4e0aROAS', color:'#10b981', fmt:pf, vals:salesRoas, roas:true, grp:'a'},
+    {key:'kw',       label:'\u5546\u54c1\u58f2\u4e0a-KW', color:'#60a5fa', fmt:yf, vals:sa.kw, grp:'b'},
+    {key:'spendKw',  label:'\u5b9f\u7e3e\u984d-KW',  color:'#f59e0b', fmt:yf, vals:spendKw, grp:'b'},
+    {key:'p20',      label:'\u58f2\u4e0a-20\u5186',  color:'#38bdf8', fmt:yf, vals:sa.p20, grp:'c'},
+    {key:'spend20',  label:'\u5b9f\u7e3e\u984d-20\u5186', color:'#fb923c', fmt:yf, vals:spend20, grp:'c'},
+    {key:'roasAll',  label:'ROAS-\u5168\u4f53',      color:'#fbbf24', fmt:pf, vals:roasAll, roas:true, grp:'a'},
   ];
 }
 function _toggleItemFY(fy){ fy=+fy; if(_renewalHiddenFY.has(fy)) _renewalHiddenFY.delete(fy); else _renewalHiddenFY.add(fy); renderItemGraph(); }
@@ -5178,7 +5178,7 @@ function _renderItemRichTable(labels, dataMap, code){
     const sa=_itemSalesArrays(labels,dataMap,code);
     cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
   } else if (metric==='all'){
-    cols=_allOverviewSeries(labels,dataMap,code).map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:(se.key==='salesRoas'||se.key==='roasAll'),colBg:(se.roas?'background:rgba(125,135,155,0.12);':'')}));
+    cols=_allOverviewSeries(labels,dataMap,code).map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:(se.key==='salesRoas'||se.key==='roasAll'),colBg:({a:'background:#eef4fb;',b:'background:#eff5ec;',c:'background:#fdf0e8;'}[se.grp]||'')}));
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
     cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
@@ -7707,7 +7707,7 @@ function _renderRenewalTable(labels, dataMap, code){
     const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily');
     cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
   } else if (metric==='all'){
-    cols=_allOverviewSeries(labels,dataMap,code).map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:(se.key==='salesRoas'||se.key==='roasAll'),colBg:(se.roas?'background:rgba(125,135,155,0.12);':'')}));
+    cols=_allOverviewSeries(labels,dataMap,code).map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:(se.key==='salesRoas'||se.key==='roasAll'),colBg:({a:'background:#eef4fb;',b:'background:#eff5ec;',c:'background:#fdf0e8;'}[se.grp]||'')}));
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
     cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
