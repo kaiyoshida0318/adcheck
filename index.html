@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.680</span>
+    <span class="build-date">v1.681</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -585,7 +585,7 @@ header + * { margin-top: 4px; }
               <button class="tbtn" onclick="exportCSV()">CSV出力</button>
             </div>
           </div>
-          <div id="colWidthPanel" style="display:none;position:fixed;top:120px;right:24px;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.25);padding:14px 16px;width:340px;max-height:72vh;overflow-y:auto">
+          <div id="colWidthPanel" style="display:none;position:fixed;top:120px;right:24px;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.25);padding:14px 16px;width:368px;max-height:74vh;overflow-y:auto">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px">
               <div style="font-size:13px;font-weight:700;color:var(--text)">列幅の調整</div>
               <div style="display:flex;gap:6px">
@@ -598,7 +598,7 @@ header + * { margin-top: 4px; }
           <div class="col-header" style="position:sticky;top:48px;z-index:25;background:#f8f9fa">
             <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="cursor:pointer">商品番号</div>
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
-            <div class="ch" onclick="sortBy('name')">商品</div>
+            <div class="ch" onclick="sortBy('name')">商品名</div>
             <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eef4fb">総売上</div>
             <div class="ch r" id="ch-salesroas" onclick="sortBy('salesroas')" title="総売上÷実績額×100" style="cursor:pointer;background:#eef4fb">売上ROAS</div>
             <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#eef4fb">SEO売上</div>
@@ -10675,20 +10675,20 @@ function clearAll() {
 }
 
 const COLW_DEFS=[
-  {k:'num',    label:'商品番号',     def:58},
-  {k:'code',   label:'商品コード',   def:90},
-  {k:'name',   label:'商品名(最小)', def:200, flex:true},
-  {k:'tot',    label:'総売上',       def:82},
-  {k:'sroas',  label:'売上ROAS',     def:70},
-  {k:'seo',    label:'SEO売上',      def:82},
-  {k:'adsales',label:'広告売上合計', def:90},
-  {k:'spend',  label:'全広告実績',   def:82},
-  {k:'roas',   label:'全広告ROAS',   def:68},
-  {k:'kwspend',label:'KW実績額',     def:68},
-  {k:'kwroas', label:'KW ROAS',      def:68},
-  {k:'sp20',   label:'20実績額',     def:68},
-  {k:'roas20', label:'20 ROAS',      def:68},
-  {k:'gross',  label:'粗利',         def:80},
+  {k:'num',    label:'商品番号',     def:58, al:'left',  row:true},
+  {k:'code',   label:'商品コード',   def:90, al:'left',  row:true},
+  {k:'name',   label:'商品名(最小)', def:200, flex:true, al:'left', row:true},
+  {k:'tot',    label:'総売上',       def:82, al:'right'},
+  {k:'sroas',  label:'売上ROAS',     def:70, al:'right'},
+  {k:'seo',    label:'SEO売上',      def:82, al:'right'},
+  {k:'adsales',label:'広告売上合計', def:90, al:'right'},
+  {k:'spend',  label:'全広告実績',   def:82, al:'right'},
+  {k:'roas',   label:'全広告ROAS',   def:68, al:'right'},
+  {k:'kwspend',label:'KW実績額',     def:68, al:'right'},
+  {k:'kwroas', label:'KW ROAS',      def:68, al:'right'},
+  {k:'sp20',   label:'20実績額',     def:68, al:'right'},
+  {k:'roas20', label:'20 ROAS',      def:68, al:'right'},
+  {k:'gross',  label:'粗利',         def:80, al:'right'},
 ];
 const COLW_KEY='adcheck_colw';
 function _colwGet(){ try{ return JSON.parse(localStorage.getItem(COLW_KEY))||{}; }catch(e){ return {}; } }
@@ -10702,20 +10702,36 @@ function _applyColWidths(){
   const ws=w('num')+'px '+w('code')+'px '+name+' '+dataCols+' 110px 70px 28px';
   let st=document.getElementById('colw-style');
   if(!st){ st=document.createElement('style'); st.id='colw-style'; document.head.appendChild(st); }
-  st.textContent='.col-header{grid-template-columns:'+ns+' !important}.item-basic{grid-template-columns:'+ns+' !important}.col-header.with-status{grid-template-columns:'+ws+' !important}.item-basic.with-status{grid-template-columns:'+ws+' !important}';
+  let css='.col-header{grid-template-columns:'+ns+' !important}.item-basic{grid-template-columns:'+ns+' !important}.col-header.with-status{grid-template-columns:'+ws+' !important}.item-basic.with-status{grid-template-columns:'+ws+' !important}';
+  COLW_DEFS.forEach(function(d,i){
+    const n=i+1; const a=_colwAlign(d.k);
+    const fp=(a==='left')?'flex-start':(a==='right')?'flex-end':'center';
+    css+='.col-header>div:nth-child('+n+'){text-align:'+a+' !important}';
+    if(d.row){ css+='.item-basic>div:nth-child('+n+'){justify-content:'+fp+' !important}'; }
+    else{ css+='.item-basic>div:nth-child('+n+'){align-items:'+fp+' !important;text-align:'+a+' !important}'; }
+  });
+  st.textContent=css;
 }
 function _renderColWidthPanel(){
   const body=document.getElementById('colWidthPanelBody'); if(!body) return;
   body.innerHTML=COLW_DEFS.map(d=>{
     const v=_colwVal(d.k);
     const mn=d.flex?120:40, mx=d.flex?420:220;
-    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'+
-      '<span style="width:104px;font-size:11px;color:var(--text2)">'+d.label+'</span>'+
-      '<input type="range" min="'+mn+'" max="'+mx+'" value="'+v+'" oninput="_colwOnChange(\''+d.k+'\',this.value)" style="flex:1">'+
-      '<span id="colw-v-'+d.k+'" style="width:46px;text-align:right;font-size:11px;font-family:\'DM Mono\',monospace">'+v+'px</span>'+
+    const a=_colwAlign(d.k);
+    const ab=[['left','左'],['center','中'],['right','右']].map(function(x){
+      const on=a===x[0];
+      return '<button onclick="_colwSetAlign(\''+d.k+'\',\''+x[0]+'\')" style="font-size:10px;padding:2px 6px;border:1px solid '+(on?'#3b82f6':'var(--border)')+';background:'+(on?'#3b82f6':'var(--surface2)')+';color:'+(on?'#fff':'var(--text3)')+';cursor:pointer">'+x[1]+'</button>';
+    }).join('');
+    return '<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">'+
+      '<span style="width:80px;font-size:11px;color:var(--text2)">'+d.label+'</span>'+
+      '<input type="range" min="'+mn+'" max="'+mx+'" value="'+v+'" oninput="_colwOnChange(\''+d.k+'\',this.value)" style="flex:1;min-width:50px">'+
+      '<span id="colw-v-'+d.k+'" style="width:42px;text-align:right;font-size:11px;font-family:\'DM Mono\',monospace">'+v+'px</span>'+
+      '<span style="display:inline-flex;border-radius:4px;overflow:hidden">'+ab+'</span>'+
       '</div>';
   }).join('');
 }
+function _colwAlign(k){ const o=_colwGet(); const d=COLW_DEFS.find(x=>x.k===k); return o['a_'+k]||(d&&d.al)||'right'; }
+function _colwSetAlign(k,a){ const o=_colwGet(); o['a_'+k]=a; _colwSet(o); _applyColWidths(); _renderColWidthPanel(); }
 function _colwOnChange(k,v){ const o=_colwGet(); o[k]=+v; _colwSet(o); const e=document.getElementById('colw-v-'+k); if(e) e.textContent=v+'px'; _applyColWidths(); }
 function _colwReset(){ try{ localStorage.removeItem(COLW_KEY); }catch(e){} _applyColWidths(); _renderColWidthPanel(); }
 function _openColWidthPanel(){
