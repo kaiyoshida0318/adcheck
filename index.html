@@ -107,8 +107,8 @@ header + * { margin-top: 4px; }
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 58px 90px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
-.col-header.with-status { grid-template-columns: 58px 72px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 110px 70px 28px; }
+.col-header { display: grid; grid-template-columns: 58px 90px 48px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.col-header.with-status { grid-template-columns: 58px 72px 48px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 110px 70px 28px; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -121,8 +121,8 @@ header + * { margin-top: 4px; }
 
 .item-row { border-bottom: 1px solid rgba(0,0,0,0.18); }
 .item-row:last-child { border-bottom: none; }
-.item-basic { display: grid; grid-template-columns: 58px 90px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
-.item-basic.with-status { grid-template-columns: 58px 72px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 110px 70px 28px; }
+.item-basic { display: grid; grid-template-columns: 58px 90px 48px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic.with-status { grid-template-columns: 58px 72px 48px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 110px 70px 28px; }
 .status-cell { display: flex; align-items: center; gap: 4px; padding: 4px 6px; justify-content: center; }
 .status-update-btn { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent); background: var(--surface2); color: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .status-update-btn:hover { background: var(--accent); color: #fff; }
@@ -151,6 +151,8 @@ header + * { margin-top: 4px; }
 .rn { color: var(--text3); }
 .mini-bar { height: 3px; border-radius: 2px; background: var(--border); margin-top: 3px; overflow: hidden; }
 .mini-fill { height: 100%; border-radius: 2px; }
+.item-basic .cell.has-bar, .item-basic .roas-cell { position: relative; }
+.item-basic .cell.has-bar .mini-bar, .item-basic .roas-cell .mini-bar { position: absolute; left: 10px; right: 10px; bottom: 7px; margin-top: 0; }
 .toggle-cell { display: flex; align-items: center; justify-content: center; padding: 0 4px; }
 .toggle-icon { width: 18px; height: 18px; border: 1px solid var(--border2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); transition: transform 0.15s; }
 .toggle-icon.open { transform: rotate(90deg); color: var(--red); border-color: var(--red); }
@@ -490,7 +492,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.683</span>
+    <span class="build-date">v1.684</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -598,6 +600,7 @@ header + * { margin-top: 4px; }
           <div class="col-header" style="position:sticky;top:48px;z-index:25;background:#f8f9fa">
             <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="cursor:pointer">商品番号</div>
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
+            <div class="ch">商品画像</div>
             <div class="ch" onclick="sortBy('name')">商品名</div>
             <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eef4fb">総売上</div>
             <div class="ch r" id="ch-salesroas" onclick="sortBy('salesroas')" title="総売上÷実績額×100" style="cursor:pointer;background:#eef4fb">売上ROAS</div>
@@ -10325,8 +10328,8 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${p.id}（ダブルクリックで選択）">
         ${p.id}
       </div>
+      <div class="cell-img" style="display:flex;align-items:center;justify-content:center;padding:8px 4px">${imgEl}</div>
       <div class="cell-name" style="display:flex;align-items:center;gap:6px">
-        ${imgEl}
         <div style="overflow:hidden">
           <div class="prod-name" id="prod-name-${p.id}" ondblclick="_selectAndCopyText(this,event)" data-full="${(name||'').replace(/"/g,'&quot;')}" title="${name}（ダブルクリックで選択）" data-raw="${cached ? '' : p.id}" style="user-select:text;cursor:text">${name !== p.id ? name.substring(0,40)+(name.length>40?'…':'') : p.id}${isManual?'<span class="manual-badge" title="手動編集済み"></span>':''}</div>
           <button class="edit-btn" onclick="event.stopPropagation();openEditModal('${p.id}')" title="編集">✏</button>
@@ -10683,7 +10686,8 @@ function clearAll() {
 
 const COLW_DEFS=[
   {k:'num',    label:'商品番号',     def:58, al:'left',  row:true},
-  {k:'code',   label:'商品コード',   def:90, al:'left',  row:true},
+  {k:'code',   label:'商品管理番号', def:90, al:'left',  row:true},
+  {k:'img',    label:'商品画像',     def:48, al:'center', row:true},
   {k:'name',   label:'商品名(最小)', def:200, flex:true, al:'left', row:true},
   {k:'tot',    label:'総売上',       def:82, al:'right'},
   {k:'sroas',  label:'売上ROAS',     def:70, al:'right'},
@@ -10705,8 +10709,8 @@ function _applyColWidths(){
   const w=k=>_colwVal(k);
   const name='minmax('+w('name')+'px,1fr)';
   const dataCols=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20','gross'].map(k=>w(k)+'px').join(' ');
-  const ns=w('num')+'px '+w('code')+'px '+name+' '+dataCols+' 28px';
-  const ws=w('num')+'px '+w('code')+'px '+name+' '+dataCols+' 110px 70px 28px';
+  const ns=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' 28px';
+  const ws=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' 110px 70px 28px';
   let st=document.getElementById('colw-style');
   if(!st){ st=document.createElement('style'); st.id='colw-style'; document.head.appendChild(st); }
   let css='.col-header{grid-template-columns:'+ns+' !important}.item-basic{grid-template-columns:'+ns+' !important}.col-header.with-status{grid-template-columns:'+ws+' !important}.item-basic.with-status{grid-template-columns:'+ws+' !important}';
