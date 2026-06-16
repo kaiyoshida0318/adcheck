@@ -492,7 +492,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.689</span>
+    <span class="build-date">v1.690</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8201,6 +8201,7 @@ async function _scheduleSSSave() {
 
 // SS設定の変更を貯めるフラグ(反映ボタン押下時にまとめて保存)
 let _ssDirty = false;
+let _statusSnapshot = null;
 
 // 未保存変更がある時にページ離脱を防ぐ(常時設置)
 window.addEventListener('beforeunload', (e) => {
@@ -8247,13 +8248,24 @@ function _toggleRoasTrendSS(code, mon, btn) {
 }
 
 // 反映ボタンに「未保存」表示を出す(視覚的フィードバック)
-function _markApplyBtnDirty() {
-  const btn = document.querySelector('button[onclick="applyAllStatusUpdates()"]');
-  if (btn && !btn.disabled) {
-    btn.innerHTML = '💾 反映する <span style="background:#fff;color:#f97316;font-size:9px;padding:1px 4px;border-radius:8px;margin-left:4px;font-weight:700">未保存</span>';
-    btn.style.background = '#f97316';
-    btn.style.animation = 'pulse 1.5s infinite';
-  }
+function _markApplyBtnDirty() { _showApplyButtons(); }
+// 状態/SS編集の未保存ボタン(キャンセル+反映)の表示制御
+function _captureStatusSnapshot(){
+  _statusSnapshot = {};
+  Object.keys(DB).forEach(function(code){ const c = productCache[code]||{}; _statusSnapshot[code] = { status: c.status||'unset', ss: (c.ss||[]).slice() }; });
+}
+function _showApplyButtons(){ _ssDirty = true; const w = document.getElementById('applyBtnWrap'); if (w) w.style.display = 'inline-flex'; }
+function _hideApplyButtons(){ const w = document.getElementById('applyBtnWrap'); if (w) w.style.display = 'none'; }
+function _cancelStatusUpdates(){
+  try {
+    if (_statusSnapshot){
+      Object.keys(_statusSnapshot).forEach(function(code){ if(!productCache[code]) productCache[code]={}; productCache[code].status = _statusSnapshot[code].status; productCache[code].ss = _statusSnapshot[code].ss.slice(); });
+      saveProductCache();
+    }
+  } catch(e){ console.warn('cancel error', e); }
+  _ssDirty = false;
+  _hideApplyButtons();
+  if (typeof _currentTab !== 'undefined' && _currentTab) renderMonthlySubTab(_currentTab);
 }
 
 function openMemoModal(code) {
@@ -8528,7 +8540,7 @@ function applyAllStatusUpdates() {
       btn.innerHTML = '✅ 反映完了';
       btn.style.background = '#16a34a';
       btn.style.animation = ''; // pulseアニメーション解除
-      _ssDirty = false; // 未保存フラグリセット
+      _ssDirty = false; _captureStatusSnapshot(); setTimeout(_hideApplyButtons, 2100); // 未保存フラグリセット
       _unlockUI(); // 保存完了したのでUIロック解除
       setTimeout(() => {
         btn.innerHTML = orig;
@@ -8609,6 +8621,7 @@ function applyStatusColor(sel) {
   const c = STATUS_COLORS[sel.value] || '';
   sel.style.color = c;
   sel.style.fontWeight = c ? '600' : '';
+  _showApplyButtons();
 }
 const STATUS_LABELS = {
   'unset': '選択前■',
@@ -8658,8 +8671,9 @@ function _subTabToolbar(tab, currentYm) {
   const monthOpts = months.map(m => `<option value="${m}"${m===currentYm?' selected':''}>${m.replace('-','年')}月</option>`).join('');
   const isStatus = tab in SUB_TAB_STATUS;
   const isSS = tab in SS_TABS;
+  if (!_ssDirty && (isStatus || isSS)) _captureStatusSnapshot();
   const updateBtn = (isStatus || isSS)
-    ? `<button onclick="applyAllStatusUpdates()" style="padding:5px 16px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(249,115,22,0.35)">💾 反映</button>`
+    ? `<div id="applyBtnWrap" style="display:${_ssDirty?'inline-flex':'none'};gap:6px;align-items:center"><button onclick="_cancelStatusUpdates()" style="padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">キャンセル</button><button onclick="applyAllStatusUpdates()" style="padding:5px 16px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(249,115,22,0.35)">反映する</button></div>`
     : '';
   // SSタブにはSALE一括用ファイル出力ボタンを追加
   const csvBtn = isSS
