@@ -494,7 +494,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.703</span>
+    <span class="build-date">v1.704</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10808,7 +10808,7 @@ try{ _applyColWidths(); }catch(e){}
 
 let _sroasFilter=null;
 const _SROAS_COLORS={g:'#1D9E75',y:'#BA7517',o:'#ED7D31',r:'#A32D2D',n:'var(--text3)'};
-const _SROAS_CATS=[['g','緑','#1D9E75'],['y','黄','#BA7517'],['o','オレンジ','#ED7D31'],['r','赤','#A32D2D'],['n','-','#9ca3af']];
+const _SROAS_CATS=[['g','1000-','#1D9E75'],['y','500-1000','#BA7517'],['o','200-500','#ED7D31'],['r','-200','#A32D2D'],['n','-','#9ca3af']];
 function _sroasCat(v){ if(!(v>0)) return 'n'; if(v>=1000) return 'g'; if(v>=500) return 'y'; if(v>=200) return 'o'; return 'r'; }
 function _sroasFilterBtnsHtml(){
   return '<span style="font-size:10px;color:var(--text3);margin:0 2px 0 2px;white-space:nowrap">売上ROAS</span>'+
