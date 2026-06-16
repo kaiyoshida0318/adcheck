@@ -107,8 +107,8 @@ header + * { margin-top: 4px; }
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 58px 90px 48px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
-.col-header.with-status { grid-template-columns: 58px 72px 48px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 110px 70px 28px; }
+.col-header { display: grid; grid-template-columns: 90px 110px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.col-header.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 110px 70px 28px; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -121,8 +121,8 @@ header + * { margin-top: 4px; }
 
 .item-row { border-bottom: 1px solid rgba(0,0,0,0.18); }
 .item-row:last-child { border-bottom: none; }
-.item-basic { display: grid; grid-template-columns: 58px 90px 48px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
-.item-basic.with-status { grid-template-columns: 58px 72px 48px minmax(0,1fr) 82px 70px 82px 90px 82px 68px 68px 68px 68px 68px 80px 110px 70px 28px; }
+.item-basic { display: grid; grid-template-columns: 90px 110px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 110px 70px 28px; }
 .status-cell { display: flex; align-items: center; gap: 4px; padding: 4px 6px; justify-content: center; }
 .status-update-btn { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent); background: var(--surface2); color: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .status-update-btn:hover { background: var(--accent); color: #fff; }
@@ -492,7 +492,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.685</span>
+    <span class="build-date">v1.686</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10685,21 +10685,21 @@ function clearAll() {
 }
 
 const COLW_DEFS=[
-  {k:'num',    label:'商品番号',     def:58, al:'left',  row:true},
-  {k:'code',   label:'商品管理番号', def:90, al:'left',  row:true},
+  {k:'num',    label:'商品番号',     def:90, al:'left',  row:true},
+  {k:'code',   label:'商品管理番号', def:110, al:'left',  row:true},
   {k:'img',    label:'商品画像',     def:48, al:'center', row:true},
   {k:'name',   label:'商品名(最小)', def:200, flex:true, al:'left', row:true},
-  {k:'tot',    label:'総売上',       def:82, al:'right'},
-  {k:'sroas',  label:'売上ROAS',     def:70, al:'right'},
-  {k:'seo',    label:'SEO売上',      def:82, al:'right'},
-  {k:'adsales',label:'広告売上合計', def:90, al:'right'},
-  {k:'spend',  label:'全広告実績',   def:82, al:'right'},
-  {k:'roas',   label:'全広告ROAS',   def:68, al:'right'},
-  {k:'kwspend',label:'KW実績額',     def:68, al:'right'},
-  {k:'kwroas', label:'KW ROAS',      def:68, al:'right'},
-  {k:'sp20',   label:'20実績額',     def:68, al:'right'},
-  {k:'roas20', label:'20 ROAS',      def:68, al:'right'},
-  {k:'gross',  label:'粗利',         def:80, al:'right'},
+  {k:'tot',    label:'総売上',       def:92, al:'right'},
+  {k:'sroas',  label:'売上ROAS',     def:82, al:'right'},
+  {k:'seo',    label:'SEO売上',      def:92, al:'right'},
+  {k:'adsales',label:'広告売上合計', def:102, al:'right'},
+  {k:'spend',  label:'全広告実績',   def:92, al:'right'},
+  {k:'roas',   label:'全広告ROAS',   def:72, al:'right'},
+  {k:'kwspend',label:'KW実績額',     def:72, al:'right'},
+  {k:'kwroas', label:'KW ROAS',      def:72, al:'right'},
+  {k:'sp20',   label:'20実績額',     def:72, al:'right'},
+  {k:'roas20', label:'20 ROAS',      def:72, al:'right'},
+  {k:'gross',  label:'粗利',         def:90, al:'right'},
 ];
 const COLW_KEY='adcheck_colw';
 function _colwGet(){ try{ return JSON.parse(localStorage.getItem(COLW_KEY))||{}; }catch(e){ return {}; } }
@@ -10757,8 +10757,8 @@ function _openColWidthPanel(){
 try{ _applyColWidths(); }catch(e){}
 
 let _sroasFilter=null;
-const _SROAS_COLORS={g:'#1D9E75',y:'#EAB308',o:'#F97316',r:'#DC2626',n:'var(--text3)'};
-const _SROAS_CATS=[['g','緑','#1D9E75'],['y','黄','#EAB308'],['o','オレンジ','#F97316'],['r','赤','#DC2626'],['n','-','#9ca3af']];
+const _SROAS_COLORS={g:'#1D9E75',y:'#BA7517',o:'#ED7D31',r:'#A32D2D',n:'var(--text3)'};
+const _SROAS_CATS=[['g','緑','#1D9E75'],['y','黄','#BA7517'],['o','オレンジ','#ED7D31'],['r','赤','#A32D2D'],['n','-','#9ca3af']];
 function _sroasCat(v){ if(!(v>0)) return 'n'; if(v>=1000) return 'g'; if(v>=500) return 'y'; if(v>=200) return 'o'; return 'r'; }
 function _renderSroasFilterBtns(){
   const w=document.getElementById('sroasFilterBtns'); if(!w) return;
