@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.667</span>
+    <span class="build-date">v1.669</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1610,7 +1610,7 @@ function _pmShowGraph(){ var c=_editItemId; closeEditModal(); if(c){ try{openRen
 function _pmShowEdit(){ var c=_renewalGraphCode; closeRenewalGraph(); if(c){ try{openEditModal(c);}catch(e){} } }
 function openEditModal(itemId) {
   _editItemId = itemId;
-  document.body.style.overflow='hidden';
+  document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
   _resolvedImgUrl = null;
   const cached = productCache[itemId] || {};
   document.getElementById('editItemId').textContent = itemId;
@@ -1634,7 +1634,7 @@ function openEditModal(itemId) {
 
 function closeEditModal() {
   document.getElementById('editItemModal').classList.remove('open');
-  document.body.style.overflow='';
+  document.documentElement.style.overflow=''; document.body.style.overflow='';
   _editItemId = null;
   _resolvedImgUrl = null;
 }
@@ -7061,19 +7061,7 @@ window.addEventListener('resize', () => {
   ['renewal-todo-list','renewal-todoseo-list','renewal-done-list','renewal-lp-list','renewal-thumb-list'].forEach(_stickRenewalHeader);
 });
 
-// renewal graph modal: wheel anywhere scrolls the table (graph/header stay fixed)
-document.addEventListener('wheel', function(e){
-  const modal = document.getElementById('renewalGraphModal');
-  if (!modal || modal.style.display !== 'flex') return;
-  const sc = document.getElementById('renewalGraphTableScroll');
-  if (!sc) return;
-  if (sc.contains(e.target)) return;
-  let dy = e.deltaY;
-  if (e.deltaMode === 1) dy *= 16;
-  else if (e.deltaMode === 2) dy *= sc.clientHeight;
-  sc.scrollTop += dy;
-  e.preventDefault();
-}, { passive: false });
+// renewal graph modal: モーダル本体をネイティブに1つのスクローラーとしてスクロール
 
 // renewal: wheel anywhere scrolls the product list (headers/toolbars stay fixed)
 (function(){
@@ -7329,7 +7317,7 @@ let _renewalGraphLastMetric = null;
 let _renewalGraphLastCode = null;
 
 function openRenewalGraph(code) {
-  document.body.style.overflow='hidden';
+  document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
   _renewalHiddenFY.clear(); _renewalHiddenMetric.clear();
   _renewalGraphCode = code;
   _renewalGraphPeriod = 'monthly';
@@ -7386,7 +7374,7 @@ function _applyRenewalGraphCollapse() {
 }
 function closeRenewalGraph() {
   document.getElementById('renewalGraphModal').style.display = 'none';
-  document.body.style.overflow='';
+  document.documentElement.style.overflow=''; document.body.style.overflow='';
   if (_renewalChartInstance) { _renewalChartInstance.destroy(); _renewalChartInstance = null; }
   _renewalGraphCode = null;
 }
@@ -10879,7 +10867,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <!-- データ表（グラフと同じ期間切替に連動） -->
       <div id="renewalGraphTableWrap" style="width:100%;min-height:0;display:flex;flex-direction:column;border-top:1px solid var(--border);padding-top:14px">
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">📋 <span id="renewalTablePeriodLabel">月別</span>データ</div>
-        <div id="renewalGraphTableScroll" style="overflow-x:auto;overflow-y:auto;border:1px solid var(--border);border-radius:8px;min-height:120px;max-height:42vh">
+        <div id="renewalGraphTableScroll" style="overflow-x:auto;border:1px solid var(--border);border-radius:8px;min-height:120px">
           <table id="renewalGraphTable" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"></table>
         </div>
       </div>
