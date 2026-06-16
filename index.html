@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.682</span>
+    <span class="build-date">v1.683</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -578,6 +578,7 @@ header + * { margin-top: 4px; }
             <select class="toolbar-month" id="monthSel" onchange="_onMonthChange()" style="transition:opacity 0.2s"></select>
             <select id="daySel" class="toolbar-month" onchange="onDaySelChange()" style="font-size:12px"></select>
             <input type="text" class="toolbar-search" id="searchBox" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderTable()">
+            <div id="sroasFilterBtns" style="display:flex;gap:3px;align-items:center;margin-left:8px"></div>
             <select class="toolbar-select" id="sortSel" onchange="renderTable()" style="display:none"></select>
             <div class="toolbar-right">
               <button class="tbtn" onclick="_openColWidthPanel()" style="margin-right:6px">幅調整</button>
@@ -10103,6 +10104,13 @@ function getSorted(ym) {
   });
   products = products.map(p => ({ ...p, ...getStats(p, ym) }));
   if (_dayMode && _selectedDay) products = products.filter(p => (p.spend||0)>0 || (p.sales720||0)>0 || (getItemDaySales(p.id,_selectedDay).sales||0)>0);
+  if (_sroasFilter) {
+    products = products.filter(p => {
+      const ag = _aggFor(p.id, ym);
+      const sr = p.spend>0 ? Math.round(ag.totSales/p.spend*100) : 0;
+      return _sroasCat(sr) === _sroasFilter;
+    });
+  }
   const dir = _sortDir === 'asc' ? 1 : -1;
   products.sort((a,b) => {
     if (_sortKey === 'spend')  return dir * (a.spend - b.spend);
@@ -10333,8 +10341,8 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       <div class="cell r mono" style="background:#eef4fb">
         ${(() => {
           const _sr = p.spend > 0 ? Math.round(_ag.totSales / p.spend * 100) : 0;
-          const rc2 = v => v>=500?'var(--green)':v>=300?'var(--amber)':v>0?'var(--danger)':'var(--text3)';
-          return _sr > 0 ? `<span style="color:${rc2(_sr)};font-weight:700">${_sr}%</span>` : '<span style="color:var(--text3)">—</span>';
+          const _sc = _SROAS_COLORS[_sroasCat(_sr)];
+          return _sr > 0 ? `<span style="color:${_sc};font-weight:700">${_sr}%</span>` : '<span style="color:var(--text3)">—</span>';
         })()}
       </div>
       <div class="cell r mono" style="background:#eef4fb">
@@ -10739,6 +10747,20 @@ function _openColWidthPanel(){
   _renderColWidthPanel(); pnl.style.display='block';
 }
 try{ _applyColWidths(); }catch(e){}
+
+let _sroasFilter=null;
+const _SROAS_COLORS={g:'#1D9E75',y:'#EAB308',o:'#F97316',r:'#DC2626',n:'var(--text3)'};
+const _SROAS_CATS=[['g','緑','#1D9E75'],['y','黄','#EAB308'],['o','オレンジ','#F97316'],['r','赤','#DC2626'],['n','-','#9ca3af']];
+function _sroasCat(v){ if(!(v>0)) return 'n'; if(v>=1000) return 'g'; if(v>=500) return 'y'; if(v>=200) return 'o'; return 'r'; }
+function _renderSroasFilterBtns(){
+  const w=document.getElementById('sroasFilterBtns'); if(!w) return;
+  w.innerHTML='<span style="font-size:10px;color:var(--text3);margin:0 2px 0 2px;white-space:nowrap">売上ROAS</span>'+
+    _SROAS_CATS.map(function(c){ const on=_sroasFilter===c[0];
+      return '<button onclick="_setSroasFilter(\''+c[0]+'\')" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;border:1.5px solid '+c[2]+';background:'+(on?c[2]:'transparent')+';color:'+(on?'#fff':c[2])+'">'+c[1]+'</button>';
+    }).join('');
+}
+function _setSroasFilter(cat){ _sroasFilter=(_sroasFilter===cat)?null:cat; _renderSroasFilterBtns(); if(typeof renderTable==='function') renderTable(); }
+try{ _renderSroasFilterBtns(); }catch(e){}
 
 function exportCSV() {
   const ym = getSelectedMonth();
