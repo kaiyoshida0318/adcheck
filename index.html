@@ -492,7 +492,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.686</span>
+    <span class="build-date">v1.687</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -583,13 +583,13 @@ header + * { margin-top: 4px; }
             <div id="sroasFilterBtns" style="display:flex;gap:3px;align-items:center;margin-left:8px"></div>
             <select class="toolbar-select" id="sortSel" onchange="renderTable()" style="display:none"></select>
             <div class="toolbar-right">
-              <button class="tbtn" onclick="_openColWidthPanel()" style="margin-right:6px">幅調整</button>
+              <button class="tbtn" onclick="_openColWidthPanel()" style="margin-right:6px">項目調整</button>
               <button class="tbtn" onclick="exportCSV()">CSV出力</button>
             </div>
           </div>
           <div id="colWidthPanel" style="display:none;position:fixed;top:120px;right:24px;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.25);padding:14px 16px;width:368px;max-height:74vh;overflow-y:auto">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px">
-              <div style="font-size:13px;font-weight:700;color:var(--text)">列幅の調整</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text)">項目の調整</div>
               <div style="display:flex;gap:6px">
                 <button class="tbtn" onclick="_colwReset()" style="font-size:11px;padding:3px 10px">リセット</button>
                 <button class="tbtn" onclick="document.getElementById('colWidthPanel').style.display='none'" style="font-size:11px;padding:3px 10px">閉じる</button>
@@ -600,8 +600,8 @@ header + * { margin-top: 4px; }
           <div class="col-header" style="position:sticky;top:48px;z-index:25;background:#f8f9fa">
             <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="cursor:pointer">商品番号</div>
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
-            <div class="ch">商品画像</div>
-            <div class="ch" onclick="sortBy('name')">商品名</div>
+            <div class="ch" id="ch-img">商品画像</div>
+            <div class="ch" id="ch-name" onclick="sortBy('name')">商品名</div>
             <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eef4fb">総売上</div>
             <div class="ch r" id="ch-salesroas" onclick="sortBy('salesroas')" title="総売上÷実績額×100" style="cursor:pointer;background:#eef4fb">売上ROAS</div>
             <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#eef4fb">SEO売上</div>
@@ -10685,21 +10685,21 @@ function clearAll() {
 }
 
 const COLW_DEFS=[
-  {k:'num',    label:'商品番号',     def:90, al:'left',  row:true},
-  {k:'code',   label:'商品管理番号', def:110, al:'left',  row:true},
-  {k:'img',    label:'商品画像',     def:48, al:'center', row:true},
-  {k:'name',   label:'商品名(最小)', def:200, flex:true, al:'left', row:true},
-  {k:'tot',    label:'総売上',       def:92, al:'right'},
-  {k:'sroas',  label:'売上ROAS',     def:82, al:'right'},
-  {k:'seo',    label:'SEO売上',      def:92, al:'right'},
-  {k:'adsales',label:'広告売上合計', def:102, al:'right'},
-  {k:'spend',  label:'全広告実績',   def:92, al:'right'},
-  {k:'roas',   label:'全広告ROAS',   def:72, al:'right'},
-  {k:'kwspend',label:'KW実績額',     def:72, al:'right'},
-  {k:'kwroas', label:'KW ROAS',      def:72, al:'right'},
-  {k:'sp20',   label:'20実績額',     def:72, al:'right'},
-  {k:'roas20', label:'20 ROAS',      def:72, al:'right'},
-  {k:'gross',  label:'粗利',         def:90, al:'right'},
+  {k:'num',    label:'商品番号',     def:90, al:'left',  row:true, hid:'ch-itemnum'},
+  {k:'code',   label:'商品管理番号', def:110, al:'left',  row:true, hid:'ch-itemid'},
+  {k:'img',    label:'商品画像',     def:48, al:'center', row:true, hid:'ch-img'},
+  {k:'name',   label:'商品名(最小)', def:200, flex:true, al:'left', row:true, hid:'ch-name'},
+  {k:'tot',    label:'総売上',       def:92, al:'right', hid:'ch-totsales'},
+  {k:'sroas',  label:'売上ROAS',     def:82, al:'right', hid:'ch-salesroas'},
+  {k:'seo',    label:'SEO売上',      def:92, al:'right', hid:'ch-seosales'},
+  {k:'adsales',label:'広告売上合計', def:102, al:'right', hid:'ch-sales'},
+  {k:'spend',  label:'全広告実績',   def:92, al:'right', hid:'ch-spend'},
+  {k:'roas',   label:'全広告ROAS',   def:72, al:'right', hid:'ch-roas'},
+  {k:'kwspend',label:'KW実績額',     def:72, al:'right', hid:'ch-kwspend'},
+  {k:'kwroas', label:'KW ROAS',      def:72, al:'right', hid:'ch-kwroas'},
+  {k:'sp20',   label:'20実績額',     def:72, al:'right', hid:'ch-spend20'},
+  {k:'roas20', label:'20 ROAS',      def:72, al:'right', hid:'ch-roas20'},
+  {k:'gross',  label:'粗利',         def:90, al:'right', hid:'ch-contrib'},
 ];
 const COLW_KEY='adcheck_colw';
 function _colwGet(){ try{ return JSON.parse(localStorage.getItem(COLW_KEY))||{}; }catch(e){ return {}; } }
@@ -10734,7 +10734,7 @@ function _renderColWidthPanel(){
       return '<button onclick="_colwSetAlign(\''+d.k+'\',\''+x[0]+'\')" style="font-size:10px;padding:2px 6px;border:1px solid '+(on?'#3b82f6':'var(--border)')+';background:'+(on?'#3b82f6':'var(--surface2)')+';color:'+(on?'#fff':'var(--text3)')+';cursor:pointer">'+x[1]+'</button>';
     }).join('');
     return '<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">'+
-      '<span style="width:80px;font-size:11px;color:var(--text2)">'+d.label+'</span>'+
+      '<input type="text" value="'+(_colCurLabel(d.k)||'').replace(/"/g,'&quot;')+'" oninput="_colLabelOnChange(\''+d.k+'\',this.value)" title="項目名(表の見出し)" style="width:96px;font-size:11px;padding:2px 5px;border:1px solid var(--border);border-radius:4px;color:var(--text);background:var(--surface)">'+
       '<input type="range" id="colw-s-'+d.k+'" min="'+mn+'" max="'+mx+'" value="'+v+'" oninput="_colwOnChange(\''+d.k+'\',this.value)" style="flex:1;min-width:44px">'+
       '<input type="number" id="colw-n-'+d.k+'" value="'+v+'" min="20" max="600" oninput="_colwOnChange(\''+d.k+'\',this.value)" style="width:50px;font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;text-align:right;font-family:\'DM Mono\',monospace;color:var(--text)">'+
       '<span style="font-size:10px;color:var(--text3)">px</span>'+
@@ -10748,12 +10748,18 @@ function _colwOnChange(k,v){ v=Math.round(+v)||0; const o=_colwGet(); o[k]=v; _c
   const sl=document.getElementById('colw-s-'+k); if(sl && sl.value!==String(v)) sl.value=v;
   const nu=document.getElementById('colw-n-'+k); if(nu && nu.value!==String(v)) nu.value=v;
   _applyColWidths(); }
-function _colwReset(){ try{ localStorage.removeItem(COLW_KEY); }catch(e){} _applyColWidths(); _renderColWidthPanel(); }
+function _colwReset(){ try{ localStorage.removeItem(COLW_KEY); }catch(e){} COLW_DEFS.forEach(function(d){ if(d.hid && _origColLabels[d.k]!=null){ const el=document.getElementById(d.hid); if(el) el.textContent=_origColLabels[d.k]; } }); _applyColWidths(); _renderColWidthPanel(); }
 function _openColWidthPanel(){
   const pnl=document.getElementById('colWidthPanel'); if(!pnl) return;
   if(pnl.style.display==='block'){ pnl.style.display='none'; return; }
   _renderColWidthPanel(); pnl.style.display='block';
 }
+const _origColLabels={};
+function _captureOrigLabels(){ COLW_DEFS.forEach(function(d){ if(d.hid){ const el=document.getElementById(d.hid); if(el && _origColLabels[d.k]==null) _origColLabels[d.k]=el.textContent.trim(); } }); }
+function _colCurLabel(k){ const o=_colwGet(); if(o['l_'+k]!=null) return o['l_'+k]; if(_origColLabels[k]!=null) return _origColLabels[k]; const d=COLW_DEFS.find(x=>x.k===k); const el=d&&d.hid?document.getElementById(d.hid):null; return el?el.textContent.trim():''; }
+function _applyColLabels(){ const o=_colwGet(); COLW_DEFS.forEach(function(d){ if(d.hid && o['l_'+d.k]!=null){ const el=document.getElementById(d.hid); if(el) el.textContent=o['l_'+d.k]; } }); }
+function _colLabelOnChange(k,val){ const o=_colwGet(); o['l_'+k]=val; _colwSet(o); const d=COLW_DEFS.find(x=>x.k===k); const el=d&&d.hid?document.getElementById(d.hid):null; if(el) el.textContent=val; }
+try{ _captureOrigLabels(); _applyColLabels(); }catch(e){}
 try{ _applyColWidths(); }catch(e){}
 
 let _sroasFilter=null;
