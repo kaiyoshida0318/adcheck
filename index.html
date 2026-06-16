@@ -107,8 +107,8 @@ header + * { margin-top: 4px; }
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 92px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
-.col-header.with-status { grid-template-columns: 90px 80px minmax(0,1fr) 92px 92px 102px 92px 72px 72px 72px 72px 72px 90px 110px 70px 28px; }
+.col-header { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 92px 72px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.col-header.with-status { grid-template-columns: 90px 80px minmax(0,1fr) 92px 72px 92px 102px 92px 72px 72px 72px 72px 72px 90px 110px 70px 28px; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -121,8 +121,8 @@ header + * { margin-top: 4px; }
 
 .item-row { border-bottom: 1px solid rgba(0,0,0,0.18); }
 .item-row:last-child { border-bottom: none; }
-.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 92px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
-.item-basic.with-status { grid-template-columns: 90px 80px minmax(0,1fr) 92px 92px 102px 92px 72px 72px 72px 72px 72px 90px 110px 70px 28px; }
+.item-basic { display: grid; grid-template-columns: 90px 110px minmax(0,1fr) 92px 72px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic.with-status { grid-template-columns: 90px 80px minmax(0,1fr) 92px 72px 92px 102px 92px 72px 72px 72px 72px 72px 90px 110px 70px 28px; }
 .status-cell { display: flex; align-items: center; gap: 4px; padding: 4px 6px; justify-content: center; }
 .status-update-btn { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent); background: var(--surface2); color: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .status-update-btn:hover { background: var(--accent); color: #fff; }
@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.670</span>
+    <span class="build-date">v1.671</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -589,6 +589,7 @@ header + * { margin-top: 4px; }
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
             <div class="ch" onclick="sortBy('name')">商品</div>
             <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eef4fb">総売上</div>
+            <div class="ch r" id="ch-salesroas" title="総売上÷実績額×100" style="background:#eef4fb">売上ROAS</div>
             <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#eef4fb;border-right:2px solid #c9dff0">SEO売上</div>
             <div class="ch r" id="ch-sales" onclick="sortBy('sales')" style="background:#fdf0e8">広告売上合計</div>
             <div class="ch r" id="ch-spend" onclick="sortBy('spend')" style="cursor:pointer;background:#fdf0e8">全広告実績</div>
@@ -10315,6 +10316,13 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
         ${(() => {
           const totS = _ag.totSales;
           return totS > 0 ? fmtY(totS) : '<span style="color:var(--text3)">—</span>';
+        })()}
+      </div>
+      <div class="cell r mono" style="background:#eef4fb">
+        ${(() => {
+          const _sr = p.spend > 0 ? Math.round(_ag.totSales / p.spend * 100) : 0;
+          const rc2 = v => v>=500?'var(--green)':v>=300?'var(--amber)':v>0?'var(--danger)':'var(--text3)';
+          return _sr > 0 ? `<span style="color:${rc2(_sr)};font-weight:700">${_sr}%</span>` : '<span style="color:var(--text3)">—</span>';
         })()}
       </div>
       <div class="cell r mono" style="background:#eef4fb;border-right:2px solid #c9dff0">
