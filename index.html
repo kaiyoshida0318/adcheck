@@ -108,7 +108,7 @@ header + * { margin-top: 4px; }
 .tbtn:hover { background: var(--surface2); }
 
 .col-header { display: grid; grid-template-columns: 90px 110px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
-.col-header.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 110px 70px 28px; }
+.col-header.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 76px 70px 28px; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -122,7 +122,7 @@ header + * { margin-top: 4px; }
 .item-row { border-bottom: 1px solid rgba(0,0,0,0.18); }
 .item-row:last-child { border-bottom: none; }
 .item-basic { display: grid; grid-template-columns: 90px 110px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
-.item-basic.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 110px 70px 28px; }
+.item-basic.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 76px 70px 28px; }
 .status-cell { display: flex; align-items: center; gap: 4px; padding: 4px 6px; justify-content: center; }
 .status-update-btn { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent); background: var(--surface2); color: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .status-update-btn:hover { background: var(--accent); color: #fff; }
@@ -494,7 +494,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.697</span>
+    <span class="build-date">v1.699</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8623,10 +8623,19 @@ const STATUS_COLORS = {
   unset:'', g1:'#1565C0', g1b:'#1E88E5', g2:'#0288D1', g3:'#4FC3F7',
   new:'#2E7D32', mid:'#F9A825', midb:'#FFB300', mid2:'#E65100', warn:'#C62828', out:'#6D1111'
 };
+function _statusDispHtml(v){
+  const lab = (typeof STATUS_LABELS!=='undefined' && STATUS_LABELS[v]) || '';
+  const i = lab.search(/[-\uFF0D\u2010\u2212]/);
+  const txt = (i<0) ? lab : (lab.slice(0,i) + '<br>' + lab.slice(i+1));
+  return '<div style="text-align:center;font-size:10px;line-height:1.12;font-weight:600;white-space:nowrap">'+txt+'</div>';
+}
 function applyStatusColor(sel) {
   const c = STATUS_COLORS[sel.value] || '';
   sel.style.color = c;
   sel.style.fontWeight = c ? '600' : '';
+  const wrap = sel.closest('.status-cell');
+  const disp = wrap && wrap.querySelector('.status-disp');
+  if (disp) { disp.innerHTML = _statusDispHtml(sel.value); disp.style.color = c || 'var(--text2)'; }
   _showApplyButtons();
 }
 const STATUS_LABELS = {
@@ -10437,8 +10446,9 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
         })()}
       </div>
       ${_subTabFilter ? `
-      <div class="status-cell" onclick="event.stopPropagation()">
-        <select id="status-sel-${p.id}" onchange="applyStatusColor(this)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);width:100%;cursor:pointer;font-weight:${STATUS_COLORS[productCache[p.id]?.status||'unset']?'600':''};color:${STATUS_COLORS[productCache[p.id]?.status||'unset']||'var(--text)'}">
+      <div class="status-cell" onclick="event.stopPropagation()" style="position:relative">
+        <div class="status-disp" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1px;overflow:hidden;color:${STATUS_COLORS[productCache[p.id]?.status||'unset']||'var(--text2)'}">${_statusDispHtml(productCache[p.id]?.status||'unset')}</div>
+        <select id="status-sel-${p.id}" onchange="applyStatusColor(this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:11px;border:none;outline:none">
           ${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','warn','out'].map(v => {
             const labels = {unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',warn:'撤退検討▲',out:'撤退■'};
             const colors = {unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',warn:'#C62828',out:'#6D1111'};
@@ -10723,6 +10733,8 @@ const COLW_DEFS=[
   {k:'sp20',   label:'20実績額',     def:72, al:'right', hid:'ch-spend20'},
   {k:'roas20', label:'20 ROAS',      def:72, al:'right', hid:'ch-roas20'},
   {k:'gross',  label:'粗利',         def:90, al:'right', hid:'ch-contrib'},
+  {k:'status', label:'区分',         def:76, al:'center', ws:true},
+  {k:'ss',     label:'SS',           def:70, al:'center', ws:true},
 ];
 const COLW_KEY='adcheck_colw';
 function _colwGet(){ try{ return JSON.parse(localStorage.getItem(COLW_KEY))||{}; }catch(e){ return {}; } }
@@ -10733,16 +10745,17 @@ function _applyColWidths(){
   const name='minmax('+w('name')+'px,1fr)';
   const dataCols=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20','gross'].map(k=>w(k)+'px').join(' ');
   const ns=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' 28px';
-  const ws=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' 110px 70px 28px';
+  const ws=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' '+w('status')+'px '+w('ss')+'px 28px';
   let st=document.getElementById('colw-style');
   if(!st){ st=document.createElement('style'); st.id='colw-style'; document.head.appendChild(st); }
   let css='.col-header{grid-template-columns:'+ns+' !important}.item-basic{grid-template-columns:'+ns+' !important}.col-header.with-status{grid-template-columns:'+ws+' !important}.item-basic.with-status{grid-template-columns:'+ws+' !important}';
   COLW_DEFS.forEach(function(d,i){
     const n=i+1; const a=_colwAlign(d.k);
     const fp=(a==='left')?'flex-start':(a==='right')?'flex-end':'center';
-    css+='.col-header>div:nth-child('+n+'){text-align:'+a+' !important}';
-    if(d.row){ css+='.item-basic>div:nth-child('+n+'){justify-content:'+fp+' !important}'; }
-    else{ css+='.item-basic>div:nth-child('+n+'){align-items:'+fp+' !important;text-align:'+a+' !important}'; }
+    const hs=d.ws?'.col-header.with-status':'.col-header', rs=d.ws?'.item-basic.with-status':'.item-basic';
+    css+=hs+'>div:nth-child('+n+'){text-align:'+a+' !important}';
+    if(d.row){ css+=rs+'>div:nth-child('+n+'){justify-content:'+fp+' !important}'; }
+    else{ css+=rs+'>div:nth-child('+n+'){align-items:'+fp+' !important;text-align:'+a+' !important}'; }
   });
   st.textContent=css;
 }
@@ -10780,7 +10793,7 @@ function _openColWidthPanel(){
 }
 const _origColLabels={};
 function _captureOrigLabels(){ COLW_DEFS.forEach(function(d){ if(d.hid){ const el=document.getElementById(d.hid); if(el && _origColLabels[d.k]==null) _origColLabels[d.k]=el.textContent.trim(); } }); }
-function _colCurLabel(k){ const o=_colwGet(); if(o['l_'+k]!=null) return o['l_'+k]; if(_origColLabels[k]!=null) return _origColLabels[k]; const d=COLW_DEFS.find(x=>x.k===k); const el=d&&d.hid?document.getElementById(d.hid):null; return el?el.textContent.trim():''; }
+function _colCurLabel(k){ const o=_colwGet(); if(o['l_'+k]!=null) return o['l_'+k]; if(_origColLabels[k]!=null) return _origColLabels[k]; const d=COLW_DEFS.find(x=>x.k===k); if(d&&d.hid){ const el=document.getElementById(d.hid); if(el) return el.textContent.trim(); } return d?d.label:''; }
 function _applyColLabels(){ const o=_colwGet(); COLW_DEFS.forEach(function(d){ if(d.hid && o['l_'+d.k]!=null){ const el=document.getElementById(d.hid); if(el) el.textContent=o['l_'+d.k]; } }); }
 function _colLabelOnChange(k,val){ const o=_colwGet(); o['l_'+k]=val; _colwSet(o); const d=COLW_DEFS.find(x=>x.k===k); const el=d&&d.hid?document.getElementById(d.hid):null; if(el) el.textContent=val; }
 try{ _captureOrigLabels(); _applyColLabels(); }catch(e){}
