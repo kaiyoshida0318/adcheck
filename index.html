@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.666</span>
+    <span class="build-date">v1.667</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5044,8 +5044,8 @@ function renderItemGraph() {
 
   let datasets, yCallback, tooltipLabel, chartLabels=displayLabels, yearMode=false, _fyYears=null;
   if (metric === 'all') {
-    const keys=_renewalOverviewKeys();
-    datasets = keys.map(k=>{ const meta=_RENEWAL_METRICS[k]; const raw=_renewalMetricValues(k,labels,dataMap,code); const nz=raw.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} const norm=raw.map(v=>mid>0?Math.round(v/mid*50*10)/10:0); return {label:meta.label,data:norm,_raw:raw,_fmt:meta.fmt,borderColor:meta.color,backgroundColor:meta.color+'22',borderWidth:2.2,pointRadius:3,pointHoverRadius:5,tension:0.3,fill:false}; });
+    const _ser=_allOverviewSeries(labels,dataMap,code);
+    datasets = _ser.map(se=>{ const raw=se.vals; const nz=raw.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} const norm=raw.map(v=>mid>0?Math.round(v/mid*50*10)/10:0); return {label:se.label,data:norm,_raw:raw,_fmt:se.fmt,borderColor:se.color,backgroundColor:se.color+'22',borderWidth:2.2,pointRadius:3,pointHoverRadius:5,tension:0.3,fill:false}; });
     yCallback=v=>v+'%';
     tooltipLabel=ctx=>{const ds=ctx.dataset;const rr=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(rr):rr;return ' '+ds.label+': '+rs+'\uff08'+ctx.raw+'%\uff09';};
   } else if (metric==='roas'||metric==='cvr'||metric==='ctr') {
@@ -5075,7 +5075,7 @@ function renderItemGraph() {
     if (_years.length && !(typeof _itemGraphView2y!=='undefined' && _itemGraphView2y)){
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
-      if (metric==='all'){ series=_renewalOverviewKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
+      if (metric==='all'){ series=_allOverviewSeries(labels,dataMap,code); normalize=true; }
       else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
       else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa'; series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:'#f59e0b',fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:'#38bdf8',fmt:uf,vals:tri.p20}]; }
       else if (metric==='sales'){ const sa=_itemSalesArrays(labels,dataMap,code); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
@@ -5106,6 +5106,22 @@ function _prodSalesArrays(labels, dataMap, code, daily){
 function _itemSalesArrays(labels, dataMap, code){ return _prodSalesArrays(labels, dataMap, code, _itemGraphPeriod==='daily'); }
 const _ITEM_SALES_DEFS=[{key:'tot',label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8'},{key:'seo',label:'SEO\u58f2\u4e0a',color:'#7c3aed'},{key:'kw',label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa'},{key:'p20',label:'20\u5186\u58f2\u4e0a',color:'#f97316'}];
 function _itemTriple(labels, dataMap, kAll, kKw){ const all=labels.map(l=>dataMap[l]?.[kAll]||0); const kw=labels.map(l=>dataMap[l]?.[kKw]||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i])); return {all,kw,p20}; }
+function _allOverviewSeries(labels, dataMap, code){
+  const daily=!!(labels.length && labels[0] && labels[0].length>7);
+  const sa=_prodSalesArrays(labels,dataMap,code,daily);
+  const spend=labels.map(l=>(dataMap[l]||{}).spend||0);
+  const salesRoas=sa.tot.map((tv,i)=>spend[i]>0?Math.round(tv/spend[i]*10000)/100:0);
+  const roasAll=labels.map(l=>{const d=dataMap[l]||{};return d.spend>0?Math.round((d.sales||0)/d.spend*10000)/100:0;});
+  const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); const pf=v=>v+'%';
+  return [
+    {key:'tot',      label:'\u7dcf\u58f2\u4e0a',          color:'#1d4ed8', fmt:yf, vals:sa.tot},
+    {key:'seo',      label:'SEO\u58f2\u4e0a',             color:'#7c3aed', fmt:yf, vals:sa.seo},
+    {key:'kw',       label:'KW\u5546\u54c1\u58f2\u4e0a',  color:'#60a5fa', fmt:yf, vals:sa.kw},
+    {key:'p20',      label:'20\u5186\u58f2\u4e0a',        color:'#f97316', fmt:yf, vals:sa.p20},
+    {key:'salesRoas',label:'\u58f2\u4e0aROAS\u5168\u4f53',color:'#10b981', fmt:pf, vals:salesRoas},
+    {key:'roasAll',  label:'ROAS-\u5168\u4f53',           color:'#fbbf24', fmt:pf, vals:roasAll},
+  ];
+}
 function _toggleItemFY(fy){ fy=+fy; if(_renewalHiddenFY.has(fy)) _renewalHiddenFY.delete(fy); else _renewalHiddenFY.add(fy); renderItemGraph(); }
 function _toggleItemMetricKey(mk){ if(_renewalHiddenMetric.has(mk)) _renewalHiddenMetric.delete(mk); else _renewalHiddenMetric.add(mk); renderItemGraph(); }
 function _toggleItemMetric(i){ const c=_itemChartInstance; if(!c) return; c.setDatasetVisibility(i,!c.isDatasetVisible(i)); c.update(); _renderItemToggles(true); }
@@ -5149,7 +5165,7 @@ function _renderItemRichTable(labels, dataMap, code){
     const sa=_itemSalesArrays(labels,dataMap,code);
     cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
   } else if (metric==='all'){
-    cols=_renewalOverviewKeys().map(k=>({label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code),dep:(k==='roas'||k==='cvr'||k==='totsales'||k==='cpc')}));
+    cols=_allOverviewSeries(labels,dataMap,code).map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:(se.key==='salesRoas'||se.key==='roasAll')}));
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
     cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
@@ -7574,8 +7590,8 @@ function renderRenewalGraph() {
 
   let datasets, yCallback, tooltipLabel, chartLabels=displayLabels, yearMode=false, _fyYears=null;
   if (metric === 'all') {
-    const keys=_renewalOverviewKeys();
-    datasets = keys.map(k=>{ const meta=_RENEWAL_METRICS[k]; const raw=_renewalMetricValues(k,labels,dataMap,code); const nz=raw.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} const norm=raw.map(v=>mid>0?Math.round(v/mid*50*10)/10:0); return {label:meta.label,data:norm,_raw:raw,_fmt:meta.fmt,borderColor:meta.color,backgroundColor:meta.color+'22',borderWidth:2.2,pointRadius:3,pointHoverRadius:5,tension:0.3,fill:false}; });
+    const _ser=_allOverviewSeries(labels,dataMap,code);
+    datasets = _ser.map(se=>{ const raw=se.vals; const nz=raw.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} const norm=raw.map(v=>mid>0?Math.round(v/mid*50*10)/10:0); return {label:se.label,data:norm,_raw:raw,_fmt:se.fmt,borderColor:se.color,backgroundColor:se.color+'22',borderWidth:2.2,pointRadius:3,pointHoverRadius:5,tension:0.3,fill:false}; });
     yCallback=v=>v+'%';
     tooltipLabel=ctx=>{const ds=ctx.dataset;const rr=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(rr):rr;return ' '+ds.label+': '+rs+'\uff08'+ctx.raw+'%\uff09';};
   } else if (metric==='roas'||metric==='cvr'||metric==='ctr') {
@@ -7605,7 +7621,7 @@ function renderRenewalGraph() {
     if (_years.length && !(typeof _renewalView2y!=='undefined' && _renewalView2y)){
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
-      if (metric==='all'){ series=_renewalOverviewKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
+      if (metric==='all'){ series=_allOverviewSeries(labels,dataMap,code); normalize=true; }
       else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
       else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa'; series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:'#f59e0b',fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:'#38bdf8',fmt:uf,vals:tri.p20}]; }
       else if (metric==='sales'){ const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
@@ -7690,7 +7706,7 @@ function _renderRenewalTable(labels, dataMap, code){
     const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily');
     cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
   } else if (metric==='all'){
-    cols=_renewalOverviewKeys().map(k=>({label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code),dep:(k==='roas'||k==='cvr'||k==='totsales'||k==='cpc')}));
+    cols=_allOverviewSeries(labels,dataMap,code).map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:(se.key==='salesRoas'||se.key==='roasAll')}));
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
     cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
