@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.674</span>
+    <span class="build-date">v1.675</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -589,7 +589,7 @@ header + * { margin-top: 4px; }
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
             <div class="ch" onclick="sortBy('name')">商品</div>
             <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eef4fb">総売上</div>
-            <div class="ch r" id="ch-salesroas" title="総売上÷実績額×100" style="background:#eef4fb">売上ROAS</div>
+            <div class="ch r" id="ch-salesroas" onclick="sortBy('salesroas')" title="総売上÷実績額×100" style="cursor:pointer;background:#eef4fb">売上ROAS</div>
             <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#eef4fb;border-right:2px solid #c9dff0">SEO売上</div>
             <div class="ch r" id="ch-sales" onclick="sortBy('sales')" style="background:#fdf0e8">広告売上合計</div>
             <div class="ch r" id="ch-spend" onclick="sortBy('spend')" style="cursor:pointer;background:#fdf0e8">全広告実績</div>
@@ -10147,6 +10147,10 @@ function getSorted(ym) {
         return Math.max(0, a2.totSales - a2.rppSales);
       };
       return dir * (seoOf(a) - seoOf(b));
+    }
+    if (_sortKey === 'salesroas') {
+      const srOf = p => { const a2 = _aggFor(p.id, ym); return p.spend > 0 ? a2.totSales / p.spend : 0; };
+      return dir * (srOf(a) - srOf(b));
     }
     if (_sortKey === 'sales')  return dir * (a.sales720 - b.sales720);
     if (_sortKey === 'name') {
