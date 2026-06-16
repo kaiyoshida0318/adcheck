@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.669</span>
+    <span class="build-date">v1.670</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10865,9 +10865,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       </div>
       <div id="renewalGraphEmpty" style="display:none;text-align:center;padding:50px;color:var(--text3);font-size:13px">この商品のデータがありません。</div>
       <!-- データ表（グラフと同じ期間切替に連動） -->
-      <div id="renewalGraphTableWrap" style="width:100%;min-height:0;display:flex;flex-direction:column;border-top:1px solid var(--border);padding-top:14px">
+      <div id="renewalGraphTableWrap" style="width:100%;flex:0 0 auto;display:flex;flex-direction:column;border-top:1px solid var(--border);padding-top:14px">
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">📋 <span id="renewalTablePeriodLabel">月別</span>データ</div>
-        <div id="renewalGraphTableScroll" style="overflow-x:auto;border:1px solid var(--border);border-radius:8px;min-height:120px">
+        <div id="renewalGraphTableScroll" style="overflow-x:auto;overflow-y:auto;border:1px solid var(--border);border-radius:8px;min-height:120px;max-height:600px">
           <table id="renewalGraphTable" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"></table>
         </div>
       </div>
