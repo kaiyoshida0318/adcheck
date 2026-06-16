@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.663</span>
+    <span class="build-date">v1.664</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -675,14 +675,13 @@ header + * { margin-top: 4px; }
           </div>
           <div id="itemGraphFYBtns" style="display:flex;gap:4px"><button id="itemGraphFYCal" onclick="setItemGraphFYStart(1)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="itemGraphFYFiscal" onclick="setItemGraphFYStart(5)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">5月始まり</button><button id="itemGraphView2yBtn" onclick="setItemGraph2y()" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">2年横並び</button></div>
           <select id="itemGraphMetric" class="toolbar-month" onchange="renderItemGraph()" style="font-size:13px;padding:6px 12px">
-            <option value="all">全体（CTR除く）</option>
-            <option value="sales">売上(SEO内訳)</option>
-            <option value="spend">実績額</option>
-            <option value="roas">ROAS</option>
-            <option value="cvr">CVR</option>
-            <option value="ctr">CTR</option>
-            <option value="totsales">売上総額</option>
-            <option value="orders">個数</option>
+            <option value="all">両方-全体</option>
+            <option value="sales">両方-売上</option>
+            <option value="spend">広告-実績額</option>
+            <option value="roas">広告-ROAS</option>
+            <option value="cvr">広告-CVR</option>
+            <option value="ctr">広告-CTR</option>
+            <option value="orders">広告-個数</option>
             <option value="cpc">平均単価</option>
           </select>
           <div id="itemGraphMonthRange" style="display:flex;align-items:center;gap:6px">
@@ -10835,14 +10834,13 @@ window.addEventListener('DOMContentLoaded', async () => {
       <div id="renewalGraphFYBtns" style="display:flex;gap:4px"><button id="renewalGraphFYCal" onclick="setRenewalFYStart(1)" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="renewalGraphFYFiscal" onclick="setRenewalFYStart(5)" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">5月始まり</button><button id="renewalGraphView2yBtn" onclick="setRenewal2y()" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">2年横並び</button></div>
       <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
       <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
-        <option value="all">全体（CTR除く）</option>
-        <option value="sales">売上(SEO内訳)</option>
-        <option value="roas">ROAS</option>
-        <option value="cvr">CVR</option>
-        <option value="ctr">CTR</option>
-        <option value="totsales">売上総額</option>
-        <option value="orders">個数(売上件数)</option>
-        <option value="spend">実績額</option>
+        <option value="all">両方-全体</option>
+        <option value="sales">両方-売上</option>
+        <option value="spend">広告-実績額</option>
+        <option value="roas">広告-ROAS</option>
+        <option value="cvr">広告-CVR</option>
+        <option value="ctr">広告-CTR</option>
+        <option value="orders">広告-個数</option>
         <option value="cpc">平均単価</option>
       </select>
       <button id="renewalGraphCollapseBtn" onclick="_toggleRenewalGraphCollapse()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">グラフを隠す</button>
