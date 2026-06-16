@@ -494,7 +494,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.695</span>
+    <span class="build-date">v1.696</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6291,7 +6291,7 @@ function _renewalHeaderHtml(mode) {
     const arrow = c.k ? _renewalArrow(c.k) : '';
     return `<div class="ch" ${click} style="background:${c.bg};${cur}${bl}text-align:${c.align}">${c.label}${arrow}</div>`;
   }).join('');
-  return `<div class="col-header" style="grid-template-columns:${colW}">${cells}</div>`;
+  return `<div class="col-header" style="grid-template-columns:${colW} !important">${cells}</div>`;
 }
 
 // 実施前タブで選択中の月（YYYY-MM）。空なら最新月
@@ -6834,7 +6834,7 @@ function _renewalSeoHeaderHtml() {
     const arrow = c.k ? _renewalArrow(c.k) : '';
     return `<div class="ch" ${click} style="background:${c.bg};${cur}text-align:${c.align}">${c.label}${arrow}</div>`;
   }).join('');
-  return `<div class="col-header" style="grid-template-columns:${colW}">${cells}</div>`;
+  return `<div class="col-header" style="grid-template-columns:${colW} !important">${cells}</div>`;
 }
 function _renewalSeoRowHtml(code) {
   const cached = productCache[code] || {};
@@ -8022,7 +8022,7 @@ function renderRoasTrend() {
     return `<div class="ch r" style="background:#e8f5e9;cursor:pointer" onclick="sortRoasTrend('${m}')">${mo}月${arrow}<br><span style="font-size:9px;color:var(--text3)">${y}</span></div>`;
   }).join('');
 
-  const header = `<div class="col-header" style="grid-template-columns:${colW}">
+  const header = `<div class="col-header" style="grid-template-columns:${colW} !important">
     <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('itemnum')">商品番号</div>
     <div class="ch" style="cursor:pointer" onclick="sortRoasTrend('itemid')">商品管理番号</div>
     <div class="ch" style="text-align:center;font-size:10px">画像</div>
