@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.661</span>
+    <span class="build-date">v1.662</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1449,6 +1449,7 @@ header + * { margin-top: 4px; }
 <!-- 商品編集モーダル -->
 <div class="modal-overlay" id="editItemModal">
   <div class="modal" style="max-width:520px">
+    <div style="display:flex;gap:4px;margin:-2px 0 14px;border-bottom:1px solid var(--border)"><button onclick="_pmShowGraph()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">商品-グラフ</button><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">商品情報を編集</button></div>
     <h3>✏️ 商品情報を編集</h3>
     <div style="display:flex;gap:20px;margin-bottom:14px">
       <div>
@@ -1605,6 +1606,8 @@ loadProductCache(); // 起動時即座に読み込み
 let _editItemId = null;
 let _resolvedImgUrl = null;
 
+function _pmShowGraph(){ var c=_editItemId; closeEditModal(); if(c){ try{openRenewalGraph(c);}catch(e){} } }
+function _pmShowEdit(){ var c=_renewalGraphCode; closeRenewalGraph(); if(c){ try{openEditModal(c);}catch(e){} } }
 function openEditModal(itemId) {
   _editItemId = itemId;
   _resolvedImgUrl = null;
@@ -10274,8 +10277,8 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const imgSrc = cached?.manualImg || cached?.img || null;
   const imgLoaded = !!imgSrc;
   const imgEl = imgLoaded
-    ? `<div id="img-cell-${p.id}" data-loaded="1" style="cursor:pointer" title="商品情報編集ページを開く" onclick="event.stopPropagation();openEditModal('${p.id}')"><img loading="lazy" src="${imgSrc}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'"></div>`
-    : `<div id="img-cell-${p.id}" class="prod-thumb" style="cursor:pointer" title="商品情報編集ページを開く" onclick="event.stopPropagation();openEditModal('${p.id}')">画像</div>`;
+    ? `<div id="img-cell-${p.id}" data-loaded="1" style="cursor:pointer" title="商品情報編集ページを開く" onclick="event.stopPropagation();openRenewalGraph('${p.id}')"><img loading="lazy" src="${imgSrc}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" onerror="this.outerHTML='<div class=prod-thumb>画像</div>'"></div>`
+    : `<div id="img-cell-${p.id}" class="prod-thumb" style="cursor:pointer" title="商品情報編集ページを開く" onclick="event.stopPropagation();openRenewalGraph('${p.id}')">画像</div>`;
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   return `<div class="item-row">
@@ -10805,6 +10808,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 </div>
 <div id="renewalGraphModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div style="background:var(--surface);border-radius:12px;width:96vw;max-width:1400px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3);position:relative;margin:auto">
+    <div style="display:flex;gap:4px;padding:10px 24px 0;border-bottom:1px solid var(--border)"><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">商品-グラフ</button><button onclick="_pmShowEdit()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">商品情報を編集</button></div>
     <div style="padding:16px 24px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
         <div id="renewalGraphImg" style="flex-shrink:0"></div>
