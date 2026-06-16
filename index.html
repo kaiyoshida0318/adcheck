@@ -492,7 +492,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.684</span>
+    <span class="build-date">v1.685</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10735,15 +10735,19 @@ function _renderColWidthPanel(){
     }).join('');
     return '<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">'+
       '<span style="width:80px;font-size:11px;color:var(--text2)">'+d.label+'</span>'+
-      '<input type="range" min="'+mn+'" max="'+mx+'" value="'+v+'" oninput="_colwOnChange(\''+d.k+'\',this.value)" style="flex:1;min-width:50px">'+
-      '<span id="colw-v-'+d.k+'" style="width:42px;text-align:right;font-size:11px;font-family:\'DM Mono\',monospace">'+v+'px</span>'+
+      '<input type="range" id="colw-s-'+d.k+'" min="'+mn+'" max="'+mx+'" value="'+v+'" oninput="_colwOnChange(\''+d.k+'\',this.value)" style="flex:1;min-width:44px">'+
+      '<input type="number" id="colw-n-'+d.k+'" value="'+v+'" min="20" max="600" oninput="_colwOnChange(\''+d.k+'\',this.value)" style="width:50px;font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;text-align:right;font-family:\'DM Mono\',monospace;color:var(--text)">'+
+      '<span style="font-size:10px;color:var(--text3)">px</span>'+
       '<span style="display:inline-flex;border-radius:4px;overflow:hidden">'+ab+'</span>'+
       '</div>';
   }).join('');
 }
 function _colwAlign(k){ const o=_colwGet(); const d=COLW_DEFS.find(x=>x.k===k); return o['a_'+k]||(d&&d.al)||'right'; }
 function _colwSetAlign(k,a){ const o=_colwGet(); o['a_'+k]=a; _colwSet(o); _applyColWidths(); _renderColWidthPanel(); }
-function _colwOnChange(k,v){ const o=_colwGet(); o[k]=+v; _colwSet(o); const e=document.getElementById('colw-v-'+k); if(e) e.textContent=v+'px'; _applyColWidths(); }
+function _colwOnChange(k,v){ v=Math.round(+v)||0; const o=_colwGet(); o[k]=v; _colwSet(o);
+  const sl=document.getElementById('colw-s-'+k); if(sl && sl.value!==String(v)) sl.value=v;
+  const nu=document.getElementById('colw-n-'+k); if(nu && nu.value!==String(v)) nu.value=v;
+  _applyColWidths(); }
 function _colwReset(){ try{ localStorage.removeItem(COLW_KEY); }catch(e){} _applyColWidths(); _renderColWidthPanel(); }
 function _openColWidthPanel(){
   const pnl=document.getElementById('colWidthPanel'); if(!pnl) return;
