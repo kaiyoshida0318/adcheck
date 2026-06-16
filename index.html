@@ -469,7 +469,7 @@ header + * { margin-top: 4px; }
         </text>
       </svg>
     </div>
-    <button onclick="window.open(location.href,'_blank','width='+((window.screen&&screen.availWidth)||1440)+',height='+((window.screen&&screen.availHeight)||900)+',scrollbars=yes,resizable=yes')" title="新しいウィンドウでADcheckを開く" style="display:flex;align-items:center;gap:5px;margin-left:8px;padding:6px 11px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text2);cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap">&#8599; 新しいウィンドウ</button>
+    <button onclick="window.open(location.href,'_blank')" title="新しいタブでADcheckを開く" style="display:flex;align-items:center;gap:5px;margin-left:8px;padding:6px 11px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text2);cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap">&#8599; 新しいタブ</button>
     <div id="shopSelectorWrap" style="position:relative;margin-left:8px">
       <button id="shopSelectorBtn" onclick="toggleShopMenu(event)" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
         <span style="font-size:14px">🏪</span>
@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.662</span>
+    <span class="build-date">v1.663</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -673,6 +673,7 @@ header + * { margin-top: 4px; }
             <button id="itemGraphPeriodDaily" onclick="_setItemGraphPeriod('daily')"
               style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
           </div>
+          <div id="itemGraphFYBtns" style="display:flex;gap:4px"><button id="itemGraphFYCal" onclick="setItemGraphFYStart(1)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="itemGraphFYFiscal" onclick="setItemGraphFYStart(5)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">5月始まり</button><button id="itemGraphView2yBtn" onclick="setItemGraph2y()" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">2年横並び</button></div>
           <select id="itemGraphMetric" class="toolbar-month" onchange="renderItemGraph()" style="font-size:13px;padding:6px 12px">
             <option value="all">全体（CTR除く）</option>
             <option value="sales">売上(SEO内訳)</option>
@@ -4752,6 +4753,13 @@ function _itemGraphToggle() {
   renderItemGraph();
 }
 
+var _itemGraphFYStart=1,_itemGraphView2y=false,_renewalFYStart=1,_renewalView2y=false;
+function _setItemGraphFYUI(){var on='font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap',off='font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap';var a=document.getElementById('itemGraphFYCal'),b=document.getElementById('itemGraphFYFiscal'),c=document.getElementById('itemGraphView2yBtn');if(a)a.style.cssText=(!_itemGraphView2y&&_itemGraphFYStart===1)?on:off;if(b)b.style.cssText=(!_itemGraphView2y&&_itemGraphFYStart===5)?on:off;if(c)c.style.cssText=_itemGraphView2y?on:off;}
+function setItemGraphFYStart(m){_itemGraphFYStart=+m;_itemGraphView2y=false;_setItemGraphFYUI();renderItemGraph();}
+function setItemGraph2y(){_itemGraphView2y=true;_setItemGraphFYUI();renderItemGraph();}
+function _setRenewalFYUI(){var on='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap',off='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap';var a=document.getElementById('renewalGraphFYCal'),b=document.getElementById('renewalGraphFYFiscal'),c=document.getElementById('renewalGraphView2yBtn');if(a)a.style.cssText=(!_renewalView2y&&_renewalFYStart===1)?on:off;if(b)b.style.cssText=(!_renewalView2y&&_renewalFYStart===5)?on:off;if(c)c.style.cssText=_renewalView2y?on:off;}
+function setRenewalFYStart(m){_renewalFYStart=+m;_renewalView2y=false;_setRenewalFYUI();renderRenewalGraph();}
+function setRenewal2y(){_renewalView2y=true;_setRenewalFYUI();renderRenewalGraph();}
 function _setItemGraphPeriod(period) {
   _itemGraphPeriod = period;
   const mBtn = document.getElementById('itemGraphPeriodMonth');
@@ -5026,7 +5034,7 @@ function renderItemGraph() {
     labels = Object.keys(monthly).sort();
     const _now=new Date(); const _curYm=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');
     labels = labels.filter(m => m < _curYm);
-    labels.forEach(m => { dataMap[m] = monthly[m]; });
+    labels.forEach(m => { dataMap[m] = monthly[m]; }); if (typeof _itemGraphView2y!=='undefined' && _itemGraphView2y) labels=labels.slice(-24);
   }
   if (!labels.length) { canvas.style.display='none'; empty.style.display='block'; empty.textContent='\u9078\u629e\u671f\u9593\u306b\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093\u3002'; _renderItemToggles(false); _renderItemYearToggles(null); const t=document.getElementById('itemGraphDataTable'); if(t)t.innerHTML=''; return; }
   canvas.style.display='block'; empty.style.display='none';
@@ -5060,10 +5068,10 @@ function renderItemGraph() {
   }
   _renewalAllYearMode=false; _renewalSeries=null;
   if (_itemGraphPeriod==='monthly') {
-    const _fyOf=ym=>+ym.slice(0,4); const _fmiOf=ym=>+ym.slice(5,7)-1;
+    const _fs=(typeof _itemGraphFYStart!=='undefined'?_itemGraphFYStart:1); const _fyOf=ym=>{const y=+ym.slice(0,4),m=+ym.slice(5,7);return (m>=_fs)?y:y-1;}; const _fmiOf=ym=>{const m=+ym.slice(5,7);return (m-_fs+12)%12;};
     const _years=[...new Set(labels.map(_fyOf))].sort((x,z)=>x-z);
-    const _fmLabels=['1\u6708','2\u6708','3\u6708','4\u6708','5\u6708','6\u6708','7\u6708','8\u6708','9\u6708','10\u6708','11\u6708','12\u6708'];
-    if (_years.length){
+    const _MN=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']; const _fmLabels=Array.from({length:12},function(_x,k){return _MN[(_fs-1+k)%12];});
+    if (_years.length && !(typeof _itemGraphView2y!=='undefined' && _itemGraphView2y)){
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
       if (metric==='all'){ series=_renewalOverviewKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
@@ -7540,7 +7548,7 @@ function renderRenewalGraph() {
     const _now = new Date();
     const _curYm = _now.getFullYear() + '-' + String(_now.getMonth()+1).padStart(2,'0');
     labels = labels.filter(m => m < _curYm);
-    labels.forEach(m => { dataMap[m] = monthly[m]; });
+    labels.forEach(m => { dataMap[m] = monthly[m]; }); if (typeof _renewalView2y!=='undefined' && _renewalView2y) labels=labels.slice(-24);
   }
 
   if (labels.length === 0) {
@@ -7588,10 +7596,10 @@ function renderRenewalGraph() {
   }
   _renewalAllYearMode=false; _renewalSeries=null;
   if (_renewalGraphPeriod==='monthly') {
-    const _fyOf=ym=>+ym.slice(0,4); const _fmiOf=ym=>+ym.slice(5,7)-1;
+    const _fs=(typeof _renewalFYStart!=='undefined'?_renewalFYStart:1); const _fyOf=ym=>{const y=+ym.slice(0,4),m=+ym.slice(5,7);return (m>=_fs)?y:y-1;}; const _fmiOf=ym=>{const m=+ym.slice(5,7);return (m-_fs+12)%12;};
     const _years=[...new Set(labels.map(_fyOf))].sort((x,z)=>x-z);
-    const _fmLabels=['1\u6708','2\u6708','3\u6708','4\u6708','5\u6708','6\u6708','7\u6708','8\u6708','9\u6708','10\u6708','11\u6708','12\u6708'];
-    if (_years.length){
+    const _MN=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']; const _fmLabels=Array.from({length:12},function(_x,k){return _MN[(_fs-1+k)%12];});
+    if (_years.length && !(typeof _renewalView2y!=='undefined' && _renewalView2y)){
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
       if (metric==='all'){ series=_renewalOverviewKeys().map(k=>({key:k,label:_RENEWAL_METRICS[k].label,color:_RENEWAL_METRICS[k].color,fmt:_RENEWAL_METRICS[k].fmt,vals:_renewalMetricValues(k,labels,dataMap,code)})); normalize=true; }
@@ -10824,6 +10832,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         <button id="renewalGraphPeriodMonth" onclick="_setRenewalGraphPeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
         <button id="renewalGraphPeriodDaily" onclick="_setRenewalGraphPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
       </div>
+      <div id="renewalGraphFYBtns" style="display:flex;gap:4px"><button id="renewalGraphFYCal" onclick="setRenewalFYStart(1)" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="renewalGraphFYFiscal" onclick="setRenewalFYStart(5)" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">5月始まり</button><button id="renewalGraphView2yBtn" onclick="setRenewal2y()" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">2年横並び</button></div>
       <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
       <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
         <option value="all">全体（CTR除く）</option>
