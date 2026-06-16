@@ -494,7 +494,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.696</span>
+    <span class="build-date">v1.697</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10376,11 +10376,11 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           const rppS = _ag.rppSales;
           const seo = Math.max(0, totS - rppS);
           const _adv = p.sales720 || 0; const _base = seo + _adv; const _sp = _base>0?Math.round(seo/_base*100):0;
-          return seo > 0 ? `<span>${fmtY(seo)}</span><span style="font-size:9px;color:var(--text3);font-weight:600;line-height:1;margin-top:1px">${_sp}%</span>` : '<span style="color:var(--text3)">—</span>';
+          return seo > 0 ? `<span>${fmtY(seo)}</span><span style="font-size:9px;color:hsl(212,85%,${Math.round(62-_sp*0.34)}%);font-weight:700;line-height:1;margin-top:1px">${_sp}%</span>` : '<span style="color:var(--text3)">—</span>';
         })()}
       </div>
       <div class="cell r mono" style="background:#eef4fb;border-right:2px solid #c9dff0">
-        ${(() => { const _t=_ag.totSales,_r=_ag.rppSales,_seo=Math.max(0,_t-_r),_adv=p.sales720||0,_base=_seo+_adv; const _ap=_base>0?(100-Math.round(_seo/_base*100)):0; return _adv>0 ? `<span>${fmtY(_adv)}</span><span style="font-size:9px;color:var(--text3);font-weight:600;line-height:1;margin-top:1px">${_ap}%</span>` : '—'; })()}
+        ${(() => { const _t=_ag.totSales,_r=_ag.rppSales,_seo=Math.max(0,_t-_r),_adv=p.sales720||0,_base=_seo+_adv; const _ap=_base>0?(100-Math.round(_seo/_base*100)):0; return _adv>0 ? `<span>${fmtY(_adv)}</span><span style="font-size:9px;color:hsl(2,78%,${Math.round(60-_ap*0.32)}%);font-weight:700;line-height:1;margin-top:1px">${_ap}%</span>` : '—'; })()}
       </div>
       <div class="cell r mono has-bar" style="background:#fdf0e8">
         <span>${fmtY(p.spend)}</span>
@@ -10456,7 +10456,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
             style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;white-space:nowrap;text-align:center">${lbl}</button>`;
         }).join('')}
       </div>` : ''}
-      <div class="toggle-cell"><div class="toggle-icon${isExp?' open':''}">▶</div></div>
+      <div class="toggle-cell">${_subTabFilter?'':`<div class="toggle-icon${isExp?' open':''}">▶</div>`}</div>
     </div>
     <div class="daily-panel${isExp?' open':''}" id="dp-${p.id}">
       ${isExp ? renderCalendar(DB[p.id], ym) : ''}
