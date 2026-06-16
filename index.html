@@ -494,7 +494,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.691</span>
+    <span class="build-date">v1.692</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8690,10 +8690,11 @@ function _subTabToolbar(tab, currentYm) {
     ? `<button onclick="downloadSSCsv('${tab}')" style="padding:7px 16px;border-radius:8px;border:2px solid var(--accent);background:#e3f2fd;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(21,101,192,0.15);transition:all 0.15s" onmouseover="this.style.background='#bbdefb';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(21,101,192,0.25)'" onmouseout="this.style.background='#e3f2fd';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(21,101,192,0.15)'" title="この月の商品管理番号と広告出稿有無をCSVでダウンロード">📥 SALE一括用ファイル出力</button>`
     : '';
   const colwBtn = (isStatus || isSS) ? '<button onclick="_openColWidthPanel()" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;margin-right:8px">項目調整</button>' : '';
+  const sroasBtns = isStatus ? '<div id="sroasFilterBtnsSub" style="display:flex;gap:3px;align-items:center;margin-left:8px">'+_sroasFilterBtnsHtml()+'</div>' : '';
   return `<div class="table-toolbar">
     <select class="toolbar-month" id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)">${monthOpts}</select>
     <input type="text" class="toolbar-search" id="subTabSearchBox" placeholder="商品名・商品番号で検索..." oninput="renderMonthlySubTab(_currentTab)" style="width:220px">
-    <div class="toolbar-right">${colwBtn}${csvBtn}${updateBtn}</div>
+    ${sroasBtns}<div class="toolbar-right">${colwBtn}${csvBtn}${updateBtn}</div>
   </div>`;
 }
 
@@ -10126,7 +10127,7 @@ function getSorted(ym) {
   });
   products = products.map(p => ({ ...p, ...getStats(p, ym) }));
   if (_dayMode && _selectedDay) products = products.filter(p => (p.spend||0)>0 || (p.sales720||0)>0 || (getItemDaySales(p.id,_selectedDay).sales||0)>0);
-  if (_sroasFilter && !_subTabFilter) {
+  if (_sroasFilter) {
     products = products.filter(p => {
       const ag = _aggFor(p.id, ym);
       const sr = p.spend>0 ? Math.round(ag.totSales/p.spend*100) : 0;
@@ -10785,14 +10786,18 @@ let _sroasFilter=null;
 const _SROAS_COLORS={g:'#1D9E75',y:'#BA7517',o:'#ED7D31',r:'#A32D2D',n:'var(--text3)'};
 const _SROAS_CATS=[['g','緑','#1D9E75'],['y','黄','#BA7517'],['o','オレンジ','#ED7D31'],['r','赤','#A32D2D'],['n','-','#9ca3af']];
 function _sroasCat(v){ if(!(v>0)) return 'n'; if(v>=1000) return 'g'; if(v>=500) return 'y'; if(v>=200) return 'o'; return 'r'; }
-function _renderSroasFilterBtns(){
-  const w=document.getElementById('sroasFilterBtns'); if(!w) return;
-  w.innerHTML='<span style="font-size:10px;color:var(--text3);margin:0 2px 0 2px;white-space:nowrap">売上ROAS</span>'+
+function _sroasFilterBtnsHtml(){
+  return '<span style="font-size:10px;color:var(--text3);margin:0 2px 0 2px;white-space:nowrap">売上ROAS</span>'+
     _SROAS_CATS.map(function(c){ const on=_sroasFilter===c[0];
       return '<button onclick="_setSroasFilter(\''+c[0]+'\')" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;border:1.5px solid '+c[2]+';background:'+(on?c[2]:'transparent')+';color:'+(on?'#fff':c[2])+'">'+c[1]+'</button>';
     }).join('');
 }
-function _setSroasFilter(cat){ _sroasFilter=(_sroasFilter===cat)?null:cat; _renderSroasFilterBtns(); if(typeof renderTable==='function') renderTable(); }
+function _renderSroasFilterBtns(){
+  const html=_sroasFilterBtnsHtml();
+  const w=document.getElementById('sroasFilterBtns'); if(w) w.innerHTML=html;
+  const w2=document.getElementById('sroasFilterBtnsSub'); if(w2) w2.innerHTML=html;
+}
+function _setSroasFilter(cat){ _sroasFilter=(_sroasFilter===cat)?null:cat; _renderSroasFilterBtns(); if(_subTabFilter){ if(typeof renderMonthlySubTab==='function') renderMonthlySubTab(_currentTab); } else if(typeof renderTable==='function'){ renderTable(); } }
 try{ _renderSroasFilterBtns(); }catch(e){}
 
 function exportCSV() {
