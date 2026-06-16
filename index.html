@@ -490,7 +490,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.679</span>
+    <span class="build-date">v1.680</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2211,14 +2211,9 @@ function _alignTaiouLabel() {
     const zentai = document.getElementById('label-zentai');
     const taiou  = document.getElementById('label-taiou');
     if (!zentai || !taiou) return;
-    // いったんマージンをリセットして自然位置を測る
+    // offsetLeft はズーム非依存のレイアウト座標。両ナビ行は同じ左端なので直接比較できる
     taiou.style.marginLeft = '0px';
-    // リセットを反映させてから測定
-    const zentaiLeft = zentai.getBoundingClientRect().left;
-    const taiouLeft  = taiou.getBoundingClientRect().left;
-    // 【全体】の左端に揃うのに必要な追加マージン(ズームの影響を打ち消すため倍率補正)
-    const z = (typeof _zoom === 'number' && _zoom > 0) ? _zoom : 1;
-    let need = (zentaiLeft - taiouLeft) / z;
+    let need = zentai.offsetLeft - taiou.offsetLeft;
     if (need < 0) need = 0; // 既に右にある場合は無理に詰めない
     taiou.style.marginLeft = need + 'px';
   } catch(e) { console.warn('_alignTaiouLabel error:', e); }
