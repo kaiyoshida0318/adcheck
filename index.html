@@ -385,6 +385,7 @@ header + * { margin-top: 4px; }
 .tab-btn-all.active { background: #e8f4fb; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
+.mk-table{width:100%;border-collapse:collapse;font-size:12px}.mk-table th{position:sticky;top:0;background:#f8f9fa;color:var(--text3);font-weight:700;font-size:11px;padding:8px 6px;border-bottom:1px solid var(--border);white-space:nowrap;z-index:5;text-align:left}.mk-table td{padding:6px 6px;border-bottom:1px solid var(--border);vertical-align:middle}.mk-table td.r,.mk-table th.r{text-align:right}.mk-table .mk-code{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2)}.mk-table .mk-name{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mk-table .b-tot{background:#eef4fb}.mk-table .b-ctr{background:#eff5ec}.mk-table .b-cvr{background:#fff8e5}.mk-table .grpL{border-left:2px solid #cbd5e1}
 .tab-coming-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; gap: 12px; }
 .tab-coming-soon .icon { font-size: 48px; }
 .tab-coming-soon h3 { font-size: 18px; font-weight: 700; color: var(--text); }
@@ -495,7 +496,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.737</span>
+    <span class="build-date">v1.738</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -515,7 +516,8 @@ header + * { margin-top: 4px; }
 <!-- タブバー -->
 <nav class="tab-bar tab-sub-row" style="background:#ffffff;border-bottom:1px solid var(--border)">
   <span class="tab-row-label" style="color:#2563eb">【基本】</span>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-products" onclick="switchTab('products')">📊 商品-基本データ</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-products" onclick="switchTab('products')">📊 商品-売上データ</button>
+            <button class="tab-btn tab-btn-basic" id="tab-btn-marke" onclick="switchTab('marke')">📊 商品-マーケデータ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">📊 商品-月別データ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-item-graph" onclick="switchTab('item-graph')">📈 商品-グラフ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-retired" onclick="switchTab('retired')">🗂 引退済商品</button>
@@ -527,7 +529,6 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-all" id="tab-btn-daily" onclick="switchTab('daily')">📊 全-日別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-graph" onclick="switchTab('graph')">📈 全-日月別グラフ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-yoy" onclick="switchTab('yoy')">📊 全-比較</button>
-  <button class="tab-btn tab-btn-all" id="tab-btn-formula" onclick="switchTab('formula')">📐 全-計算式</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-2">
   <span class="tab-row-label" style="color:#16a34a">【リニューアル】</span>
@@ -629,6 +630,19 @@ header + * { margin-top: 4px; }
   </div>
 
   <!-- ── 対応検討タブ ── -->
+  <div class="tab-panel" id="tab-marke">
+    <div style="padding:12px 16px">
+      <div class="table-card">
+        <div style="overflow-y:auto;max-height:75vh;overflow-x:auto">
+          <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
+            <select class="toolbar-month" id="markeMonthSel" onchange="renderMarke()"></select>
+            <input type="text" class="toolbar-search" id="markeSearch" placeholder="商品名・商品番号で検索..." oninput="renderMarke()">
+          </div>
+          <div id="markeList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="tab-panel" id="tab-roas-trend">
     <div style="padding:12px 16px">
       <div class="table-card">
@@ -844,22 +858,6 @@ header + * { margin-top: 4px; }
       <div id="yoyCompareArea" style="position:relative;overflow:auto;max-height:72vh"></div>
     </div>
   </div>
-  <div class="tab-panel" id="tab-formula">
-    <div style="padding:20px 24px;max-width:860px">
-      <div style="font-size:18px;font-weight:700;margin-bottom:20px">📐 全-計算式</div>
-      <!-- 月別・商品別 途中式ビューア -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;border-bottom:2px solid var(--border);padding-bottom:8px">🔍 月別・商品別 予測vol途中式</div>
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-          <select id="formulaMonthSel" onchange="renderFormulaBrowser()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text)"></select>
-          <input type="text" id="formulaSearch" placeholder="商品名・商品番号で検索..." oninput="renderFormulaBrowser()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);width:240px">
-          <span id="formulaCount" style="font-size:11px;color:var(--text3)"></span>
-        </div>
-        <div id="formulaBrowserList"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- 全-月別データ -->
   <div class="tab-panel" id="tab-monthly">
     <div class="container" style="max-width:1400px">
@@ -9194,6 +9192,7 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab)?.classList.add('active');
   // 月別/商品個別タブを開いたら自動でレンダリング
   if (tab === 'products') renderTable();
+  if (tab === 'marke') renderMarke();
   if (tab === 'monthly-item') renderMonthlyItem();
   if (tab === 'retired') renderRetired();
   if (tab === 'roas-trend') renderRoasTrend();
@@ -9206,7 +9205,6 @@ function switchTab(tab) {
   if (tab === 'yoy') renderYoy();
   if (tab === 'kw-basic') renderKwBasic();
   if (tab === 'kw-compare') renderKwCompare();
-  if (tab === 'formula') { _initFormulaMonthSel(); renderFormulaBrowser(); }
   if (tab === 'item-graph') { _initItemGraphRange(); }
   if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
   if (tab === 'daily') { renderDailyFiltered(); }
@@ -10422,6 +10420,54 @@ function getSorted(ym) {
 }
 
 function renderTable() { renderPage(); }
+function _markeMon(){ var sel=document.getElementById('markeMonthSel'); return (sel&&sel.value)||getSelectedMonth(); }
+function _markeAgg(code, ym){
+  var m=itemDailyData[code]||{}, cl=0,imp=0,od=0,clK=0,impK=0,odK=0;
+  for(var d in m){ if(d.slice(0,7)!==ym) continue; var v=m[d]||{};
+    cl+=v.cl||0; imp+=v.imp||0; od+=v.orders||0; clK+=v.clKw||0; impK+=v.impKw||0; odK+=v.ordersKw||0; }
+  var cl2=Math.max(0,cl-clK), imp2=Math.max(0,imp-impK), od2=Math.max(0,od-odK);
+  return { ctrKw: impK>0?clK/impK*100:null, ctr20: imp2>0?cl2/imp2*100:null, cvrKw: clK>0?odK/clK*100:null, cvr20: cl2>0?od2/cl2*100:null };
+}
+function renderMarke(){
+  var listEl=document.getElementById('markeList'); if(!listEl) return;
+  var sel=document.getElementById('markeMonthSel');
+  if(sel){ var months=(typeof getMonths==='function'?getMonths():[]).slice().reverse(); var cur=sel.value||getSelectedMonth();
+    sel.innerHTML=months.map(function(m){ return '<option value="'+m+'"'+(m===cur?' selected':'')+'>'+m.replace('-','年')+'月</option>'; }).join(''); }
+  var ym=_markeMon();
+  var q=((document.getElementById('markeSearch')||{}).value||'').toLowerCase();
+  var products=getProducts().filter(function(p){ return !(productCache[p.id]&&productCache[p.id].retired); });
+  if(q) products=products.filter(function(p){ var c=productCache[p.id]||{}; var nm=(c.manualName||c.name||'').toLowerCase(); var inum=(c.itemNumber||'').toLowerCase(); return p.id.toString().toLowerCase().includes(q)||nm.includes(q)||inum.includes(q); });
+  var rowsData=products.map(function(p){ var ag=getItemMonthAgg(p.id,ym); return {p:p, ag:ag, spend:ag.spend||0, sales720:ag.sales720||0}; });
+  rowsData.sort(function(a,b){ return (b.spend)-(a.spend); });
+  function pf(v){ return v==null?'<span style="color:var(--text3)">\u2212</span>':((Math.round(v*100)/100)+'%'); }
+  function rf(v){ return v?(Math.round(v)+'%'):'<span style="color:var(--text3)">\u2212</span>'; }
+  var rows=rowsData.map(function(o){
+    var p=o.p, ag=o.ag; var totS=ag.totSales||0, rppS=ag.rppSales||0; var seo=Math.max(0,totS-rppS); var adv=o.sales720;
+    var sroas=o.spend>0?Math.round(totS/o.spend*100):0; var mk=_markeAgg(p.id,ym);
+    var c=productCache[p.id]||{}; var nm=c.manualName||c.name||p.id; var inum=c.itemNumber||''; var img=c.manualImg||c.img||null;
+    var imgEl=img?('<img src="'+img+'" style="width:34px;height:34px;object-fit:cover;border-radius:4px">'):'<div style="width:34px;height:34px;border-radius:4px;background:var(--surface2)"></div>';
+    return '<tr>'+
+      '<td class="mk-code">'+p.id+'</td>'+
+      '<td>'+inum+'</td>'+
+      '<td>'+imgEl+'</td>'+
+      '<td class="mk-name" title="'+String(nm).replace(/"/g,'&quot;')+'">'+nm+'</td>'+
+      '<td class="r b-tot">'+fmtY(totS)+'</td>'+
+      '<td class="r b-tot">'+rf(sroas)+'</td>'+
+      '<td class="r b-tot">'+fmtY(seo)+'</td>'+
+      '<td class="r b-tot">'+fmtY(adv)+'</td>'+
+      '<td class="r b-ctr grpL">'+pf(mk.ctrKw)+'</td>'+
+      '<td class="r b-ctr">'+pf(mk.ctr20)+'</td>'+
+      '<td class="r b-cvr grpL">'+pf(mk.cvrKw)+'</td>'+
+      '<td class="r b-cvr">'+pf(mk.cvr20)+'</td>'+
+    '</tr>';
+  }).join('');
+  listEl.innerHTML='<table class="mk-table"><thead><tr>'+
+    '<th>商品番号</th><th>商品管理番号</th><th>商品画像</th><th>商品名</th>'+
+    '<th class="r b-tot">総売上</th><th class="r b-tot">売上ROAS</th><th class="r b-tot">SEO売上</th><th class="r b-tot">広告売上</th>'+
+    '<th class="r b-ctr grpL">CTR-KW</th><th class="r b-ctr">CTR-20</th>'+
+    '<th class="r b-cvr grpL">CVR-KW</th><th class="r b-cvr">CVR-20</th>'+
+    '</tr></thead><tbody>'+(rows||'<tr><td colspan="12" style="padding:30px;text-align:center;color:var(--text3)">データがありません</td></tr>')+'</tbody></table>';
+}
 
 function renderPage() {
   const ym = _subTabFilter ? _getSubTabMonth() : getSelectedMonth();
