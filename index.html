@@ -494,7 +494,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.725</span>
+    <span class="build-date">v1.726</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4786,7 +4786,7 @@ function _applyItemDayPreset(){
   var d1=document.getElementById('itemGraphDateFrom'), d2=document.getElementById('itemGraphDateTo');
   if(!d1||!d2) return;
   var end=d2.value;
-  if(!end){ var ds=Object.keys(itemDailyData[_itemGraphCode]||{}).sort(); end=ds.length?ds[ds.length-1]:''; if(end)d2.value=end; }
+  if(!end){ var ds=_itemDateUniverse(_itemGraphCode); end=ds.length?ds[ds.length-1]:''; if(end)d2.value=end; }
   if(!end) return;
   var from='';
   if(_itemGraphDayPreset==='60'){ var e=new Date(end+'T00:00:00'); e.setDate(e.getDate()-29); from=_igYmd(e); }
@@ -5069,8 +5069,9 @@ function renderItemGraph() {
   if (_itemGraphPeriod === 'daily') {
     const fromD = document.getElementById('itemGraphDateFrom')?.value || '';
     const toD   = document.getElementById('itemGraphDateTo')?.value   || '';
-    labels = Object.keys(byDate).sort().filter(d => (!fromD || d >= fromD) && (!toD || d <= toD));
-    labels.forEach(d => { dataMap[d] = byDate[d]; });
+    labels = _itemDateUniverse(code).filter(d => (!fromD || d >= fromD) && (!toD || d <= toD));
+    if (!labels.length) { const _u=_itemDateUniverse(code); if (_u.length) { const _to2=_u[_u.length-1]; const _e2=new Date(_to2+'T00:00:00'); _e2.setDate(_e2.getDate()-29); const _from2=_igYmd(_e2); const _d1=document.getElementById('itemGraphDateFrom'), _d2=document.getElementById('itemGraphDateTo'); if(_d1)_d1.value=_from2; if(_d2)_d2.value=_to2; labels=_u.filter(d=>d>=_from2&&d<=_to2); } }
+    labels.forEach(d => { dataMap[d] = byDate[d] || {spend:0,sales:0,spendKw:0,salesKw:0,cl:0,clKw:0,orders:0,ordersKw:0,imp:0,impKw:0}; });
   } else {
     const fromM = document.getElementById('itemGraphMonthFrom')?.value || '';
     const toM   = document.getElementById('itemGraphMonthTo')?.value   || '';
@@ -5081,6 +5082,7 @@ function renderItemGraph() {
       if (!monthly[ym]) monthly[ym] = {spend:0,sales:0,spendKw:0,salesKw:0,cl:0,clKw:0,orders:0,ordersKw:0,imp:0,impKw:0};
       ['spend','sales','spendKw','salesKw','cl','clKw','orders','ordersKw','imp','impKw'].forEach(k=>{ monthly[ym][k]=(monthly[ym][k]||0)+(v[k]||0); });
     });
+    try{ const _sc=_getDailySales()[code]; if(_sc){ Object.keys(_sc).forEach(d=>{ const ym=d.slice(0,7), ymc=ym.replace('-',''); if((fromM&&ymc<fromM)||(toM&&ymc>toM))return; if(!monthly[ym]) monthly[ym]={spend:0,sales:0,spendKw:0,salesKw:0,cl:0,clKw:0,orders:0,ordersKw:0,imp:0,impKw:0}; }); } }catch(e){}
     labels = Object.keys(monthly).sort();
     const _now=new Date(); const _curYm=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');
     labels = labels.filter(m => m < _curYm);
@@ -7577,7 +7579,7 @@ function _syncRenewalDayMonth(keepSelection) {
   const code = _renewalGraphCode;
   const byDate = (code && itemDailyData[code]) || {};
   // 利用可能な月(YYYY-MM)を新しい順に
-  const months = [...new Set(Object.keys(byDate).map(d => d.slice(0,7)))].sort().reverse();
+  const months = [...new Set(_itemDateUniverse(code).map(d => d.slice(0,7)))].sort().reverse();
   const prev = keepSelection ? sel.value : null;
   sel.innerHTML = months.map(m => `<option value="${m}">${m.slice(0,4)}年${m.slice(5,7)}月</option>`).join('');
   // 以前の選択を維持、無ければ最新月
@@ -7708,7 +7710,7 @@ function renderRenewalGraph() {
   if (_renewalGraphPeriod === 'daily') {
     // 選択中の月だけに絞る（数百日が出ないように）
     const selMonth = document.getElementById('renewalGraphDayMonth')?.value || '';
-    const allD = Object.keys(byDate).sort();
+    const allD = _itemDateUniverse(code);
     if (!selMonth) { labels = allD; }
     else {
       const y=+selMonth.slice(0,4), mo=+selMonth.slice(5,7);
@@ -7722,7 +7724,8 @@ function renderRenewalGraph() {
       else { const e=new Date(to+'T00:00:00'); e.setDate(e.getDate()-29); from=_igYmd(e); }
       labels = allD.filter(d => d>=from && d<=to);
     }
-    labels.forEach(d => { dataMap[d] = byDate[d]; });
+    if (!labels.length && allD.length) { const _to2=allD[allD.length-1]; const _e2=new Date(_to2+'T00:00:00'); _e2.setDate(_e2.getDate()-29); const _from2=_igYmd(_e2); labels=allD.filter(d=>d>=_from2&&d<=_to2); }
+    labels.forEach(d => { dataMap[d] = byDate[d] || {spend:0,sales:0,orders:0,cl:0,imp:0,spendKw:0,salesKw:0,ordersKw:0,clKw:0,impKw:0}; });
   } else {
     const monthly = {};
     Object.entries(byDate).forEach(([d, v]) => {
@@ -7732,6 +7735,7 @@ function renderRenewalGraph() {
         monthly[ym][k] = (monthly[ym][k]||0) + (v[k]||0);
       });
     });
+    try{ const _sc=_getDailySales()[code]; if(_sc){ Object.keys(_sc).forEach(d=>{ const ym=d.slice(0,7); if(!monthly[ym]) monthly[ym]={ spend:0, sales:0, orders:0, cl:0, imp:0, spendKw:0, salesKw:0, ordersKw:0, clKw:0, impKw:0 }; }); } }catch(e){}
     labels = Object.keys(monthly).sort();
     // 当月（まだ締まっていない月）は数値が不完全なので月別表示から除外
     const _now = new Date();
@@ -9769,6 +9773,12 @@ function _getDailySales() {
   return c;
 }
 // 商品×日付の総売上情報を取得
+function _itemDateUniverse(code){
+  var set=Object.create(null);
+  var a=itemDailyData[code]; if(a){ for(var k in a) set[k]=1; }
+  try{ var sc=_getDailySales()[code]; if(sc){ for(var k2 in sc) set[k2]=1; } }catch(e){}
+  return Object.keys(set).sort();
+}
 function getItemDaySales(code, date) {
   const c = _getDailySales()[code];
   return (c && c[date]) || { sales:0, orders:0, units:0 };
