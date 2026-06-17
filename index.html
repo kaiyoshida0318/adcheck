@@ -385,7 +385,7 @@ header + * { margin-top: 4px; }
 .tab-btn-all.active { background: #e8f4fb; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
-.mk-table{width:100%;border-collapse:collapse;font-size:12px}.mk-table th{position:sticky;top:0;background:#f8f9fa;color:var(--text3);font-weight:700;font-size:11px;padding:8px 6px;border-bottom:1px solid var(--border);white-space:nowrap;z-index:5;text-align:left}.mk-table td{padding:6px 6px;border-bottom:1px solid var(--border);vertical-align:middle}.mk-table td.r,.mk-table th.r{text-align:right}.mk-table .mk-code{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2)}.mk-table .mk-name{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mk-table .b-tot{background:#eef4fb}.mk-table .b-ctr{background:#eff5ec}.mk-table .b-cvr{background:#fff8e5}.mk-table .grpL{border-left:2px solid #cbd5e1}
+.mk-table{width:100%;border-collapse:collapse;font-size:12px}.mk-table th{position:sticky;top:0;background:#f8f9fa;color:var(--text3);font-weight:700;font-size:11px;padding:8px 6px;border-bottom:1px solid var(--border);white-space:nowrap;z-index:5;text-align:left}.mk-table td{padding:6px 6px;border-bottom:1px solid var(--border);vertical-align:middle}.mk-table td.r,.mk-table th.r{text-align:right}.mk-table .mk-code{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2)}.mk-table .mk-name{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mk-table td.b-tot{background:#eef4fb;color:#10548c;font-weight:600}.mk-table td.b-ctr{background:#eff5ec;color:#1b6e2a;font-weight:600}.mk-table td.b-cvr{background:#fff8e5;color:#9a6400;font-weight:600}.mk-table th.b-tot{background:#eef4fb;color:#1565C0}.mk-table th.b-ctr{background:#eff5ec;color:#2E7D32}.mk-table th.b-cvr{background:#fff8e5;color:#B26A00}.mk-table tbody tr:hover td{filter:brightness(0.97)}.mk-table .mk-code{color:#64748b}.mk-table .grpL{border-left:2px solid #cbd5e1}
 .tab-coming-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; gap: 12px; }
 .tab-coming-soon .icon { font-size: 48px; }
 .tab-coming-soon h3 { font-size: 18px; font-weight: 700; color: var(--text); }
@@ -496,7 +496,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.738</span>
+    <span class="build-date">v1.739</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10440,7 +10440,7 @@ function renderMarke(){
   var rowsData=products.map(function(p){ var ag=getItemMonthAgg(p.id,ym); return {p:p, ag:ag, spend:ag.spend||0, sales720:ag.sales720||0}; });
   rowsData.sort(function(a,b){ return (b.spend)-(a.spend); });
   function pf(v){ return v==null?'<span style="color:var(--text3)">\u2212</span>':((Math.round(v*100)/100)+'%'); }
-  function rf(v){ return v?(Math.round(v)+'%'):'<span style="color:var(--text3)">\u2212</span>'; }
+  function rf(v){ return v?('<span style="color:'+_pctBandColor(v)+';font-weight:700">'+Math.round(v)+'%</span>'):'<span style="color:var(--text3)">\u2212</span>'; }
   var rows=rowsData.map(function(o){
     var p=o.p, ag=o.ag; var totS=ag.totSales||0, rppS=ag.rppSales||0; var seo=Math.max(0,totS-rppS); var adv=o.sales720;
     var sroas=o.spend>0?Math.round(totS/o.spend*100):0; var mk=_markeAgg(p.id,ym);
