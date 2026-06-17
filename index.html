@@ -498,7 +498,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.742</span>
+    <span class="build-date">v1.743</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10494,12 +10494,26 @@ function _markeRow(d, maxSpend){
     <div class="cell r mono" style="background:#eef4fb">${d.seo>0?`${fmtY(d.seo)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_sp)};font-weight:700;line-height:1">${_sp}%</span>`:'<span style="color:var(--text3)">\u2014</span>'}</div>
     <div class="cell r mono" style="background:#eef4fb;border-right:2px solid #c9dff0">${d.adv>0?`${fmtY(d.adv)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_ap)};font-weight:700;line-height:1">${_ap}%</span>`:'<span style="color:var(--text3)">\u2014</span>'}</div>
     <div class="cell r mono has-bar" style="background:#eff5ec">${d.kwSpend>0?`<span>${fmtY(d.kwSpend)}</span><div class="mini-bar"><div class="mini-fill" style="width:${kwPct}%;background:#70AD47;opacity:0.7"></div></div>`:'<span style="color:var(--text3)">\u2014</span>'}</div>
-    <div class="cell r mono" style="background:#eff5ec">${pf(d.ctrKw,'#1b6e2a')}</div>
-    <div class="cell r mono" style="background:#eff5ec;border-right:2px solid #b8d9a8">${pf(d.cvrKw,'#1b6e2a')}</div>
+    <div class="cell r mono" style="background:#eff5ec">${pf(d.ctrKw,d._ctrKwC)}</div>
+    <div class="cell r mono" style="background:#eff5ec;border-right:2px solid #b8d9a8">${pf(d.cvrKw,d._cvrKwC)}</div>
     <div class="cell r mono has-bar" style="background:#fff8e5">${d.sp20>0?`<span>${fmtY(d.sp20)}</span><div class="mini-bar"><div class="mini-fill" style="width:${p20Pct}%;background:#E6B800;opacity:0.7"></div></div>`:'<span style="color:var(--text3)">\u2014</span>'}</div>
-    <div class="cell r mono" style="background:#fff8e5">${pf(d.ctr20,'#9a6400')}</div>
-    <div class="cell r mono" style="background:#fff8e5">${pf(d.cvr20,'#9a6400')}</div>
+    <div class="cell r mono" style="background:#fff8e5">${pf(d.ctr20,d._ctr20C)}</div>
+    <div class="cell r mono" style="background:#fff8e5">${pf(d.cvr20,d._cvr20C)}</div>
   </div></div>`;
+}
+function _markeRankColor(data, key){
+  var vals=data.map(function(d){return d[key];}).filter(function(v){return v!=null;}).sort(function(a,b){return a-b;});
+  var n=vals.length;
+  return function(v){
+    if(v==null||n===0) return '#8B1A1A';
+    var idx=0; while(idx<n && vals[idx]<v) idx++;
+    var rank = n>1 ? idx/(n-1) : 1;
+    if(rank>=0.8) return '#0D47A1';
+    if(rank>=0.6) return '#1E88E5';
+    if(rank>=0.4) return '#C9A000';
+    if(rank>=0.2) return '#E53935';
+    return '#8B1A1A';
+  };
 }
 function renderMarke(){
   var listEl=document.getElementById('markeList'); if(!listEl) return;
@@ -10511,6 +10525,8 @@ function renderMarke(){
   var products=getProducts().filter(function(p){ return !(productCache[p.id]&&productCache[p.id].retired); });
   if(q) products=products.filter(function(p){ var c=productCache[p.id]||{}; var nm=(c.manualName||c.name||'').toLowerCase(); var inum=(c.itemNumber||'').toLowerCase(); return p.id.toString().toLowerCase().includes(q)||nm.includes(q)||inum.includes(q); });
   var data=products.map(function(p){ return _markeData(p,ym); });
+  var _cK=_markeRankColor(data,'ctrKw'),_c2=_markeRankColor(data,'ctr20'),_vK=_markeRankColor(data,'cvrKw'),_v2=_markeRankColor(data,'cvr20');
+  data.forEach(function(d){ d._ctrKwC=_cK(d.ctrKw); d._ctr20C=_c2(d.ctr20); d._cvrKwC=_vK(d.cvrKw); d._cvr20C=_v2(d.cvr20); });
   var maxSpend=Math.max.apply(null,data.map(function(d){return d.spend;}).concat([1]));
   var SK={ itemnum:function(d){return d.itemNumber;}, itemid:function(d){return d.p.id;}, name:function(d){return d.name;},
     totsales:function(d){return d.totS;}, sroas:function(d){return d.sroas;}, seo:function(d){return d.seo;}, adsales:function(d){return d.adv;},
