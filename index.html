@@ -494,7 +494,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.720</span>
+    <span class="build-date">v1.721</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -693,6 +693,7 @@ header + * { margin-top: 4px; }
               style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
           </div>
           <div id="itemGraphFYBtns" style="display:flex;gap:4px"><button id="itemGraphFYCal" onclick="setItemGraphFYStart(1)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="itemGraphFYFiscal" onclick="setItemGraphFYStart(5)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">5月始まり</button><button id="itemGraphView2yBtn" onclick="setItemGraph2y()" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">2年横並び</button></div>
+          <div id="itemGraphDayPresets" style="display:none;gap:4px"><button id="itemGraphDP60" onclick="setItemGraphDayPreset('60')" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">60日</button><button id="itemGraphDP2M" onclick="setItemGraphDayPreset('2month')" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">先月-今月</button><button id="itemGraphDPTM" onclick="setItemGraphDayPreset('thismonth')" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">今月</button></div>
           <select id="itemGraphMetric" class="toolbar-month" onchange="renderItemGraph()" style="font-size:13px;padding:6px 12px">
             <option value="all">両方-全体</option>
             <option value="sales">両方-売上</option>
@@ -711,7 +712,7 @@ header + * { margin-top: 4px; }
           <div id="itemGraphDateRange" style="display:none;align-items:center;gap:6px">
             <input type="date" id="itemGraphDateFrom" class="toolbar-month" onchange="renderItemGraph()" style="font-size:12px;padding:4px 8px">
             <span style="font-size:12px;color:var(--text3)">〜</span>
-            <input type="date" id="itemGraphDateTo" class="toolbar-month" onchange="renderItemGraph()" style="font-size:12px;padding:4px 8px">
+            <input type="date" id="itemGraphDateTo" class="toolbar-month" onchange="_applyItemDayPreset();renderItemGraph()" style="font-size:12px;padding:4px 8px">
           </div>
           <div id="itemGraphQuickBtns" style="display:flex;gap:3px;margin-left:6px">
             <button onclick="setItemGraphQuickRange('lastMonth')" style="font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">先月～今月</button>
@@ -4778,6 +4779,28 @@ function _itemGraphToggle() {
 var _itemGraphFYStart=1,_itemGraphView2y=false,_renewalFYStart=1,_renewalView2y=false;
 function _setItemGraphFYUI(){var on='font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap',off='font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap';var a=document.getElementById('itemGraphFYCal'),b=document.getElementById('itemGraphFYFiscal'),c=document.getElementById('itemGraphView2yBtn');if(a)a.style.cssText=(!_itemGraphView2y&&_itemGraphFYStart===1)?on:off;if(b)b.style.cssText=(!_itemGraphView2y&&_itemGraphFYStart===5)?on:off;if(c)c.style.cssText=_itemGraphView2y?on:off;}
 function setItemGraphFYStart(m){_itemGraphFYStart=+m;_itemGraphView2y=false;_setItemGraphFYUI();renderItemGraph();}
+let _itemGraphDayPreset='60';
+function _igYmd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function _applyItemDayPreset(){
+  var d1=document.getElementById('itemGraphDateFrom'), d2=document.getElementById('itemGraphDateTo');
+  if(!d1||!d2) return;
+  var end=d2.value;
+  if(!end){ var ds=Object.keys(itemDailyData[_itemGraphCode]||{}).sort(); end=ds.length?ds[ds.length-1]:''; if(end)d2.value=end; }
+  if(!end) return;
+  var from='';
+  if(_itemGraphDayPreset==='60'){ var e=new Date(end+'T00:00:00'); e.setDate(e.getDate()-59); from=_igYmd(e); }
+  else if(_itemGraphDayPreset==='thismonth'){ from=end.slice(0,8)+'01'; }
+  else if(_itemGraphDayPreset==='2month'){ var y=+end.slice(0,4),mo=+end.slice(5,7); from=_igYmd(new Date(y,mo-2,1)); }
+  if(from) d1.value=from;
+}
+function _setItemDayPresetUI(){
+  var on='font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap';
+  var off='font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap';
+  var map={'60':'itemGraphDP60','2month':'itemGraphDP2M','thismonth':'itemGraphDPTM'};
+  Object.keys(map).forEach(function(k){ var b=document.getElementById(map[k]); if(b)b.style.cssText=(_itemGraphDayPreset===k)?on:off; });
+}
+function setItemGraphDayPreset(p){ _itemGraphDayPreset=p; _setItemDayPresetUI(); _applyItemDayPreset(); renderItemGraph(); }
+
 function setItemGraph2y(){_itemGraphView2y=true;_setItemGraphFYUI();renderItemGraph();}
 function _setRenewalFYUI(){var on='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap',off='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap';var a=document.getElementById('renewalGraphFYCal'),b=document.getElementById('renewalGraphFYFiscal'),c=document.getElementById('renewalGraphView2yBtn');if(a)a.style.cssText=(!_renewalView2y&&_renewalFYStart===1)?on:off;if(b)b.style.cssText=(!_renewalView2y&&_renewalFYStart===5)?on:off;if(c)c.style.cssText=_renewalView2y?on:off;}
 function setRenewalFYStart(m){_renewalFYStart=+m;_renewalView2y=false;_setRenewalFYUI();renderRenewalGraph();}
@@ -4797,6 +4820,10 @@ function _setItemGraphPeriod(period) {
   });
   if (mRange) mRange.style.display = period === 'monthly' ? 'flex' : 'none';
   if (dRange) dRange.style.display = period === 'daily'   ? 'flex' : 'none';
+  var _fy=document.getElementById('itemGraphFYBtns'), _dp=document.getElementById('itemGraphDayPresets');
+  if(_fy)_fy.style.display = period==='monthly'?'flex':'none';
+  if(_dp)_dp.style.display = period==='daily'?'flex':'none';
+  if(period==='daily')_setItemDayPresetUI();
   _initItemGraphRange();
   if (_itemGraphOn) renderItemGraph();
 }
@@ -4823,8 +4850,8 @@ function _initItemGraphRange() {
     if (!d1 || !d2 || !_itemGraphCode) return;
     const dates = Object.keys(itemDailyData[_itemGraphCode] || {}).sort();
     if (!dates.length) return;
-    if (!d1.value) d1.value = dates[0];
     if (!d2.value) d2.value = dates[dates.length-1];
+    _applyItemDayPreset();
   }
 }
 
