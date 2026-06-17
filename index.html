@@ -495,7 +495,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.734</span>
+    <span class="build-date">v1.735</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1518,6 +1518,7 @@ header + * { margin-top: 4px; }
           <option value="mid2" style="color:#E65100;font-weight:600">中立-広告無し</option>
           <option value="mid2y" style="color:#E65100;font-weight:600">中立-広告無し-Yahoo</option>
           <option value="warn" style="color:#C62828;font-weight:600">撤退予定▲</option>
+          <option value="warnout" style="color:#C62828;font-weight:600">撤退予定-out記入済▲</option>
           <option value="out"  style="color:#6D1111;font-weight:600">撤退済■</option>
       </select>
       </div>
@@ -8268,9 +8269,9 @@ function renderRoasTrend() {
     const statusColor = STATUS_COLORS[statusVal] || '';
     const statusSel = `<div class="status-cell" onclick="event.stopPropagation()">
       <select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">
-        ${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','out'].map(v => {
-          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',out:'撤退済■'};
-          const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',out:'#6D1111'};
+        ${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','out'].map(v => {
+          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
+          const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnout:'#C62828',out:'#6D1111'};
           return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;
         }).join('')}
       </select>
@@ -8812,7 +8813,7 @@ function applyAllStatusUpdates() {
 // 【状態】サブタブのレンダリング
 const STATUS_COLORS = {
   unset:'', g1:'#1565C0', g1b:'#1E88E5', g2:'#0288D1', g3:'#4FC3F7',
-  new:'#2E7D32', mid:'#F9A825', midb:'#FFB300', mid2:'#E65100', mid2y:'#E65100', warn:'#C62828', out:'#6D1111'
+  new:'#2E7D32', mid:'#F9A825', midb:'#FFB300', mid2:'#E65100', mid2y:'#E65100', warn:'#C62828', warnout:'#C62828', out:'#6D1111'
 };
 function _statusDispHtml(v){
   const lab = (typeof STATUS_LABELS!=='undefined' && STATUS_LABELS[v]) || '';
@@ -8842,6 +8843,7 @@ const STATUS_LABELS = {
   'mid2':  '中立-広告無し',
   'mid2y': '中立-広告無し',
   'warn':  '撤退予定▲',
+  'warnout': '撤退予定▲',
   'out':   '撤退済■',
 };
 const SS_TABS = { 'ss-mar':'03', 'ss-jun':'06', 'ss-sep':'09', 'ss-dec':'12' };
@@ -8914,7 +8916,7 @@ function downloadSSCsv(tab) {
   // 区分(status)を「広告状況」の出稿中/未出稿に変換
   // g3(健常-広告無し)/mid2(中立-広告無し)/warn(撤退予定▲)/out(撤退済■) → 未出稿
   // それ以外 → 出稿中
-  const MISYUKKO_STATUSES = ['g3', 'mid2', 'mid2y', 'warn', 'out'];
+  const MISYUKKO_STATUSES = ['g3', 'mid2', 'mid2y', 'warn', 'warnout', 'out'];
   const toAdStatus = (status) => MISYUKKO_STATUSES.includes(status) ? '未出稿' : '出稿中';
   // CSV作成: 商品管理番号 / 広告状況
   const header = '商品管理番号,広告状況';
@@ -10208,7 +10210,7 @@ function _updateStatusCounts() {
   set('monthly-mid',   statusCount['mid']  || 0);
   set('monthly-midb',  statusCount['midb'] || 0);
   set('monthly-mid2',  (statusCount['mid2'] || 0)+(statusCount['mid2y'] || 0));
-  set('monthly-warn',  statusCount['warn'] || 0);
+  set('monthly-warn',  (statusCount['warn'] || 0)+(statusCount['warnout'] || 0));
   set('monthly-out',   statusCount['out']  || 0);
   set('monthly-unset', statusCount['unset']|| 0);
   set('ss-mar',        ssCount['03']);
@@ -10330,7 +10332,7 @@ function getSorted(ym) {
     if (q && !p.id.toString().includes(q) && !(productCache[p.id]?.itemNumber||'').toLowerCase().includes(q) && !(productCache[p.id]?.manualName||productCache[p.id]?.name||'').toLowerCase().includes(q)) return false;
     // サブタブフィルタ
     if (_subTabFilter && _subTabFilter !== 'all') {
-      let _st = (productCache[p.id]?.status || 'unset'); if (_st === 'mid2y') _st = 'mid2';
+      let _st = (productCache[p.id]?.status || 'unset'); if (_st === 'mid2y') _st = 'mid2'; if (_st === 'warnout') _st = 'warn';
       if (_st !== _subTabFilter) return false;
     }
     return true;
@@ -10655,9 +10657,9 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       <div class="status-cell" onclick="event.stopPropagation()" style="position:relative">
         <div class="status-disp" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1px;overflow:hidden;color:${STATUS_COLORS[productCache[p.id]?.status||'unset']||'var(--text2)'}">${_statusDispHtml(productCache[p.id]?.status||'unset')}</div>
         <select id="status-sel-${p.id}" onchange="applyStatusColor(this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:11px;border:none;outline:none">
-          ${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','out'].map(v => {
-            const labels = {unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',out:'撤退済■'};
-            const colors = {unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',out:'#6D1111'};
+          ${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','out'].map(v => {
+            const labels = {unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
+            const colors = {unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnout:'#C62828',out:'#6D1111'};
             const cur = productCache[p.id]?.status || 'unset';
             const col = colors[v] ? `style="color:${colors[v]};font-weight:600"` : '';
             return `<option value="${v}"${cur===v?' selected':''} ${col}>${labels[v]}</option>`;
