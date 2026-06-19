@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.801</span>
+    <span class="build-date">v1.803</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9270,20 +9270,20 @@ function renderYoy(){
     .filter(p=> p.v[2].s>1000);
   if(!prods.length){ area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">比較できる売上データがありません</div>'; return; }
   const top=[...prods].sort((a,b)=>b.v[2].s-a.v[2].s);
-  const rowH=44, headerH=30, gapW=34, labelH=27, TW=348;
+  const rowH=48, headerH=32, gapW=48, labelH=27, TW=452;
   const orders=[0,1,2].map(k=> [...top].sort((a,b)=>b.v[k].s-a.v[k].s));
   const idxs=orders.map(ord=>{ const m={}; ord.forEach((p,i)=>m[p.code]=i); return m; });
   const yen=v=>'¥'+Math.round(v).toLocaleString();
   const fmt=v=> v>0?yen(v):'<span style="color:var(--text3)">—</span>';
   const fmtP=v=> v>0?'<span style="color:#16a34a">'+yen(v)+'</span>':(v<0?'<span style="color:#dc2626">-'+yen(-v)+'</span>':'<span style="color:var(--text3)">—</span>');
   const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const colH='<div style="display:flex;height:'+headerH+'px;align-items:center;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--text3);background:var(--surface2)">'
-    +'<div style="width:36px;text-align:center">画像</div>'
-    +'<div style="flex:1;padding-left:5px">商品名</div>'
-    +'<div style="width:64px;text-align:right;padding-right:4px">商品売上</div>'
-    +'<div style="width:56px;text-align:right;padding-right:4px">広告費</div>'
-    +'<div style="width:64px;text-align:right;padding-right:4px">SEO売上</div>'
-    +'<div style="width:50px;text-align:right;padding-right:5px">売上ROAS</div></div>';
+  const colH='<div style="display:flex;height:'+headerH+'px;align-items:center;border-bottom:2px solid var(--border);font-size:11px;font-weight:700;color:var(--text3);background:var(--surface2)">'
+    +'<div style="width:48px;text-align:center">画像</div>'
+    +'<div style="flex:1;padding-left:8px">商品名</div>'
+    +'<div style="width:80px;text-align:right;padding-right:8px">商品売上</div>'
+    +'<div style="width:70px;text-align:right;padding-right:8px">広告費</div>'
+    +'<div style="width:80px;text-align:right;padding-right:8px">SEO売上</div>'
+    +'<div style="width:64px;text-align:right;padding-right:10px">売上ROAS</div></div>';
   const tableHtml=(ord,k)=>{
     let h='';
     ord.forEach(p=>{ const vv=p.v[k]; const _r=(vv.sp>0)?Math.round(vv.s/vv.sp*100):0; const roasCell=(vv.sp>0)?('<span style="color:'+_SROAS_COLORS[_sroasCat(_r)]+';font-weight:700">'+_r+'%</span>'):'<span style="color:var(--text3)">\u2014</span>';
@@ -9291,15 +9291,18 @@ function renderYoy(){
       let salesCell;
       if(vv.s<=0){ salesCell=fmt(vv.s); }
       else { const _cat=(k>0)?_yoyCat(vv.s, ps):null; salesCell=_cat?('<span style="color:'+_YOYCOL[_cat]+';font-weight:700">'+yen(vv.s)+'</span>'):yen(vv.s); }
-      const im=p.img?'<img src="'+esc(p.img)+'" style="width:32px;height:32px;object-fit:contain;border-radius:4px">':'<div style="width:32px;height:32px;background:var(--surface2);border-radius:4px"></div>';
+      const psSeo=(k>0)?(p.v[k-1].seo||0):0; let seoCell;
+      if(vv.seo<=0){ seoCell=fmt(vv.seo); }
+      else { const _c2=(k>0)?_yoyCat(vv.seo, psSeo):null; seoCell=_c2?('<span style="color:'+_YOYCOL[_c2]+';font-weight:700">'+yen(vv.seo)+'</span>'):yen(vv.seo); }
+      const im=p.img?'<img src="'+esc(p.img)+'" style="width:44px;height:44px;object-fit:contain;border-radius:4px">':'<div style="width:44px;height:44px;background:var(--surface2);border-radius:4px"></div>';
       const foc=(_yoyFocus===p.code);
       h+='<div onclick="setYoyFocus(\''+p.code+'\')" style="display:flex;height:'+rowH+'px;align-items:center;border-bottom:1px solid var(--border);cursor:pointer;'+(foc?'background:#fef9c3;':'')+'">'
-        +'<div style="width:36px;display:flex;justify-content:center">'+im+'</div>'
-        +'<div style="flex:1;padding-left:5px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</div>'
-        +'<div style="width:64px;text-align:right;padding-right:4px;font-family:monospace;font-size:10px">'+salesCell+'</div>'
-        +'<div style="width:56px;text-align:right;padding-right:4px;font-family:monospace;font-size:10px">'+fmt(vv.sp)+'</div>'
-        +'<div style="width:64px;text-align:right;padding-right:4px;font-family:monospace;font-size:10px">'+fmt(vv.seo)+'</div>'
-        +'<div style="width:50px;text-align:right;padding-right:5px;font-family:monospace;font-size:10px">'+roasCell+'</div></div>';
+        +'<div style="width:48px;display:flex;justify-content:center">'+im+'</div>'
+        +'<div style="flex:1;padding-left:8px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</div>'
+        +'<div style="width:80px;text-align:right;padding-right:8px;font-family:monospace;font-size:12px">'+salesCell+'</div>'
+        +'<div style="width:70px;text-align:right;padding-right:8px;font-family:monospace;font-size:12px">'+fmt(vv.sp)+'</div>'
+        +'<div style="width:80px;text-align:right;padding-right:8px;font-family:monospace;font-size:12px">'+seoCell+'</div>'
+        +'<div style="width:64px;text-align:right;padding-right:10px;font-family:monospace;font-size:12px">'+roasCell+'</div></div>';
     });
     return h;
   };
