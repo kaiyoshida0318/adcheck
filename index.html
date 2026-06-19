@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.757</span>
+    <span class="build-date">v1.758</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -602,8 +602,8 @@ header + * { margin-top: 4px; }
             </div>
           </div>
           <div id="colWidthPanel" style="display:none;position:fixed;top:120px;right:24px;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.25);padding:14px 16px;width:368px;max-height:74vh;overflow-y:auto">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px">
-              <div style="font-size:13px;font-weight:700;color:var(--text)">項目の調整</div>
+            <div id="colwPanelHeader" onmousedown="_colwDragStart(event)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;cursor:move;user-select:none">
+              <div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap">☰ 項目の調整</div>
               <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
                 <button class="tbtn" onclick="_colwPublish()" style="font-size:11px;padding:3px 9px;background:#16a34a;color:#fff;border-color:#16a34a;font-weight:700">アップロード</button>
                 <button class="tbtn" onclick="_colwApplyShared()" style="font-size:11px;padding:3px 9px;background:#1565C0;color:#fff;border-color:#1565C0;font-weight:700">反映</button>
@@ -11275,6 +11275,27 @@ async function _colwApplyShared(){
     alert('共有設定を反映しました');
   }catch(e){ alert('反映に失敗しました '+(e&&e.message?e.message:'')); }
 }
+let _colwDrag=null;
+function _colwDragStart(e){
+  if(e.target.closest('button')||e.target.closest('input')) return;
+  const pnl=document.getElementById('colWidthPanel'); if(!pnl) return;
+  const r=pnl.getBoundingClientRect();
+  pnl.style.left=r.left+'px'; pnl.style.top=r.top+'px'; pnl.style.right='auto';
+  _colwDrag={dx:e.clientX-r.left, dy:e.clientY-r.top};
+  document.addEventListener('mousemove',_colwDragMove);
+  document.addEventListener('mouseup',_colwDragEnd);
+  e.preventDefault();
+}
+function _colwDragMove(e){
+  if(!_colwDrag) return;
+  const pnl=document.getElementById('colWidthPanel'); if(!pnl) return;
+  const w=pnl.offsetWidth;
+  let nx=e.clientX-_colwDrag.dx, ny=e.clientY-_colwDrag.dy;
+  nx=Math.max(0, Math.min(nx, window.innerWidth-Math.min(w,window.innerWidth)));
+  ny=Math.max(0, Math.min(ny, window.innerHeight-40));
+  pnl.style.left=nx+'px'; pnl.style.top=ny+'px';
+}
+function _colwDragEnd(){ _colwDrag=null; document.removeEventListener('mousemove',_colwDragMove); document.removeEventListener('mouseup',_colwDragEnd); }
 function _openColWidthPanel(){
   const pnl=document.getElementById('colWidthPanel'); if(!pnl) return;
   if(pnl.parentElement!==document.body) document.body.appendChild(pnl);
