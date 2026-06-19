@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.759</span>
+    <span class="build-date">v1.761</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -618,7 +618,7 @@ header + * { margin-top: 4px; }
           <div class="col-header" style="position:sticky;top:48px;z-index:25;background:#f8f9fa">
             <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="cursor:pointer">商品番号</div>
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
-            <div class="ch" id="ch-img">商品画像</div>
+            <div class="ch" id="ch-img" style="color:#1565C0;font-weight:700">商品画像</div>
             <div class="ch" id="ch-name" onclick="sortBy('name')">商品名</div>
             <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eef4fb">総売上</div>
             <div class="ch r" id="ch-salesroas" onclick="sortBy('salesroas')" title="総売上÷実績額×100" style="cursor:pointer;background:#eef4fb">売上ROAS</div>
@@ -649,6 +649,10 @@ header + * { margin-top: 4px; }
           <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
             <select class="toolbar-month" id="markeMonthSel" onchange="renderMarke()"></select>
             <input type="text" class="toolbar-search" id="markeSearch" placeholder="商品名・商品番号で検索..." oninput="renderMarke()">
+            <div class="toolbar-right">
+              <button class="tbtn" onclick="_openColWidthPanel('marke')" style="margin-right:6px">項目調整</button>
+              <button class="tbtn" onclick="exportMarkeCSV()">CSV出力</button>
+            </div>
           </div>
           <div id="markeList"></div>
         </div>
@@ -10528,7 +10532,7 @@ function _markeHeader(){
   return '<div class="col-header marke" style="position:sticky;top:48px;z-index:25;background:#f8f9fa">'
     +_mkH('商品番号','itemnum','ch','','')
     +_mkH('商品管理番号','itemid','ch','','')
-    +_mkH('商品画像','','ch','','')
+    +_mkH('<span style="color:#1565C0;font-weight:700">商品画像</span>','','ch','','')
     +_mkH('商品名','name','ch','','')
     +_mkH('総売上','totsales','ch r','#eef4fb','')
     +_mkH('売上ROAS','sroas','ch r','#eef4fb','')
@@ -10608,6 +10612,23 @@ function renderMarke(){
   var strKeys={itemnum:1,itemid:1,name:1};
   data.sort(function(a,b){ var va=f(a),vb=f(b); if(strKeys[_markeSortKey]) return dir*String(va).localeCompare(String(vb)); return dir*((va||0)-(vb||0)); });
   listEl.innerHTML = _markeHeader() + (data.length? data.map(function(d){ return _markeRow(d,maxSpend); }).join('') : '<div style="padding:30px;text-align:center;color:var(--text3)">データがありません</div>');
+}
+function exportMarkeCSV(){
+  var ym=_markeMon();
+  var q=((document.getElementById('markeSearch')||{}).value||'').toLowerCase();
+  var products=getProducts().filter(function(p){ return !(productCache[p.id]&&productCache[p.id].retired); });
+  if(q) products=products.filter(function(p){ var c=productCache[p.id]||{}; var nm=(c.manualName||c.name||'').toLowerCase(); var inum=(c.itemNumber||'').toLowerCase(); return p.id.toString().toLowerCase().includes(q)||nm.includes(q)||inum.includes(q); });
+  var data=products.map(function(p){ return _markeData(p,ym); });
+  var SK={ itemnum:function(d){return d.itemNumber;}, itemid:function(d){return d.p.id;}, name:function(d){return d.name;}, totsales:function(d){return d.totS;}, sroas:function(d){return d.sroas;}, seo:function(d){return d.seo;}, adsales:function(d){return d.adv;}, kwspend:function(d){return d.kwSpend;}, ctrkw:function(d){return d.ctrKw==null?-1:d.ctrKw;}, cvrkw:function(d){return d.cvrKw==null?-1:d.cvrKw;}, sp20:function(d){return d.sp20;}, ctr20:function(d){return d.ctr20==null?-1:d.ctr20;}, cvr20:function(d){return d.cvr20==null?-1:d.cvr20;} };
+  var f=SK[_markeSortKey]||SK.totsales; var dir=_markeSortDir==='asc'?1:-1; var strKeys={itemnum:1,itemid:1,name:1};
+  data.sort(function(a,b){ var va=f(a),vb=f(b); if(strKeys[_markeSortKey]) return dir*String(va).localeCompare(String(vb)); return dir*((va||0)-(vb||0)); });
+  var header=['商品番号','商品管理番号','商品名','総売上','売上ROAS(%)','SEO売上','広告売上','実績額-KW','CTR-KW(%)','CVR-KW(%)','実績額-20','CTR-20(%)','CVR-20(%)'];
+  var nz=function(v){ return (v==null)?'':v; };
+  var rows=data.map(function(d){ return [d.itemNumber, d.p.id, d.name, d.totS, d.sroas, d.seo, d.adv, d.kwSpend, nz(d.ctrKw), nz(d.cvrKw), d.sp20, nz(d.ctr20), nz(d.cvr20)]; });
+  var esc=function(v){ v=(v==null?'':String(v)); return '"'+v.replace(/"/g,'""')+'"'; };
+  var csv='\uFEFF'+[header].concat(rows).map(function(r){ return r.map(esc).join(','); }).join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='マーケデータ_'+ym+'.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 function renderPage() {
   const ym = _subTabFilter ? _getSubTabMonth() : getSelectedMonth();
@@ -11126,6 +11147,7 @@ const COLW_DEFS=[
 ];
 const COLW_KEY='adcheck_colw';
 const COLW_KEY_MK='adcheck_colw_marathon';
+const COLW_KEY_MK2='adcheck_colw_marke';
 let _colwMode='normal';
 const MK_COLW_DEFS=[
   {k:'num',    label:'商品番号',     def:90, al:'left',  row:true},
@@ -11146,8 +11168,24 @@ const MK_COLW_DEFS=[
   {k:'status', label:'区分',         def:76, al:'center'},
   {k:'ss',     label:'SS/マラソン',  def:96, al:'center'},
 ];
-function _colwKey(){ return _colwMode==='marathon'?COLW_KEY_MK:COLW_KEY; }
-function _colwDefs(){ return _colwMode==='marathon'?MK_COLW_DEFS:COLW_DEFS; }
+const MK2_COLW_DEFS=[
+  {k:'num',     label:'商品番号',     def:90, al:'left',  row:true},
+  {k:'code',    label:'商品管理番号', def:110, al:'left', row:true},
+  {k:'img',     label:'商品画像',     def:48, al:'center',row:true},
+  {k:'name',    label:'商品名(最小)', def:200, flex:true, al:'left', row:true},
+  {k:'totsales',label:'総売上',       def:92, al:'right'},
+  {k:'sroas',   label:'売上ROAS',     def:82, al:'right'},
+  {k:'seo',     label:'SEO売上',      def:92, al:'right'},
+  {k:'adsales', label:'広告売上',     def:102, al:'right'},
+  {k:'kwspend', label:'実績額-KW',    def:88, al:'right'},
+  {k:'ctrkw',   label:'CTR-KW',       def:76, al:'right'},
+  {k:'cvrkw',   label:'CVR-KW',       def:76, al:'right'},
+  {k:'sp20',    label:'実績額-20',    def:88, al:'right'},
+  {k:'ctr20',   label:'CTR-20',       def:76, al:'right'},
+  {k:'cvr20',   label:'CVR-20',       def:76, al:'right'},
+];
+function _colwKey(){ return _colwMode==='marathon'?COLW_KEY_MK:(_colwMode==='marke'?COLW_KEY_MK2:COLW_KEY); }
+function _colwDefs(){ return _colwMode==='marathon'?MK_COLW_DEFS:(_colwMode==='marke'?MK2_COLW_DEFS:COLW_DEFS); }
 function _colwGetK(key){ try{ return JSON.parse(localStorage.getItem(key))||{}; }catch(e){ return {}; } }
 function _colwGet(){ return _colwGetK(_colwKey()); }
 function _colwSet(o){ try{ localStorage.setItem(_colwKey(), JSON.stringify(o)); }catch(e){} }
@@ -11189,13 +11227,26 @@ function _applyColWidths(){
       else{ css+='.item-basic.marathon>div:nth-child('+n+'){align-items:'+fp+' !important;text-align:'+a+' !important}'; }
     });
   }
+  // マーケ
+  { const w=k=>_colwValFor(COLW_KEY_MK2,MK2_COLW_DEFS,k);
+    const name='minmax('+w('name')+'px,1fr)';
+    const cols=['totsales','sroas','seo','adsales','kwspend','ctrkw','cvrkw','sp20','ctr20','cvr20'].map(k=>w(k)+'px').join(' ');
+    const mk2=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+cols;
+    css+='.col-header.marke{grid-template-columns:'+mk2+' !important}.item-basic.marke{grid-template-columns:'+mk2+' !important}';
+    MK2_COLW_DEFS.forEach(function(d,i){ const n=i+1; const a=_colwAlignFor(COLW_KEY_MK2,MK2_COLW_DEFS,d.k);
+      const fp=(a==='left')?'flex-start':(a==='right')?'flex-end':'center';
+      css+='.col-header.marke>div:nth-child('+n+'){text-align:'+a+' !important}';
+      if(d.row){ css+='.item-basic.marke>div:nth-child('+n+'){justify-content:'+fp+' !important}'; }
+      else{ css+='.item-basic.marke>div:nth-child('+n+'){align-items:'+fp+' !important;text-align:'+a+' !important}'; }
+    });
+  }
   st.textContent=css;
 }
 function _renderColwModeTabs(){
   const el=document.getElementById('colwModeTabs'); if(!el) return;
   const mk=function(m,lbl){ const on=_colwMode===m;
     return '<button onclick="_colwSetMode(\''+m+'\')" style="flex:1;font-size:12px;font-weight:700;padding:5px 8px;border-radius:6px;cursor:pointer;border:1.5px solid '+(on?'#1565C0':'var(--border)')+';background:'+(on?'#1565C0':'var(--surface2)')+';color:'+(on?'#fff':'var(--text3)')+'">'+lbl+'</button>'; };
-  el.innerHTML=mk('normal','通常')+mk('marathon','マラソン');
+  el.innerHTML=mk('normal','通常')+mk('marathon','マラソン')+mk('marke','マーケ');
 }
 function _renderColWidthPanel(){
   const body=document.getElementById('colWidthPanelBody'); if(!body) return;
@@ -11222,7 +11273,7 @@ function _colwUpdateTotal(){
   const el=document.getElementById('colwTotalReadout'); if(!el) return;
   let total=0;
   _colwDefs().forEach(function(d){ total+=_colwVal(d.k); });
-  total+=28;
+  if(_colwMode!=='marke') total+=28;
   const win=window.innerWidth||0; const diff=total-win; const over=diff>0;
   const diffTxt=over?('+'+diff+'px はみ出し'):((-diff)+'px 余裕'); const diffCol=over?'#C62828':'#1D9E75';
   const modeLbl=_colwMode==='marathon'?'マラソン':'通常(状態/SS)';
@@ -11296,9 +11347,10 @@ function _colwDragMove(e){
   pnl.style.left=nx+'px'; pnl.style.top=ny+'px';
 }
 function _colwDragEnd(){ _colwDrag=null; document.removeEventListener('mousemove',_colwDragMove); document.removeEventListener('mouseup',_colwDragEnd); }
-function _openColWidthPanel(){
+function _openColWidthPanel(mode){
   const pnl=document.getElementById('colWidthPanel'); if(!pnl) return;
   if(pnl.parentElement!==document.body) document.body.appendChild(pnl);
+  if(mode) _colwMode=mode;
   _renderColWidthPanel(); pnl.style.display='block';
 }
 const _origColLabels={};
