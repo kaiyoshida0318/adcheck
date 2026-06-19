@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.799</span>
+    <span class="build-date">v1.800</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -726,7 +726,7 @@ header + * { margin-top: 4px; }
           <div id="itemGraphFYBtns" style="display:flex;gap:4px"><button id="itemGraphFYCal" onclick="setItemGraphFYStart(1)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="itemGraphFYFiscal" onclick="setItemGraphFYStart(5)" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">5月始まり</button><button id="itemGraphView2yBtn" onclick="setItemGraph2y()" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">2年横並び</button></div>
           <div id="itemGraphDayPresets" style="display:none;gap:4px"><button id="itemGraphDP60" onclick="setItemGraphDayPreset('60')" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">30日</button><button id="itemGraphDP2M" onclick="setItemGraphDayPreset('2month')" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">先月-今月</button><button id="itemGraphDPTM" onclick="setItemGraphDayPreset('thismonth')" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">今月</button></div>
           <select id="itemGraphMetric" class="toolbar-month" onchange="renderItemGraph()" style="font-size:13px;padding:6px 12px">
-            <option value="all">両方-全体</option>
+            <option value="all">売上＆ROAS</option>
             <option value="sales">両方-売上</option>
             <option value="spend">広告-実績額</option>
             <option value="roas">広告-ROAS</option>
@@ -772,7 +772,7 @@ header + * { margin-top: 4px; }
         <div id="itemGraphEmpty" style="text-align:center;padding:60px;color:var(--text3);font-size:13px">
           商品管理番号を入力してONを押してください。
         </div>
-        <div id="itemGraphDataTable" style="margin-top:20px;overflow-x:auto"></div>
+        <div id="itemTblModeBtns" style="display:none;gap:4px;margin-top:18px"><button id="itemTblNormal" onclick="setItemTblYoy(false)">通常</button><button id="itemTblYoyB" onclick="setItemTblYoy(true)">前年同月比</button></div><div id="itemGraphDataTable" style="margin-top:8px;overflow-x:auto"></div>
       </div>
     </div>
   </div>
@@ -5156,7 +5156,7 @@ function renderItemGraph() {
 
   let datasets, yCallback, tooltipLabel, chartLabels=displayLabels, yearMode=false, _fyYears=null;
   if (metric === 'all') {
-    const _ser=_allOverviewSeries(labels,dataMap,code);
+    const _ser=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas'||s.key==='roasAll');
     datasets = _ser.map(se=>{ const raw=se.vals; const nz=raw.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} const norm=raw.map(v=>mid>0?Math.round(v/mid*50*10)/10:0); return {label:se.label,data:norm,_raw:raw,_fmt:se.fmt,borderColor:se.color,backgroundColor:se.color+'22',borderWidth:2.2,pointRadius:3,pointHoverRadius:5,tension:0.3,fill:false}; });
     yCallback=v=>v+'%';
     tooltipLabel=ctx=>{const ds=ctx.dataset;const rr=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(rr):rr;return ' '+ds.label+': '+rs+'\uff08'+ctx.raw+'%\uff09';};
@@ -5187,7 +5187,7 @@ function renderItemGraph() {
     if (_years.length && !(typeof _itemGraphView2y!=='undefined' && _itemGraphView2y)){
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
-      if (metric==='all'){ series=_allOverviewSeries(labels,dataMap,code); normalize=true; }
+      if (metric==='all'){ series=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas'||s.key==='roasAll'); normalize=true; }
       else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
       else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa'; series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:'#f59e0b',fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:'#38bdf8',fmt:uf,vals:tri.p20}]; }
       else if (metric==='sales'){ const sa=_itemSalesArrays(labels,dataMap,code); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
@@ -5306,6 +5306,28 @@ function _renderIgColPanel(){
   }).join('');
 }
 
+function _tblBtnStyle(on){ return 'font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid '+(on?'#3b82f6':'var(--border)')+';background:'+(on?'#3b82f6':'var(--surface2)')+';color:'+(on?'#fff':'var(--text3)')+';'; }
+let _itemTblYoy=false, _renTblYoy=false;
+function setItemTblYoy(b){ _itemTblYoy=!!b; try{ renderItemGraph(); }catch(e){} }
+function setRenTblYoy(b){ _renTblYoy=!!b; try{ renderRenewalGraph(); }catch(e){} }
+function _richYoyTableHTML(labels, cols){
+  const idx={}; labels.forEach((l,i)=>idx[l]=i);
+  const sorted=[...labels].sort(); const latest=sorted[sorted.length-1];
+  const y1=+latest.slice(0,4), lm=+latest.slice(5,7), y0=y1-1; const pad=m=>String(m).padStart(2,'0');
+  const mset=new Set(); for(let m=1;m<=12;m++){ if(idx[y1+'-'+pad(m)]!==undefined||idx[y0+'-'+pad(m)]!==undefined) mset.add(m); }
+  const months=[...mset].sort((a,b)=>((lm-a+12)%12)-((lm-b+12)%12));
+  const dash='<span style="color:var(--text3)">\u2014</span>';
+  const th='padding:7px 10px;border-bottom:2px solid var(--border);font-weight:700;white-space:nowrap;';
+  const td='padding:6px 10px;border-bottom:1px solid var(--border);font-family:\'DM Mono\',monospace;text-align:right;white-space:nowrap;';
+  const header='<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)"><th style="'+th+'text-align:center;color:var(--text2)">\u6708</th><th style="'+th+'text-align:right;color:var(--text2)">\u5e74</th>'+cols.map(c=>'<th style="'+th+'text-align:right;color:'+c.color+';'+(c.colBg||'')+'">'+c.label+'</th>').join('')+'</tr></thead>';
+  const cv=(c,i)=>(i===undefined)?dash:c.fmt(c.vals[i]);
+  let body='';
+  months.forEach((m,gi)=>{ const tint=(gi%2===0)?'rgba(59,130,246,0.06)':'transparent'; const tb='border-top:2px solid var(--border);'; const i1=idx[y1+'-'+pad(m)], i0=idx[y0+'-'+pad(m)];
+    body+='<tr><td rowspan="2" style="'+td+'text-align:center;font-weight:700;color:var(--text);vertical-align:middle;'+tb+'background:'+tint+'">'+m+'\u6708</td><td style="'+td+'color:var(--text2);'+tb+'background:'+tint+'">'+y1+'\u5e74</td>'+cols.map(c=>'<td style="'+td+(c.colBg||'')+tb+'background:'+tint+'">'+cv(c,i1)+'</td>').join('')+'</tr><tr><td style="'+td+'color:var(--text2);background:'+tint+'">'+y0+'\u5e74</td>'+cols.map(c=>'<td style="'+td+(c.colBg||'')+'background:'+tint+'">'+cv(c,i0)+'</td>').join('')+'</tr>';
+  });
+  return '<table style="border-collapse:collapse;width:100%;font-size:12px">'+header+'<tbody>'+body+'</tbody></table>';
+}
+
 function _renderItemRichTable(labels, dataMap, code){
   const wrap=document.getElementById('itemGraphDataTable'); if(!wrap) return;
   if(!labels||!labels.length){ wrap.innerHTML=''; return; }
@@ -5328,11 +5350,13 @@ function _renderItemRichTable(labels, dataMap, code){
     const sa=_itemSalesArrays(labels,dataMap,code);
     cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
   } else if (metric==='all'){
-    cols=_allTableCols(labels,dataMap,code).map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:!!se.roas,colBg:({a:'background:#eef4fb;',b:'background:#fdf0e8;',c:'background:#eff5ec;',d:'background:#fff8e5;'}[se.grp]||'')}));
+    cols=_allTableCols(labels,dataMap,code).filter(se=>se.label==='総売上'||se.label==='売上ROAS'||se.label==='全広告ROAS').map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:!!se.roas,colBg:({a:'background:#eef4fb;',b:'background:#fdf0e8;',c:'background:#eff5ec;',d:'background:#fff8e5;'}[se.grp]||'')}));
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
     cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
   }
+  const _itb=document.getElementById('itemTblModeBtns'); if(_itb){ _itb.style.display=daily?'none':'flex'; const _n=document.getElementById('itemTblNormal'),_y=document.getElementById('itemTblYoyB'); if(_n)_n.style.cssText=_tblBtnStyle(!_itemTblYoy); if(_y)_y.style.cssText=_tblBtnStyle(_itemTblYoy); }
+  if(!daily && _itemTblYoy){ wrap.innerHTML=_richYoyTableHTML(labels,cols); return; }
   const totSalesArr=_renewalMetricValues('totsales',labels,dataMap,code);
   const order=labels.map((_,i)=>i).reverse();
   const chip=l=>{ const c=l.type==='lp'?'#1a73e8':l.type==='thumb'?'#f4b400':l.type==='both'?'#9333ea':'#f97316'; const tl=l.type==='lp'?'LP\u5909\u66f4':l.type==='thumb'?'\u30b5\u30e0\u30cd\u5909\u66f4':l.type==='both'?'LP\u30fb\u30b5\u30e0\u30cd\u5909\u66f4':'\u5909\u66f4'; const nt=(l.note||'').trim()||tl; return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">'+l.date+' '+nt+'</span>'; };
@@ -7961,6 +7985,8 @@ function _renderRenewalTable(labels, dataMap, code){
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
     cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
   }
+  const _rtb=document.getElementById('renTblModeBtns'); if(_rtb){ _rtb.style.display=daily?'none':'flex'; const _n=document.getElementById('renTblNormal'),_y=document.getElementById('renTblYoyB'); if(_n)_n.style.cssText=_tblBtnStyle(!_renTblYoy); if(_y)_y.style.cssText=_tblBtnStyle(_renTblYoy); }
+  if(!daily && _renTblYoy){ wrap.innerHTML=_richYoyTableHTML(labels,cols); return; }
   const totSalesArr=_renewalMetricValues('totsales',labels,dataMap,code);
   const order=labels.map((_,i)=>i).reverse();
   const chip=l=>{ const c=l.type==='lp'?'#1a73e8':l.type==='thumb'?'#f4b400':l.type==='both'?'#9333ea':'#f97316'; const tl=l.type==='lp'?'LP\u5909\u66f4':l.type==='thumb'?'\u30b5\u30e0\u30cd\u5909\u66f4':l.type==='both'?'LP\u30fb\u30b5\u30e0\u30cd\u5909\u66f4':'\u5909\u66f4'; const nt=(l.note||'').trim()||tl; return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">'+l.date+' '+nt+'</span>'; };
@@ -11731,7 +11757,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <div id="renewalGraphEmpty" style="display:none;text-align:center;padding:50px;color:var(--text3);font-size:13px">この商品のデータがありません。</div>
       <!-- データ表（グラフと同じ期間切替に連動） -->
       <div id="renewalGraphTableWrap" style="width:100%;flex:0 0 auto;display:flex;flex-direction:column;border-top:1px solid var(--border);padding-top:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">📋 <span id="renewalTablePeriodLabel">月別</span>データ</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:10px">📋 <span id="renewalTablePeriodLabel">月別</span>データ<span id="renTblModeBtns" style="display:none;gap:4px"><button id="renTblNormal" onclick="setRenTblYoy(false)">通常</button><button id="renTblYoyB" onclick="setRenTblYoy(true)">前年同月比</button></span></div>
         <div id="renewalGraphTableScroll" style="overflow-x:auto;overflow-y:auto;border:1px solid var(--border);border-radius:8px;min-height:120px;max-height:600px">
           <table id="renewalGraphTable" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"></table>
         </div>
