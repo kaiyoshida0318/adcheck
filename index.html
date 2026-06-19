@@ -125,8 +125,8 @@ header + * { margin-top: 4px; }
 .item-basic.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 76px 96px 28px; }
 .col-header.marathon { grid-template-columns: 90px 80px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 76px 96px 28px !important; }
 .item-basic.marathon { grid-template-columns: 90px 80px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 76px 96px 28px !important; }
-.col-header.marke{grid-template-columns:90px 110px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 88px 76px 76px 88px 76px 76px !important}
-.item-basic.marke{grid-template-columns:90px 110px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 88px 76px 76px 88px 76px 76px !important}
+.col-header.marke{grid-template-columns:90px 110px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 76px 76px 76px 76px !important}
+.item-basic.marke{grid-template-columns:90px 110px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 76px 76px 76px 76px !important}
 .status-cell { display: flex; align-items: center; gap: 4px; padding: 4px 6px; justify-content: center; }
 .status-update-btn { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent); background: var(--surface2); color: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .status-update-btn:hover { background: var(--accent); color: #fff; }
@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.796</span>
+    <span class="build-date">v1.798</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1504,7 +1504,7 @@ header + * { margin-top: 4px; }
 <!-- 商品編集モーダル -->
 <div class="modal-overlay" id="editItemModal">
   <div class="modal" style="max-width:520px">
-    <div style="display:flex;gap:4px;margin:-2px 0 14px;border-bottom:1px solid var(--border)"><button onclick="_pmShowGraph()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">商品-グラフ</button><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">商品情報を編集</button></div>
+    <div style="display:flex;gap:4px;margin:-2px 0 14px;border-bottom:1px solid var(--border)"><button onclick="_pmShowGraph()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">個別-グラフ</button><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">商品情報を編集</button></div>
     <h3>✏️ 商品情報を編集</h3>
     <div style="display:flex;gap:20px;margin-bottom:14px">
       <div>
@@ -7840,7 +7840,7 @@ function renderRenewalGraph() {
 
   let datasets, yCallback, tooltipLabel, chartLabels=displayLabels, yearMode=false, _fyYears=null;
   if (metric === 'all') {
-    const _ser=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas');
+    const _ser=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas'||s.key==='roasAll');
     datasets = _ser.map(se=>{ const raw=se.vals; const nz=raw.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} const norm=raw.map(v=>mid>0?Math.round(v/mid*50*10)/10:0); return {label:se.label,data:norm,_raw:raw,_fmt:se.fmt,borderColor:se.color,backgroundColor:se.color+'22',borderWidth:2.2,pointRadius:3,pointHoverRadius:5,tension:0.3,fill:false}; });
     yCallback=v=>v+'%';
     tooltipLabel=ctx=>{const ds=ctx.dataset;const rr=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(rr):rr;return ' '+ds.label+': '+rs+'\uff08'+ctx.raw+'%\uff09';};
@@ -7871,7 +7871,7 @@ function renderRenewalGraph() {
     if (_years.length && !(typeof _renewalView2y!=='undefined' && _renewalView2y)){
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
-      if (metric==='all'){ series=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas'); normalize=true; }
+      if (metric==='all'){ series=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas'||s.key==='roasAll'); normalize=true; }
       else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
       else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa'; series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:'#f59e0b',fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:'#38bdf8',fmt:uf,vals:tri.p20}]; }
       else if (metric==='sales'){ const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
@@ -7956,7 +7956,7 @@ function _renderRenewalTable(labels, dataMap, code){
     const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily');
     cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
   } else if (metric==='all'){
-    cols=_allTableCols(labels,dataMap,code).map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:!!se.roas,colBg:({a:'background:#eef4fb;',b:'background:#fdf0e8;',c:'background:#eff5ec;',d:'background:#fff8e5;'}[se.grp]||'')}));
+    cols=_allTableCols(labels,dataMap,code).filter(se=>se.label==='総売上'||se.label==='売上ROAS'||se.label==='全広告ROAS').map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:!!se.roas,colBg:({a:'background:#eef4fb;',b:'background:#fdf0e8;',c:'background:#eff5ec;',d:'background:#fff8e5;'}[se.grp]||'')}));
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
     cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
@@ -10585,7 +10585,7 @@ function getSorted(ym) {
 }
 
 function renderTable() { renderPage(); }
-let _markeSortKey='totsales', _markeSortDir='desc';
+let _markeSortKey='sroas', _markeSortDir='desc';
 function markeSortBy(key){
   if(_markeSortKey===key){ _markeSortDir=(_markeSortDir==='asc')?'desc':'asc'; }
   else { _markeSortKey=key; _markeSortDir=(key==='itemnum'||key==='itemid'||key==='name')?'asc':'desc'; }
@@ -10627,12 +10627,10 @@ function _markeHeader(){
     +_mkH('売上ROAS','sroas','ch r','#eef4fb','')
     +_mkH('SEO売上','seo','ch r','#eef4fb','')
     +_mkH('広告売上','adsales','ch r','#eef4fb','#c9dff0')
-    +_mkH('実績額-KW','kwspend','ch r','#eff5ec','')
-    +_mkH('CTR-KW','ctrkw','ch r','#eff5ec','')
-    +_mkH('CVR-KW','cvrkw','ch r','#eff5ec','#b8d9a8')
-    +_mkH('実績額-20','sp20','ch r','#fff8e5','')
-    +_mkH('CTR-20','ctr20','ch r','#fff8e5','')
-    +_mkH('CVR-20','cvr20','ch r','#fff8e5','')
+    +_mkH('CTR-KW','ctrkw','ch r','#f2ecfb','')
+    +_mkH('CTR-20','ctr20','ch r','#f2ecfb','#d9c9f0')
+    +_mkH('CVR-KW','cvrkw','ch r','#fdeef4','')
+    +_mkH('CVR-20','cvr20','ch r','#fdeef4','')
     +'</div>';
 }
 function _markeRow(d, maxSpend){
@@ -10659,12 +10657,10 @@ function _markeRow(d, maxSpend){
     <div class="cell r mono" style="background:#eef4fb">${d.sroas>0?`<span style="color:${sc};font-weight:700">${d.sroas}%</span>`:'<span style="color:var(--text3)">\u2014</span>'}</div>
     <div class="cell r mono" style="background:#eef4fb">${d.seo>0?`${fmtY(d.seo)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_sp)};font-weight:700;line-height:1">${_sp}%</span>`:'<span style="color:var(--text3)">\u2014</span>'}</div>
     <div class="cell r mono" style="background:#eef4fb;border-right:2px solid #c9dff0">${d.adv>0?`${fmtY(d.adv)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_ap)};font-weight:700;line-height:1">${_ap}%</span>`:'<span style="color:var(--text3)">\u2014</span>'}</div>
-    <div class="cell r mono" style="background:#eff5ec">${d.kwSpend>0?`${fmtY(d.kwSpend)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_kwP)};font-weight:700;line-height:1">${_kwP}%</span>`:'<span style="color:var(--text3)">\u2014</span>'}</div>
-    <div class="cell r mono" style="background:#eff5ec">${pf(d.ctrKw,d._ctrKwC)}</div>
-    <div class="cell r mono" style="background:#eff5ec;border-right:2px solid #b8d9a8">${pf(d.cvrKw,d._cvrKwC)}</div>
-    <div class="cell r mono" style="background:#fff8e5">${d.sp20>0?`${fmtY(d.sp20)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_20P)};font-weight:700;line-height:1">${_20P}%</span>`:'<span style="color:var(--text3)">\u2014</span>'}</div>
-    <div class="cell r mono" style="background:#fff8e5">${pf(d.ctr20,d._ctr20C)}</div>
-    <div class="cell r mono" style="background:#fff8e5">${pf(d.cvr20,d._cvr20C)}</div>
+    <div class="cell r mono" style="background:#f2ecfb">${pf(d.ctrKw,d._ctrKwC)}</div>
+    <div class="cell r mono" style="background:#f2ecfb;border-right:2px solid #d9c9f0">${pf(d.ctr20,d._ctr20C)}</div>
+    <div class="cell r mono" style="background:#fdeef4">${pf(d.cvrKw,d._cvrKwC)}</div>
+    <div class="cell r mono" style="background:#fdeef4">${pf(d.cvr20,d._cvr20C)}</div>
   </div></div>`;
 }
 function _markeRankColor(data, key){
@@ -10712,9 +10708,9 @@ function exportMarkeCSV(){
   var SK={ itemnum:function(d){return d.itemNumber;}, itemid:function(d){return d.p.id;}, name:function(d){return d.name;}, totsales:function(d){return d.totS;}, sroas:function(d){return d.sroas;}, seo:function(d){return d.seo;}, adsales:function(d){return d.adv;}, kwspend:function(d){return d.kwSpend;}, ctrkw:function(d){return d.ctrKw==null?-1:d.ctrKw;}, cvrkw:function(d){return d.cvrKw==null?-1:d.cvrKw;}, sp20:function(d){return d.sp20;}, ctr20:function(d){return d.ctr20==null?-1:d.ctr20;}, cvr20:function(d){return d.cvr20==null?-1:d.cvr20;} };
   var f=SK[_markeSortKey]||SK.totsales; var dir=_markeSortDir==='asc'?1:-1; var strKeys={itemnum:1,itemid:1,name:1};
   data.sort(function(a,b){ var va=f(a),vb=f(b); if(strKeys[_markeSortKey]) return dir*String(va).localeCompare(String(vb)); return dir*((va||0)-(vb||0)); });
-  var header=['商品番号','商品管理番号','ジャンルID','商品名','総売上','売上ROAS(%)','SEO売上','広告売上','実績額-KW','CTR-KW(%)','CVR-KW(%)','実績額-20','CTR-20(%)','CVR-20(%)'];
+  var header=['商品番号','商品管理番号','ジャンルID','商品名','総売上','売上ROAS(%)','SEO売上','広告売上','CTR-KW(%)','CTR-20(%)','CVR-KW(%)','CVR-20(%)'];
   var nz=function(v){ return (v==null)?'':v; };
-  var rows=data.map(function(d){ return [d.itemNumber, d.p.id, (productCache[d.p.id]&&productCache[d.p.id].genreId)||'', d.name, d.totS, d.sroas, d.seo, d.adv, d.kwSpend, nz(d.ctrKw), nz(d.cvrKw), d.sp20, nz(d.ctr20), nz(d.cvr20)]; });
+  var rows=data.map(function(d){ return [d.itemNumber, d.p.id, (productCache[d.p.id]&&productCache[d.p.id].genreId)||'', d.name, d.totS, d.sroas, d.seo, d.adv, nz(d.ctrKw), nz(d.ctr20), nz(d.cvrKw), nz(d.cvr20)]; });
   var esc=function(v){ v=(v==null?'':String(v)); return '"'+v.replace(/"/g,'""')+'"'; };
   var csv='\uFEFF'+[header].concat(rows).map(function(r){ return r.map(esc).join(','); }).join('\r\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
@@ -11280,11 +11276,9 @@ const MK2_COLW_DEFS=[
   {k:'sroas',   label:'売上ROAS',     def:82, al:'right'},
   {k:'seo',     label:'SEO売上',      def:92, al:'right'},
   {k:'adsales', label:'広告売上',     def:102, al:'right'},
-  {k:'kwspend', label:'実績額-KW',    def:88, al:'right'},
   {k:'ctrkw',   label:'CTR-KW',       def:76, al:'right'},
-  {k:'cvrkw',   label:'CVR-KW',       def:76, al:'right'},
-  {k:'sp20',    label:'実績額-20',    def:88, al:'right'},
   {k:'ctr20',   label:'CTR-20',       def:76, al:'right'},
+  {k:'cvrkw',   label:'CVR-KW',       def:76, al:'right'},
   {k:'cvr20',   label:'CVR-20',       def:76, al:'right'},
 ];
 function _colwKey(){ return _colwMode==='marathon'?COLW_KEY_MK:(_colwMode==='marke'?COLW_KEY_MK2:COLW_KEY); }
@@ -11692,7 +11686,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 </div>
 <div id="renewalGraphModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div style="background:var(--surface);border-radius:12px;width:96vw;max-width:1200px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3);position:relative;margin:auto">
-    <div style="display:flex;gap:4px;padding:10px 24px 0;border-bottom:1px solid var(--border)"><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">商品-グラフ</button><button onclick="_pmShowEdit()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">商品情報を編集</button></div>
+    <div style="display:flex;gap:4px;padding:10px 24px 0;border-bottom:1px solid var(--border)"><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">個別-グラフ</button><button onclick="_pmShowEdit()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">商品情報を編集</button></div>
     <div style="padding:16px 24px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
         <div id="renewalGraphImg" style="flex-shrink:0"></div>
@@ -11712,7 +11706,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <div id="renewalGraphDayPresets" style="display:none;gap:4px"><button id="renewalDP60" onclick="setRenewalDayPreset('60')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">30日</button><button id="renewalDP2M" onclick="setRenewalDayPreset('2month')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">先月-今月</button><button id="renewalDPTM" onclick="setRenewalDayPreset('thismonth')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">今月</button></div>
       <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
       <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
-        <option value="all">売上＆売上ROAS</option>
+        <option value="all">売上＆ROAS</option>
         <option value="sales">両方-売上</option>
         <option value="spend">広告-実績額</option>
         <option value="roas">広告-ROAS</option>
