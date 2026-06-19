@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.789</span>
+    <span class="build-date">v1.790</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6427,9 +6427,7 @@ function _renewalRowHtml(code, mode) {
   else { actBg = 'var(--surface2)'; actColor = logCount>0?'var(--green)':'var(--accent)'; actBorder = '1px solid ' + (logCount>0?'var(--green)':'var(--accent)'); }
   let _latestMMDD='';
   { const _ds = logs.map(l=>l.date).filter(Boolean).sort(); if(_ds.length){ const _d=_ds[_ds.length-1]; _latestMMDD=_d.slice(5,7)+'/'+_d.slice(8,10); } }
-  const _qt = mode==='lp'?'lp':mode==='thumb'?'thumb':'both';
-  const _numBtn = logCount>0 ? `<span onclick="event.stopPropagation();openChangeLog('${code}')" title="記録を開く" style="cursor:pointer;font-size:13px;font-weight:700;color:var(--accent);text-decoration:underline;padding:0 4px">${logCount}</span>` : '';
-  const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center;gap:5px"><input type="text" inputmode="numeric" value="${_latestMMDD}" placeholder="記録" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.stopPropagation();_quickAddLog('${code}',this.value,'${_qt}');}" onblur="this.value='${_latestMMDD}'" title="変更日を入力(例 06/08)してEnterで記録" style="width:62px;font-size:12px;font-weight:600;padding:4px 4px;border-radius:5px;border:${actBorder};background:${actBg};color:${actColor};text-align:center;text-shadow:${actShadow}">${_numBtn}</div>`;
+  const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" title="変更記録を開く" style="font-size:12px;font-weight:600;padding:4px 12px;border-radius:5px;border:${actBorder};background:${actBg};color:${actColor};cursor:pointer;white-space:nowrap;text-shadow:${actShadow}">${_latestMMDD || '記録'}</button></div>`;
 
   return `<div class="item-row">
     <div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:50px;background:var(--surface)" ${rowClick}>
