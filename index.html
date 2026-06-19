@@ -498,7 +498,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.746</span>
+    <span class="build-date">v1.747</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -598,7 +598,10 @@ header + * { margin-top: 4px; }
           <div id="colWidthPanel" style="display:none;position:fixed;top:120px;right:24px;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.25);padding:14px 16px;width:368px;max-height:74vh;overflow-y:auto">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px">
               <div style="font-size:13px;font-weight:700;color:var(--text)">項目の調整</div>
-              <div style="display:flex;gap:6px">
+              <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+                <input type="file" id="colwImportFile" accept=".json,application/json" style="display:none" onchange="_colwImportFile(this)">
+                <button class="tbtn" onclick="_colwImportClick()" style="font-size:11px;padding:3px 9px;background:#16a34a;color:#fff;border-color:#16a34a;font-weight:700">アップロード</button>
+                <button class="tbtn" onclick="_colwExport()" style="font-size:11px;padding:3px 9px;background:#1565C0;color:#fff;border-color:#1565C0;font-weight:700">ダウンロード</button>
                 <button class="tbtn" onclick="_colwReset()" style="font-size:11px;padding:3px 10px">リセット</button>
                 <button class="tbtn" onclick="document.getElementById('colWidthPanel').style.display='none'" style="font-size:11px;padding:3px 10px">閉じる</button>
               </div>
@@ -11110,6 +11113,36 @@ function _colwOnChange(k,v){ v=Math.round(+v)||0; const o=_colwGet(); o[k]=v; _c
   const nu=document.getElementById('colw-n-'+k); if(nu && nu.value!==String(v)) nu.value=v;
   _applyColWidths(); }
 function _colwReset(){ try{ localStorage.removeItem(COLW_KEY); }catch(e){} COLW_DEFS.forEach(function(d){ if(d.hid && _origColLabels[d.k]!=null){ const el=document.getElementById(d.hid); if(el) el.textContent=_origColLabels[d.k]; } }); _applyColWidths(); _renderColWidthPanel(); }
+function _colwExport(){
+  try{
+    var data=_colwGet();
+    var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url; a.download='adcheck_colwidth.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{document.body.removeChild(a);}catch(e){} URL.revokeObjectURL(url); },120);
+  }catch(e){ alert('ダウンロードに失敗しました'); }
+}
+function _colwImportClick(){
+  if(!confirm('アップロードすると 今の列幅と項目名の設定がすべて上書きされます\n本当に大丈夫ですか?')) return;
+  var inp=document.getElementById('colwImportFile'); if(inp){ inp.value=''; inp.click(); }
+}
+function _colwImportFile(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var obj=JSON.parse(rd.result);
+      if(!obj||typeof obj!=='object'||Array.isArray(obj)){ alert('ファイルの形式が正しくありません'); return; }
+      _colwSet(obj);
+      try{ _applyColLabels(); }catch(e){}
+      _applyColWidths();
+      _renderColWidthPanel();
+      alert('列幅設定を読み込みました');
+    }catch(e){ alert('読み込みに失敗しました ファイルを確認してください'); }
+  };
+  rd.readAsText(f);
+}
 function _openColWidthPanel(){
   const pnl=document.getElementById('colWidthPanel'); if(!pnl) return;
   if(pnl.parentElement!==document.body) document.body.appendChild(pnl);
