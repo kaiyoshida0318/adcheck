@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.786</span>
+    <span class="build-date">v1.787</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8903,7 +8903,9 @@ const STATUS_COLORS = {
 function _statusDispHtml(v){
   const lab = (typeof STATUS_LABELS!=='undefined' && STATUS_LABELS[v]) || '';
   const i = lab.search(/[-\uFF0D\u2010\u2212]/);
-  const txt = (i<0) ? lab : (lab.slice(0,i) + '<br>' + lab.slice(i+1));
+  let parts = (i<0) ? [lab] : [lab.slice(0,i), lab.slice(i+1)];
+  if (parts.length===2 && parts[1].indexOf('20円')===0 && parts[1].length>3) { parts = [parts[0], '20円', parts[1].slice(3)]; }
+  const txt = parts.join('<br>');
   return '<div style="text-align:center;font-size:10px;line-height:1.12;font-weight:600;white-space:nowrap">'+txt+'</div>';
 }
 function applyStatusColor(sel) {
