@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.768</span>
+    <span class="build-date">v1.770</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1242,6 +1242,9 @@ header + * { margin-top: 4px; }
           </label>
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer" id="bulkChkNumLabel">
             <input type="checkbox" id="bulkChkNum" checked onchange="bulkRebuildList()"> 商品番号
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="bulkChkGenre" checked onchange="bulkRebuildList()"> ジャンルID
           </label>
         </div>
       </div>
@@ -3255,8 +3258,8 @@ function openBulkNameModal() {
   _bulkNameFile = null;
   document.getElementById('bulkFileName').textContent = '';
   document.getElementById('bulkStatus').textContent = '';
-  document.getElementById('bulkRunBtn').disabled = true;
-  document.getElementById('bulkRunBtn').style.opacity = '0.5';
+  document.getElementById('bulkNextBtn').disabled = true;
+  document.getElementById('bulkNextBtn').style.opacity = '0.5';
 }
 
 function closeBulkNameModal() {
@@ -3312,9 +3315,11 @@ function bulkHandleFile(file) {
     }
     const keyVal = document.querySelector('input[name="bulkKey"]:checked')?.value || 'id';
     const headers = lines[hi].split(',').map(h => h.trim().replace(/^"|"$/g,''));
-    const idIdx   = headers.indexOf('商品管理番号');
-    const numIdx  = headers.indexOf('商品番号');
-    const nameIdx = headers.indexOf('商品名');
+    const _find = (kw) => headers.findIndex(h => h.includes(kw));
+    const idIdx   = _find('商品管理番号');
+    const numIdx  = _find('商品番号');
+    const nameIdx = _find('商品名');
+    const genreIdx= _find('ジャンルID');
     // 基準列
     const keyIdx  = keyVal === 'num' ? numIdx : idIdx;
     if (keyIdx < 0) {
@@ -3343,6 +3348,7 @@ function bulkHandleFile(file) {
       if (!_bulkParsedMap[code]) _bulkParsedMap[code] = { keyDisplay: keyVal2 };
       if (nameIdx >= 0 && vals[nameIdx] && !_bulkParsedMap[code].name) _bulkParsedMap[code].name = vals[nameIdx];
       if (numIdx  >= 0 && vals[numIdx]  && !_bulkParsedMap[code].num && keyVal !== 'num') _bulkParsedMap[code].num = vals[numIdx];
+      if (genreIdx>= 0 && vals[genreIdx]&& !_bulkParsedMap[code].genre) _bulkParsedMap[code].genre = vals[genreIdx];
     }
     const count = Object.keys(_bulkParsedMap).length;
     document.getElementById('bulkStatus').textContent = `✅ ${count}件の対象商品が見つかりました`;
@@ -3368,6 +3374,7 @@ function bulkBackToStep1() {
 function bulkRebuildList() {
   const doName = document.getElementById('bulkChkName').checked;
   const doNum  = document.getElementById('bulkChkNum').checked;
+  const doGenre = (document.getElementById('bulkChkGenre')||{}).checked;
   const tbody  = document.getElementById('bulkListBody');
   tbody.innerHTML = '';
   let rows = 0;
@@ -3397,6 +3404,18 @@ function bulkRebuildList() {
       </tr>`;
       rows++;
     }
+    if (doGenre && val.genre) {
+      const cur = cached.genreId || '（未設定）';
+      const changed = cur !== val.genre;
+      tbody.innerHTML += `<tr style="border-bottom:1px solid var(--border);${!changed?'opacity:0.45':''}">
+        <td style="padding:5px 8px;text-align:center"><input type="checkbox" class="bulk-chk" data-code="${code}" data-field="genre" ${changed?'checked':''}></td>
+        <td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text3)">${val.keyDisplay||code}</td>
+        <td style="padding:5px 8px;color:var(--text3)">ジャンルID</td>
+        <td style="padding:5px 8px;color:var(--text2)">${cur}</td>
+        <td style="padding:5px 8px;font-weight:600;color:var(--text)">${val.genre}</td>
+      </tr>`;
+      rows++;
+    }
   });
   document.getElementById('bulkListCount').textContent = `${rows}件の変更候補（変更なしは薄表示）`;
 }
@@ -3419,6 +3438,10 @@ function bulkExecUpdate() {
     }
     if (field === 'num' && _bulkParsedMap[code].num) {
       productCache[code].itemNumber = _bulkParsedMap[code].num;
+      updated++;
+    }
+    if (field === 'genre' && _bulkParsedMap[code].genre) {
+      productCache[code].genreId = _bulkParsedMap[code].genre;
       updated++;
     }
   });
