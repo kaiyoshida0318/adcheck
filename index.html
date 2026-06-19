@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.776</span>
+    <span class="build-date">v1.778</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1273,7 +1273,7 @@ header + * { margin-top: 4px; }
       <div class="modal-actions" style="margin-top:12px;flex-shrink:0">
         <button class="modal-btn" onclick="bulkBackToStep1()">← 戻る</button>
         <button class="modal-btn" onclick="closeBulkNameModal()">キャンセル</button>
-        <button class="modal-btn save" id="bulkExecBtn" onclick="bulkExecUpdate()">選択した変更を適用</button>
+        <button class="modal-btn save" id="bulkExecBtn" onclick="bulkExecUpdate()">選択した変更を適用（アップロード）</button>
       </div>
     </div>
   </div>
@@ -3447,15 +3447,21 @@ function bulkExecUpdate() {
     }
   });
   saveProductCache();
-  try { _ssDirty = true; _markApplyBtnDirty(); } catch(e){}
   renderAll();
-  closeBulkNameModal();
-  // 完了通知(GitHubへのプッシュは「反映」ボタンでまとめて行う)
-  const bar = document.createElement('div');
-  bar.textContent = `✅ ${updated}件を反映しました（GitHub保存は「反映」ボタンで）`;
-  bar.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3)';
-  document.body.appendChild(bar);
-  setTimeout(() => bar.remove(), 2500);
+  var _eb=document.getElementById('bulkExecBtn');
+  if(_eb){ _eb.disabled=true; _eb.textContent='アップロード中...'; }
+  saveProductCacheToGitHub().then(function(){
+    if(_eb){ _eb.disabled=false; _eb.textContent='選択した変更を適用（アップロード）'; }
+    closeBulkNameModal();
+    var bar = document.createElement('div');
+    bar.textContent = '✅ '+updated+'件を適用しGitHubにアップロードしました';
+    bar.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3)';
+    document.body.appendChild(bar);
+    setTimeout(function(){ bar.remove(); }, 2500);
+  }).catch(function(e){
+    if(_eb){ _eb.disabled=false; _eb.textContent='選択した変更を適用（アップロード）'; }
+    alert('GitHubアップロードに失敗しました '+(e&&e.message?e.message:''));
+  });
 }
 
 
