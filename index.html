@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.762</span>
+    <span class="build-date">v1.763</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -608,7 +608,6 @@ header + * { margin-top: 4px; }
                 <button class="tbtn" onclick="_colwPublish()" style="font-size:11px;padding:3px 9px;background:#16a34a;color:#fff;border-color:#16a34a;font-weight:700">アップロード</button>
                 <button class="tbtn" onclick="_colwApplyShared()" style="font-size:11px;padding:3px 9px;background:#1565C0;color:#fff;border-color:#1565C0;font-weight:700">反映</button>
                 <button class="tbtn" onclick="_colwReset()" style="font-size:11px;padding:3px 10px">リセット</button>
-                <button class="tbtn" onclick="document.getElementById('colWidthPanel').style.display='none'" style="font-size:11px;padding:3px 10px">閉じる</button>
               </div>
             </div>
             <div id="colwModeTabs" style="display:flex;gap:6px;margin-bottom:8px"></div>
@@ -11347,11 +11346,22 @@ function _colwDragMove(e){
   pnl.style.left=nx+'px'; pnl.style.top=ny+'px';
 }
 function _colwDragEnd(){ _colwDrag=null; document.removeEventListener('mousemove',_colwDragMove); document.removeEventListener('mouseup',_colwDragEnd); }
+function _colwCenter(pnl){
+  const w=pnl.offsetWidth||368, h=pnl.offsetHeight||300;
+  pnl.style.left=Math.max(8,(window.innerWidth-w)/2)+'px';
+  pnl.style.top=Math.max(8,(window.innerHeight-h)/2)+'px';
+  pnl.style.right='auto';
+}
 function _openColWidthPanel(mode){
   const pnl=document.getElementById('colWidthPanel'); if(!pnl) return;
   if(pnl.parentElement!==document.body) document.body.appendChild(pnl);
+  const visible = pnl.style.display!=='none' && pnl.style.display!=='';
+  if(visible){
+    if(mode && mode!==_colwMode){ _colwMode=mode; _renderColWidthPanel(); _colwCenter(pnl); return; }
+    pnl.style.display='none'; return;
+  }
   if(mode) _colwMode=mode;
-  _renderColWidthPanel(); pnl.style.display='block';
+  _renderColWidthPanel(); pnl.style.display='block'; _colwCenter(pnl);
 }
 const _origColLabels={};
 function _captureOrigLabels(){ COLW_DEFS.forEach(function(d){ if(d.hid){ const el=document.getElementById(d.hid); if(el && _origColLabels[d.k]==null) _origColLabels[d.k]=el.textContent.trim(); } }); }
