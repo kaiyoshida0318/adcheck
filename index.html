@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.755</span>
+    <span class="build-date">v1.757</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -611,6 +611,7 @@ header + * { margin-top: 4px; }
                 <button class="tbtn" onclick="document.getElementById('colWidthPanel').style.display='none'" style="font-size:11px;padding:3px 10px">閉じる</button>
               </div>
             </div>
+            <div id="colwModeTabs" style="display:flex;gap:6px;margin-bottom:8px"></div>
             <div id="colwTotalReadout" style="font-size:11px;margin-bottom:10px;padding:6px 8px;background:var(--surface2);border-radius:6px;line-height:1.6"></div>
             <div id="colWidthPanelBody"></div>
           </div>
@@ -11124,31 +11125,82 @@ const COLW_DEFS=[
   {k:'ss',     label:'SS/マラソン',    def:96, al:'center', ws:true},
 ];
 const COLW_KEY='adcheck_colw';
-function _colwGet(){ try{ return JSON.parse(localStorage.getItem(COLW_KEY))||{}; }catch(e){ return {}; } }
-function _colwSet(o){ try{ localStorage.setItem(COLW_KEY, JSON.stringify(o)); }catch(e){} }
-function _colwVal(k){ const o=_colwGet(); const d=COLW_DEFS.find(x=>x.k===k); return (o[k]!=null)?o[k]:(d?d.def:80); }
+const COLW_KEY_MK='adcheck_colw_marathon';
+let _colwMode='normal';
+const MK_COLW_DEFS=[
+  {k:'num',    label:'商品番号',     def:90, al:'left',  row:true},
+  {k:'code',   label:'商品管理番号', def:80, al:'left',  row:true},
+  {k:'genre',  label:'ジャンルID',   def:90, al:'left',  row:true},
+  {k:'img',    label:'商品画像',     def:48, al:'center',row:true},
+  {k:'name',   label:'商品名(最小)', def:200, flex:true, al:'left', row:true},
+  {k:'tot',    label:'総売上',       def:92, al:'right'},
+  {k:'sroas',  label:'売上ROAS',     def:82, al:'right'},
+  {k:'seo',    label:'SEO売上',      def:92, al:'right'},
+  {k:'adsales',label:'広告売上合計', def:102, al:'right'},
+  {k:'spend',  label:'全広告実績',   def:92, al:'right'},
+  {k:'roas',   label:'全広告ROAS',   def:72, al:'right'},
+  {k:'kwspend',label:'KW実績額',     def:72, al:'right'},
+  {k:'kwroas', label:'KW ROAS',      def:72, al:'right'},
+  {k:'sp20',   label:'20実績額',     def:72, al:'right'},
+  {k:'roas20', label:'20 ROAS',      def:72, al:'right'},
+  {k:'status', label:'区分',         def:76, al:'center'},
+  {k:'ss',     label:'SS/マラソン',  def:96, al:'center'},
+];
+function _colwKey(){ return _colwMode==='marathon'?COLW_KEY_MK:COLW_KEY; }
+function _colwDefs(){ return _colwMode==='marathon'?MK_COLW_DEFS:COLW_DEFS; }
+function _colwGetK(key){ try{ return JSON.parse(localStorage.getItem(key))||{}; }catch(e){ return {}; } }
+function _colwGet(){ return _colwGetK(_colwKey()); }
+function _colwSet(o){ try{ localStorage.setItem(_colwKey(), JSON.stringify(o)); }catch(e){} }
+function _colwVal(k){ const o=_colwGet(); const d=_colwDefs().find(x=>x.k===k); return (o[k]!=null)?o[k]:(d?d.def:80); }
+function _colwValFor(key,defs,k){ const o=_colwGetK(key); const d=defs.find(x=>x.k===k); return (o[k]!=null)?o[k]:(d?d.def:80); }
+function _colwAlignFor(key,defs,k){ const o=_colwGetK(key); const d=defs.find(x=>x.k===k); return o['a_'+k]||(d&&d.al)||'right'; }
+function _colwSetMode(m){ _colwMode=m; _renderColWidthPanel(); }
 function _applyColWidths(){
-  const w=k=>_colwVal(k);
-  const name='minmax('+w('name')+'px,1fr)';
-  const dataCols=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20','gross'].map(k=>w(k)+'px').join(' ');
-  const ns=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' 28px';
-  const ws=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' '+w('status')+'px '+w('ss')+'px 28px';
   let st=document.getElementById('colw-style');
   if(!st){ st=document.createElement('style'); st.id='colw-style'; document.head.appendChild(st); }
-  let css='.col-header{grid-template-columns:'+ns+' !important}.item-basic{grid-template-columns:'+ns+' !important}.col-header.with-status{grid-template-columns:'+ws+' !important}.item-basic.with-status{grid-template-columns:'+ws+' !important}';
-  COLW_DEFS.forEach(function(d,i){
-    const n=i+1; const a=_colwAlign(d.k);
-    const fp=(a==='left')?'flex-start':(a==='right')?'flex-end':'center';
-    const hs=d.ws?'.col-header.with-status':'.col-header', rs=d.ws?'.item-basic.with-status':'.item-basic';
-    css+=hs+'>div:nth-child('+n+'){text-align:'+a+' !important}';
-    if(d.row){ css+=rs+'>div:nth-child('+n+'){justify-content:'+fp+' !important}'; }
-    else{ css+=rs+'>div:nth-child('+n+'){align-items:'+fp+' !important;text-align:'+a+' !important}'; }
-  });
+  let css='';
+  // 通常 / with-status
+  { const w=k=>_colwValFor(COLW_KEY,COLW_DEFS,k);
+    const name='minmax('+w('name')+'px,1fr)';
+    const dataCols=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20','gross'].map(k=>w(k)+'px').join(' ');
+    const ns=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' 28px';
+    const ws=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' '+w('status')+'px '+w('ss')+'px 28px';
+    css+='.col-header{grid-template-columns:'+ns+' !important}.item-basic{grid-template-columns:'+ns+' !important}.col-header.with-status{grid-template-columns:'+ws+' !important}.item-basic.with-status{grid-template-columns:'+ws+' !important}';
+    COLW_DEFS.forEach(function(d,i){
+      const n=i+1; const a=_colwAlignFor(COLW_KEY,COLW_DEFS,d.k);
+      const fp=(a==='left')?'flex-start':(a==='right')?'flex-end':'center';
+      const hs=d.ws?'.col-header.with-status':'.col-header', rs=d.ws?'.item-basic.with-status':'.item-basic';
+      css+=hs+'>div:nth-child('+n+'){text-align:'+a+' !important}';
+      if(d.row){ css+=rs+'>div:nth-child('+n+'){justify-content:'+fp+' !important}'; }
+      else{ css+=rs+'>div:nth-child('+n+'){align-items:'+fp+' !important;text-align:'+a+' !important}'; }
+    });
+  }
+  // マラソン
+  { const w=k=>_colwValFor(COLW_KEY_MK,MK_COLW_DEFS,k);
+    const name='minmax('+w('name')+'px,1fr)';
+    const mid=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20'].map(k=>w(k)+'px').join(' ');
+    const mk=w('num')+'px '+w('code')+'px '+w('genre')+'px '+w('img')+'px '+name+' '+mid+' '+w('status')+'px '+w('ss')+'px 28px';
+    css+='.col-header.marathon{grid-template-columns:'+mk+' !important}.item-basic.marathon{grid-template-columns:'+mk+' !important}';
+    MK_COLW_DEFS.forEach(function(d,i){
+      const n=i+1; const a=_colwAlignFor(COLW_KEY_MK,MK_COLW_DEFS,d.k);
+      const fp=(a==='left')?'flex-start':(a==='right')?'flex-end':'center';
+      css+='.col-header.marathon>div:nth-child('+n+'){text-align:'+a+' !important}';
+      if(d.row){ css+='.item-basic.marathon>div:nth-child('+n+'){justify-content:'+fp+' !important}'; }
+      else{ css+='.item-basic.marathon>div:nth-child('+n+'){align-items:'+fp+' !important;text-align:'+a+' !important}'; }
+    });
+  }
   st.textContent=css;
+}
+function _renderColwModeTabs(){
+  const el=document.getElementById('colwModeTabs'); if(!el) return;
+  const mk=function(m,lbl){ const on=_colwMode===m;
+    return '<button onclick="_colwSetMode(\''+m+'\')" style="flex:1;font-size:12px;font-weight:700;padding:5px 8px;border-radius:6px;cursor:pointer;border:1.5px solid '+(on?'#1565C0':'var(--border)')+';background:'+(on?'#1565C0':'var(--surface2)')+';color:'+(on?'#fff':'var(--text3)')+'">'+lbl+'</button>'; };
+  el.innerHTML=mk('normal','通常')+mk('marathon','マラソン');
 }
 function _renderColWidthPanel(){
   const body=document.getElementById('colWidthPanelBody'); if(!body) return;
-  body.innerHTML=COLW_DEFS.map(d=>{
+  _renderColwModeTabs();
+  body.innerHTML=_colwDefs().map(d=>{
     const v=_colwVal(d.k);
     const mn=d.flex?120:40, mx=d.flex?420:220;
     const a=_colwAlign(d.k);
@@ -11168,25 +11220,22 @@ function _renderColWidthPanel(){
 }
 function _colwUpdateTotal(){
   const el=document.getElementById('colwTotalReadout'); if(!el) return;
-  let base=0, st=0, ss=0;
-  COLW_DEFS.forEach(function(d){ const v=_colwVal(d.k); if(d.k==='status'){st=v;} else if(d.k==='ss'){ss=v;} else { base+=v; } });
-  const normalTotal=base+28;
-  const statusTotal=base+st+ss+28;
-  const win=window.innerWidth||0;
-  const diff=statusTotal-win;
-  const over=diff>0;
-  const diffTxt=over?('+'+diff+'px はみ出し'):((-diff)+'px 余裕');
-  const diffCol=over?'#C62828':'#1D9E75';
-  el.innerHTML='<div style="color:var(--text2)">合計幅  通常:<b style="color:var(--text)">'+normalTotal+'px</b>  状態/SS:<b style="color:var(--text)">'+statusTotal+'px</b></div>'+
-    '<div style="color:var(--text2)">画面幅:'+win+'px  差分(状態/SS):<b style="color:'+diffCol+'">'+diffTxt+'</b></div>';
+  let total=0;
+  _colwDefs().forEach(function(d){ total+=_colwVal(d.k); });
+  total+=28;
+  const win=window.innerWidth||0; const diff=total-win; const over=diff>0;
+  const diffTxt=over?('+'+diff+'px はみ出し'):((-diff)+'px 余裕'); const diffCol=over?'#C62828':'#1D9E75';
+  const modeLbl=_colwMode==='marathon'?'マラソン':'通常(状態/SS)';
+  el.innerHTML='<div style="color:var(--text2)">'+modeLbl+' 合計幅:<b style="color:var(--text)">'+total+'px</b></div>'+
+    '<div style="color:var(--text2)">画面幅:'+win+'px  差分:<b style="color:'+diffCol+'">'+diffTxt+'</b></div>';
 }
-function _colwAlign(k){ const o=_colwGet(); const d=COLW_DEFS.find(x=>x.k===k); return o['a_'+k]||(d&&d.al)||'right'; }
+function _colwAlign(k){ const o=_colwGet(); const d=_colwDefs().find(x=>x.k===k); return o['a_'+k]||(d&&d.al)||'right'; }
 function _colwSetAlign(k,a){ const o=_colwGet(); o['a_'+k]=a; _colwSet(o); _applyColWidths(); _renderColWidthPanel(); }
 function _colwOnChange(k,v){ v=Math.round(+v)||0; const o=_colwGet(); o[k]=v; _colwSet(o);
   const sl=document.getElementById('colw-s-'+k); if(sl && sl.value!==String(v)) sl.value=v;
   const nu=document.getElementById('colw-n-'+k); if(nu && nu.value!==String(v)) nu.value=v;
   _applyColWidths(); _colwUpdateTotal(); }
-function _colwReset(){ try{ localStorage.removeItem(COLW_KEY); }catch(e){} COLW_DEFS.forEach(function(d){ if(d.hid && _origColLabels[d.k]!=null){ const el=document.getElementById(d.hid); if(el) el.textContent=_origColLabels[d.k]; } }); _applyColWidths(); _renderColWidthPanel(); }
+function _colwReset(){ try{ localStorage.removeItem(_colwKey()); }catch(e){} if(_colwMode==='normal'){ COLW_DEFS.forEach(function(d){ if(d.hid && _origColLabels[d.k]!=null){ const el=document.getElementById(d.hid); if(el) el.textContent=_origColLabels[d.k]; } }); } _applyColWidths(); _renderColWidthPanel(); }
 const COLW_SHARED_FILE='data/colwidth_shared.json';
 async function _colwPublish(){
   if(!confirm('アップロードすると チーム共有の列幅設定が 今のあなたの設定で上書きされます\n全員が反映ボタンでこれを取り込めるようになります\n本当に大丈夫ですか?')) return;
@@ -11197,7 +11246,7 @@ async function _colwPublish(){
     var url='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+COLW_SHARED_FILE;
     var getRes=await fetch(url,{headers,cache:'no-store'});
     var sha=getRes.ok?(await getRes.json()).sha:null;
-    var base64=btoa(unescape(encodeURIComponent(JSON.stringify(_colwGet()))));
+    var base64=btoa(unescape(encodeURIComponent(JSON.stringify({normal:_colwGetK(COLW_KEY),marathon:_colwGetK(COLW_KEY_MK)}))));
     var body={message:'Update shared colwidth',content:base64}; if(sha) body.sha=sha;
     var putRes=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)});
     if(!putRes.ok){ var ee=await putRes.json(); throw new Error(ee.message||putRes.status); }
@@ -11218,7 +11267,8 @@ async function _colwApplyShared(){
       if(rr.ok) obj=JSON.parse(await rr.text());
     }
     if(!obj||typeof obj!=='object'||Array.isArray(obj)){ alert('共有設定が見つかりません 先に誰かがアップロードする必要があります'); return; }
-    _colwSet(obj);
+    if(obj.normal||obj.marathon){ try{ localStorage.setItem(COLW_KEY, JSON.stringify(obj.normal||{})); localStorage.setItem(COLW_KEY_MK, JSON.stringify(obj.marathon||{})); }catch(e){} }
+    else { try{ localStorage.setItem(COLW_KEY, JSON.stringify(obj)); }catch(e){} }
     try{ _applyColLabels(); }catch(e){}
     _applyColWidths();
     _renderColWidthPanel();
@@ -11233,9 +11283,9 @@ function _openColWidthPanel(){
 }
 const _origColLabels={};
 function _captureOrigLabels(){ COLW_DEFS.forEach(function(d){ if(d.hid){ const el=document.getElementById(d.hid); if(el && _origColLabels[d.k]==null) _origColLabels[d.k]=el.textContent.trim(); } }); }
-function _colCurLabel(k){ const o=_colwGet(); if(o['l_'+k]!=null) return o['l_'+k]; if(_origColLabels[k]!=null) return _origColLabels[k]; const d=COLW_DEFS.find(x=>x.k===k); if(d&&d.hid){ const el=document.getElementById(d.hid); if(el) return el.textContent.trim(); } return d?d.label:''; }
+function _colCurLabel(k){ const o=_colwGet(); if(o['l_'+k]!=null) return o['l_'+k]; if(_colwMode==='normal' && _origColLabels[k]!=null) return _origColLabels[k]; const d=_colwDefs().find(x=>x.k===k); if(d&&d.hid){ const el=document.getElementById(d.hid); if(el) return el.textContent.trim(); } return d?d.label:''; }
 function _applyColLabels(){ const o=_colwGet(); COLW_DEFS.forEach(function(d){ if(d.hid && o['l_'+d.k]!=null){ const el=document.getElementById(d.hid); if(el) el.textContent=o['l_'+d.k]; } }); }
-function _colLabelOnChange(k,val){ const o=_colwGet(); o['l_'+k]=val; _colwSet(o); const d=COLW_DEFS.find(x=>x.k===k); const el=d&&d.hid?document.getElementById(d.hid):null; if(el) el.textContent=val; }
+function _colLabelOnChange(k,val){ const o=_colwGet(); o['l_'+k]=val; _colwSet(o); if(_colwMode!=='normal') return; const d=COLW_DEFS.find(x=>x.k===k); const el=d&&d.hid?document.getElementById(d.hid):null; if(el) el.textContent=val; }
 try{ _captureOrigLabels(); _applyColLabels(); }catch(e){}
 try{ _applyColWidths(); }catch(e){}
 
