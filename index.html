@@ -125,8 +125,8 @@ header + * { margin-top: 4px; }
 .item-basic.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 76px 96px 28px; }
 .col-header.marathon { grid-template-columns: 90px 80px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 76px 96px 28px !important; }
 .item-basic.marathon { grid-template-columns: 90px 80px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 76px 96px 28px !important; }
-.col-header.marke{grid-template-columns:90px 110px 48px minmax(0,1fr) 92px 82px 92px 102px 88px 76px 76px 88px 76px 76px !important}
-.item-basic.marke{grid-template-columns:90px 110px 48px minmax(0,1fr) 92px 82px 92px 102px 88px 76px 76px 88px 76px 76px !important}
+.col-header.marke{grid-template-columns:90px 110px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 88px 76px 76px 88px 76px 76px !important}
+.item-basic.marke{grid-template-columns:90px 110px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 88px 76px 76px 88px 76px 76px !important}
 .status-cell { display: flex; align-items: center; gap: 4px; padding: 4px 6px; justify-content: center; }
 .status-update-btn { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent); background: var(--surface2); color: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .status-update-btn:hover { background: var(--accent); color: #fff; }
@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.771</span>
+    <span class="build-date">v1.774</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3445,12 +3445,13 @@ function bulkExecUpdate() {
       updated++;
     }
   });
-  saveToGitHub();
+  saveProductCache();
+  try { _ssDirty = true; _markApplyBtnDirty(); } catch(e){}
   renderAll();
   closeBulkNameModal();
-  // 完了通知
+  // 完了通知(GitHubへのプッシュは「反映」ボタンでまとめて行う)
   const bar = document.createElement('div');
-  bar.textContent = `✅ ${updated}件の変更を適用しました`;
+  bar.textContent = `✅ ${updated}件を反映しました（GitHub保存は「反映」ボタンで）`;
   bar.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3)';
   document.body.appendChild(bar);
   setTimeout(() => bar.remove(), 2500);
@@ -10554,6 +10555,7 @@ function _markeHeader(){
   return '<div class="col-header marke" style="position:sticky;top:48px;z-index:25;background:#f8f9fa">'
     +_mkH('商品番号','itemnum','ch','','')
     +_mkH('商品管理番号','itemid','ch','','')
+    +_mkH('ジャンルID','','ch','','')
     +_mkH('商品画像','','ch','','#c4cad2')
     +_mkH('商品名','name','ch','','#c4cad2')
     +_mkH('総売上','totsales','ch r','#eef4fb','')
@@ -10582,6 +10584,7 @@ function _markeRow(d, maxSpend){
   return `<div class="item-row"><div class="item-basic marke" onclick="openRenewalGraph('${p.id}')" style="cursor:pointer">
     <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${d.itemNumber}">${d.itemNumber || '\u2014'}</div>
     <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${p.id}">${p.id}</div>
+    <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${(productCache[p.id]&&productCache[p.id].genreId)||''}">${(productCache[p.id]&&productCache[p.id].genreId)||'\u2014'}</div>
     <div class="cell-img" style="display:flex;align-items:center;justify-content:center;padding:8px 4px;border-right:2px solid #c4cad2">${imgEl}</div>
     <div class="cell-name" style="display:flex;align-items:center;gap:6px;border-right:2px solid #c4cad2"><div style="overflow:hidden">
       <div class="prod-name" ondblclick="_selectAndCopyText(this,event)" data-full="${(d.name||'').replace(/"/g,'&quot;')}" title="${d.name}" style="user-select:text;cursor:text">${d.name !== p.id ? d.name.substring(0,40)+(d.name.length>40?'\u2026':'') : p.id}${d.isManual?'<span class="manual-badge" title="手動編集済み"></span>':''}</div>
@@ -10644,9 +10647,9 @@ function exportMarkeCSV(){
   var SK={ itemnum:function(d){return d.itemNumber;}, itemid:function(d){return d.p.id;}, name:function(d){return d.name;}, totsales:function(d){return d.totS;}, sroas:function(d){return d.sroas;}, seo:function(d){return d.seo;}, adsales:function(d){return d.adv;}, kwspend:function(d){return d.kwSpend;}, ctrkw:function(d){return d.ctrKw==null?-1:d.ctrKw;}, cvrkw:function(d){return d.cvrKw==null?-1:d.cvrKw;}, sp20:function(d){return d.sp20;}, ctr20:function(d){return d.ctr20==null?-1:d.ctr20;}, cvr20:function(d){return d.cvr20==null?-1:d.cvr20;} };
   var f=SK[_markeSortKey]||SK.totsales; var dir=_markeSortDir==='asc'?1:-1; var strKeys={itemnum:1,itemid:1,name:1};
   data.sort(function(a,b){ var va=f(a),vb=f(b); if(strKeys[_markeSortKey]) return dir*String(va).localeCompare(String(vb)); return dir*((va||0)-(vb||0)); });
-  var header=['商品番号','商品管理番号','商品名','総売上','売上ROAS(%)','SEO売上','広告売上','実績額-KW','CTR-KW(%)','CVR-KW(%)','実績額-20','CTR-20(%)','CVR-20(%)'];
+  var header=['商品番号','商品管理番号','ジャンルID','商品名','総売上','売上ROAS(%)','SEO売上','広告売上','実績額-KW','CTR-KW(%)','CVR-KW(%)','実績額-20','CTR-20(%)','CVR-20(%)'];
   var nz=function(v){ return (v==null)?'':v; };
-  var rows=data.map(function(d){ return [d.itemNumber, d.p.id, d.name, d.totS, d.sroas, d.seo, d.adv, d.kwSpend, nz(d.ctrKw), nz(d.cvrKw), d.sp20, nz(d.ctr20), nz(d.cvr20)]; });
+  var rows=data.map(function(d){ return [d.itemNumber, d.p.id, (productCache[d.p.id]&&productCache[d.p.id].genreId)||'', d.name, d.totS, d.sroas, d.seo, d.adv, d.kwSpend, nz(d.ctrKw), nz(d.cvrKw), d.sp20, nz(d.ctr20), nz(d.cvr20)]; });
   var esc=function(v){ v=(v==null?'':String(v)); return '"'+v.replace(/"/g,'""')+'"'; };
   var csv='\uFEFF'+[header].concat(rows).map(function(r){ return r.map(esc).join(','); }).join('\r\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
@@ -11193,6 +11196,7 @@ const MK_COLW_DEFS=[
 const MK2_COLW_DEFS=[
   {k:'num',     label:'商品番号',     def:90, al:'left',  row:true},
   {k:'code',    label:'商品管理番号', def:110, al:'left', row:true},
+  {k:'genre',   label:'ジャンルID',   def:90, al:'left', row:true},
   {k:'img',     label:'商品画像',     def:48, al:'center',row:true},
   {k:'name',    label:'商品名(最小)', def:200, flex:true, al:'left', row:true},
   {k:'totsales',label:'総売上',       def:92, al:'right'},
@@ -11253,7 +11257,7 @@ function _applyColWidths(){
   { const w=k=>_colwValFor(COLW_KEY_MK2,MK2_COLW_DEFS,k);
     const name='minmax('+w('name')+'px,1fr)';
     const cols=['totsales','sroas','seo','adsales','kwspend','ctrkw','cvrkw','sp20','ctr20','cvr20'].map(k=>w(k)+'px').join(' ');
-    const mk2=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+cols;
+    const mk2=w('num')+'px '+w('code')+'px '+w('genre')+'px '+w('img')+'px '+name+' '+cols;
     css+='.col-header.marke{grid-template-columns:'+mk2+' !important}.item-basic.marke{grid-template-columns:'+mk2+' !important}';
     MK2_COLW_DEFS.forEach(function(d,i){ const n=i+1; const a=_colwAlignFor(COLW_KEY_MK2,MK2_COLW_DEFS,d.k);
       const fp=(a==='left')?'flex-start':(a==='right')?'flex-end':'center';
