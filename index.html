@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.761</span>
+    <span class="build-date">v1.762</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10600,7 +10600,7 @@ function renderMarke(){
   var q=((document.getElementById('markeSearch')||{}).value||'').toLowerCase();
   var products=getProducts().filter(function(p){ return !(productCache[p.id]&&productCache[p.id].retired); });
   if(q) products=products.filter(function(p){ var c=productCache[p.id]||{}; var nm=(c.manualName||c.name||'').toLowerCase(); var inum=(c.itemNumber||'').toLowerCase(); return p.id.toString().toLowerCase().includes(q)||nm.includes(q)||inum.includes(q); });
-  var data=products.map(function(p){ return _markeData(p,ym); });
+  var data=products.map(function(p){ try{ return _markeData(p,ym); }catch(e){ console.warn('[ADcheck] marke data err', p&&p.id, e); return null; } }).filter(Boolean);
   var _cK=_markeRankColor(data,'ctrKw'),_c2=_markeRankColor(data,'ctr20'),_vK=_markeRankColor(data,'cvrKw'),_v2=_markeRankColor(data,'cvr20');
   data.forEach(function(d){ d._ctrKwC=_cK(d.ctrKw); d._ctr20C=_c2(d.ctr20); d._cvrKwC=_vK(d.cvrKw); d._cvr20C=_v2(d.cvr20); });
   var maxSpend=Math.max.apply(null,data.map(function(d){return d.spend;}).concat([1]));
@@ -10611,7 +10611,7 @@ function renderMarke(){
   var f=SK[_markeSortKey]||SK.totsales; var dir=_markeSortDir==='asc'?1:-1;
   var strKeys={itemnum:1,itemid:1,name:1};
   data.sort(function(a,b){ var va=f(a),vb=f(b); if(strKeys[_markeSortKey]) return dir*String(va).localeCompare(String(vb)); return dir*((va||0)-(vb||0)); });
-  listEl.innerHTML = _markeHeader() + (data.length? data.map(function(d){ return _markeRow(d,maxSpend); }).join('') : '<div style="padding:30px;text-align:center;color:var(--text3)">データがありません</div>');
+  listEl.innerHTML = _markeHeader() + (data.length? data.map(function(d){ try{ return _markeRow(d,maxSpend); }catch(e){ console.warn('[ADcheck] marke row err', e); return ''; } }).join('') : '<div style="padding:30px;text-align:center;color:var(--text3)">データがありません</div>');
 }
 function exportMarkeCSV(){
   var ym=_markeMon();
