@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.798</span>
+    <span class="build-date">v1.799</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9256,10 +9256,10 @@ function renderYoy(){
     +'<div style="flex:1;padding-left:6px">商品名</div>'
     +'<div style="width:76px;text-align:right;padding-right:6px">商品売上</div>'
     +'<div style="width:72px;text-align:right;padding-right:6px">広告費</div>'
-    +'<div style="width:80px;text-align:right;padding-right:8px">粗広告利益</div></div>';
+    +'<div style="width:80px;text-align:right;padding-right:8px">売上ROAS</div></div>';
   const tableHtml=(ord,k)=>{
     let h='';
-    ord.forEach(p=>{ const vv=p.v[k];
+    ord.forEach(p=>{ const vv=p.v[k]; const _r=(vv.sp>0)?Math.round(vv.s/vv.sp*100):0; const roasCell=(vv.sp>0)?('<span style="color:'+_SROAS_COLORS[_sroasCat(_r)]+';font-weight:700">'+_r+'%</span>'):'<span style="color:var(--text3)">\u2014</span>';
       const ps=(k>0)?(p.v[k-1].s||0):0;
       let salesCell;
       if(vv.s<=0){ salesCell=fmt(vv.s); }
@@ -9271,7 +9271,7 @@ function renderYoy(){
         +'<div style="flex:1;padding-left:6px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</div>'
         +'<div style="width:76px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+salesCell+'</div>'
         +'<div style="width:72px;text-align:right;padding-right:6px;font-family:monospace;font-size:11px">'+fmt(vv.sp)+'</div>'
-        +'<div style="width:80px;text-align:right;padding-right:8px;font-family:monospace;font-size:11px">'+fmtP(vv.pf)+'</div></div>';
+        +'<div style="width:80px;text-align:right;padding-right:8px;font-family:monospace;font-size:11px">'+roasCell+'</div></div>';
     });
     return h;
   };
