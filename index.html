@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.809</span>
+    <span class="build-date">v1.810</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9021,12 +9021,16 @@ function _subTabToolbar(tab, currentYm) {
   const moveBtn = (tab === 'mar-kouho')
     ? `<button onclick="document.getElementById('marMoveFileInput').click()" style="padding:7px 16px;border-radius:8px;border:2px solid #0891b2;background:#e0f7fa;color:#0891b2;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(8,145,178,0.15);transition:all 0.15s" onmouseover="this.style.background='#b2ebf2';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(8,145,178,0.25)'" onmouseout="this.style.background='#e0f7fa';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(8,145,178,0.15)'" title="参加決定（商品管理番号）CSVを取り込み、該当商品を候補から実施中へ一括移動します">📤 実施中へ一括移動</button><input type="file" id="marMoveFileInput" accept=".csv,.txt" style="display:none" onchange="uploadMarathonMoveCsv(event)">`
     : '';
+  // 【マラソン】実施中のみ: 全件を候補へ一括で戻す
+  const returnBtn = (tab === 'mar-jisshi')
+    ? `<button onclick="returnAllJisshiToKouho()" style="padding:7px 16px;border-radius:8px;border:2px solid #7c3aed;background:#f3eefe;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(124,58,237,0.15);transition:all 0.15s" onmouseover="this.style.background='#e9ddfd';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(124,58,237,0.25)'" onmouseout="this.style.background='#f3eefe';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(124,58,237,0.15)'" title="実施中の商品をすべて候補へ戻します（セール終了後の一括戻し用）">↩ 候補へ一括で戻す</button>`
+    : '';
   const colwBtn = (isStatus || isSS || isMarathon) ? '<button onclick="_openColWidthPanel()" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;margin-right:8px">項目調整</button>' : '';
   const sroasBtns = isStatus ? '<div id="sroasFilterBtnsSub" style="display:flex;gap:3px;align-items:center;margin-left:8px">'+_sroasFilterBtnsHtml()+'</div>' : '';
   return `<div class="table-toolbar">
     <select class="toolbar-month" id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)">${monthOpts}</select>
     <input type="text" class="toolbar-search" id="subTabSearchBox" placeholder="商品名・商品番号で検索..." oninput="renderMonthlySubTab(_currentTab)" style="width:220px">
-    ${sroasBtns}<div class="toolbar-right">${colwBtn}${csvBtn}${moveBtn}${updateBtn}</div>
+    ${sroasBtns}<div class="toolbar-right">${colwBtn}${csvBtn}${moveBtn}${returnBtn}${updateBtn}</div>
   </div>`;
 }
 
@@ -9143,6 +9147,31 @@ function uploadMarathonMoveCsv(ev){
     }catch(err){ alert('取り込みエラー: '+err.message); }
   };
   reader.readAsText(file);
+}
+
+// 実施中の商品をすべて候補へ一括で戻す(セール終了後)
+function returnAllJisshiToKouho(){
+  const codes = Object.keys(productCache).filter(function(code){
+    if(productCache[code] && productCache[code].retired) return false;
+    return (productCache[code] && productCache[code].marathon || []).indexOf('jisshi')>=0;
+  });
+  if(codes.length===0){ alert('実施中の商品がありません'); return; }
+  if(!confirm('実施中の '+codes.length+'件をすべて候補へ戻します。よろしいですか？')) return;
+  let moved=0, already=0;
+  codes.forEach(function(code){
+    if(!productCache[code]) productCache[code]={};
+    const cur = productCache[code].marathon||[];
+    const wasKouho = cur.indexOf('kouho')>=0;
+    productCache[code].marathon = cur.filter(function(k){return k!=='jisshi'&&k!=='kouho';}).concat(['kouho']);
+    if(wasKouho) already++; else moved++;
+  });
+  saveProductCache();
+  _ssDirty=true; _markApplyBtnDirty();
+  if(_ssTabActive && typeof _currentTab!=='undefined' && _currentTab in MARATHON_TABS){ renderMonthlySubTab(_currentTab); }
+  let msg='候補へ一括で戻しました\n\n対象 '+codes.length+'件\n候補へ戻した '+moved+'件';
+  if(already>0) msg+='\n既に候補にもあった '+already+'件';
+  msg+='\n\n反映（GitHub保存）するには「反映する」を押してください。';
+  alert(msg);
 }
 
 function renderMonthlySubTab(tab) {
