@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.814</span>
+    <span class="build-date">v1.816</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -526,7 +526,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-basic" id="tab-btn-item-graph" onclick="switchTab('item-graph')">商品-グラフ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-retired" onclick="switchTab('retired')">引退済商品</button>
   <span class="tab-row-label" style="color:#00897B;padding-left:7px">【KW】</span>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-基本データ</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-月別データ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
   <span class="tab-row-label" id="label-zentai" style="color:#dc2626;padding-left:7px">【全体】</span>
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">全-月別データ</button>
@@ -1509,7 +1509,7 @@ header + * { margin-top: 4px; }
 <!-- 商品編集モーダル -->
 <div class="modal-overlay" id="editItemModal">
   <div class="modal" style="max-width:520px">
-    <div style="display:flex;gap:4px;margin:-2px 0 14px;border-bottom:1px solid var(--border)"><button onclick="_pmShowGraph()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">個別-グラフ</button><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">商品情報を編集</button></div>
+    <div style="display:flex;gap:4px;margin:-2px 0 14px;border-bottom:1px solid var(--border)"><button onclick="_pmShowGraph()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">全体情報</button><button onclick="_kwdFromEdit()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">KW詳細</button><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">商品情報を編集</button></div>
     <h3>✏️ 商品情報を編集</h3>
     <div style="display:flex;gap:20px;margin-bottom:14px">
       <div>
@@ -6844,7 +6844,7 @@ var _ANALYZE_OPTS=[
  {v:'商品-グラフ',b:'【基本】',r:'商品-グラフ',c:'#2563eb'},
  {v:'引退済商品',b:'【基本】',r:'引退済商品',c:'#2563eb'},
  {v:'【KW】全体',b:'【KW】',r:'全体',c:'#00897B',full:true},
- {v:'KW-基本データ',b:'【KW】',r:'KW-基本データ',c:'#00897B'},
+ {v:'KW-月別データ',b:'【KW】',r:'KW-基本データ',c:'#00897B'},
  {v:'KW-比較',b:'【KW】',r:'KW-比較',c:'#00897B'},
  {v:'【全体】全体',b:'【全体】',r:'全体',c:'#dc2626',full:true},
  {v:'全-月別データ',b:'【全体】',r:'全-月別データ',c:'#dc2626'},
@@ -7628,6 +7628,59 @@ let _renewalChartInstance = null;
 let _renewalGraphLastMetric = null;
 let _renewalGraphLastCode = null;
 
+// ===== KW詳細 モーダル =====
+let _kwDetailCode = null;
+let _kwDetailCharts = [];
+function _kwdFromEdit(){ var c=_editItemId; try{closeEditModal();}catch(e){} if(c){ try{openKwDetail(c);}catch(e){} } }
+function _kwdFromGraph(){ var c=_renewalGraphCode; try{closeRenewalGraph();}catch(e){} if(c){ try{openKwDetail(c);}catch(e){} } }
+function _graphFromKwd(){ var c=_kwDetailCode; try{closeKwDetail();}catch(e){} if(c){ try{openRenewalGraph(c);}catch(e){} } }
+function _editFromKwd(){ var c=_kwDetailCode; try{closeKwDetail();}catch(e){} if(c){ try{openEditModal(c);}catch(e){} } }
+function openKwDetail(code){
+  document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
+  _kwDetailCode=code;
+  const c=productCache[code]||{};
+  const name=c.manualName||c.name||code, num=c.itemNumber||code, img=c.manualImg||c.img||null;
+  document.getElementById('kwDetailName').textContent=name;
+  document.getElementById('kwDetailSub').textContent=num+'\u3000|\u3000'+code;
+  document.getElementById('kwDetailImg').innerHTML= img?('<img loading="lazy" src="'+img+'" style="width:40px;height:40px;border-radius:7px;object-fit:cover;border:1px solid var(--border)">'):'';
+  document.getElementById('kwDetailModal').style.display='flex';
+  renderKwDetail();
+}
+function closeKwDetail(){
+  const m=document.getElementById('kwDetailModal'); if(m) m.style.display='none';
+  document.documentElement.style.overflow=''; document.body.style.overflow='';
+  _kwDetailCharts.forEach(c=>{try{c.destroy();}catch(e){}}); _kwDetailCharts=[];
+  _kwDetailCode=null;
+}
+function renderKwDetail(){
+  const code=_kwDetailCode; if(!code) return;
+  const idd=(typeof itemDailyData!=='undefined' && itemDailyData[code])||{};
+  const dateSet=new Set(Object.keys(idd));
+  if(typeof kwRows!=='undefined') kwRows.forEach(r=>{ if(r.itemCode===code && r.date) dateSet.add(r.date); });
+  let dates=[...dateSet].sort();
+  if(dates.length>90) dates=dates.slice(-90);
+  const empty=dates.length===0;
+  const emptyEl=document.getElementById('kwDetailEmpty'), chartsEl=document.getElementById('kwDetailCharts');
+  if(emptyEl) emptyEl.style.display=empty?'block':'none';
+  if(chartsEl) chartsEl.style.display=empty?'none':'block';
+  _kwDetailCharts.forEach(c=>{try{c.destroy();}catch(e){}}); _kwDetailCharts=[];
+  if(empty) return;
+  // 目安CPC: 日ごとにKWのmcpc(>0)平均、欠損日は前日継続
+  const mcpcByDate={};
+  if(typeof kwRows!=='undefined') kwRows.forEach(r=>{ if(r.itemCode===code && r.date && r.mcpc>0){ const o=mcpcByDate[r.date]||(mcpcByDate[r.date]={s:0,n:0}); o.s+=r.mcpc; o.n++; } });
+  let last=null;
+  const mcpcArr=dates.map(d=>{ const m=mcpcByDate[d]; if(m&&m.n>0) last=Math.round(m.s/m.n); return last; });
+  const spendArr=dates.map(d=>(idd[d]?idd[d].spend:0)||0);
+  const salesArr=dates.map(d=>(idd[d]?idd[d].sales:0)||0);
+  const labels=dates.map(d=>d.slice(5));
+  function mk(id,label,data,color){
+    const ctx=document.getElementById(id); if(!ctx||typeof Chart==='undefined') return;
+    _kwDetailCharts.push(new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{label:label,data:data,borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:2,tension:0.2,spanGaps:true,fill:true}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:14}}}}}));
+  }
+  mk('kwDetailCpcCanvas','目安CPC',mcpcArr,'#9333ea');
+  mk('kwDetailSpendCanvas','実績額',spendArr,'#f97316');
+  mk('kwDetailSalesCanvas','売上',salesArr,'#2563eb');
+}
 function openRenewalGraph(code) {
   document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
   _renewalHiddenFY.clear(); _renewalHiddenMetric.clear();
@@ -11870,7 +11923,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 </div>
 <div id="renewalGraphModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div style="background:var(--surface);border-radius:12px;width:96vw;max-width:1200px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3);position:relative;margin:auto">
-    <div style="display:flex;gap:4px;padding:10px 24px 0;border-bottom:1px solid var(--border)"><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">個別-グラフ</button><button onclick="_pmShowEdit()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">商品情報を編集</button></div>
+    <div style="display:flex;gap:4px;padding:10px 24px 0;border-bottom:1px solid var(--border)"><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">全体情報</button><button onclick="_kwdFromGraph()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">KW詳細</button><button onclick="_pmShowEdit()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">商品情報を編集</button></div>
     <div style="padding:16px 24px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
         <div id="renewalGraphImg" style="flex-shrink:0"></div>
@@ -11919,6 +11972,34 @@ window.addEventListener('DOMContentLoaded', async () => {
         <div id="renewalGraphTableScroll" style="overflow-x:auto;overflow-y:auto;border:1px solid var(--border);border-radius:8px;min-height:120px;max-height:600px">
           <table id="renewalGraphTable" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"></table>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KW詳細 モーダル -->
+<div id="kwDetailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:var(--surface);border-radius:12px;width:96vw;max-width:1100px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3);position:relative;margin:auto">
+    <div style="display:flex;gap:4px;padding:10px 24px 0;border-bottom:1px solid var(--border)"><button onclick="_graphFromKwd()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">全体情報</button><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">KW詳細</button><button onclick="_editFromKwd()" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">商品情報を編集</button></div>
+    <div style="padding:16px 24px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+        <div id="kwDetailImg" style="flex-shrink:0"></div>
+        <div style="overflow:hidden">
+          <div id="kwDetailName" style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          <div id="kwDetailSub" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace"></div>
+        </div>
+      </div>
+      <button onclick="closeKwDetail()" style="border:none;background:rgba(0,0,0,0.08);cursor:pointer;font-size:16px;color:#333;line-height:1;padding:6px 11px;border-radius:50%;flex-shrink:0">✕</button>
+    </div>
+    <div style="padding:8px 24px 16px;flex:1;min-height:0;overflow-y:auto">
+      <div id="kwDetailEmpty" style="display:none;text-align:center;padding:50px;color:var(--text3);font-size:13px">この商品の日別データがありません。</div>
+      <div id="kwDetailCharts">
+        <div style="font-size:12px;font-weight:700;color:#9333ea;margin:4px 0 4px">毎日の目安CPC推移（KW平均・円／欠損日は前日継続）</div>
+        <div style="position:relative;height:200px;margin-bottom:18px"><canvas id="kwDetailCpcCanvas"></canvas></div>
+        <div style="font-size:12px;font-weight:700;color:#f97316;margin:4px 0 4px">毎日の実績額（円）</div>
+        <div style="position:relative;height:200px;margin-bottom:18px"><canvas id="kwDetailSpendCanvas"></canvas></div>
+        <div style="font-size:12px;font-weight:700;color:#2563eb;margin:4px 0 4px">毎日の売上（円）</div>
+        <div style="position:relative;height:200px;margin-bottom:6px"><canvas id="kwDetailSalesCanvas"></canvas></div>
       </div>
     </div>
   </div>
