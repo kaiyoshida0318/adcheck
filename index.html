@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.803</span>
+    <span class="build-date">v1.804</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -551,6 +551,8 @@ header + * { margin-top: 4px; }
   <span class="tab-row-label" style="color:#7c3aed;padding-left:16px">【マラソン】</span>
   <button class="tab-btn" id="tab-btn-mar-kouho" onclick="switchTab('mar-kouho')">候補<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-kouho"></span></button>
   <button class="tab-btn" id="tab-btn-mar-jisshi" onclick="switchTab('mar-jisshi')">実施中<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-jisshi"></span></button>
+  <span class="tab-row-label" style="color:var(--text3);padding:0 4px">|</span>
+  <button class="tab-btn" id="tab-btn-mar-sage" onclick="switchTab('mar-sage')">CPC下げたい<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-sage"></span></button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3">
   <span class="tab-row-label red" style="color:#9333ea">【状態】</span>
@@ -1008,6 +1010,7 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-ss-dec"></div>
   <div class="tab-panel" id="tab-mar-kouho"></div>
   <div class="tab-panel" id="tab-mar-jisshi"></div>
+  <div class="tab-panel" id="tab-mar-sage"></div>
 
   <!-- リニューアル：全体（変更記録一覧） -->
   <div class="tab-panel" id="tab-renewal-todo">
@@ -8533,7 +8536,7 @@ function _ssCellBtns(code){
     return `<button id="ss-btn-${code}-${m}" data-code="${code}" data-mon="${m}" data-active="${active?'1':'0'}" onclick="_toggleRoasTrendSS('${code}','${m}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;white-space:nowrap;text-align:center">${lbl}</button>`; };
   const rb = function(k){ const active=mar.includes(k); const o=MARATHON_BTN[k];
     return `<button id="mar-btn-${code}-${k}" data-code="${code}" data-mar="${k}" data-active="${active?'1':'0'}" onclick="_toggleMarathon('${code}','${k}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?o.col:'var(--border)'};background:${active?o.col:'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;white-space:nowrap;text-align:center">${o.lbl}</button>`; };
-  return mb('03')+mb('06')+rb('kouho')+mb('09')+mb('12')+rb('jisshi');
+  return mb('03')+mb('06')+rb('kouho')+mb('09')+mb('12')+rb('jisshi')+rb('sage');
 }
 function _toggleMarathon(code, key, btn){
   const active = btn.getAttribute('data-active')==='1';
@@ -8909,7 +8912,7 @@ function applyAllStatusUpdates() {
       if (lastEmpty !== -1) {
         h = h.slice(0, lastEmpty)
           + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
-          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン</div>'
+          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン/下げ</div>'
           + h.slice(lastEmpty);
       }
       headerHtml = h;
@@ -8964,9 +8967,9 @@ const STATUS_LABELS = {
 };
 const SS_TABS = { 'ss-mar':'03', 'ss-jun':'06', 'ss-sep':'09', 'ss-dec':'12' };
 const SS_LABELS = { 'ss-mar':'3月', 'ss-jun':'6月', 'ss-sep':'9月', 'ss-dec':'12月' };
-const MARATHON_TABS = { 'mar-kouho':'kouho', 'mar-jisshi':'jisshi' };
-const MARATHON_LABELS = { 'mar-kouho':'候補', 'mar-jisshi':'実施中' };
-const MARATHON_BTN = { kouho:{lbl:'候補',col:'#7c3aed'}, jisshi:{lbl:'実施',col:'#0891b2'} };
+const MARATHON_TABS = { 'mar-kouho':'kouho', 'mar-jisshi':'jisshi', 'mar-sage':'sage' };
+const MARATHON_LABELS = { 'mar-kouho':'候補', 'mar-jisshi':'実施中', 'mar-sage':'CPC下げたい' };
+const MARATHON_BTN = { kouho:{lbl:'候補',col:'#7c3aed'}, jisshi:{lbl:'実施',col:'#0891b2'}, sage:{lbl:'下げ',col:'#ea580c'} };
 const SUB_TAB_STATUS = {
   'monthly-all':  'all',
   'monthly-g1':   'g1',
@@ -9152,7 +9155,7 @@ function renderMonthlySubTab(tab) {
       if (lastEmpty !== -1) {
         h = h.slice(0, lastEmpty)
           + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
-          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン</div>'
+          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン/下げ</div>'
           + h.slice(lastEmpty);
       }
       headerHtml = h;
@@ -10384,7 +10387,7 @@ function _updateStatusCounts() {
   products.forEach(p => {
     (productCache[p.id]?.ss || []).forEach(m => { if (ssCount[m] !== undefined) ssCount[m]++; });
   });
-  const marCount = { kouho:0, jisshi:0 };
+  const marCount = { kouho:0, jisshi:0, sage:0 };
   products.forEach(p => {
     (productCache[p.id]?.marathon || []).forEach(k => { if (marCount[k] !== undefined) marCount[k]++; });
   });
@@ -10413,6 +10416,7 @@ function _updateStatusCounts() {
   set('ss-dec',        ssCount['12']);
   set('mar-kouho',     marCount.kouho);
   set('mar-jisshi',    marCount.jisshi);
+  set('mar-sage',      marCount.sage);
 }
 
 function renderAll() {
@@ -10776,7 +10780,7 @@ function renderPage() {
         if (lastEmpty !== -1) {
           h = h.slice(0, lastEmpty)
             + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
-            + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン</div>'
+            + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン/下げ</div>'
             + h.slice(lastEmpty);
         }
         headerHtml = h;
@@ -11272,7 +11276,7 @@ const COLW_DEFS=[
   {k:'roas20', label:'20 ROAS',      def:72, al:'right', hid:'ch-roas20'},
   {k:'gross',  label:'粗利',         def:90, al:'right', hid:'ch-contrib'},
   {k:'status', label:'区分',         def:76, al:'center', ws:true},
-  {k:'ss',     label:'SS/マラソン',    def:96, al:'center', ws:true},
+  {k:'ss',     label:'SS/マラソン/下げ',    def:96, al:'center', ws:true},
 ];
 const COLW_KEY='adcheck_colw';
 const COLW_KEY_MK='adcheck_colw_marathon';
@@ -11295,7 +11299,7 @@ const MK_COLW_DEFS=[
   {k:'sp20',   label:'20実績額',     def:72, al:'right'},
   {k:'roas20', label:'20 ROAS',      def:72, al:'right'},
   {k:'status', label:'区分',         def:76, al:'center'},
-  {k:'ss',     label:'SS/マラソン',  def:96, al:'center'},
+  {k:'ss',     label:'SS/マラソン/下げ',  def:96, al:'center'},
 ];
 const MK2_COLW_DEFS=[
   {k:'num',     label:'商品番号',     def:90, al:'left',  row:true},
