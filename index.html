@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.804</span>
+    <span class="build-date">v1.805</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8535,7 +8535,7 @@ function _ssCellBtns(code){
   const mb = function(m){ const active=ss.includes(m); const lbl={'03':'3月','06':'6月','09':'9月','12':'12月'}[m]||m+'月';
     return `<button id="ss-btn-${code}-${m}" data-code="${code}" data-mon="${m}" data-active="${active?'1':'0'}" onclick="_toggleRoasTrendSS('${code}','${m}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;white-space:nowrap;text-align:center">${lbl}</button>`; };
   const rb = function(k){ const active=mar.includes(k); const o=MARATHON_BTN[k];
-    return `<button id="mar-btn-${code}-${k}" data-code="${code}" data-mar="${k}" data-active="${active?'1':'0'}" onclick="_toggleMarathon('${code}','${k}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?o.col:'var(--border)'};background:${active?o.col:'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;white-space:nowrap;text-align:center">${o.lbl}</button>`; };
+    return `<button id="mar-btn-${code}-${k}" data-code="${code}" data-mar="${k}" data-active="${active?'1':'0'}" onclick="_toggleMarathon('${code}','${k}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?o.col:'var(--border)'};background:${active?o.col:'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;${k==='sage'?'min-width:50px;':''}white-space:nowrap;text-align:center">${o.lbl}</button>`; };
   return mb('03')+mb('06')+rb('kouho')+mb('09')+mb('12')+rb('jisshi')+rb('sage');
 }
 function _toggleMarathon(code, key, btn){
@@ -8969,7 +8969,7 @@ const SS_TABS = { 'ss-mar':'03', 'ss-jun':'06', 'ss-sep':'09', 'ss-dec':'12' };
 const SS_LABELS = { 'ss-mar':'3月', 'ss-jun':'6月', 'ss-sep':'9月', 'ss-dec':'12月' };
 const MARATHON_TABS = { 'mar-kouho':'kouho', 'mar-jisshi':'jisshi', 'mar-sage':'sage' };
 const MARATHON_LABELS = { 'mar-kouho':'候補', 'mar-jisshi':'実施中', 'mar-sage':'CPC下げたい' };
-const MARATHON_BTN = { kouho:{lbl:'候補',col:'#7c3aed'}, jisshi:{lbl:'実施',col:'#0891b2'}, sage:{lbl:'下げ',col:'#ea580c'} };
+const MARATHON_BTN = { kouho:{lbl:'候補',col:'#7c3aed'}, jisshi:{lbl:'実施',col:'#0891b2'}, sage:{lbl:'CPC下げたい',col:'#ea580c'} };
 const SUB_TAB_STATUS = {
   'monthly-all':  'all',
   'monthly-g1':   'g1',
