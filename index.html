@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.810</span>
+    <span class="build-date">v1.811</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9017,9 +9017,12 @@ function _subTabToolbar(tab, currentYm) {
   const csvBtn = (isSS || isMarathon)
     ? `<button onclick="${_csvFn}" style="padding:7px 16px;border-radius:8px;border:2px solid var(--accent);background:#e3f2fd;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(21,101,192,0.15);transition:all 0.15s" onmouseover="this.style.background='#bbdefb';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(21,101,192,0.25)'" onmouseout="this.style.background='#e3f2fd';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(21,101,192,0.15)'" title="この月の商品管理番号と広告出稿有無をCSVでダウンロード">📥 SALE一括用ファイル出力</button>`
     : '';
-  // 【マラソン】候補のみ: 参加決定CSVを取り込み実施中へ一括移動
+  // 【マラソン】候補のみ: クリックでドロップ枠を開く→ドロップ→取り込んで反映
   const moveBtn = (tab === 'mar-kouho')
-    ? `<button onclick="document.getElementById('marMoveFileInput').click()" style="padding:7px 16px;border-radius:8px;border:2px solid #0891b2;background:#e0f7fa;color:#0891b2;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(8,145,178,0.15);transition:all 0.15s" onmouseover="this.style.background='#b2ebf2';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(8,145,178,0.25)'" onmouseout="this.style.background='#e0f7fa';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(8,145,178,0.15)'" title="参加決定（商品管理番号）CSVを取り込み、該当商品を候補から実施中へ一括移動します">📤 実施中へ一括移動</button><input type="file" id="marMoveFileInput" accept=".csv,.txt" style="display:none" onchange="uploadMarathonMoveCsv(event)">`
+    ? `<button onclick="_toggleMarMoveDrop()" style="padding:7px 16px;border-radius:8px;border:2px solid #0891b2;background:#e0f7fa;color:#0891b2;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(8,145,178,0.15);transition:all 0.15s" onmouseover="this.style.background='#b2ebf2';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(8,145,178,0.25)'" onmouseout="this.style.background='#e0f7fa';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(8,145,178,0.15)'" title="参加決定（商品管理番号）CSVを取り込み、該当商品を候補から実施中へ一括移動します">📤 実施中へ一括移動</button>`
+    : '';
+  const dropPanel = (tab === 'mar-kouho')
+    ? `<div id="marMoveDropWrap" style="display:none;flex:0 0 100%;width:100%;margin-top:2px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);box-sizing:border-box"><div style="font-size:11px;color:var(--text2);font-weight:700;margin-bottom:8px">参加決定（商品管理番号）CSVを取り込み、候補→実施中へ一括移動します</div><div style="display:flex;gap:12px;align-items:stretch;flex-wrap:wrap"><div id="marMoveDropZone" ondragover="_marMoveDragOver(event)" ondragleave="_marMoveDragLeave(event)" ondrop="_marMoveDrop(event)" onclick="document.getElementById('marMoveFileInput').click()" style="flex:1;min-width:240px;min-height:70px;display:flex;align-items:center;justify-content:center;text-align:center;border:2px dashed #0891b2;border-radius:8px;background:#e0f7fa;color:#0891b2;font-size:12px;font-weight:600;cursor:pointer;padding:10px;box-sizing:border-box">ここにファイルをドロップ／クリックして選択</div><div style="display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:170px"><span id="marMoveFileName" style="font-size:11px;color:var(--text3);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ファイル未選択</span><button id="marMoveApplyBtn" onclick="applyMarMove()" disabled style="padding:8px 16px;border-radius:8px;border:none;background:#9aa0a6;color:#fff;font-size:12px;font-weight:700;cursor:not-allowed;white-space:nowrap">取り込んで反映</button><button onclick="_cancelMarMove()" style="padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:11px;cursor:pointer;white-space:nowrap">キャンセル</button></div></div><input type="file" id="marMoveFileInput" accept=".csv,.txt" style="display:none" onchange="_onMarMoveFile(this.files)"></div>`
     : '';
   // 【マラソン】実施中のみ: 全件を候補へ一括で戻す
   const returnBtn = (tab === 'mar-jisshi')
@@ -9031,6 +9034,7 @@ function _subTabToolbar(tab, currentYm) {
     <select class="toolbar-month" id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)">${monthOpts}</select>
     <input type="text" class="toolbar-search" id="subTabSearchBox" placeholder="商品名・商品番号で検索..." oninput="renderMonthlySubTab(_currentTab)" style="width:220px">
     ${sroasBtns}<div class="toolbar-right">${colwBtn}${csvBtn}${moveBtn}${returnBtn}${updateBtn}</div>
+    ${dropPanel}
   </div>`;
 }
 
@@ -9107,10 +9111,17 @@ function _parseMoveCsvLine(line){
   }
   out.push(cur); return out;
 }
+let _marMoveFile = null;
+function _toggleMarMoveDrop(){ const w=document.getElementById('marMoveDropWrap'); if(!w) return; w.style.display=(w.style.display==='none'||!w.style.display)?'block':'none'; }
+function _setMarMoveBtnState(){ const b=document.getElementById('marMoveApplyBtn'); if(!b) return; if(_marMoveFile){ b.disabled=false; b.style.background='#0891b2'; b.style.cursor='pointer'; } else { b.disabled=true; b.style.background='#9aa0a6'; b.style.cursor='not-allowed'; } }
+function _onMarMoveFile(files){ _marMoveFile=(files&&files[0])||null; const n=document.getElementById('marMoveFileName'); if(n) n.textContent=_marMoveFile?_marMoveFile.name:'ファイル未選択'; _setMarMoveBtnState(); }
+function _marMoveDragOver(e){ e.preventDefault(); const z=document.getElementById('marMoveDropZone'); if(z){ z.style.background='#b2ebf2'; z.style.borderColor='#00626f'; } }
+function _marMoveDragLeave(e){ e.preventDefault(); const z=document.getElementById('marMoveDropZone'); if(z){ z.style.background='#e0f7fa'; z.style.borderColor='#0891b2'; } }
+function _marMoveDrop(e){ e.preventDefault(); _marMoveDragLeave(e); const f=e.dataTransfer&&e.dataTransfer.files; _onMarMoveFile(f); }
+function _cancelMarMove(){ _marMoveFile=null; const w=document.getElementById('marMoveDropWrap'); if(w) w.style.display='none'; const n=document.getElementById('marMoveFileName'); if(n) n.textContent='ファイル未選択'; const i=document.getElementById('marMoveFileInput'); if(i) i.value=''; _setMarMoveBtnState(); }
+function applyMarMove(){ if(!_marMoveFile){ alert('先にファイルをドロップまたは選択してください'); return; } _processMarMoveFile(_marMoveFile); _cancelMarMove(); }
 // 参加決定(商品管理番号)CSVを取り込み、候補→実施中へ一括移動
-function uploadMarathonMoveCsv(ev){
-  const file = ev.target.files && ev.target.files[0];
-  ev.target.value='';
+function _processMarMoveFile(file){
   if(!file) return;
   const reader = new FileReader();
   reader.onload = function(e){
