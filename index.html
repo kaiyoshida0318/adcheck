@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.808</span>
+    <span class="build-date">v1.809</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9017,12 +9017,16 @@ function _subTabToolbar(tab, currentYm) {
   const csvBtn = (isSS || isMarathon)
     ? `<button onclick="${_csvFn}" style="padding:7px 16px;border-radius:8px;border:2px solid var(--accent);background:#e3f2fd;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(21,101,192,0.15);transition:all 0.15s" onmouseover="this.style.background='#bbdefb';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(21,101,192,0.25)'" onmouseout="this.style.background='#e3f2fd';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(21,101,192,0.15)'" title="この月の商品管理番号と広告出稿有無をCSVでダウンロード">📥 SALE一括用ファイル出力</button>`
     : '';
+  // 【マラソン】候補のみ: 参加決定CSVを取り込み実施中へ一括移動
+  const moveBtn = (tab === 'mar-kouho')
+    ? `<button onclick="document.getElementById('marMoveFileInput').click()" style="padding:7px 16px;border-radius:8px;border:2px solid #0891b2;background:#e0f7fa;color:#0891b2;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(8,145,178,0.15);transition:all 0.15s" onmouseover="this.style.background='#b2ebf2';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(8,145,178,0.25)'" onmouseout="this.style.background='#e0f7fa';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(8,145,178,0.15)'" title="参加決定（商品管理番号）CSVを取り込み、該当商品を候補から実施中へ一括移動します">📤 実施中へ一括移動</button><input type="file" id="marMoveFileInput" accept=".csv,.txt" style="display:none" onchange="uploadMarathonMoveCsv(event)">`
+    : '';
   const colwBtn = (isStatus || isSS || isMarathon) ? '<button onclick="_openColWidthPanel()" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;margin-right:8px">項目調整</button>' : '';
   const sroasBtns = isStatus ? '<div id="sroasFilterBtnsSub" style="display:flex;gap:3px;align-items:center;margin-left:8px">'+_sroasFilterBtnsHtml()+'</div>' : '';
   return `<div class="table-toolbar">
     <select class="toolbar-month" id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)">${monthOpts}</select>
     <input type="text" class="toolbar-search" id="subTabSearchBox" placeholder="商品名・商品番号で検索..." oninput="renderMonthlySubTab(_currentTab)" style="width:220px">
-    ${sroasBtns}<div class="toolbar-right">${colwBtn}${csvBtn}${updateBtn}</div>
+    ${sroasBtns}<div class="toolbar-right">${colwBtn}${csvBtn}${moveBtn}${updateBtn}</div>
   </div>`;
 }
 
@@ -9089,6 +9093,56 @@ function downloadMarathonCsv(tab) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   console.log('[ADcheck] マラソンSALE一括用CSV出力: ' + codes.length + '件');
+}
+
+function _parseMoveCsvLine(line){
+  const out=[]; let cur=''; let inQ=false;
+  for(let i=0;i<line.length;i++){ const ch=line[i];
+    if(inQ){ if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=ch; }
+    else { if(ch==='"') inQ=true; else if(ch===',') {out.push(cur);cur='';} else cur+=ch; }
+  }
+  out.push(cur); return out;
+}
+// 参加決定(商品管理番号)CSVを取り込み、候補→実施中へ一括移動
+function uploadMarathonMoveCsv(ev){
+  const file = ev.target.files && ev.target.files[0];
+  ev.target.value='';
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      let text = String(e.target.result||'').replace(/^\uFEFF/,'');
+      const lines = text.split(/\r\n|\n|\r/).filter(function(l){return l.trim()!=='';});
+      if(lines.length===0){ alert('ファイルが空です'); return; }
+      const header = _parseMoveCsvLine(lines[0]).map(function(h){return h.trim();});
+      let idx = header.findIndex(function(h){return h.indexOf('商品管理番号')>=0;});
+      let start = 1;
+      if(idx<0){ idx=0; start=0; }
+      const codes=[];
+      for(let i=start;i<lines.length;i++){ const cells=_parseMoveCsvLine(lines[i]); let c=(cells[idx]||'').trim(); c=c.replace(/^"+|"+$/g,'').trim(); if(c) codes.push(c); }
+      const uniq=[]; const seen={}; codes.forEach(function(c){ if(!seen[c]){seen[c]=1;uniq.push(c);} });
+      if(uniq.length===0){ alert('商品管理番号が読み取れませんでした'); return; }
+      let moved=0, already=0, notfound=0;
+      uniq.forEach(function(code){
+        const exists = (productCache[code]!=null) || (typeof DB!=='undefined' && DB[code]!=null);
+        if(!exists){ notfound++; return; }
+        if(!productCache[code]) productCache[code]={};
+        const cur = productCache[code].marathon||[];
+        if(cur.indexOf('jisshi')>=0 && cur.indexOf('kouho')<0){ already++; }
+        else { moved++; }
+        productCache[code].marathon = cur.filter(function(k){return k!=='kouho'&&k!=='jisshi';}).concat(['jisshi']);
+      });
+      saveProductCache();
+      _ssDirty=true; _markApplyBtnDirty();
+      if(_ssTabActive && typeof _currentTab!=='undefined' && _currentTab in MARATHON_TABS){ renderMonthlySubTab(_currentTab); }
+      let msg='実施中へ一括移動しました\n\n対象 '+uniq.length+'件\n移動 '+moved+'件';
+      if(already>0) msg+='\n既に実施中 '+already+'件';
+      if(notfound>0) msg+='\n該当する商品管理番号なし '+notfound+'件';
+      msg+='\n\n反映（GitHub保存）するには「反映する」を押してください。';
+      alert(msg);
+    }catch(err){ alert('取り込みエラー: '+err.message); }
+  };
+  reader.readAsText(file);
 }
 
 function renderMonthlySubTab(tab) {
