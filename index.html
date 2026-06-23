@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.834</span>
+    <span class="build-date">v1.835</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6756,10 +6756,11 @@ function renderKwIndiv(){
     if(_tw){
       const _yc=v=>(v==null||v===0)?'\u2014':(Number(v).toLocaleString()+'円');
       const _bd='border:1px solid #d0d0d0;padding:2px 3px;white-space:nowrap';
+      const _mk=(act,gui)=>{ if(act==null||gui==null||act<=0||gui<=0) return ''; if(act>gui) return '<span style="color:#c0392b">\u25A1</span>'; if(act<gui) return '<span style="color:#1e8449">\u25EF</span>'; return ''; };
       let _th='<table style="border-collapse:collapse;table-layout:fixed;width:100%;font-size:9px;text-align:center">';
       _th+='<tr>'+labels.map(l=>'<td style="'+_bd+';background:#f3f3f3;color:#555">'+l+'</td>').join('')+'</tr>';
       _th+='<tr>'+mcpcArr.map(v=>'<td style="'+_bd+';background:#e6d6fb">'+_yc(v)+'</td>').join('')+'</tr>';
-      _th+='<tr>'+cpcArr.map(v=>'<td style="'+_bd+';background:#d9edca">'+_yc(v)+'</td>').join('')+'</tr>';
+      _th+='<tr>'+cpcArr.map((v,_i)=>{ const _m=_mk(v,mcpcArr[_i]); return '<td style="'+_bd+';background:#d9edca"><div style="font-size:10px;line-height:1.1;height:12px">'+(_m||'\u00A0')+'</div>'+_yc(v)+'</td>'; }).join('')+'</tr>';
       _tw.innerHTML=_th+'</table>';
     }
     const ctx=document.getElementById('kwIndivC'+ki); if(!ctx||typeof Chart==='undefined') return;
