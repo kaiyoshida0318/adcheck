@@ -345,6 +345,7 @@ header + * { margin-top: 4px; }
 .tab-sub-row { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 8px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 2px; position: sticky; z-index: 198; min-height: 34px; box-sizing: border-box; }
 .tab-sub-row-2 { top: var(--z-tab2-top, calc(52px + 46px)); background: #ffffff; z-index: 198; }
 .tab-sub-row-3 { top: var(--z-tab3-top, calc(52px + 46px + 46px)); background: #ffffff; z-index: 198; }
+.tab-sub-row-3::after { border-top: none; }
 /* stickyナビの隙間に色付きヘッダーが覗くのを防ぐため、各ナビの上端外に白いカバーを配置 */
 .tab-bar::before, .tab-sub-row::before {
   content: '';
@@ -519,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.875</span>
+    <span class="build-date">v1.877</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -544,11 +545,6 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-basic" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">商品-月別データ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-item-graph" onclick="switchTab('item-graph')">商品-グラフ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-retired" onclick="switchTab('retired')">引退済商品</button>
-  <span class="tab-row-label" style="color:#00897B;padding-left:7px">【KW】</span>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-月別データ</button>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv" onclick="switchTab('kw-indiv')">KW-個別データ（グラフ）</button>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv-table" onclick="switchTab('kw-indiv-table')">KW-個別データ（表）</button>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
   <span class="tab-row-label" id="label-zentai" style="color:#dc2626;padding-left:7px">【全体】</span>
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">全-月別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-daily" onclick="switchTab('daily')">全-日別データ</button>
@@ -590,7 +586,12 @@ header + * { margin-top: 4px; }
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-unset"></span></button>
 </nav>
 <nav class="tab-sub-row" style="position:relative;top:auto;z-index:1">
-  <span class="tab-row-label" style="color:#dc2626">【注視】</span>
+  <span class="tab-row-label" style="color:#00897B">【KW】</span>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-月別データ</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv" onclick="switchTab('kw-indiv')">KW-個別データ（グラフ）</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv-table" onclick="switchTab('kw-indiv-table')">KW-個別データ（表）</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
+  <span class="tab-row-label" style="color:#dc2626;padding-left:10px">【注視】</span>
   <button class="tab-btn" id="tab-btn-mar-select" onclick="switchTab('mar-select')">広告出稿中<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-select"></span></button>
   <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
   <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">セール時広告圏外対策△用<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
@@ -7023,7 +7024,9 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+(_img?'<img loading="lazy" src="'+_img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&ym?('\u3000|\u3000'+ym.slice(0,4)+'/'+ym.slice(4,6)):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div></div></div>';
   const _btn='<button onclick="_kwTblToggleCharts(\''+pfx+'\','+idx+',this)" style="font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #00897B;background:#fff;color:#00897B;cursor:pointer;font-weight:700;margin:2px 0 8px">グラフ・表を表示</button>';
   const _chc='<div id="kwTblCh'+pfx+'_'+idx+'" style="display:none;margin-bottom:10px"></div>';
-  return { html:_head+_sumHtml+_btn+_chc, hasFix:hasFix };
+  const _sscell='<div style="flex:0 0 210px;align-self:flex-start"><div style="font-size:10px;color:var(--text3);margin:0 0 3px;text-align:center">SS/マラソン/下げ</div>'+_ssCellBtns(code)+'</div>';
+  const _flex='<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'+_sumHtml+_sscell+'</div>';
+  return { html:_head+_flex+_btn+_chc, hasFix:hasFix };
 }
 function _setKwIndivTableModeUI(){
   const on='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
