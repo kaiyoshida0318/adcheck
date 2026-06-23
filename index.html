@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.869</span>
+    <span class="build-date">v1.870</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -993,8 +993,8 @@ header + * { margin-top: 4px; }
     <div class="table-card">
       <div class="table-toolbar" style="flex-wrap:wrap;gap:8px;align-items:center">
         <div style="display:flex;gap:6px">
-          <button id="kwIndivModeFix" onclick="setKwIndivTableMode('fix')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">修正あり</button>
-          <button id="kwIndivModeBasic" onclick="setKwIndivTableMode('basic')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">全体</button>
+          <button id="kwIndivModeFix" onclick="setKwIndivTableMode('fix')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">修正あり</button>
+          <button id="kwIndivModeBasic" onclick="setKwIndivTableMode('basic')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">全体</button>
         </div>
         <span id="kwIndivTableCount" style="font-size:13px;font-weight:700;color:var(--text2)"></span>
         <div class="toolbar-right" style="display:flex;align-items:center;gap:8px">
@@ -6945,7 +6945,7 @@ function renderKwIndiv(){
     _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{type:'bar',label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea',order:0},{type:'bar',label:'入札単価（CPC実績）',data:cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}));
   });
 }
-var _kwIndivTableMode='basic';
+var _kwIndivTableMode='fix';
 var _kwTblCharts=[]; var _kwTblCodes=[];
 function _kwiPrevDay(ds){ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()-1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function _kwiNextDay(ds){ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()+1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
