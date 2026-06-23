@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.839</span>
+    <span class="build-date">v1.840</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6714,20 +6714,31 @@ function _setKwIndivPeriodUI(){
   if(m)m.style.cssText=_kwIndivPeriod==='monthly'?on:off;
 }
 function setKwIndivPeriod(p){ _kwIndivPeriod=p; _setKwIndivPeriodUI(); _syncKwIndivMonths(); renderKwIndiv(); }
-function _kwIndivResolveCode(q){
-  q=(q||'').trim(); if(!q) return null;
-  if(productCache[q] || kwRows.some(r=>r.itemCode===q)) return q;
-  const codes=Object.keys(productCache||{});
-  let hit=codes.find(c=>{ const n=(productCache[c].manualName||productCache[c].name||''); return n && n.indexOf(q)>=0; });
-  if(hit) return hit;
-  const kr=kwRows.find(r=>r.itemCode && String(r.itemCode).indexOf(q)>=0);
-  return kr?kr.itemCode:null;
+function _kwIndivMatches(q){
+  q=(q||'').trim(); if(!q) return [];
+  const set=new Map();
+  if(productCache[q]) set.set(q,1);
+  Object.keys(productCache||{}).forEach(c=>{ const n=(productCache[c].manualName||productCache[c].name||''); if(n && n.indexOf(q)>=0) set.set(c,1); });
+  const spendMap={};
+  kwRows.forEach(r=>{ if(!r.itemCode) return; spendMap[r.itemCode]=(spendMap[r.itemCode]||0)+(r.spend||0); if(String(r.itemCode).indexOf(q)>=0) set.set(r.itemCode,1); if(r.kw && r.kw.indexOf(q)>=0) set.set(r.itemCode,1); });
+  return [...set.keys()].sort((a,b)=>(spendMap[b]||0)-(spendMap[a]||0));
 }
 function kwIndivSearch(){
   const el=document.getElementById('kwIndivSearch'); const q=el?el.value:'';
-  const code=_kwIndivResolveCode(q);
-  if(!code){ _kwIndivCode=null; renderKwIndiv(); alert('該当する商品が見つかりません'); return; }
-  _kwIndivCode=code; _syncKwIndivMonths(); renderKwIndiv();
+  const matches=_kwIndivMatches(q);
+  if(matches.length===0){ _kwIndivCode=null; renderKwIndiv(); alert('該当する商品が見つかりません'); return; }
+  if(matches.length===1){ _kwIndivCode=matches[0]; _syncKwIndivMonths(); renderKwIndiv(); return; }
+  _kwIndivShowCandidates(matches);
+}
+function _kwIndivShowCandidates(codes){
+  _kwIndivCode=null; _syncKwIndivMonths();
+  _kwIndivCharts.forEach(c=>{try{c.destroy();}catch(e){}}); _kwIndivCharts=[];
+  const hd=document.getElementById('kwIndivHeaderName'); if(hd) hd.innerHTML='';
+  const empty=document.getElementById('kwIndivEmpty'); if(empty) empty.style.display='none';
+  const wrap=document.getElementById('kwIndivCharts'); if(!wrap) return;
+  let h='<div style="font-size:12px;color:var(--text2);margin:4px 0 10px">'+codes.length+'件の候補が見つかりました。表示する商品を選んでください。</div>';
+  h+=codes.map(c=>{ const nm=_kwEsc(_kwIndivName(c)); return '<div onclick="kwIndivLoadSaved(\''+_kwEsc(c)+'\')" style="cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;background:var(--surface);display:flex;justify-content:space-between;align-items:center;gap:10px" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'var(--surface)\'"><span style="font-size:13px;font-weight:600;color:var(--text)">'+nm+'</span><span style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace;white-space:nowrap">'+_kwEsc(c)+'</span></div>'; }).join('');
+  wrap.innerHTML=h;
 }
 function _kwIndivMonths(code){ return [...new Set(kwRows.filter(r=>r.itemCode===code).map(r=>r.ym))].filter(Boolean).sort().reverse(); }
 function _syncKwIndivMonths(){
