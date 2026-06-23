@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.874</span>
+    <span class="build-date">v1.875</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -591,7 +591,7 @@ header + * { margin-top: 4px; }
 </nav>
 <nav class="tab-sub-row" style="position:relative;top:auto;z-index:1">
   <span class="tab-row-label" style="color:#dc2626">【注視】</span>
-  <button class="tab-btn" id="tab-btn-mar-select" onclick="switchTab('mar-select')">選択用</button>
+  <button class="tab-btn" id="tab-btn-mar-select" onclick="switchTab('mar-select')">広告出稿中<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-select"></span></button>
   <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
   <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">セール時広告圏外対策△用<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
   <button id="topHideBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 9px;position:absolute;right:16px;top:50%;transform:translateY(-50%);border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;z-index:5">上部を隠す</button>
@@ -9810,7 +9810,8 @@ function renderMonthlySubTab(tab) {
     const qEl = document.getElementById('subTabSearchBox');
     const q = (qEl ? qEl.value : '').toLowerCase().trim();
     const allCodes = Object.keys(DB).filter(code => !productCache[code]?.retired);
-    let codes = isSelect ? allCodes.slice() : (isMarathon ? allCodes.filter(code => (productCache[code]?.marathon || []).includes(marKey)) : allCodes.filter(code => (productCache[code]?.ss || []).includes(mon)));
+    let codes = isSelect ? allCodes.filter(c => { try{ return getStats(DB[c],ym).spend > 0; }catch(e){ return false; } }) : (isMarathon ? allCodes.filter(code => (productCache[code]?.marathon || []).includes(marKey)) : allCodes.filter(code => (productCache[code]?.ss || []).includes(mon)));
+    if (isSelect) { codes.sort((a,b)=>{ const sa=getStats(DB[a],ym), sb=getStats(DB[b],ym); const ra=sa.spend>0?sa.sales720/sa.spend:0, rb=sb.spend>0?sb.sales720/sb.spend:0; return rb-ra; }); const _ce=document.getElementById('cnt-mar-select'); if(_ce) _ce.textContent= codes.length>0?('('+codes.length+')'):''; }
     // 検索キーワードで絞り込み(商品ID・商品番号・商品名)
     if (q) {
       codes = codes.filter(code => {
@@ -9821,7 +9822,7 @@ function renderMonthlySubTab(tab) {
         return id.includes(q) || itemNum.includes(q) || name.includes(q);
       });
     }
-    const label = isSelect ? '選択用' : (isMarathon ? MARATHON_LABELS[tab] : SS_LABELS[tab]);
+    const label = isSelect ? '広告出稿中' : (isMarathon ? MARATHON_LABELS[tab] : SS_LABELS[tab]);
     if (codes.length === 0) {
       // 検索でヒット0と「SSなし」を分けて表示(toolbar維持)
       const _toolbarWrap0 = panel.querySelector('#subTabToolbarWrap');
@@ -11097,6 +11098,8 @@ function _updateStatusCounts() {
     const el = document.getElementById('cnt-' + id);
     if (el) el.textContent = n > 0 ? `(${n})` : '';
   };
+  let _adActiveCnt = 0; { let _ymA=''; try{ _ymA=_getSubTabMonth(); }catch(e){} products.forEach(p => { try{ if(getStats(DB[p.id], _ymA).spend > 0) _adActiveCnt++; }catch(e){} }); }
+  set('mar-select', _adActiveCnt);
 
   set('monthly-all',   total);
   set('monthly-g1',    statusCount['g1']   || 0);
