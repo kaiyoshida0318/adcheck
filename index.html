@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.844</span>
+    <span class="build-date">v1.845</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6773,7 +6773,7 @@ function renderKwIndiv(){
   let _sumHtml='';
   { const _latest=rows.reduce((m,r)=>(r.date>m?r.date:m),'');
     if(_latest){ const _dl=(+_latest.slice(5,7))+'月'+(+_latest.slice(8,10))+'日';
-      const _cols=kws.filter(kw=>byKw[kw].some(r=>r.date===_latest));
+      const _cols=kws;
       if(_cols.length){ const _T='border:1px solid #c9c9c9;padding:3px 6px;text-align:center;white-space:nowrap';
         let r1='<tr><td rowspan="6" style="'+_T+';background:#eef2ff;font-weight:700;font-size:12px">'+_dl+'</td>',r2='<tr>',r3='<tr>',r4='<tr>',rc='<tr>',r5='<tr>';
         _cols.forEach(kw=>{ const sh=_totSpend>0?(_kwSpend[kw]/_totSpend*100).toFixed(2):'0.00'; const dv=_carry(byKw[kw],_latest);
