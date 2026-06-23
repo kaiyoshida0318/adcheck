@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.859</span>
+    <span class="build-date">v1.860</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6775,6 +6775,7 @@ function renderKwIndiv(){
   const _predVol=(rs,lastDate)=>{ const impByDate={}; rs.forEach(r=>{ if(r.ctr>0&&r.cl>0){ impByDate[r.date]=(impByDate[r.date]||0)+r.cl*100/r.ctr; } }); const dataDays=Object.keys(impByDate).filter(d=>d<=lastDate).sort(); if(!dataDays.length) return 0; let sum=0,d=dataDays[0],guard=0; while(d<=lastDate && guard<400){ guard++; if(impByDate[d]!=null){ sum+=impByDate[d]; } else { let best=null,bd=Infinity; for(const dd of dataDays){ const dist=Math.abs(_dDiff(dd,d)); if(dist<bd){bd=dist;best=dd;} } sum+=impByDate[best]; } d=_nextDay(d); } return Math.round(sum); };
   const _kwSpend={}; let _totSpend=0; Object.keys(byKw).forEach(kw=>{ const sp=byKw[kw].reduce((a,r)=>a+(r.spend||0),0); _kwSpend[kw]=sp; _totSpend+=sp; });
   const _kwVol={}; let _totVol=0; Object.keys(byKw).forEach(kw=>{ const v=_predVol(byKw[kw],_monthLast); _kwVol[kw]=v; _totVol+=v; });
+  const _volRed={}; Object.keys(byKw).forEach(kw=>{ const dd=[...new Set(byKw[kw].filter(r=>r.ctr>0&&r.cl>0).map(r=>r.date))].filter(d=>d<=_monthLast).sort(); _volRed[kw]= dd.length ? (dd.length*2 < (_dDiff(_monthLast,dd[0])+1)) : false; });
   const kws=Object.keys(byKw).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
   const _mkM=(act,gui,streak)=>{ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u25B3</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; };
   const _yc2=v=>(v==null||v===0)?'\u2014':Number(v).toLocaleString();
@@ -6801,7 +6802,7 @@ function renderKwIndiv(){
       kws.forEach(kw=>{ const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_carry(byKw[kw],_latest); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_recent3(byKw[kw],_latest);
         _h+='<tr>'
           +'<td style="'+_T+';font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
-          +'<td style="'+_T+';font-size:11px;color:#555">'+_n2(_kwVol[kw])+'</td>'
+          +'<td style="'+_T+';font-size:11px;color:'+(_volRed[kw]?'#c0392b;font-weight:700':'#555')+'">'+_n2(_kwVol[kw])+'</td>'
           +'<td style="'+_T+';font-size:11px;color:#555">'+sh+'%</td>'
           +'<td style="'+_T+';font-size:11px;color:#333">'+_n2(_mcl)+'</td>'
           +'<td style="'+_T+';font-size:11px;color:#333">'+_n2(_r3)+'</td>'
@@ -6820,7 +6821,8 @@ function renderKwIndiv(){
         +'<span style="color:#1e8449;font-weight:700;font-size:13px">&#9711;</span>　入札が目安より安い（差10円以内）<br>'
         +'<span style="color:#1e8449;font-weight:800;font-size:14px">&#10003;</span>　入札が目安より安い（差10円超）'
         +'</div>';
-      _sumHtml='<div style="display:flex;gap:20px;align-items:flex-start;margin:0 0 16px;flex-wrap:wrap"><div style="overflow-x:auto"><table style="border-collapse:collapse">'+_h+'</table></div>'+_leg+'</div>';
+      const _note='<div style="font-size:11px;color:#888;margin-top:6px"><span style="color:#c0392b;font-weight:700">赤数字</span>＝データが半数以下で、おおまかな予測の数値です。</div>';
+      _sumHtml='<div style="display:flex;gap:20px;align-items:flex-start;margin:0 0 16px;flex-wrap:wrap"><div style="overflow-x:auto"><table style="border-collapse:collapse">'+_h+'</table>'+_note+'</div>'+_leg+'</div>';
     }
   }
   { let _calcHtml='<div style="font-weight:700;margin-bottom:6px">KWvol（予測検索vol）の計算式</div><div style="font-size:11px;color:#555;margin-bottom:10px;line-height:1.6">各日の表示回数 ＝ Σ（その日のクリック数 ÷ CTR％ × 100）。<br>データの無い日は「最も近いデータ日」の表示回数で補完。<br>最初のデータ日〜最新データ日（'+( _monthLast? ((+_monthLast.slice(5,7))+'月'+(+_monthLast.slice(8,10))+'日') :'')+'まで）の全日を合計した値が KWvol。</div>';
@@ -6829,7 +6831,7 @@ function renderKwIndiv(){
     kws.forEach(kw=>{ const rs=byKw[kw]; const impByDate={}, clByDate={};
       rs.forEach(r=>{ if(r.ctr>0&&r.cl>0){ impByDate[r.date]=(impByDate[r.date]||0)+r.cl*100/r.ctr; clByDate[r.date]=(clByDate[r.date]||0)+r.cl; } });
       const dataDays=Object.keys(impByDate).filter(d=>d<=_monthLast).sort();
-      _calcHtml+='<div style="margin:12px 0 4px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'　（KWvol＝'+(_kwVol[kw]||0).toLocaleString()+'）</div>';
+      _calcHtml+='<div style="margin:12px 0 4px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'　（KWvol＝<span style="color:'+(_volRed[kw]?'#c0392b':'#00897B')+'">'+(_kwVol[kw]||0).toLocaleString()+'</span>）'+(_volRed[kw]?'<span style="color:#c0392b;font-weight:400;font-size:10px">　※半数以下が予測補完</span>':'')+'</div>';
       if(!dataDays.length){ _calcHtml+='<div style="font-size:11px;color:#999">データなし</div>'; return; }
       let t='<table style="border-collapse:collapse;font-size:10px;text-align:center"><tr><td style="'+_TH+'">日付</td><td style="'+_TH+'">クリック</td><td style="'+_TH+'">CTR</td><td style="'+_TH+'">表示回数</td><td style="'+_TH+'">区分</td></tr>';
       let sum=0,d=dataDays[0],guard=0;
