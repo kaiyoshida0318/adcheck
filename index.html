@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.826</span>
+    <span class="build-date">v1.827</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6740,14 +6740,15 @@ function renderKwIndiv(){
       const byDate={};
       rs.forEach(r=>{ const o=byDate[r.date]||(byDate[r.date]={mS:0,mN:0,spend:0,cl:0,cA:0,cN:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){o.cA+=ca;o.cN++;} });
       const _ym=(rs[0]&&rs[0].ym)||''; const _yy=_ym.slice(0,4), _mm=_ym.slice(4,6); const _dim=_ym?new Date(+_yy,+_mm,0).getDate():31;
-      for(let _dd=1;_dd<=_dim;_dd++){ const _ds=_yy+'-'+_mm+'-'+String(_dd).padStart(2,'0'); const o=byDate[_ds]; labels.push(String(_dd)); if(o){ mcpcArr.push(o.mN?Math.round(o.mS/o.mN):0); cpcArr.push(o.cN?Math.round(o.cA/o.cN):(o.cl>0?Math.round(o.spend/o.cl):0)); } else { mcpcArr.push(0); cpcArr.push(0); } }
+      let _lastM=null;
+      for(let _dd=1;_dd<=_dim;_dd++){ const _ds=_yy+'-'+_mm+'-'+String(_dd).padStart(2,'0'); const o=byDate[_ds]; labels.push(String(_dd)); if(o&&o.mN){ _lastM=Math.round(o.mS/o.mN); } mcpcArr.push(_lastM); if(o){ cpcArr.push(o.cN?Math.round(o.cA/o.cN):(o.cl>0?Math.round(o.spend/o.cl):0)); } else { cpcArr.push(0); } }
     } else {
       const byYm={};
       rs.forEach(r=>{ const o=byYm[r.ym]||(byYm[r.ym]={mS:0,mN:0,spend:0,cl:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); });
       Object.keys(byYm).sort().forEach(ym=>{ const o=byYm[ym]; labels.push(ym.slice(0,4)+'/'+ym.slice(4,6)); mcpcArr.push(o.mN?Math.round(o.mS/o.mN):0); cpcArr.push(o.cl>0?Math.round(o.spend/o.cl):0); });
     }
     const ctx=document.getElementById('kwIndivC'+ki); if(!ctx||typeof Chart==='undefined') return;
-    _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea'},{label:'CPC実績',data:cpcArr,backgroundColor:'#00897B'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:daily?8:9},maxRotation:0,autoSkip:!daily,maxTicksLimit:daily?31:16}}}}}));
+    _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[daily?{type:'line',label:'目安CPC',data:mcpcArr,borderColor:'#9333ea',backgroundColor:'#9333ea',borderWidth:2,pointRadius:2,tension:0,spanGaps:true,order:0}:{label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea'},{type:'bar',label:'CPC実績',data:cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:daily?8:9},maxRotation:0,autoSkip:!daily,maxTicksLimit:daily?31:16}}}}}));
   });
 }
 function renderKwBasic(){
