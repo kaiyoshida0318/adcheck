@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.861</span>
+    <span class="build-date">v1.862</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6891,12 +6891,18 @@ function renderKwIndiv(){
       const _bd='border:1px solid #d0d0d0;padding:3px 2px;white-space:nowrap;vertical-align:top';
       const _mk=_mkM;
       const _streak=[]; { let _s=0; for(let _k=0;_k<clArr.length;_k++){ if((clArr[_k]||0)===0){ _s++; } else { _s=0; } _streak[_k]=_s; } }
-      let _th='<table style="border-collapse:collapse;table-layout:fixed;width:100%;font-size:9px;text-align:center;line-height:1.25">';
-      _th+='<tr>'+labels.map(l=>'<td style="'+_bd+';background:#f3f3f3;color:#555">'+l+'</td>').join('')+'</tr>';
-      _th+='<tr>'+labels.map((l,_i)=>{ const g=mcpcArr[_i], a=cpcArr[_i]; return '<td style="'+_bd+'">'+'<div style="color:#7c3aed;font-size:8px">目安</div>'+'<div style="background:#e6d6fb;border-radius:2px;font-size:11px">'+_yc(g)+'</div>'+'<div style="color:#00897B;font-size:8px;margin-top:1px">入札</div>'+'<div style="background:#d9edca;border-radius:2px;font-size:11px">'+_yc(a)+'</div>'+'<div style="color:#555;font-size:8px;margin-top:1px">クリック</div>'+'<div style="font-size:11px">'+((mcpcArr[_i]==null&&cpcArr[_i]==null)?'\u2014':Number(clArr[_i]||0).toLocaleString())+'</div>'+'<div style="height:16px;line-height:1;margin-top:1px">'+_mk(a,g,daily?_streak[_i]:0)+'</div>'+'</td>'; }).join('')+'</tr>';
+      const _cell=(_i)=>{ const g=mcpcArr[_i], a=cpcArr[_i]; return '<td style="'+_bd+'">'+'<div style="color:#7c3aed;font-size:8px">目安</div>'+'<div style="background:#e6d6fb;border-radius:2px;font-size:11px">'+_yc(g)+'</div>'+'<div style="color:#00897B;font-size:8px;margin-top:1px">入札</div>'+'<div style="background:#d9edca;border-radius:2px;font-size:11px">'+_yc(a)+'</div>'+'<div style="color:#555;font-size:8px;margin-top:1px">クリック</div>'+'<div style="font-size:11px">'+((mcpcArr[_i]==null&&cpcArr[_i]==null)?'\u2014':Number(clArr[_i]||0).toLocaleString())+'</div>'+'<div style="height:16px;line-height:1;margin-top:1px">'+_mk(a,g,daily?_streak[_i]:0)+'</div>'+'</td>'; };
+      const _hd=(_i)=>'<td style="'+_bd+';background:#f3f3f3;color:#555">'+labels[_i]+'</td>';
+      const _tbl='border-collapse:collapse;table-layout:fixed;width:100%;font-size:9px;text-align:center;line-height:1.25';
+      let _th='<table style="'+_tbl+'">';
+      _th+='<tr>'+labels.map((l,_i)=>_hd(_i)).join('')+'</tr>';
+      _th+='<tr>'+labels.map((l,_i)=>_cell(_i)).join('')+'</tr>';
       const _full=_th+'</table>'; _tw.innerHTML=_full;
       const _shT=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00';
-      _tvBody+='<div style="margin:14px 0 5px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_shT+'%</span></div><div style="overflow-x:auto;margin-bottom:18px"><div style="min-width:'+(labels.length*38)+'px">'+_full+'</div></div>';
+      const _keep=labels.map((l,_i)=>_i).filter(_i=> !(mcpcArr[_i]==null&&cpcArr[_i]==null));
+      const _kp=_keep.length?_keep:labels.map((l,_i)=>_i);
+      let _thTV='<table style="'+_tbl+'">'+'<tr>'+_kp.map(_i=>_hd(_i)).join('')+'</tr>'+'<tr>'+_kp.map(_i=>_cell(_i)).join('')+'</tr></table>';
+      _tvBody+='<div style="margin:14px 0 5px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_shT+'%</span></div><div style="overflow-x:auto;margin-bottom:18px"><div style="min-width:'+(_kp.length*38)+'px">'+_thTV+'</div></div>';
     }
     const ctx=document.getElementById('kwIndivC'+ki); if(!ctx||typeof Chart==='undefined') return;
     _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{type:'bar',label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea',order:0},{type:'bar',label:'入札単価（CPC実績）',data:cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}));
