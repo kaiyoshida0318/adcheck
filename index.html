@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.864</span>
+    <span class="build-date">v1.865</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -998,11 +998,21 @@ header + * { margin-top: 4px; }
         </div>
         <span id="kwIndivTableCount" style="font-size:13px;font-weight:700;color:var(--text2)"></span>
         <div class="toolbar-right" style="display:flex;align-items:center;gap:8px">
+          <button onclick="_toggleKwTableLegend()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">マークの意味</button>
           <div style="display:flex;gap:4px">
             <button id="kwIndivDailyT" onclick="setKwIndivTablePeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">日別</button>
             <button id="kwIndivMonthlyT" onclick="setKwIndivTablePeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">月別</button>
           </div>
         </div>
+      </div>
+      <div id="kwIndivTableLegend" style="display:none;margin:4px 2px 12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);font-size:12px;line-height:1.95">
+        <div style="font-weight:700;margin-bottom:5px">マークの意味（入札単価 と 目安CPC の比較）</div>
+        <span style="color:#c0392b;font-weight:900;font-size:15px">&#10006;</span>　入札が目安より高い<br>
+        <span style="color:#c0392b;font-weight:900;font-size:15px">&#9651;</span>　入札が目安より安い（3日以上0クリック）<br>
+        <span style="color:#c0392b;font-weight:900;font-size:15px">&#10003;</span>　入札と目安が同じ<br>
+        <span style="color:#1e8449;font-weight:900;font-size:15px">&#9678;</span>　目安・入札が両方40円で一致（最低CPC達成）<br>
+        <span style="color:#1e8449;font-weight:700;font-size:13px">&#9711;</span>　入札が目安より安い（差10円以内）<br>
+        <span style="color:#1e8449;font-weight:800;font-size:14px">&#10003;</span>　入札が目安より安い（差10円超）
       </div>
       <div id="kwIndivTableHeader" style="display:none"></div>
       <div id="kwIndivTableEmpty" style="text-align:center;padding:50px;color:var(--text3);font-size:13px">読み込み中…</div>
@@ -6773,6 +6783,7 @@ function _syncKwIndivMonths(){
 }
 function _toggleKwMarkLegend(){ const el=document.getElementById('kwMarkLegend'); if(el) el.style.display = (el.style.display==='none'||!el.style.display) ? 'block' : 'none'; }
 function _toggleKwCalc(){ const el=document.getElementById('kwCalcPanel'); if(el) el.style.display = (el.style.display==='none'||!el.style.display) ? 'block' : 'none'; }
+function _toggleKwTableLegend(){ const el=document.getElementById('kwIndivTableLegend'); if(el) el.style.display = (el.style.display==='none'||!el.style.display) ? 'block' : 'none'; }
 function renderKwIndiv(){
   _setKwIndivPeriodUI(); _renderKwIndivSavedDropdown();
   const wrap=document.getElementById('kwIndivCharts'), empty=document.getElementById('kwIndivEmpty'), hd=document.getElementById('kwIndivHeaderName');
@@ -6999,9 +7010,8 @@ function _buildKwTableBlock(code, daily){
     const _shT=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00';
     _tvBody+='<div style="margin:14px 0 5px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_shT+'%</span></div><div style="overflow-x:auto;margin-bottom:18px"><div style="min-width:'+(_kp.length*38)+'px">'+_thTV+'</div></div>';
   });
-  const _img=(productCache[code]&&(productCache[code].manualImg||productCache[code].img))||null;
   const _name=_kwIndivName(code);
-  const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+(_img?'<img loading="lazy" src="'+_img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&ym?('\u3000|\u3000'+ym.slice(0,4)+'/'+ym.slice(4,6)):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div></div></div>';
+  const _head='<div style="margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)"><div style="font-size:14px;font-weight:700">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&ym?('\u3000|\u3000'+ym.slice(0,4)+'/'+ym.slice(4,6)):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div></div>';
   return { html:_head+_sumHtml+_tvBody, hasFix:hasFix };
 }
 function _setKwIndivTableModeUI(){
@@ -7024,7 +7034,7 @@ function renderKwIndivTableAll(){
   codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily); if(!blk) return; if(_kwIndivTableMode==='fix' && !blk.hasFix) return; shown++; body+=blk.html; });
   if(cntEl) cntEl.textContent='表示中：'+shown+'商品';
   if(empty){ if(shown){ empty.style.display='none'; } else { empty.style.display='block'; empty.textContent=(kwRows.length? (_kwIndivTableMode==='fix'?'修正ありの商品はありません。':'KWデータがありません。') :'KWデータがありません。'); } }
-  if(view) view.innerHTML= shown?(_kwiLegendCard()+body):'';
+  if(view) view.innerHTML= shown?body:'';
 }
 function renderKwBasic(){
   const sel = document.getElementById('kwBasicMonthSel');
