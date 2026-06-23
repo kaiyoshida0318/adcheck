@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.822</span>
+    <span class="build-date">v1.823</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -889,7 +889,7 @@ header + * { margin-top: 4px; }
           <div style="display:flex;gap:4px;margin-right:10px"><button id="mtmNormal" onclick="setMonthlyTableMode('normal')" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">通常</button><button id="mtmYoy" onclick="setMonthlyTableMode('yoy')" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前年同月比</button></div>
           <span id="monthly-run-status" style="font-size:11px;color:var(--text3)"></span><div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;margin-right:6px"><span style="color:var(--text3);font-weight:700">配色:</span><span style="color:#1565C0;font-weight:700">上位10%</span><span style="color:#2E7D32;font-weight:700">上位20%</span><span style="color:#1a1a1a">中間</span><span style="color:#BA7517;font-weight:700">下位20%</span><span style="color:#A32D2D;font-weight:700">下位10%</span></div>
           <div class="toolbar-right">
-            <div style="display:flex;gap:4px"><button id="mpmOff" onclick="setMonthlyPctMode(false)" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid #16a34a;background:#16a34a;color:#fff;">％表記なし</button><button id="mpmOn" onclick="setMonthlyPctMode(true)" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">％表記あり</button></div><button onclick="openGlobalChangeLog()" title="変更記録を開く" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">📝 変更記録</button>
+            <div style="display:flex;gap:4px"><button id="mpmOff" onclick="setMonthlyPctMode(false)" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid #16a34a;background:#16a34a;color:#fff;">比率表記なし</button><button id="mpmOn" onclick="setMonthlyPctMode(true)" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">比率表記あり</button></div><button onclick="openGlobalChangeLog()" title="変更記録を開く" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">📝 変更記録</button><button onclick="_openIgColPanel()" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button>
           </div>
         </div>
         <div id="monthly-col-header"></div>
@@ -916,7 +916,7 @@ header + * { margin-top: 4px; }
             <span style="font-size:12px;color:var(--text3)">〜</span>
             <input type="date" id="dailyDateTo" autocomplete="off" class="toolbar-month" onchange="renderDailyFiltered()" style="font-size:12px;padding:4px 8px">
           </div>
-          <div class="toolbar-right"></div>
+          <div class="toolbar-right"><button onclick="_openIgColPanel()" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button></div>
         </div>
         <div id="daily-col-header"></div>
         <div id="daily-table-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
@@ -4303,11 +4303,14 @@ function _renderTable(mode, rows) {
   const dateLabel = mode === 'monthly' ? '月' : '日付';
   const _HEADS0 = ['総売上★','SEO売上◎','広告売上◎','広告売上-KW','広告売上-20','実績額■','実績額-KW','実績額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','売上ROAS★','ROAS■','ROAS-KW','ROAS-20'];
   const HEADS = _COLORD.map(i=>_HEADS0[i]);
+  const _igO = _igColGet();
+  const _igS = function(label, defA){ var o=_igO[label]||{}; var a=o.a||defA||'right'; var w=o.w; return 'text-align:'+a+';'+(w>0?('width:'+w+'px;min-width:'+w+'px;max-width:'+w+'px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'):''); };
+  _igLastCols=[{label:dateLabel,defAlign:'left'}].concat(HEADS.map(function(h){return {label:h,defAlign:'right'};}));
 
   let html = `<table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:auto">
     <thead><tr style="background:var(--surface2);position:sticky;top:0;z-index:3">
-      <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:4;background:var(--surface2)">${dateLabel}</th>
-      ${HEADS.map((h,i) => `<th style="padding:8px 6px;text-align:right;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:3;background:${HBG[i]}">${h}</th>`).join('')}
+      <th style="padding:8px 6px;${_igS(dateLabel,'left')}font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:4;background:var(--surface2)">${dateLabel}</th>
+      ${HEADS.map((h,i) => `<th style="padding:8px 6px;${_igS(h,'right')}font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:3;background:${HBG[i]}">${h}</th>`).join('')}
     </tr></thead><tbody>`;
 
   const _latestRow = (mode === 'monthly' && rows.length > 0) ? rows[0] : null;
@@ -4382,8 +4385,8 @@ function _renderTable(mode, rows) {
     const _hlL = _hasLog ? 'border-left:2px dashed #f97316;' : '';
     const _hlR = _hasLog ? 'border-right:2px dashed #f97316;' : '';
     html += `<tr style="${_pct?'':'border-bottom:1px solid var(--border);'}${r._grpTop ? 'border-top:3px solid var(--text2);' : ''}">
-      <td ${_pct?'rowspan="2" ':''}${_hasLog?`title="${_clTitle}" `:''}style="padding:7px 6px;font-weight:600;white-space:nowrap;font-size:11px;${_pct?'vertical-align:middle;':''}${_hlTop}${_hlBot}${_hlL}">${_hasLog?'📝':''}${r.label}</td>
-      ${cells.map((c,i) => `<td style="padding:7px 6px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap;background:${BG[i]};${_hlTop}${_pct?'':_hlBot}${i===cells.length-1?_hlR:''}">${c}</td>`).join('')}
+      <td ${_pct?'rowspan="2" ':''}${_hasLog?`title="${_clTitle}" `:''}style="padding:7px 6px;${_igS(dateLabel,'left')}font-weight:600;white-space:nowrap;font-size:11px;${_pct?'vertical-align:middle;':''}${_hlTop}${_hlBot}${_hlL}">${_hasLog?'📝':''}${r.label}</td>
+      ${cells.map((c,i) => `<td style="padding:7px 6px;${_igS(HEADS[i],'right')}font-family:'DM Mono',monospace;white-space:nowrap;background:${BG[i]};${_hlTop}${_pct?'':_hlBot}${i===cells.length-1?_hlR:''}">${c}</td>`).join('')}
     </tr>`;
     if (_pct) {
       const _spd=(r.spendKw||0)+(r.spend20||0);
@@ -4393,7 +4396,7 @@ function _renderTable(mode, rows) {
       const _p20=_spd>0?Math.round((r.spend20||0)/_spd*1000)/10:null;
       const _pmap={1:_seoP,2:_salP,10:_kwP,11:_p20};
       const _rc=v=>v==null?'var(--text3)':(v<30?'#1d4ed8':v<40?'#3b82f6':v<50?'#60a5fa':v<60?'#fb7185':v<70?'#ef4444':'#b91c1c');
-      html += `<tr style="border-bottom:1px solid var(--border)">${BG.map((_x,i)=>`<td style="padding:1px 6px 5px;text-align:right;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:${_rc(_pmap[i])};white-space:nowrap;background:${BG[i]};${_hlBot}${i===BG.length-1?_hlR:''}">${_pmap[i]==null?'':_pmap[i]+'%'}</td>`).join('')}</tr>`;
+      html += `<tr style="border-bottom:1px solid var(--border)">${BG.map((_x,i)=>`<td style="padding:1px 6px 5px;${_igS(HEADS[i],'right')}font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:${_rc(_pmap[i])};white-space:nowrap;background:${BG[i]};${_hlBot}${i===BG.length-1?_hlR:''}">${_pmap[i]==null?'':_pmap[i]+'%'}</td>`).join('')}</tr>`;
     }
   }
   html += '</tbody></table>';
@@ -5380,7 +5383,7 @@ let _igLastCols=[];
 function _igColOnWI(i,val){ var c=_igLastCols[i]; if(!c)return; var o=_igColGet(); if(!o[c.label])o[c.label]={}; var n=+val; if(n>0)o[c.label].w=n; else delete o[c.label].w; _igColSet(o); _igRerender(); _renderIgColPanel(); }
 function _igColSetAlignI(i,a){ var c=_igLastCols[i]; if(!c)return; var o=_igColGet(); if(!o[c.label])o[c.label]={}; o[c.label].a=a; _igColSet(o); _igRerender(); _renderIgColPanel(); }
 function _igColReset(){ try{ localStorage.removeItem(_IGCOL_KEY); }catch(e){} _igRerender(); _renderIgColPanel(); }
-function _igRerender(){ try{ if(typeof renderRenewalGraph==='function')renderRenewalGraph(); }catch(e){} try{ if(typeof renderItemGraph==='function')renderItemGraph(); }catch(e){} }
+function _igRerender(){ try{ if(typeof renderRenewalGraph==='function')renderRenewalGraph(); }catch(e){} try{ if(typeof renderItemGraph==='function')renderItemGraph(); }catch(e){} try{ if(typeof _renderMonthlyTable==='function')_renderMonthlyTable(_monthlyLastRows||[]); }catch(e){} try{ if(typeof renderDailyFiltered==='function')renderDailyFiltered(); }catch(e){} }
 function _openIgColPanel(){ var p=document.getElementById('igColPanel'); if(!p)return; if(p.parentElement!==document.body)document.body.appendChild(p); if(p.style.display==='block'){p.style.display='none';return;} _renderIgColPanel(); p.style.display='block'; }
 function _renderIgColPanel(){
   var body=document.getElementById('igColPanelBody'); if(!body)return;
