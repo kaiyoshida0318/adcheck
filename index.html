@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.846</span>
+    <span class="build-date">v1.847</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -975,11 +975,20 @@ header + * { margin-top: 4px; }
         <select id="kwIndivSaved" onchange="kwIndivLoadSaved(this.value)" style="font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;max-width:220px"><option value="">保存済みから選択</option></select>
         <select id="kwIndivMonth" onchange="renderKwIndiv()" style="display:none;font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
         <div class="toolbar-right" style="display:flex;align-items:center;gap:8px">
+          <button onclick="_toggleKwMarkLegend()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">マークの意味</button>
           <div style="display:flex;gap:4px">
             <button id="kwIndivDaily" onclick="setKwIndivPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">日別</button>
             <button id="kwIndivMonthly" onclick="setKwIndivPeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">月別</button>
           </div>
         </div>
+      </div>
+      <div id="kwMarkLegend" style="display:none;margin:4px 2px 12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);font-size:12px;line-height:1.95">
+        <div style="font-weight:700;margin-bottom:5px">マークの意味（入札単価 と 目安CPC の比較）</div>
+        <span style="color:#c0392b;font-weight:900;font-size:15px">&#10006;</span>　入札が目安より高い<br>
+        <span style="color:#c0392b;font-weight:900;font-size:15px">&#10003;</span>　入札と目安が同じ<br>
+        <span style="color:#1e8449;font-weight:900;font-size:15px">&#9678;</span>　目安・入札が両方40円で一致（最低CPC達成）<br>
+        <span style="color:#1e8449;font-weight:700;font-size:13px">&#9711;</span>　入札が目安より安い（差10円以内）<br>
+        <span style="color:#1e8449;font-weight:800;font-size:14px">&#10003;</span>　入札が目安より安い（差10円超）
       </div>
       <div id="kwIndivHeader" style="padding:6px 2px 12px"><div id="kwIndivHeaderName"></div></div>
       <div id="kwIndivEmpty" style="text-align:center;padding:50px;color:var(--text3);font-size:13px">商品を検索してください。</div>
@@ -6749,6 +6758,7 @@ function _syncKwIndivMonths(){
   if(months.indexOf(prev)>=0) sel.value=prev;
   sel.style.display=months.length?'':'none';
 }
+function _toggleKwMarkLegend(){ const el=document.getElementById('kwMarkLegend'); if(el) el.style.display = (el.style.display==='none'||!el.style.display) ? 'block' : 'none'; }
 function renderKwIndiv(){
   _setKwIndivPeriodUI(); _renderKwIndivSavedDropdown();
   const wrap=document.getElementById('kwIndivCharts'), empty=document.getElementById('kwIndivEmpty'), hd=document.getElementById('kwIndivHeaderName');
