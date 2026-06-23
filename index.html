@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.823</span>
+    <span class="build-date">v1.824</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -527,6 +527,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-basic" id="tab-btn-retired" onclick="switchTab('retired')">引退済商品</button>
   <span class="tab-row-label" style="color:#00897B;padding-left:7px">【KW】</span>
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-月別データ</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv" onclick="switchTab('kw-indiv')">KW個別データ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
   <span class="tab-row-label" id="label-zentai" style="color:#dc2626;padding-left:7px">【全体】</span>
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">全-月別データ</button>
@@ -947,6 +948,26 @@ header + * { margin-top: 4px; }
         </div>
         <div id="kwBasicList" style="overflow:auto;max-height:74vh;padding:0 12px 16px"></div>
       </div>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-kw-indiv">
+    <div class="table-card">
+      <div class="table-toolbar" style="flex-wrap:wrap;gap:8px">
+        <input type="text" id="kwIndivSearch" placeholder="商品管理番号・商品名で検索" onkeydown="if(event.key==='Enter')kwIndivSearch()" style="width:240px;font-size:13px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)">
+        <button onclick="kwIndivSearch()" style="font-size:12px;font-weight:700;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">検索</button>
+        <button onclick="kwIndivSave()" style="font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">保存</button>
+        <select id="kwIndivSaved" onchange="kwIndivLoadSaved(this.value)" style="font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;max-width:220px"><option value="">保存済みから選択</option></select>
+        <div class="toolbar-right" style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;gap:4px">
+            <button id="kwIndivDaily" onclick="setKwIndivPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">日別</button>
+            <button id="kwIndivMonthly" onclick="setKwIndivPeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">月別</button>
+          </div>
+          <select id="kwIndivMonth" onchange="renderKwIndiv()" style="display:none;font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
+        </div>
+      </div>
+      <div id="kwIndivHeader" style="padding:6px 2px 14px"></div>
+      <div id="kwIndivEmpty" style="text-align:center;padding:50px;color:var(--text3);font-size:13px">商品を検索してください。</div>
+      <div id="kwIndivCharts"></div>
     </div>
   </div>
   <div class="tab-panel" id="tab-kw-compare">
@@ -3186,6 +3207,7 @@ function _parseKwRows(text) {
       kwRows[existingIdx].cl     = parseFloat(vals[col('クリック数(合計)')]) || 0;
       kwRows[existingIdx].ctr    = parseFloat(vals[col('CTR(%)')]) || 0;
       kwRows[existingIdx].mcpc   = parseFloat(vals[col('目安CPC')]) || 0;
+      kwRows[existingIdx].cpcAct = parseFloat(vals[col('CPC実績(合計)')]) || 0;
     } else {
       kwRows.push({
         code, date: dateStr, ym: `${dm[1]}${dm[2]}`, itemCode, kw,
@@ -3195,6 +3217,7 @@ function _parseKwRows(text) {
         cl:     parseFloat(vals[col('クリック数(合計)')]) || 0,
         ctr:    parseFloat(vals[col('CTR(%)')]) || 0,
         mcpc:   parseFloat(vals[col('目安CPC')]) || 0,
+        cpcAct: parseFloat(vals[col('CPC実績(合計)')]) || 0,
       });
     }
   }
@@ -6640,6 +6663,91 @@ function _renewalTodoMetrics(code, ym) {
 
 let _kwBasicMonth = '';
 function onKwBasicMonth(v){ _kwBasicMonth = v; _renderKwBasicTable(); }
+// ===== KW個別データ タブ =====
+const _KWINDIV_SAVED_KEY='adcheck_kwindiv_saved';
+let _kwIndivCode=null, _kwIndivPeriod='daily', _kwIndivCharts=[];
+const _kwEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function _kwIndivSavedGet(){ try{ return JSON.parse(localStorage.getItem(_KWINDIV_SAVED_KEY)||'[]')||[]; }catch(e){ return []; } }
+function _kwIndivSavedSet(a){ try{ localStorage.setItem(_KWINDIV_SAVED_KEY, JSON.stringify(a)); }catch(e){} }
+function _kwIndivName(code){ const c=productCache[code]||{}; return c.manualName||c.name||code; }
+function _renderKwIndivSavedDropdown(){
+  const sel=document.getElementById('kwIndivSaved'); if(!sel) return;
+  const list=_kwIndivSavedGet();
+  sel.innerHTML='<option value="">保存済みから選択</option>'+list.map(code=>'<option value="'+_kwEsc(code)+'"'+(code===_kwIndivCode?' selected':'')+'>'+_kwEsc(_kwIndivName(code))+'</option>').join('');
+}
+function kwIndivSave(){
+  if(!_kwIndivCode){ alert('先に商品を検索してください'); return; }
+  const list=_kwIndivSavedGet();
+  if(list.indexOf(_kwIndivCode)<0){ list.unshift(_kwIndivCode); _kwIndivSavedSet(list); }
+  _renderKwIndivSavedDropdown();
+  alert('保存しました：'+_kwIndivName(_kwIndivCode));
+}
+function kwIndivLoadSaved(code){ if(!code) return; _kwIndivCode=code; _syncKwIndivMonths(); renderKwIndiv(); }
+function _setKwIndivPeriodUI(){
+  const on='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap';
+  const off='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap';
+  const d=document.getElementById('kwIndivDaily'), m=document.getElementById('kwIndivMonthly');
+  if(d)d.style.cssText=_kwIndivPeriod==='daily'?on:off;
+  if(m)m.style.cssText=_kwIndivPeriod==='monthly'?on:off;
+}
+function setKwIndivPeriod(p){ _kwIndivPeriod=p; _setKwIndivPeriodUI(); _syncKwIndivMonths(); renderKwIndiv(); }
+function _kwIndivResolveCode(q){
+  q=(q||'').trim(); if(!q) return null;
+  if(productCache[q] || kwRows.some(r=>r.itemCode===q)) return q;
+  const codes=Object.keys(productCache||{});
+  let hit=codes.find(c=>{ const n=(productCache[c].manualName||productCache[c].name||''); return n && n.indexOf(q)>=0; });
+  if(hit) return hit;
+  const kr=kwRows.find(r=>r.itemCode && String(r.itemCode).indexOf(q)>=0);
+  return kr?kr.itemCode:null;
+}
+function kwIndivSearch(){
+  const el=document.getElementById('kwIndivSearch'); const q=el?el.value:'';
+  const code=_kwIndivResolveCode(q);
+  if(!code){ _kwIndivCode=null; renderKwIndiv(); alert('該当する商品が見つかりません'); return; }
+  _kwIndivCode=code; _syncKwIndivMonths(); renderKwIndiv();
+}
+function _kwIndivMonths(code){ return [...new Set(kwRows.filter(r=>r.itemCode===code).map(r=>r.ym))].filter(Boolean).sort().reverse(); }
+function _syncKwIndivMonths(){
+  const sel=document.getElementById('kwIndivMonth'); if(!sel) return;
+  if(!_kwIndivCode || _kwIndivPeriod!=='daily'){ sel.style.display='none'; return; }
+  const months=_kwIndivMonths(_kwIndivCode); const prev=sel.value;
+  sel.innerHTML=months.map(ym=>'<option value="'+ym+'">'+ym.slice(0,4)+'/'+ym.slice(4,6)+'</option>').join('');
+  if(months.indexOf(prev)>=0) sel.value=prev;
+  sel.style.display=months.length?'':'none';
+}
+function renderKwIndiv(){
+  _setKwIndivPeriodUI(); _renderKwIndivSavedDropdown();
+  const wrap=document.getElementById('kwIndivCharts'), empty=document.getElementById('kwIndivEmpty'), hd=document.getElementById('kwIndivHeader');
+  _kwIndivCharts.forEach(c=>{try{c.destroy();}catch(e){}}); _kwIndivCharts=[];
+  if(!_kwIndivCode){ if(wrap)wrap.innerHTML=''; if(hd)hd.innerHTML=''; if(empty){empty.style.display='block';empty.textContent='商品を検索してください。';} return; }
+  const code=_kwIndivCode; const daily=_kwIndivPeriod==='daily';
+  let rows=kwRows.filter(r=>r.itemCode===code); let monthLabel='';
+  if(daily){
+    const sel=document.getElementById('kwIndivMonth'); const ym=(sel&&sel.value)||(_kwIndivMonths(code)[0]||'');
+    rows=rows.filter(r=>r.ym===ym); monthLabel=ym?(ym.slice(0,4)+'/'+ym.slice(4,6)):'';
+  }
+  if(hd) hd.innerHTML='<div style="font-size:14px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&monthLabel?('\u3000|\u3000'+monthLabel):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div>';
+  if(rows.length===0){ if(wrap)wrap.innerHTML=''; if(empty){empty.style.display='block';empty.textContent='この商品のKWデータがありません。';} return; }
+  if(empty) empty.style.display='none';
+  const byKw={}; rows.forEach(r=>{ const k=r.kw||'(空)'; (byKw[k]||(byKw[k]=[])).push(r); });
+  const kws=Object.keys(byKw).sort();
+  let html=''; kws.forEach((kw,ki)=>{ html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'</div><div style="position:relative;height:200px;margin-bottom:22px"><canvas id="kwIndivC'+ki+'"></canvas></div>'; });
+  if(wrap) wrap.innerHTML=html;
+  kws.forEach((kw,ki)=>{
+    const rs=byKw[kw]; let labels=[],mcpcArr=[],cpcArr=[];
+    if(daily){
+      const byDate={};
+      rs.forEach(r=>{ const o=byDate[r.date]||(byDate[r.date]={mS:0,mN:0,spend:0,cl:0,cA:0,cN:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){o.cA+=ca;o.cN++;} });
+      Object.keys(byDate).sort().forEach(d=>{ const o=byDate[d]; labels.push(d.slice(5)); mcpcArr.push(o.mN?Math.round(o.mS/o.mN):0); cpcArr.push(o.cN?Math.round(o.cA/o.cN):(o.cl>0?Math.round(o.spend/o.cl):0)); });
+    } else {
+      const byYm={};
+      rs.forEach(r=>{ const o=byYm[r.ym]||(byYm[r.ym]={mS:0,mN:0,spend:0,cl:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); });
+      Object.keys(byYm).sort().forEach(ym=>{ const o=byYm[ym]; labels.push(ym.slice(0,4)+'/'+ym.slice(4,6)); mcpcArr.push(o.mN?Math.round(o.mS/o.mN):0); cpcArr.push(o.cl>0?Math.round(o.spend/o.cl):0); });
+    }
+    const ctx=document.getElementById('kwIndivC'+ki); if(!ctx||typeof Chart==='undefined') return;
+    _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea'},{label:'CPC実績',data:cpcArr,backgroundColor:'#00897B'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:16}}}}}));
+  });
+}
 function renderKwBasic(){
   const sel = document.getElementById('kwBasicMonthSel');
   const months = [...new Set(kwRows.map(r => r.ym))].sort().reverse();
@@ -9608,6 +9716,7 @@ function switchTab(tab) {
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'yoy') renderYoy();
   if (tab === 'kw-basic') renderKwBasic();
+  if (tab === 'kw-indiv') { _syncKwIndivMonths(); renderKwIndiv(); }
   if (tab === 'kw-compare') renderKwCompare();
   if (tab === 'item-graph') { _initItemGraphRange(); }
   if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
