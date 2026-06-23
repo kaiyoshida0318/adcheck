@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.854</span>
+    <span class="build-date">v1.855</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6791,29 +6791,34 @@ function renderKwIndiv(){
   let _sumHtml='';
   { const _latest=rows.reduce((m,r)=>(r.date>m?r.date:m),'');
     if(_latest && kws.length){ const _dl=(+_latest.slice(5,7))+'月'+(+_latest.slice(8,10))+'日';
-      const _T='border:1px solid #c9c9c9;padding:3px 6px;text-align:center;white-space:nowrap';
-      const _L='border:1px solid #c9c9c9;padding:3px 8px;text-align:center;white-space:nowrap;background:#f3f3f3;font-weight:700;font-size:11px;color:#444';
+      const _T='border:1px solid #c9c9c9;padding:3px 8px;text-align:center;white-space:nowrap';
+      const _H='border:1px solid #c9c9c9;padding:4px 8px;text-align:center;white-space:nowrap;background:#f3f3f3;font-weight:700;font-size:11px;color:#444';
       const _n2=v=>(v==null)?'\u2014':Number(v).toLocaleString();
       const _recent3=(rs,upto)=>{ let s=0,d=upto; for(let i=0;i<3&&d;i++){ s+=rs.reduce((a,r)=>a+(r.date===d?(r.cl||0):0),0); d=_prevDay(d); } return s; };
-      let r1='<tr><td rowspan="8" style="'+_T+';background:#eef2ff;font-weight:700;font-size:12px">'+_dl+'</td><td style="'+_L+'">商品名</td>';
-      let rvol='<tr><td style="'+_L+'">KWvol</td>';
-      let r2='<tr><td style="'+_L+'">KW割合</td>';
-      let r3='<tr><td style="'+_L+'"></td>';
-      let r4='<tr><td style="'+_L+'"></td>';
-      let r5='<tr><td style="'+_L+'">月クリック合計</td>';
-      let r6='<tr><td style="'+_L+'">直近3日クリック</td>';
-      let r7='<tr><td style="'+_L+'"></td>';
+      let _h='<thead><tr>'
+        +'<th style="'+_H+';background:#eef2ff">'+_dl+'</th>'
+        +'<th style="'+_H+'">KWvol</th>'
+        +'<th style="'+_H+'">KW割合</th>'
+        +'<th style="'+_H+';color:#7c3aed">目安</th>'
+        +'<th style="'+_H+';color:#00897B">入札</th>'
+        +'<th style="'+_H+'">月クリック合計</th>'
+        +'<th style="'+_H+'">直近3日クリック</th>'
+        +'<th style="'+_H+'">判定</th>'
+        +'</tr></thead><tbody>';
       kws.forEach(kw=>{ const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_carry(byKw[kw],_latest); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_recent3(byKw[kw],_latest);
-        r1+='<td colspan="2" style="'+_T+';font-weight:700;font-size:12px">'+_kwEsc(kw)+'</td>';
-        rvol+='<td colspan="2" style="'+_T+';font-size:11px;color:#555">'+_n2(_kwVol[kw])+'</td>';
-        r2+='<td colspan="2" style="'+_T+';color:#555;font-size:11px">'+sh+'%</td>';
-        r3+='<td style="'+_T+';color:#7c3aed;font-size:9px">目安</td><td style="'+_T+';color:#00897B;font-size:9px">入札</td>';
-        r4+='<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td><td style="'+_T+';background:#d9edca;font-size:11px">'+_n2(dv.act)+'</td>';
-        r5+='<td colspan="2" style="'+_T+';font-size:11px;color:#333">'+_n2(_mcl)+'</td>';
-        r6+='<td colspan="2" style="'+_T+';font-size:11px;color:#333">'+_n2(_r3)+'</td>';
-        r7+='<td colspan="2" style="'+_T+';height:18px">'+_mkM(dv.act,dv.gui,_noClickStreak(byKw[kw],_latest))+'</td>';
+        _h+='<tr>'
+          +'<td style="'+_T+';font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
+          +'<td style="'+_T+';font-size:11px;color:#555">'+_n2(_kwVol[kw])+'</td>'
+          +'<td style="'+_T+';font-size:11px;color:#555">'+sh+'%</td>'
+          +'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td>'
+          +'<td style="'+_T+';background:#d9edca;font-size:11px">'+_n2(dv.act)+'</td>'
+          +'<td style="'+_T+';font-size:11px;color:#333">'+_n2(_mcl)+'</td>'
+          +'<td style="'+_T+';font-size:11px;color:#333">'+_n2(_r3)+'</td>'
+          +'<td style="'+_T+'">'+_mkM(dv.act,dv.gui,_noClickStreak(byKw[kw],_latest))+'</td>'
+          +'</tr>';
       });
-      _sumHtml='<div style="overflow-x:auto;margin:0 0 16px"><table style="border-collapse:collapse">'+r1+'</tr>'+rvol+'</tr>'+r2+'</tr>'+r3+'</tr>'+r4+'</tr>'+r5+'</tr>'+r6+'</tr>'+r7+'</tr></table></div>';
+      _h+='</tbody>';
+      _sumHtml='<div style="overflow-x:auto;margin:0 0 16px"><table style="border-collapse:collapse">'+_h+'</table></div>';
     }
   }
   let html=_sumHtml; kws.forEach((kw,ki)=>{ const _sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_sh+'%</span></div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+ki+'"></canvas></div><div id="kwIndivT'+ki+'"></div></div></div>'; });
