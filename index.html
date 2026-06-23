@@ -448,6 +448,25 @@ header + * { margin-top: 4px; }
 .manual-badge { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); margin-left: 4px; vertical-align: middle; flex-shrink: 0; }
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script>
+  /* CSS zoom(html)使用時、Chart.jsのホバー座標がブラウザ差でずれる問題への恒久対策。
+     ネイティブイベントのclientXとcanvasの実表示矩形から比率で正規化し、
+     chartの論理座標へ変換し直す。zoom=100%でも無害(同値計算)。全チャート共通。 */
+  if (window.Chart) {
+    Chart.register({
+      id: 'zoomEventFix',
+      beforeEvent(chart, args) {
+        const ev = args && args.event;
+        const ne = ev && ev.native;
+        if (!ne || typeof ne.clientX !== 'number') return;
+        const r = chart.canvas.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        ev.x = (ne.clientX - r.left) / r.width  * chart.width;
+        ev.y = (ne.clientY - r.top)  / r.height * chart.height;
+      }
+    });
+  }
+  </script>
 </head>
 <body>
 <div id="loadingLock">
@@ -500,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.835</span>
+    <span class="build-date">v1.836</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
