@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.847</span>
+    <span class="build-date">v1.848</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6777,10 +6777,12 @@ function renderKwIndiv(){
   const _monthLast=rows.reduce((m,r)=>(r.date>m?r.date:m),'');
   const _kwSpend={}; let _totSpend=0; Object.keys(byKw).forEach(kw=>{ const sp=byKw[kw].reduce((a,r)=>a+(r.spend||0),0); _kwSpend[kw]=sp; _totSpend+=sp; });
   const kws=Object.keys(byKw).sort((x,y)=>(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
-  const _mkM=(act,gui)=>{ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; };
+  const _mkM=(act,gui,streak)=>{ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:800;font-size:13px">\u2713</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; };
   const _yc2=v=>(v==null||v===0)?'\u2014':Number(v).toLocaleString();
   const _dayVal=(rs,d)=>{ let mS=0,mN=0,sp=0,cl=0,cA=0,cN=0,has=false; rs.forEach(r=>{ if(r.date!==d) return; has=true; if(r.mcpc>0){mS+=r.mcpc;mN++;} sp+=(r.spend||0); cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){cA+=ca;cN++;} }); return {has:has, cl:cl, gui:mN?Math.round(mS/mN):0, act:cN?Math.round(cA/cN):(cl>0?Math.round(sp/cl):0)}; };
   const _carry=(rs,upto)=>{ const ds=[...new Set(rs.map(r=>r.date))].filter(d=>d&&d<=upto).sort(); let gui=null,act=null; ds.forEach(d=>{ const v=_dayVal(rs,d); if(v.gui>0) gui=v.gui; if(v.act>0) act=v.act; }); const last=_dayVal(rs,upto); return {has:last.has, cl:last.cl, gui:gui!=null?gui:last.gui, act:act!=null?act:last.act}; };
+  const _prevDay=ds=>{ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()-1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); };
+  const _noClickStreak=(rs,upto)=>{ let s=0,d=upto; for(let i=0;i<366 && d;i++){ const cl=rs.reduce((a,r)=>a+(r.date===d?(r.cl||0):0),0); if(cl>0) break; s++; d=_prevDay(d); } return s; };
   let _sumHtml='';
   { const _latest=rows.reduce((m,r)=>(r.date>m?r.date:m),'');
     if(_latest){ const _dl=(+_latest.slice(5,7))+'月'+(+_latest.slice(8,10))+'日';
@@ -6793,7 +6795,7 @@ function renderKwIndiv(){
           r3+='<td style="'+_T+';color:#7c3aed;font-size:9px">目安</td><td style="'+_T+';color:#00897B;font-size:9px">入札</td>';
           r4+='<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_yc2(dv.gui)+'</td><td style="'+_T+';background:#d9edca;font-size:11px">'+_yc2(dv.act)+'</td>';
           rc+='<td colspan="2" style="'+_T+';font-size:10px;color:#333">クリック '+(dv.cl>0?Number(dv.cl).toLocaleString():'\u2014')+'</td>';
-          r5+='<td colspan="2" style="'+_T+';height:18px">'+_mkM(dv.act,dv.gui)+'</td>';
+          r5+='<td colspan="2" style="'+_T+';height:18px">'+_mkM(dv.act,dv.gui,_noClickStreak(byKw[kw],_latest))+'</td>';
         });
         _sumHtml='<div style="overflow-x:auto;margin:0 0 16px"><table style="border-collapse:collapse">'+r1+'</tr>'+r2+'</tr>'+r3+'</tr>'+r4+'</tr>'+rc+'</tr>'+r5+'</tr></table></div>';
       }
@@ -6820,9 +6822,10 @@ function renderKwIndiv(){
       const _yc=v=>(v==null||v===0)?'\u2014':(Number(v).toLocaleString()+'円');
       const _bd='border:1px solid #d0d0d0;padding:3px 2px;white-space:nowrap;vertical-align:top';
       const _mk=_mkM;
+      const _streak=[]; { let _s=0; for(let _k=0;_k<clArr.length;_k++){ if((clArr[_k]||0)===0){ _s++; } else { _s=0; } _streak[_k]=_s; } }
       let _th='<table style="border-collapse:collapse;table-layout:fixed;width:100%;font-size:9px;text-align:center;line-height:1.25">';
       _th+='<tr>'+labels.map(l=>'<td style="'+_bd+';background:#f3f3f3;color:#555">'+l+'</td>').join('')+'</tr>';
-      _th+='<tr>'+labels.map((l,_i)=>{ const g=mcpcArr[_i], a=cpcArr[_i]; return '<td style="'+_bd+'">'+'<div style="color:#7c3aed;font-size:8px">目安</div>'+'<div style="background:#e6d6fb;border-radius:2px;font-size:11px">'+_yc(g)+'</div>'+'<div style="color:#00897B;font-size:8px;margin-top:1px">入札</div>'+'<div style="background:#d9edca;border-radius:2px;font-size:11px">'+_yc(a)+'</div>'+'<div style="color:#555;font-size:8px;margin-top:1px">クリック</div>'+'<div style="font-size:11px">'+(clArr[_i]>0?Number(clArr[_i]).toLocaleString():'\u2014')+'</div>'+'<div style="height:16px;line-height:1;margin-top:1px">'+_mk(a,g)+'</div>'+'</td>'; }).join('')+'</tr>';
+      _th+='<tr>'+labels.map((l,_i)=>{ const g=mcpcArr[_i], a=cpcArr[_i]; return '<td style="'+_bd+'">'+'<div style="color:#7c3aed;font-size:8px">目安</div>'+'<div style="background:#e6d6fb;border-radius:2px;font-size:11px">'+_yc(g)+'</div>'+'<div style="color:#00897B;font-size:8px;margin-top:1px">入札</div>'+'<div style="background:#d9edca;border-radius:2px;font-size:11px">'+_yc(a)+'</div>'+'<div style="color:#555;font-size:8px;margin-top:1px">クリック</div>'+'<div style="font-size:11px">'+(clArr[_i]>0?Number(clArr[_i]).toLocaleString():'\u2014')+'</div>'+'<div style="height:16px;line-height:1;margin-top:1px">'+_mk(a,g,daily?_streak[_i]:0)+'</div>'+'</td>'; }).join('')+'</tr>';
       _tw.innerHTML=_th+'</table>';
     }
     const ctx=document.getElementById('kwIndivC'+ki); if(!ctx||typeof Chart==='undefined') return;
