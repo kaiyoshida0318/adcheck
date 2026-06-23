@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.818</span>
+    <span class="build-date">v1.819</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4301,7 +4301,7 @@ function _renderTable(mode, rows) {
   const _HBG0 = ['#bfdbfe','#dbeafe','#bbf7d0','#a7f3d0','#d1fae5','#fef08a','#fef9c3','#fefce8','#ddd6fe','#ede9fe','#f5f3ff','#fed7aa','#fde8c8','#fff7ed','#bfdbfe','#fecdd3','#ffe4e8','#fff1f2'];
   const HBG = _COLORD.map(i=>_HBG0[i]);
   const dateLabel = mode === 'monthly' ? '月' : '日付';
-  const _HEADS0 = ['総売上★','SEO売上','売上金額■','売上金額-KW','売上金額-20','実績額■','実績額-KW','実績額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','売上ROAS★','ROAS■','ROAS-KW','ROAS-20'];
+  const _HEADS0 = ['総売上★','SEO売上','広売金額■','広売-KW','広売-20','実績額■','実績額-KW','実績額-20','獲得単価■','獲得単価-KW','獲得単価-20','CVR■','CVR-KW','CVR-20','売上ROAS★','ROAS■','ROAS-KW','ROAS-20'];
   const HEADS = _COLORD.map(i=>_HEADS0[i]);
 
   let html = `<table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:auto">
