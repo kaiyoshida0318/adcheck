@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.870</span>
+    <span class="build-date">v1.871</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -572,8 +572,6 @@ header + * { margin-top: 4px; }
   <span class="tab-row-label" style="color:#7c3aed;padding-left:16px">【マラソン】</span>
   <button class="tab-btn" id="tab-btn-mar-kouho" onclick="switchTab('mar-kouho')">候補<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-kouho"></span></button>
   <button class="tab-btn" id="tab-btn-mar-jisshi" onclick="switchTab('mar-jisshi')">実施中<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-jisshi"></span></button>
-  <span class="tab-sep" style="color:#9333ea;font-size:12px;font-weight:700;align-self:center;padding:0 1px;user-select:none">|</span>
-  <button class="tab-btn" id="tab-btn-mar-sage" onclick="switchTab('mar-sage')">CPC下げたい<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-sage"></span></button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3">
   <span class="tab-row-label red" style="color:#9333ea">【状態】</span>
@@ -591,6 +589,12 @@ header + * { margin-top: 4px; }
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退済■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-out"></span></button>
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-unset"></span></button>
   <button id="topHideBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 9px;position:absolute;right:16px;top:50%;transform:translateY(-50%);border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;z-index:5">上部を隠す</button>
+</nav>
+<nav class="tab-sub-row" style="position:relative;top:auto;z-index:1">
+  <span class="tab-row-label" style="color:#dc2626">【注視】</span>
+  <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
+  <span class="tab-sep">|</span>
+  <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">セール時広告圏外対策△用<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
 </nav>
 </div>
 <div id="topChromeBar" style="display:none;justify-content:flex-end;padding:2px 16px;border-bottom:1px solid var(--border);background:var(--surface)"><button id="topShowBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 11px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap">上部を表示</button></div>
@@ -1082,7 +1086,8 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-ss-dec"></div>
   <div class="tab-panel" id="tab-mar-kouho"></div>
   <div class="tab-panel" id="tab-mar-jisshi"></div>
-  <div class="tab-panel" id="tab-mar-sage"></div>
+  <div class="tab-panel" id="tab-mar-cpc"></div>
+  <div class="tab-panel" id="tab-mar-tanka"></div>
 
   <!-- リニューアル：全体（変更記録一覧） -->
   <div class="tab-panel" id="tab-renewal-todo">
@@ -1715,6 +1720,7 @@ function loadProductCache() {
       }
     }
     if (raw) Object.assign(productCache, JSON.parse(raw));
+    _migrateMarathonTags();
   } catch(e) {}
 }
 function saveProductCache() {
@@ -2178,6 +2184,7 @@ async function loadFromGitHub() {
         const _localSsOnly = JSON.parse(localStorage.getItem(_cacheKey() + '_ss_only') || '{}');
         for (const k of Object.keys(productCache)) delete productCache[k];
         Object.assign(productCache, data.productCache);
+        _migrateMarathonTags();
         // localStorageのSS設定だけ、GitHubに反映されてない分を救済
         let _localKept = 0;
         const _ssRescue = (source) => {
@@ -9113,7 +9120,7 @@ function _ssCellBtns(code){
     return `<button id="ss-btn-${code}-${m}" data-code="${code}" data-mon="${m}" data-active="${active?'1':'0'}" onclick="_toggleRoasTrendSS('${code}','${m}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;width:100%;box-sizing:border-box;white-space:nowrap;text-align:center">${lbl}</button>`; };
   const rb = function(k){ const active=mar.includes(k); const o=MARATHON_BTN[k];
     return `<button id="mar-btn-${code}-${k}" data-code="${code}" data-mar="${k}" data-active="${active?'1':'0'}" onclick="_toggleMarathon('${code}','${k}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?o.col:'var(--border)'};background:${active?o.col:'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;width:100%;box-sizing:border-box;${k==='sage'?'grid-column:1/-1;':''}white-space:nowrap;text-align:center">${o.lbl}</button>`; };
-  return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:100%;box-sizing:border-box">'+mb('03')+mb('06')+rb('kouho')+mb('09')+mb('12')+rb('jisshi')+rb('sage')+'</div>';
+  return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:100%;box-sizing:border-box">'+mb('03')+mb('06')+rb('kouho')+mb('09')+mb('12')+rb('jisshi')+'<div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:2px">'+rb('cpc')+rb('tanka')+'</div>'+'</div>';
 }
 function _toggleMarathon(code, key, btn){
   const active = btn.getAttribute('data-active')==='1';
@@ -9544,9 +9551,10 @@ const STATUS_LABELS = {
 };
 const SS_TABS = { 'ss-mar':'03', 'ss-jun':'06', 'ss-sep':'09', 'ss-dec':'12' };
 const SS_LABELS = { 'ss-mar':'3月', 'ss-jun':'6月', 'ss-sep':'9月', 'ss-dec':'12月' };
-const MARATHON_TABS = { 'mar-kouho':'kouho', 'mar-jisshi':'jisshi', 'mar-sage':'sage' };
-const MARATHON_LABELS = { 'mar-kouho':'候補', 'mar-jisshi':'実施中', 'mar-sage':'CPC下げたい' };
-const MARATHON_BTN = { kouho:{lbl:'候補',col:'#7c3aed'}, jisshi:{lbl:'実施',col:'#0891b2'}, sage:{lbl:'CPC下げたい',col:'#ea580c'} };
+const MARATHON_TABS = { 'mar-kouho':'kouho', 'mar-jisshi':'jisshi', 'mar-cpc':'cpc', 'mar-tanka':'tanka' };
+const MARATHON_LABELS = { 'mar-kouho':'候補', 'mar-jisshi':'実施中', 'mar-cpc':'CPC下げたい◎以外', 'mar-tanka':'セール時広告圏外対策△用' };
+const MARATHON_BTN = { kouho:{lbl:'候補',col:'#7c3aed'}, jisshi:{lbl:'実施',col:'#0891b2'}, cpc:{lbl:'CPC',col:'#ea580c'}, tanka:{lbl:'単価対策',col:'#db2777'} };
+function _migrateMarathonTags(){ try{ Object.keys(productCache||{}).forEach(function(c){ var o=productCache[c]; if(!o||!Array.isArray(o.marathon)) return; if(o.marathon.indexOf('sage')<0) return; var nm=[]; o.marathon.forEach(function(k){ var nk=(k==='sage')?'cpc':k; if(nm.indexOf(nk)<0) nm.push(nk); }); o.marathon=nm; }); }catch(e){} }
 const SUB_TAB_STATUS = {
   'monthly-all':  'all',
   'monthly-g1':   'g1',
@@ -11060,7 +11068,7 @@ function _updateStatusCounts() {
   products.forEach(p => {
     (productCache[p.id]?.ss || []).forEach(m => { if (ssCount[m] !== undefined) ssCount[m]++; });
   });
-  const marCount = { kouho:0, jisshi:0, sage:0 };
+  const marCount = { kouho:0, jisshi:0, cpc:0, tanka:0 };
   products.forEach(p => {
     (productCache[p.id]?.marathon || []).forEach(k => { if (marCount[k] !== undefined) marCount[k]++; });
   });
@@ -11089,7 +11097,8 @@ function _updateStatusCounts() {
   set('ss-dec',        ssCount['12']);
   set('mar-kouho',     marCount.kouho);
   set('mar-jisshi',    marCount.jisshi);
-  set('mar-sage',      marCount.sage);
+  set('mar-cpc',       marCount.cpc);
+  set('mar-tanka',     marCount.tanka);
 }
 
 function renderAll() {
