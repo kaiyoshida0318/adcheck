@@ -346,6 +346,7 @@ header + * { margin-top: 4px; }
 .tab-sub-row-2 { top: var(--z-tab2-top, calc(52px + 46px)); background: #ffffff; z-index: 198; }
 .tab-sub-row-3 { top: var(--z-tab3-top, calc(52px + 46px + 46px)); background: #ffffff; z-index: 198; }
 .tab-sub-row-3::after { border-top: none !important; }
+.kw-nav-row::after { border-top: none !important; }
 /* stickyナビの隙間に色付きヘッダーが覗くのを防ぐため、各ナビの上端外に白いカバーを配置 */
 .tab-bar::before, .tab-sub-row::before {
   content: '';
@@ -384,10 +385,8 @@ header + * { margin-top: 4px; }
 .s-mid2 { color: #E65100; }   /* 中立広告無し オレンジ */
 .s-warn { color: #C62828; }   /* 撤退予定▲  赤 */
 .s-out  { color: #6D1111; }   /* 撤退済■      エンジ */
-.tab-btn-all { background: #e8f4fb; padding: 7px 8px; }
+.tab-btn-all { padding: 7px 8px; }
     .tab-btn-basic { padding: 7px 8px; }
-.tab-btn-all:hover { background: #d4ecf7; }
-.tab-btn-all.active { background: #e8f4fb; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 .mk-table{width:100%;border-collapse:collapse;font-size:12px}.mk-table th{position:sticky;top:0;background:#f8f9fa;color:var(--text3);font-weight:700;font-size:11px;padding:8px 6px;border-bottom:1px solid var(--border);white-space:nowrap;z-index:5;text-align:left}.mk-table td{padding:6px 6px;border-bottom:1px solid var(--border);vertical-align:middle}.mk-table td.r,.mk-table th.r{text-align:right}.mk-table .mk-code{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2)}.mk-table .mk-name{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mk-table td.b-tot{background:#eef4fb;color:#10548c;font-weight:600}.mk-table td.b-ctr{background:#eff5ec;color:#1b6e2a;font-weight:600}.mk-table td.b-cvr{background:#fff8e5;color:#9a6400;font-weight:600}.mk-table th.b-tot{background:#eef4fb;color:#1565C0}.mk-table th.b-ctr{background:#eff5ec;color:#2E7D32}.mk-table th.b-cvr{background:#fff8e5;color:#B26A00}.mk-table tbody tr:hover td{filter:brightness(0.97)}.mk-table .mk-code{color:#64748b}.mk-table .grpL{border-left:2px solid #cbd5e1}
@@ -520,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.881</span>
+    <span class="build-date">v1.884</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -569,6 +568,17 @@ header + * { margin-top: 4px; }
   <button class="tab-btn" id="tab-btn-mar-kouho" onclick="switchTab('mar-kouho')">候補<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-kouho"></span></button>
   <button class="tab-btn" id="tab-btn-mar-jisshi" onclick="switchTab('mar-jisshi')">実施中<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-jisshi"></span></button>
 </nav>
+<nav class="tab-sub-row kw-nav-row" style="position:relative;top:auto;z-index:1">
+  <span class="tab-row-label" style="color:#00897B">【KW】</span>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-月別データ</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv" onclick="switchTab('kw-indiv')">KW-個別データ（グラフ）</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv-table" onclick="switchTab('kw-indiv-table')">KW-個別データ（表）</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
+  <span class="tab-row-label" style="color:#dc2626;padding-left:10px">【入札単価対策】</span>
+  <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
+  <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">セール活用単価対策<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
+  <button id="topHideBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 9px;position:absolute;right:16px;top:50%;transform:translateY(-50%);border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;z-index:5">上部を隠す</button>
+</nav>
 <nav class="tab-sub-row tab-sub-row-3" style="border-bottom:none">
   <span class="tab-row-label red" style="color:#9333ea">【状態】</span>
   <button class="tab-btn" id="tab-btn-monthly-all" onclick="switchTab('monthly-all')">全体<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-all"></span></button><button class="tab-btn" id="tab-btn-monthly-new" onclick="switchTab('monthly-new')">新商品<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-new"></span></button>
@@ -584,17 +594,6 @@ header + * { margin-top: 4px; }
   <button class="tab-btn" id="tab-btn-monthly-warnbig" onclick="switchTab('monthly-warnbig')">撤退予定-大サイズ▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warnbig"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退済■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-out"></span></button>
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-unset"></span></button>
-</nav>
-<nav class="tab-sub-row" style="position:relative;top:auto;z-index:1">
-  <span class="tab-row-label" style="color:#00897B">【KW】</span>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-月別データ</button>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv" onclick="switchTab('kw-indiv')">KW-個別データ（グラフ）</button>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv-table" onclick="switchTab('kw-indiv-table')">KW-個別データ（表）</button>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
-  <span class="tab-row-label" style="color:#dc2626;padding-left:10px">【入札単価対策】</span>
-  <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
-  <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">セール活用単価対策<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
-  <button id="topHideBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 9px;position:absolute;right:16px;top:50%;transform:translateY(-50%);border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;z-index:5">上部を隠す</button>
 </nav>
 </div>
 <div id="topChromeBar" style="display:none;justify-content:flex-end;padding:2px 16px;border-bottom:1px solid var(--border);background:var(--surface)"><button id="topShowBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 11px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap">上部を表示</button></div>
