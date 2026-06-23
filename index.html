@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.872</span>
+    <span class="build-date">v1.873</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -591,6 +591,8 @@ header + * { margin-top: 4px; }
 </nav>
 <nav class="tab-sub-row" style="position:relative;top:auto;z-index:1">
   <span class="tab-row-label" style="color:#dc2626">【注視】</span>
+  <button class="tab-btn" id="tab-btn-chuui-kouho" onclick="switchTab('chuui-kouho')">候補<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-chuui-kouho"></span></button>
+  <span class="tab-sep">|</span>
   <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
   <span class="tab-sep">|</span>
   <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">セール時広告圏外対策△用<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
@@ -1086,6 +1088,7 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-ss-dec"></div>
   <div class="tab-panel" id="tab-mar-kouho"></div>
   <div class="tab-panel" id="tab-mar-jisshi"></div>
+  <div class="tab-panel" id="tab-chuui-kouho"></div>
   <div class="tab-panel" id="tab-mar-cpc"></div>
   <div class="tab-panel" id="tab-mar-tanka"></div>
 
@@ -6953,7 +6956,7 @@ function renderKwIndiv(){
   });
 }
 var _kwIndivTableMode='fix';
-var _kwTblCharts=[]; var _kwTblCodes=[];
+var _kwTblCharts=[]; var _kwTblCodes={};
 function _kwiPrevDay(ds){ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()-1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function _kwiNextDay(ds){ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()+1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function _kwiDDiff(a,b){ return Math.round((new Date(a+'T12:00:00')-new Date(b+'T12:00:00'))/86400000); }
@@ -6973,7 +6976,7 @@ function _kwiLegendCard(){ return '<div style="border:1px solid #c9c9c9;border-r
   +'<span style="color:#1e8449;font-weight:700;font-size:13px">&#9711;</span>　入札が目安より安い（差10円以内）<br>'
   +'<span style="color:#1e8449;font-weight:800;font-size:14px">&#10003;</span>　入札が目安より安い（差10円超）'
   +'</div>'; }
-function _buildKwTableBlock(code, daily, idx){
+function _buildKwTableBlock(code, daily, idx, pfx){
   let rows=kwRows.filter(r=>r.itemCode===code); if(!rows.length) return null;
   let ym='';
   if(daily){ const months=[...new Set(rows.map(r=>r.ym))].filter(Boolean).sort(); ym=months[months.length-1]||''; rows=rows.filter(r=>r.ym===ym); }
@@ -7020,8 +7023,8 @@ function _buildKwTableBlock(code, daily, idx){
   const _img=(productCache[code]&&(productCache[code].manualImg||productCache[code].img))||null;
   const _name=_kwIndivName(code);
   const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+(_img?'<img loading="lazy" src="'+_img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&ym?('\u3000|\u3000'+ym.slice(0,4)+'/'+ym.slice(4,6)):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div></div></div>';
-  const _btn='<button onclick="_kwTblToggleCharts('+idx+',this)" style="font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #00897B;background:#fff;color:#00897B;cursor:pointer;font-weight:700;margin:2px 0 8px">グラフ・表を表示</button>';
-  const _chc='<div id="kwTblCh'+idx+'" style="display:none;margin-bottom:10px"></div>';
+  const _btn='<button onclick="_kwTblToggleCharts(\''+pfx+'\','+idx+',this)" style="font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #00897B;background:#fff;color:#00897B;cursor:pointer;font-weight:700;margin:2px 0 8px">グラフ・表を表示</button>';
+  const _chc='<div id="kwTblCh'+pfx+'_'+idx+'" style="display:none;margin-bottom:10px"></div>';
   return { html:_head+_sumHtml+_btn+_chc, hasFix:hasFix };
 }
 function _setKwIndivTableModeUI(){
@@ -7061,8 +7064,8 @@ function _kwiBuildCharts(code, daily, cont){
   const cans=cont.querySelectorAll('canvas');
   series.forEach((sd,i)=>{ const ctx=cans[i]; if(!ctx||typeof Chart==='undefined') return; const ch=new Chart(ctx,{type:'bar',data:{labels:sd.labels,datasets:[{type:'bar',label:'目安CPC',data:sd.mcpcArr,backgroundColor:'#9333ea',order:0},{type:'bar',label:'入札単価（CPC実績）',data:sd.cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}); _kwTblCharts.push(ch); });
 }
-function _kwTblToggleCharts(idx, btn){
-  const cont=document.getElementById('kwTblCh'+idx); if(!cont) return; const code=_kwTblCodes[idx];
+function _kwTblToggleCharts(pfx, idx, btn){
+  const cont=document.getElementById('kwTblCh'+pfx+'_'+idx); if(!cont) return; const code=(_kwTblCodes[pfx]||[])[idx];
   if(cont.style.display==='none' || cont.style.display===''){
     if(!cont.dataset.built){ _kwiBuildCharts(code, _kwIndivPeriod==='daily', cont); cont.dataset.built='1'; }
     cont.style.display='block'; if(btn) btn.textContent='グラフ・表を隠す';
@@ -7075,12 +7078,24 @@ function renderKwIndivTableAll(){
   const codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))];
   const spend={}; kwRows.forEach(r=>{ spend[r.itemCode]=(spend[r.itemCode]||0)+(r.spend||0); });
   codes.sort((a,b)=>(spend[b]||0)-(spend[a]||0));
-  (_kwTblCharts||[]).forEach(c=>{try{c.destroy();}catch(e){}}); _kwTblCharts=[]; _kwTblCodes=[];
+  (_kwTblCharts||[]).forEach(c=>{try{c.destroy();}catch(e){}}); _kwTblCharts=[]; _kwTblCodes['tbl']=[];
   let body='', shown=0;
-  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes.length); if(!blk) return; if(_kwIndivTableMode==='fix' && !blk.hasFix) return; _kwTblCodes.push(code); shown++; body+=blk.html; });
+  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes['tbl'].length,'tbl'); if(!blk) return; if(_kwIndivTableMode==='fix' && !blk.hasFix) return; _kwTblCodes['tbl'].push(code); shown++; body+=blk.html; });
   if(cntEl) cntEl.textContent='表示中：'+shown+'商品';
   if(empty){ if(shown){ empty.style.display='none'; } else { empty.style.display='block'; empty.textContent=(kwRows.length? (_kwIndivTableMode==='fix'?'修正ありの商品はありません。':'KWデータがありません。') :'KWデータがありません。'); } }
   if(view) view.innerHTML= shown?body:'';
+}
+function _renderKwTableFiltered(containerId, pfx, filterFn){
+  const cont=document.getElementById(containerId); if(!cont) return;
+  _setKwIndivPeriodUI();
+  const daily=_kwIndivPeriod==='daily';
+  let codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))].filter(filterFn);
+  const spend={}; kwRows.forEach(r=>{ spend[r.itemCode]=(spend[r.itemCode]||0)+(r.spend||0); });
+  codes.sort((a,b)=>(spend[b]||0)-(spend[a]||0));
+  (_kwTblCharts||[]).forEach(c=>{try{c.destroy();}catch(e){}}); _kwTblCharts=[]; _kwTblCodes[pfx]=[];
+  let body='', shown=0;
+  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes[pfx].length,pfx); if(!blk) return; _kwTblCodes[pfx].push(code); shown++; body+=blk.html; });
+  cont.innerHTML='<div style="padding:10px 14px"><div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px">表示中：'+shown+'商品</div>'+(shown?(_kwiLegendCard()+body):'<div style="color:var(--text3);font-size:13px;padding:30px;text-align:center">対象の商品がありません。</div>')+'</div>';
 }
 function renderKwBasic(){
   const sel = document.getElementById('kwBasicMonthSel');
@@ -9551,8 +9566,8 @@ const STATUS_LABELS = {
 };
 const SS_TABS = { 'ss-mar':'03', 'ss-jun':'06', 'ss-sep':'09', 'ss-dec':'12' };
 const SS_LABELS = { 'ss-mar':'3月', 'ss-jun':'6月', 'ss-sep':'9月', 'ss-dec':'12月' };
-const MARATHON_TABS = { 'mar-kouho':'kouho', 'mar-jisshi':'jisshi', 'mar-cpc':'cpc', 'mar-tanka':'tanka' };
-const MARATHON_LABELS = { 'mar-kouho':'候補', 'mar-jisshi':'実施中', 'mar-cpc':'CPC下げたい◎以外', 'mar-tanka':'セール時広告圏外対策△用' };
+const MARATHON_TABS = { 'mar-kouho':'kouho', 'mar-jisshi':'jisshi', 'chuui-kouho':'kouho' };
+const MARATHON_LABELS = { 'mar-kouho':'候補', 'mar-jisshi':'実施中', 'chuui-kouho':'候補' };
 const MARATHON_BTN = { kouho:{lbl:'候補',col:'#7c3aed'}, jisshi:{lbl:'実施',col:'#0891b2'}, cpc:{lbl:'CPC',col:'#ea580c'}, tanka:{lbl:'単価対策',col:'#db2777'} };
 function _migrateMarathonTags(){ try{ Object.keys(productCache||{}).forEach(function(c){ var o=productCache[c]; if(!o||!Array.isArray(o.marathon)) return; if(o.marathon.indexOf('sage')<0) return; var nm=[]; o.marathon.forEach(function(k){ var nk=(k==='sage')?'cpc':k; if(nm.indexOf(nk)<0) nm.push(nk); }); o.marathon=nm; }); }catch(e){} }
 const SUB_TAB_STATUS = {
@@ -10053,6 +10068,8 @@ function switchTab(tab) {
   if (tab === 'kw-basic') renderKwBasic();
   if (tab === 'kw-indiv') { _syncKwIndivMonths(); renderKwIndiv(); _kwIndivSavedFetch().then(_renderKwIndivSavedDropdown).catch(function(){}); }
   if (tab === 'kw-indiv-table') { renderKwIndivTableAll(); }
+  if (tab === 'mar-cpc') { _renderKwTableFiltered('tab-mar-cpc','cpc', function(c){ return !!(productCache[c] && (productCache[c].marathon||[]).indexOf('cpc')>=0); }); }
+  if (tab === 'mar-tanka') { _renderKwTableFiltered('tab-mar-tanka','tanka', function(c){ return !!(productCache[c] && (productCache[c].marathon||[]).indexOf('tanka')>=0); }); }
   if (tab === 'kw-compare') renderKwCompare();
   if (tab === 'item-graph') { _initItemGraphRange(); }
   if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
@@ -11097,6 +11114,7 @@ function _updateStatusCounts() {
   set('ss-dec',        ssCount['12']);
   set('mar-kouho',     marCount.kouho);
   set('mar-jisshi',    marCount.jisshi);
+  set('chuui-kouho',   marCount.kouho);
   set('mar-cpc',       marCount.cpc);
   set('mar-tanka',     marCount.tanka);
 }
