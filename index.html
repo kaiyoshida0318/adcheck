@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.817</span>
+    <span class="build-date">v1.818</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4246,7 +4246,7 @@ function _renderTable(mode, rows) {
   function _fmtRoasCell(v, rankVal, vArr) {
     if (!v || v === 0) return '<span class="c-bk">—</span>';
     const rank = _rank5(rankVal || v, vArr || vRoas, true);
-    return `<span class="c-${rank}">${v}%</span>`;
+    return `<span class="c-${rank}">${Math.round(v*10)/10}%</span>`;
   }
 
 
@@ -4337,12 +4337,12 @@ function _renderTable(mode, rows) {
       _cv(r.cpa,     r.cpa>0?fmtY(r.cpa):'—',     _rank5_(r.cpa,     vCpa,     false)), // 獲得単価：低い=良い
       _cv(cpaKw_r,   cpaKw_r>0?fmtY(cpaKw_r):'—', _rank5_(cpaKw_r,   vCpaKw,   false)),
       _cv(cpa20V,    cpa20V>0?fmtY(cpa20V):'—',   _rank5_(cpa20V,    vCpa20,   false)),
-      _cv(r.cvr,     r.cvr>0?r.cvr+'%':'—',        _rank5_(r.cvr,     vCvr,     true)),  // CVR：高い=良い
-      _cv(cvrKwV,    cvrKwV>0?cvrKwV+'%':'—',      _rank5_(cvrKwV,    vCvrKw,   true)),
-      _cv(cvr20V,    cvr20V>0?cvr20V+'%':'—',      _rank5_(cvr20V,    vCvr20,   true)),
+      _cv(r.cvr,     r.cvr>0?(Math.round(r.cvr*10)/10)+'%':'—',        _rank5_(r.cvr,     vCvr,     true)),  // CVR：高い=良い
+      _cv(cvrKwV,    cvrKwV>0?(Math.round(cvrKwV*10)/10)+'%':'—',      _rank5_(cvrKwV,    vCvrKw,   true)),
+      _cv(cvr20V,    cvr20V>0?(Math.round(cvr20V*10)/10)+'%':'—',      _rank5_(cvr20V,    vCvr20,   true)),
       // 売上ROAS★ = 総売上 / 実績額■ × 100
       (() => {
-        const _sr = _totSales > 0 && r.spend > 0 ? Math.round(_totSales / r.spend * 10000) / 100 : 0;
+        const _sr = _totSales > 0 && r.spend > 0 ? Math.round(_totSales / r.spend * 1000) / 10 : 0;
         if (!_sr) return '<span class="c-bk">—</span>';
         return `<span class="c-${_rank5_(_sr, vSalesROASAll, true)}">${_sr}%</span>`;
       })(),
