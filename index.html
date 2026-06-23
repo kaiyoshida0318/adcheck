@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.879</span>
+    <span class="build-date">v1.881</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -593,7 +593,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
   <span class="tab-row-label" style="color:#dc2626;padding-left:10px">【入札単価対策】</span>
   <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
-  <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">セール時広告圏外対策△用<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
+  <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">セール活用単価対策<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
   <button id="topHideBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 9px;position:absolute;right:16px;top:50%;transform:translateY(-50%);border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;z-index:5">上部を隠す</button>
 </nav>
 </div>
@@ -9572,7 +9572,7 @@ const SS_TABS = { 'ss-mar':'03', 'ss-jun':'06', 'ss-sep':'09', 'ss-dec':'12' };
 const SS_LABELS = { 'ss-mar':'3月', 'ss-jun':'6月', 'ss-sep':'9月', 'ss-dec':'12月' };
 const MARATHON_TABS = { 'mar-kouho':'kouho', 'mar-jisshi':'jisshi' };
 const MARATHON_LABELS = { 'mar-kouho':'候補', 'mar-jisshi':'実施中' };
-const MARATHON_BTN = { kouho:{lbl:'候補',col:'#7c3aed'}, jisshi:{lbl:'実施',col:'#0891b2'}, cpc:{lbl:'CPC',col:'#ea580c'}, tanka:{lbl:'単価対策',col:'#db2777'} };
+const MARATHON_BTN = { kouho:{lbl:'候補',col:'#7c3aed'}, jisshi:{lbl:'実施',col:'#0891b2'}, cpc:{lbl:'CPC',col:'#ea580c'}, tanka:{lbl:'セール時対策',col:'#db2777'} };
 function _migrateMarathonTags(){ try{ Object.keys(productCache||{}).forEach(function(c){ var o=productCache[c]; if(!o||!Array.isArray(o.marathon)) return; if(o.marathon.indexOf('sage')<0) return; var nm=[]; o.marathon.forEach(function(k){ var nk=(k==='sage')?'cpc':k; if(nm.indexOf(nk)<0) nm.push(nk); }); o.marathon=nm; }); }catch(e){} }
 const SUB_TAB_STATUS = {
   'monthly-all':  'all',
