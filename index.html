@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.866</span>
+    <span class="build-date">v1.867</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6725,6 +6725,28 @@ let _kwIndivCode=null, _kwIndivPeriod='daily', _kwIndivCharts=[];
 const _kwEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 function _kwIndivSavedGet(){ try{ return JSON.parse(localStorage.getItem(_KWINDIV_SAVED_KEY)||'[]')||[]; }catch(e){ return []; } }
 function _kwIndivSavedSet(a){ try{ localStorage.setItem(_KWINDIV_SAVED_KEY, JSON.stringify(a)); }catch(e){} }
+const _KWINDIV_SHARED_FILE='data/kwindiv_saved_shared.json';
+async function _kwIndivSavedFetch(){
+  try{
+    var pat=localStorage.getItem('github_pat'); var obj=null;
+    try{ var h={'Accept':'application/vnd.github.v3.raw'}; if(pat) h['Authorization']='token '+pat; var r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_KWINDIV_SHARED_FILE+'?t='+Date.now(),{headers:h,cache:'no-store'}); if(r.ok){ obj=JSON.parse(await r.text()); } }catch(e){}
+    if(!obj){ var rr=await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+_KWINDIV_SHARED_FILE+'?t='+Date.now(),{cache:'no-store'}); if(rr.ok) obj=JSON.parse(await rr.text()); }
+    if(obj && Array.isArray(obj.list)){ _kwIndivSavedSet(obj.list); return obj.list; }
+  }catch(e){}
+  return _kwIndivSavedGet();
+}
+async function _kwIndivSavedPublish(arr){
+  var pat=localStorage.getItem('github_pat'); if(!pat) return false;
+  try{
+    var headers={'Authorization':'token '+pat,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+    var url='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_KWINDIV_SHARED_FILE;
+    var getRes=await fetch(url,{headers,cache:'no-store'}); var sha=getRes.ok?(await getRes.json()).sha:null;
+    var base64=btoa(unescape(encodeURIComponent(JSON.stringify({list:arr,updatedAt:Date.now()}))));
+    var body={message:'Update kwindiv saved',content:base64}; if(sha) body.sha=sha;
+    var putRes=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)});
+    return putRes.ok;
+  }catch(e){ return false; }
+}
 function _kwIndivName(code){ const c=productCache[code]||{}; return c.manualName||c.name||code; }
 function _renderKwIndivSavedDropdown(){
   const list=_kwIndivSavedGet();
@@ -6732,12 +6754,14 @@ function _renderKwIndivSavedDropdown(){
   ['kwIndivSaved','kwIndivSavedT'].forEach(id=>{ const sel=document.getElementById(id); if(sel) sel.innerHTML=opts; });
 }
 function kwIndivSearchT(){ const el=document.getElementById('kwIndivSearchT'); const q=el?el.value:''; const matches=_kwIndivMatches(q); if(matches.length>1){ const g=document.getElementById('kwIndivSearch'); if(g) g.value=q; switchTab('kw-indiv'); kwIndivSearch(); return; } if(matches.length===1){ _kwIndivCode=matches[0]; _syncKwIndivMonths(); renderKwIndiv(); return; } alert('該当する商品が見つかりません'); }
-function kwIndivSave(){
+async function kwIndivSave(){
   if(!_kwIndivCode){ alert('先に商品を検索してください'); return; }
   const list=_kwIndivSavedGet();
   if(list.indexOf(_kwIndivCode)<0){ list.unshift(_kwIndivCode); _kwIndivSavedSet(list); }
   _renderKwIndivSavedDropdown();
-  alert('保存しました：'+_kwIndivName(_kwIndivCode));
+  const _nm=_kwIndivName(_kwIndivCode);
+  const ok=await _kwIndivSavedPublish(list);
+  alert('保存しました：'+_nm+(ok?'（他のPCにも共有しました）':'（このPCのみ。共有にはGitHub PATの登録が必要です）'));
 }
 function kwIndivLoadSaved(code){ if(!code) return; _kwIndivCode=code; _syncKwIndivMonths(); renderKwIndiv(); }
 function _setKwIndivPeriodUI(){
@@ -6795,7 +6819,8 @@ function renderKwIndiv(){
     const sel=document.getElementById('kwIndivMonth'); const ym=(sel&&sel.value)||(_kwIndivMonths(code)[0]||'');
     rows=rows.filter(r=>r.ym===ym); monthLabel=ym?(ym.slice(0,4)+'/'+ym.slice(4,6)):'';
   }
-  if(hd) hd.innerHTML='<div style="font-size:14px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&monthLabel?('\u3000|\u3000'+monthLabel):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div>';
+  { const _gimg=(productCache[code]&&(productCache[code].manualImg||productCache[code].img))||null;
+    if(hd) hd.innerHTML='<div style="display:flex;align-items:center;gap:10px">'+(_gimg?'<img loading="lazy" src="'+_gimg+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&monthLabel?('\u3000|\u3000'+monthLabel):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div></div></div>'; }
   { const _tImg=(productCache[code]&&(productCache[code].manualImg||productCache[code].img))||null; const _thd=document.getElementById('kwIndivTableHeader'); if(_thd) _thd.innerHTML='<div style="display:flex;align-items:center;gap:10px">'+(_tImg?'<img loading="lazy" src="'+_tImg+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&monthLabel?('\u3000|\u3000'+monthLabel):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div></div></div>'; }
   if(rows.length===0){ if(wrap)wrap.innerHTML=''; if(empty){empty.style.display='block';empty.textContent='この商品のKWデータがありません。';} { const _tv=document.getElementById('kwIndivTableView'); if(_tv)_tv.innerHTML=''; const _te=document.getElementById('kwIndivTableEmpty'); if(_te){_te.style.display='block';_te.textContent='この商品のKWデータがありません。';} } return; }
   if(empty) empty.style.display='none';
@@ -6921,6 +6946,7 @@ function renderKwIndiv(){
   });
 }
 var _kwIndivTableMode='basic';
+var _kwTblCharts=[]; var _kwTblCodes=[];
 function _kwiPrevDay(ds){ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()-1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function _kwiNextDay(ds){ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()+1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function _kwiDDiff(a,b){ return Math.round((new Date(a+'T12:00:00')-new Date(b+'T12:00:00'))/86400000); }
@@ -6940,7 +6966,7 @@ function _kwiLegendCard(){ return '<div style="border:1px solid #c9c9c9;border-r
   +'<span style="color:#1e8449;font-weight:700;font-size:13px">&#9711;</span>　入札が目安より安い（差10円以内）<br>'
   +'<span style="color:#1e8449;font-weight:800;font-size:14px">&#10003;</span>　入札が目安より安い（差10円超）'
   +'</div>'; }
-function _buildKwTableBlock(code, daily){
+function _buildKwTableBlock(code, daily, idx){
   let rows=kwRows.filter(r=>r.itemCode===code); if(!rows.length) return null;
   let ym='';
   if(daily){ const months=[...new Set(rows.map(r=>r.ym))].filter(Boolean).sort(); ym=months[months.length-1]||''; rows=rows.filter(r=>r.ym===ym); }
@@ -6987,7 +7013,9 @@ function _buildKwTableBlock(code, daily){
   const _img=(productCache[code]&&(productCache[code].manualImg||productCache[code].img))||null;
   const _name=_kwIndivName(code);
   const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+(_img?'<img loading="lazy" src="'+_img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&ym?('\u3000|\u3000'+ym.slice(0,4)+'/'+ym.slice(4,6)):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div></div></div>';
-  return { html:_head+_sumHtml, hasFix:hasFix };
+  const _btn='<button onclick="_kwTblToggleCharts('+idx+',this)" style="font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #00897B;background:#fff;color:#00897B;cursor:pointer;font-weight:700;margin:2px 0 8px">グラフを表示</button>';
+  const _chc='<div id="kwTblCh'+idx+'" style="display:none;margin-bottom:10px"></div>';
+  return { html:_head+_sumHtml+_btn+_chc, hasFix:hasFix };
 }
 function _setKwIndivTableModeUI(){
   const on='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
@@ -6998,6 +7026,34 @@ function _setKwIndivTableModeUI(){
 }
 function setKwIndivTableMode(m){ _kwIndivTableMode=m; _setKwIndivTableModeUI(); renderKwIndivTableAll(); }
 function setKwIndivTablePeriod(p){ _kwIndivPeriod=p; _setKwIndivPeriodUI(); renderKwIndivTableAll(); }
+function _kwiBuildCharts(code, daily, cont){
+  let rows=kwRows.filter(r=>r.itemCode===code); if(!rows.length){ cont.innerHTML='<div style="font-size:11px;color:#999">データなし</div>'; return; }
+  if(daily){ const months=[...new Set(rows.map(r=>r.ym))].filter(Boolean).sort(); const ym=months[months.length-1]||''; rows=rows.filter(r=>r.ym===ym); }
+  const byKw={}; rows.forEach(r=>{ const k=r.kw||'(空)'; (byKw[k]||(byKw[k]=[])).push(r); });
+  const _monthLast=rows.reduce((m,r)=>(r.date>m?r.date:m),'');
+  const _kwVol={}; let _totVol=0; Object.keys(byKw).forEach(kw=>{ const v=_kwiPredVol(byKw[kw],_monthLast); _kwVol[kw]=v; _totVol+=v; });
+  const kws=Object.keys(byKw).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(x<y?-1:1));
+  let html=''; const series=[];
+  kws.forEach(kw=>{ const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00';
+    const rs=byKw[kw]; let labels=[],mcpcArr=[],cpcArr=[];
+    if(daily){ const byDate={}; rs.forEach(r=>{ const o=byDate[r.date]||(byDate[r.date]={mS:0,mN:0,spend:0,cl:0,cA:0,cN:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){o.cA+=ca;o.cN++;} });
+      const _ym=(rs[0]&&rs[0].ym)||''; const _yy=_ym.slice(0,4),_mm=_ym.slice(4,6); const _dim=_ym?new Date(+_yy,+_mm,0).getDate():31; let _lM=null,_lA=null;
+      for(let _dd=1;_dd<=_dim;_dd++){ const _ds=_yy+'-'+_mm+'-'+String(_dd).padStart(2,'0'); const o=byDate[_ds]; labels.push(String(_dd)); if(_monthLast && _ds>_monthLast){ mcpcArr.push(null); cpcArr.push(null); continue;} if(o&&o.mN){_lM=Math.round(o.mS/o.mN);} mcpcArr.push(_lM); const _aV=o?(o.cN?Math.round(o.cA/o.cN):(o.cl>0?Math.round(o.spend/o.cl):0)):0; if(_aV>0){_lA=_aV;} cpcArr.push(_aV>0?_aV:_lA); }
+    } else { const byYm={}; rs.forEach(r=>{ const o=byYm[r.ym]||(byYm[r.ym]={mS:0,mN:0,spend:0,cl:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); }); Object.keys(byYm).sort().forEach(y=>{ const o=byYm[y]; labels.push(y.slice(0,4)+'/'+y.slice(4,6)); mcpcArr.push(o.mN?Math.round(o.mS/o.mN):0); cpcArr.push(o.cl>0?Math.round(o.spend/o.cl):0); }); }
+    series.push({labels:labels,mcpcArr:mcpcArr,cpcArr:cpcArr});
+    html+='<div style="margin:6px 0 4px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+sh+'%</span></div><div style="overflow-x:auto;margin-bottom:16px"><div style="min-width:'+(labels.length*40)+'px"><div style="position:relative;height:180px"><canvas></canvas></div></div></div>';
+  });
+  cont.innerHTML=html;
+  const cans=cont.querySelectorAll('canvas');
+  series.forEach((sd,i)=>{ const ctx=cans[i]; if(!ctx||typeof Chart==='undefined') return; const ch=new Chart(ctx,{type:'bar',data:{labels:sd.labels,datasets:[{type:'bar',label:'目安CPC',data:sd.mcpcArr,backgroundColor:'#9333ea',order:0},{type:'bar',label:'入札単価（CPC実績）',data:sd.cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}); _kwTblCharts.push(ch); });
+}
+function _kwTblToggleCharts(idx, btn){
+  const cont=document.getElementById('kwTblCh'+idx); if(!cont) return; const code=_kwTblCodes[idx];
+  if(cont.style.display==='none' || cont.style.display===''){
+    if(!cont.dataset.built){ _kwiBuildCharts(code, _kwIndivPeriod==='daily', cont); cont.dataset.built='1'; }
+    cont.style.display='block'; if(btn) btn.textContent='グラフを隠す';
+  } else { cont.style.display='none'; if(btn) btn.textContent='グラフを表示'; }
+}
 function renderKwIndivTableAll(){
   _setKwIndivPeriodUI(); _setKwIndivTableModeUI();
   const view=document.getElementById('kwIndivTableView'); const empty=document.getElementById('kwIndivTableEmpty'); const cntEl=document.getElementById('kwIndivTableCount'); const thd=document.getElementById('kwIndivTableHeader'); if(thd) thd.innerHTML='';
@@ -7005,8 +7061,9 @@ function renderKwIndivTableAll(){
   const codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))];
   const spend={}; kwRows.forEach(r=>{ spend[r.itemCode]=(spend[r.itemCode]||0)+(r.spend||0); });
   codes.sort((a,b)=>(spend[b]||0)-(spend[a]||0));
+  (_kwTblCharts||[]).forEach(c=>{try{c.destroy();}catch(e){}}); _kwTblCharts=[]; _kwTblCodes=[];
   let body='', shown=0;
-  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily); if(!blk) return; if(_kwIndivTableMode==='fix' && !blk.hasFix) return; shown++; body+=blk.html; });
+  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes.length); if(!blk) return; if(_kwIndivTableMode==='fix' && !blk.hasFix) return; _kwTblCodes.push(code); shown++; body+=blk.html; });
   if(cntEl) cntEl.textContent='表示中：'+shown+'商品';
   if(empty){ if(shown){ empty.style.display='none'; } else { empty.style.display='block'; empty.textContent=(kwRows.length? (_kwIndivTableMode==='fix'?'修正ありの商品はありません。':'KWデータがありません。') :'KWデータがありません。'); } }
   if(view) view.innerHTML= shown?body:'';
@@ -9979,7 +10036,7 @@ function switchTab(tab) {
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'yoy') renderYoy();
   if (tab === 'kw-basic') renderKwBasic();
-  if (tab === 'kw-indiv') { _syncKwIndivMonths(); renderKwIndiv(); }
+  if (tab === 'kw-indiv') { _syncKwIndivMonths(); renderKwIndiv(); _kwIndivSavedFetch().then(_renderKwIndivSavedDropdown).catch(function(){}); }
   if (tab === 'kw-indiv-table') { renderKwIndivTableAll(); }
   if (tab === 'kw-compare') renderKwCompare();
   if (tab === 'item-graph') { _initItemGraphRange(); }
