@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.837</span>
+    <span class="build-date">v1.838</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6753,9 +6753,9 @@ function renderKwIndiv(){
   if(rows.length===0){ if(wrap)wrap.innerHTML=''; if(empty){empty.style.display='block';empty.textContent='この商品のKWデータがありません。';} return; }
   if(empty) empty.style.display='none';
   const byKw={}; rows.forEach(r=>{ const k=r.kw||'(空)'; (byKw[k]||(byKw[k]=[])).push(r); });
-  const kws=Object.keys(byKw).sort();
-  const _kwSpend={}; let _totSpend=0; kws.forEach(kw=>{ const sp=byKw[kw].reduce((a,r)=>a+(r.spend||0),0); _kwSpend[kw]=sp; _totSpend+=sp; });
-  let html=''; kws.forEach((kw,ki)=>{ const _sh=_totSpend>0?Math.round(_kwSpend[kw]/_totSpend*100):0; html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_sh+'%</span></div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+ki+'"></canvas></div><div id="kwIndivT'+ki+'"></div></div></div>'; });
+  const _kwSpend={}; let _totSpend=0; Object.keys(byKw).forEach(kw=>{ const sp=byKw[kw].reduce((a,r)=>a+(r.spend||0),0); _kwSpend[kw]=sp; _totSpend+=sp; });
+  const kws=Object.keys(byKw).sort((x,y)=>(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
+  let html=''; kws.forEach((kw,ki)=>{ const _sh=_totSpend>0?(_kwSpend[kw]/_totSpend*100).toFixed(2):'0.00'; html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_sh+'%</span></div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+ki+'"></canvas></div><div id="kwIndivT'+ki+'"></div></div></div>'; });
   if(wrap) wrap.innerHTML=html;
   kws.forEach((kw,ki)=>{
     const rs=byKw[kw]; let labels=[],mcpcArr=[],cpcArr=[];
