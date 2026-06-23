@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.853</span>
+    <span class="build-date">v1.854</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6776,17 +6776,18 @@ function renderKwIndiv(){
   if(empty) empty.style.display='none';
   const byKw={}; rows.forEach(r=>{ const k=r.kw||'(空)'; (byKw[k]||(byKw[k]=[])).push(r); });
   const _monthLast=rows.reduce((m,r)=>(r.date>m?r.date:m),'');
+  const _prevDay=ds=>{ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()-1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); };
+  const _nextDay=ds=>{ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()+1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); };
+  const _dDiff=(a,b)=>Math.round((new Date(a+'T12:00:00')-new Date(b+'T12:00:00'))/86400000);
+  const _predVol=(rs,lastDate)=>{ const impByDate={}; rs.forEach(r=>{ if(r.ctr>0&&r.cl>0){ impByDate[r.date]=(impByDate[r.date]||0)+r.cl*100/r.ctr; } }); const dataDays=Object.keys(impByDate).filter(d=>d<=lastDate).sort(); if(!dataDays.length) return 0; let sum=0,d=dataDays[0],guard=0; while(d<=lastDate && guard<400){ guard++; if(impByDate[d]!=null){ sum+=impByDate[d]; } else { let best=null,bd=Infinity; for(const dd of dataDays){ const dist=Math.abs(_dDiff(dd,d)); if(dist<bd){bd=dist;best=dd;} } sum+=impByDate[best]; } d=_nextDay(d); } return Math.round(sum); };
   const _kwSpend={}; let _totSpend=0; Object.keys(byKw).forEach(kw=>{ const sp=byKw[kw].reduce((a,r)=>a+(r.spend||0),0); _kwSpend[kw]=sp; _totSpend+=sp; });
-  const kws=Object.keys(byKw).sort((x,y)=>(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
+  const _kwVol={}; let _totVol=0; Object.keys(byKw).forEach(kw=>{ const v=_predVol(byKw[kw],_monthLast); _kwVol[kw]=v; _totVol+=v; });
+  const kws=Object.keys(byKw).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
   const _mkM=(act,gui,streak)=>{ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u25B3</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; };
   const _yc2=v=>(v==null||v===0)?'\u2014':Number(v).toLocaleString();
   const _dayVal=(rs,d)=>{ let mS=0,mN=0,sp=0,cl=0,cA=0,cN=0,has=false; rs.forEach(r=>{ if(r.date!==d) return; has=true; if(r.mcpc>0){mS+=r.mcpc;mN++;} sp+=(r.spend||0); cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){cA+=ca;cN++;} }); return {has:has, cl:cl, gui:mN?Math.round(mS/mN):0, act:cN?Math.round(cA/cN):(cl>0?Math.round(sp/cl):0)}; };
   const _carry=(rs,upto)=>{ const ds=[...new Set(rs.map(r=>r.date))].filter(d=>d&&d<=upto).sort(); let gui=null,act=null; ds.forEach(d=>{ const v=_dayVal(rs,d); if(v.gui>0) gui=v.gui; if(v.act>0) act=v.act; }); const last=_dayVal(rs,upto); return {has:last.has, cl:last.cl, gui:gui!=null?gui:last.gui, act:act!=null?act:last.act}; };
-  const _prevDay=ds=>{ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()-1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); };
   const _noClickStreak=(rs,upto)=>{ let s=0,d=upto; for(let i=0;i<366 && d;i++){ const cl=rs.reduce((a,r)=>a+(r.date===d?(r.cl||0):0),0); if(cl>0) break; s++; d=_prevDay(d); } return s; };
-  const _nextDay=ds=>{ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()+1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); };
-  const _dDiff=(a,b)=>Math.round((new Date(a+'T12:00:00')-new Date(b+'T12:00:00'))/86400000);
-  const _predVol=(rs,lastDate)=>{ const impByDate={}; rs.forEach(r=>{ if(r.ctr>0&&r.cl>0){ impByDate[r.date]=(impByDate[r.date]||0)+r.cl*100/r.ctr; } }); const dataDays=Object.keys(impByDate).filter(d=>d<=lastDate).sort(); if(!dataDays.length) return 0; let sum=0,d=dataDays[0],guard=0; while(d<=lastDate && guard<400){ guard++; if(impByDate[d]!=null){ sum+=impByDate[d]; } else { let best=null,bd=Infinity; for(const dd of dataDays){ const dist=Math.abs(_dDiff(dd,d)); if(dist<bd){bd=dist;best=dd;} } sum+=impByDate[best]; } d=_nextDay(d); } return Math.round(sum); };
   let _sumHtml='';
   { const _latest=rows.reduce((m,r)=>(r.date>m?r.date:m),'');
     if(_latest && kws.length){ const _dl=(+_latest.slice(5,7))+'月'+(+_latest.slice(8,10))+'日';
@@ -6796,16 +6797,15 @@ function renderKwIndiv(){
       const _recent3=(rs,upto)=>{ let s=0,d=upto; for(let i=0;i<3&&d;i++){ s+=rs.reduce((a,r)=>a+(r.date===d?(r.cl||0):0),0); d=_prevDay(d); } return s; };
       let r1='<tr><td rowspan="8" style="'+_T+';background:#eef2ff;font-weight:700;font-size:12px">'+_dl+'</td><td style="'+_L+'">商品名</td>';
       let rvol='<tr><td style="'+_L+'">KWvol</td>';
-      let r2='<tr><td style="'+_L+'">割合</td>';
+      let r2='<tr><td style="'+_L+'">KW割合</td>';
       let r3='<tr><td style="'+_L+'"></td>';
       let r4='<tr><td style="'+_L+'"></td>';
       let r5='<tr><td style="'+_L+'">月クリック合計</td>';
       let r6='<tr><td style="'+_L+'">直近3日クリック</td>';
       let r7='<tr><td style="'+_L+'"></td>';
-      kws.forEach(kw=>{ const sh=_totSpend>0?(_kwSpend[kw]/_totSpend*100).toFixed(2):'0.00'; const dv=_carry(byKw[kw],_latest); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_recent3(byKw[kw],_latest);
+      kws.forEach(kw=>{ const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_carry(byKw[kw],_latest); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_recent3(byKw[kw],_latest);
         r1+='<td colspan="2" style="'+_T+';font-weight:700;font-size:12px">'+_kwEsc(kw)+'</td>';
-        const _vol=_predVol(byKw[kw],_latest);
-        rvol+='<td colspan="2" style="'+_T+';font-size:11px;color:#555">'+_n2(_vol)+'</td>';
+        rvol+='<td colspan="2" style="'+_T+';font-size:11px;color:#555">'+_n2(_kwVol[kw])+'</td>';
         r2+='<td colspan="2" style="'+_T+';color:#555;font-size:11px">'+sh+'%</td>';
         r3+='<td style="'+_T+';color:#7c3aed;font-size:9px">目安</td><td style="'+_T+';color:#00897B;font-size:9px">入札</td>';
         r4+='<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td><td style="'+_T+';background:#d9edca;font-size:11px">'+_n2(dv.act)+'</td>';
@@ -6816,7 +6816,7 @@ function renderKwIndiv(){
       _sumHtml='<div style="overflow-x:auto;margin:0 0 16px"><table style="border-collapse:collapse">'+r1+'</tr>'+rvol+'</tr>'+r2+'</tr>'+r3+'</tr>'+r4+'</tr>'+r5+'</tr>'+r6+'</tr>'+r7+'</tr></table></div>';
     }
   }
-  let html=_sumHtml; kws.forEach((kw,ki)=>{ const _sh=_totSpend>0?(_kwSpend[kw]/_totSpend*100).toFixed(2):'0.00'; html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_sh+'%</span></div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+ki+'"></canvas></div><div id="kwIndivT'+ki+'"></div></div></div>'; });
+  let html=_sumHtml; kws.forEach((kw,ki)=>{ const _sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_sh+'%</span></div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+ki+'"></canvas></div><div id="kwIndivT'+ki+'"></div></div></div>'; });
   if(wrap) wrap.innerHTML=html;
   kws.forEach((kw,ki)=>{
     const rs=byKw[kw]; let labels=[],mcpcArr=[],cpcArr=[],clArr=[];
