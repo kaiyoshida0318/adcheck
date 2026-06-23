@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.858</span>
+    <span class="build-date">v1.859</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6831,16 +6831,17 @@ function renderKwIndiv(){
       const dataDays=Object.keys(impByDate).filter(d=>d<=_monthLast).sort();
       _calcHtml+='<div style="margin:12px 0 4px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'　（KWvol＝'+(_kwVol[kw]||0).toLocaleString()+'）</div>';
       if(!dataDays.length){ _calcHtml+='<div style="font-size:11px;color:#999">データなし</div>'; return; }
-      let t='<table style="border-collapse:collapse;font-size:10px;text-align:center"><tr><td style="'+_TH+'">日付</td><td style="'+_TH+'">クリック</td><td style="'+_TH+'">表示回数</td><td style="'+_TH+'">区分</td></tr>';
+      let t='<table style="border-collapse:collapse;font-size:10px;text-align:center"><tr><td style="'+_TH+'">日付</td><td style="'+_TH+'">クリック</td><td style="'+_TH+'">CTR</td><td style="'+_TH+'">表示回数</td><td style="'+_TH+'">区分</td></tr>';
       let sum=0,d=dataDays[0],guard=0;
       while(d<=_monthLast && guard<400){ guard++; let imp,clk,kbun,col;
         if(impByDate[d]!=null){ imp=impByDate[d]; clk=clByDate[d]; kbun='実データ'; col='#333'; }
         else { let best=null,bd=Infinity; for(const dd of dataDays){ const dist=Math.abs(_dDiff(dd,d)); if(dist<bd){bd=dist;best=dd;} } imp=impByDate[best]; clk=null; kbun='補完（←'+(+best.slice(5,7))+'/'+(+best.slice(8,10))+'）'; col='#c0392b'; }
         sum+=imp;
-        t+='<tr><td style="'+_TD+'">'+(+d.slice(5,7))+'/'+(+d.slice(8,10))+'</td><td style="'+_TD+'">'+(clk==null?'\u2014':clk)+'</td><td style="'+_TD+'">'+Math.round(imp).toLocaleString()+'</td><td style="'+_TD+';color:'+col+'">'+kbun+'</td></tr>';
+        const _ctr=(clk!=null&&imp>0)?(clByDate[d]/impByDate[d]*100).toFixed(2)+'%':'\u2014';
+        t+='<tr><td style="'+_TD+'">'+(+d.slice(5,7))+'/'+(+d.slice(8,10))+'</td><td style="'+_TD+'">'+(clk==null?'\u2014':clk)+'</td><td style="'+_TD+'">'+_ctr+'</td><td style="'+_TD+'">'+Math.round(imp).toLocaleString()+'</td><td style="'+_TD+';color:'+col+'">'+kbun+'</td></tr>';
         d=_nextDay(d);
       }
-      t+='<tr><td style="'+_TD+';font-weight:700;background:#eef2ff">合計</td><td style="'+_TD+';background:#eef2ff"></td><td style="'+_TD+';font-weight:700;background:#eef2ff">'+Math.round(sum).toLocaleString()+'</td><td style="'+_TD+';background:#eef2ff"></td></tr></table>';
+      t+='<tr><td style="'+_TD+';font-weight:700;background:#eef2ff">合計</td><td style="'+_TD+';background:#eef2ff"></td><td style="'+_TD+';background:#eef2ff"></td><td style="'+_TD+';font-weight:700;background:#eef2ff">'+Math.round(sum).toLocaleString()+'</td><td style="'+_TD+';background:#eef2ff"></td></tr></table>';
       _calcHtml+='<div style="overflow-x:auto">'+t+'</div>';
     });
     const _cp=document.getElementById('kwCalcPanel'); if(_cp) _cp.innerHTML=_calcHtml;
