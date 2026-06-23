@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.831</span>
+    <span class="build-date">v1.833</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-basic" id="tab-btn-retired" onclick="switchTab('retired')">引退済商品</button>
   <span class="tab-row-label" style="color:#00897B;padding-left:7px">【KW】</span>
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-月別データ</button>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv" onclick="switchTab('kw-indiv')">KW個別データ</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv" onclick="switchTab('kw-indiv')">KW-個別データ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
   <span class="tab-row-label" id="label-zentai" style="color:#dc2626;padding-left:7px">【全体】</span>
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">全-月別データ</button>
@@ -954,6 +954,7 @@ header + * { margin-top: 4px; }
         <button onclick="kwIndivSearch()" style="font-size:12px;font-weight:700;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">検索</button>
         <button onclick="kwIndivSave()" style="font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">保存</button>
         <select id="kwIndivSaved" onchange="kwIndivLoadSaved(this.value)" style="font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;max-width:220px"><option value="">保存済みから選択</option></select>
+        <select id="kwIndivMonth" onchange="renderKwIndiv()" style="display:none;font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
         <div class="toolbar-right" style="display:flex;align-items:center;gap:8px">
           <div style="display:flex;gap:4px">
             <button id="kwIndivDaily" onclick="setKwIndivPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">日別</button>
@@ -961,7 +962,7 @@ header + * { margin-top: 4px; }
           </div>
         </div>
       </div>
-      <div id="kwIndivHeader" style="display:flex;align-items:center;gap:12px;padding:6px 2px 14px"><div id="kwIndivHeaderName" style="flex:1 1 auto;min-width:0"></div><select id="kwIndivMonth" onchange="renderKwIndiv()" style="display:none;font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;flex:0 0 auto"></select></div>
+      <div id="kwIndivHeader" style="padding:6px 2px 12px"><div id="kwIndivHeaderName"></div></div>
       <div id="kwIndivEmpty" style="text-align:center;padding:50px;color:var(--text3);font-size:13px">商品を検索してください。</div>
       <div id="kwIndivCharts"></div>
     </div>
@@ -6761,7 +6762,7 @@ function renderKwIndiv(){
       _tw.innerHTML=_th+'</table>';
     }
     const ctx=document.getElementById('kwIndivC'+ki); if(!ctx||typeof Chart==='undefined') return;
-    _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[daily?{type:'line',label:'目安CPC',data:mcpcArr,borderColor:'#9333ea',backgroundColor:'#9333ea',borderWidth:2,pointRadius:2,tension:0,spanGaps:true,order:0}:{label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea'},{type:'bar',label:'CPC実績',data:cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}));
+    _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[daily?{type:'line',label:'目安CPC',data:mcpcArr,borderColor:'#9333ea',backgroundColor:'#9333ea',borderWidth:2,pointRadius:2,tension:0,spanGaps:true,order:0}:{label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea'},{type:'bar',label:'入札単価（CPC実績）',data:cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}));
   });
 }
 function renderKwBasic(){
