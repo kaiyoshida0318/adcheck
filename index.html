@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.848</span>
+    <span class="build-date">v1.849</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -985,6 +985,7 @@ header + * { margin-top: 4px; }
       <div id="kwMarkLegend" style="display:none;margin:4px 2px 12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);font-size:12px;line-height:1.95">
         <div style="font-weight:700;margin-bottom:5px">マークの意味（入札単価 と 目安CPC の比較）</div>
         <span style="color:#c0392b;font-weight:900;font-size:15px">&#10006;</span>　入札が目安より高い<br>
+        <span style="color:#c0392b;font-weight:900;font-size:15px">&#9651;</span>　入札が目安より安い（3日以上0クリック）<br>
         <span style="color:#c0392b;font-weight:900;font-size:15px">&#10003;</span>　入札と目安が同じ<br>
         <span style="color:#1e8449;font-weight:900;font-size:15px">&#9678;</span>　目安・入札が両方40円で一致（最低CPC達成）<br>
         <span style="color:#1e8449;font-weight:700;font-size:13px">&#9711;</span>　入札が目安より安い（差10円以内）<br>
@@ -6777,7 +6778,7 @@ function renderKwIndiv(){
   const _monthLast=rows.reduce((m,r)=>(r.date>m?r.date:m),'');
   const _kwSpend={}; let _totSpend=0; Object.keys(byKw).forEach(kw=>{ const sp=byKw[kw].reduce((a,r)=>a+(r.spend||0),0); _kwSpend[kw]=sp; _totSpend+=sp; });
   const kws=Object.keys(byKw).sort((x,y)=>(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
-  const _mkM=(act,gui,streak)=>{ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:800;font-size:13px">\u2713</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; };
+  const _mkM=(act,gui,streak)=>{ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u25B3</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; };
   const _yc2=v=>(v==null||v===0)?'\u2014':Number(v).toLocaleString();
   const _dayVal=(rs,d)=>{ let mS=0,mN=0,sp=0,cl=0,cA=0,cN=0,has=false; rs.forEach(r=>{ if(r.date!==d) return; has=true; if(r.mcpc>0){mS+=r.mcpc;mN++;} sp+=(r.spend||0); cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){cA+=ca;cN++;} }); return {has:has, cl:cl, gui:mN?Math.round(mS/mN):0, act:cN?Math.round(cA/cN):(cl>0?Math.round(sp/cl):0)}; };
   const _carry=(rs,upto)=>{ const ds=[...new Set(rs.map(r=>r.date))].filter(d=>d&&d<=upto).sort(); let gui=null,act=null; ds.forEach(d=>{ const v=_dayVal(rs,d); if(v.gui>0) gui=v.gui; if(v.act>0) act=v.act; }); const last=_dayVal(rs,upto); return {has:last.has, cl:last.cl, gui:gui!=null?gui:last.gui, act:act!=null?act:last.act}; };
