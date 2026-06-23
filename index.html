@@ -519,7 +519,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.845</span>
+    <span class="build-date">v1.846</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6764,6 +6764,7 @@ function renderKwIndiv(){
   if(rows.length===0){ if(wrap)wrap.innerHTML=''; if(empty){empty.style.display='block';empty.textContent='この商品のKWデータがありません。';} return; }
   if(empty) empty.style.display='none';
   const byKw={}; rows.forEach(r=>{ const k=r.kw||'(空)'; (byKw[k]||(byKw[k]=[])).push(r); });
+  const _monthLast=rows.reduce((m,r)=>(r.date>m?r.date:m),'');
   const _kwSpend={}; let _totSpend=0; Object.keys(byKw).forEach(kw=>{ const sp=byKw[kw].reduce((a,r)=>a+(r.spend||0),0); _kwSpend[kw]=sp; _totSpend+=sp; });
   const kws=Object.keys(byKw).sort((x,y)=>(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
   const _mkM=(act,gui)=>{ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; };
@@ -6797,7 +6798,7 @@ function renderKwIndiv(){
       rs.forEach(r=>{ const o=byDate[r.date]||(byDate[r.date]={mS:0,mN:0,spend:0,cl:0,cA:0,cN:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){o.cA+=ca;o.cN++;} });
       const _ym=(rs[0]&&rs[0].ym)||''; const _yy=_ym.slice(0,4), _mm=_ym.slice(4,6); const _dim=_ym?new Date(+_yy,+_mm,0).getDate():31;
       let _lastM=null,_lastA=null;
-      for(let _dd=1;_dd<=_dim;_dd++){ const _ds=_yy+'-'+_mm+'-'+String(_dd).padStart(2,'0'); const o=byDate[_ds]; labels.push(String(_dd)); if(o&&o.mN){ _lastM=Math.round(o.mS/o.mN); } mcpcArr.push(_lastM); const _aV=o?(o.cN?Math.round(o.cA/o.cN):(o.cl>0?Math.round(o.spend/o.cl):0)):0; if(_aV>0){ _lastA=_aV; } cpcArr.push(_aV>0?_aV:_lastA); clArr.push(o?(o.cl||0):0); }
+      for(let _dd=1;_dd<=_dim;_dd++){ const _ds=_yy+'-'+_mm+'-'+String(_dd).padStart(2,'0'); const o=byDate[_ds]; labels.push(String(_dd)); if(_monthLast && _ds>_monthLast){ mcpcArr.push(null); cpcArr.push(null); clArr.push(0); continue; } if(o&&o.mN){ _lastM=Math.round(o.mS/o.mN); } mcpcArr.push(_lastM); const _aV=o?(o.cN?Math.round(o.cA/o.cN):(o.cl>0?Math.round(o.spend/o.cl):0)):0; if(_aV>0){ _lastA=_aV; } cpcArr.push(_aV>0?_aV:_lastA); clArr.push(o?(o.cl||0):0); }
     } else {
       const byYm={};
       rs.forEach(r=>{ const o=byYm[r.ym]||(byYm[r.ym]={mS:0,mN:0,spend:0,cl:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); });
