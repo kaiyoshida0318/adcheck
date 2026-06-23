@@ -500,7 +500,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.833</span>
+    <span class="build-date">v1.834</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6735,7 +6735,8 @@ function renderKwIndiv(){
   if(empty) empty.style.display='none';
   const byKw={}; rows.forEach(r=>{ const k=r.kw||'(空)'; (byKw[k]||(byKw[k]=[])).push(r); });
   const kws=Object.keys(byKw).sort();
-  let html=''; kws.forEach((kw,ki)=>{ html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'</div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+ki+'"></canvas></div><div id="kwIndivT'+ki+'"></div></div></div>'; });
+  const _kwSpend={}; let _totSpend=0; kws.forEach(kw=>{ const sp=byKw[kw].reduce((a,r)=>a+(r.spend||0),0); _kwSpend[kw]=sp; _totSpend+=sp; });
+  let html=''; kws.forEach((kw,ki)=>{ const _sh=_totSpend>0?Math.round(_kwSpend[kw]/_totSpend*100):0; html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_sh+'%</span></div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+ki+'"></canvas></div><div id="kwIndivT'+ki+'"></div></div></div>'; });
   if(wrap) wrap.innerHTML=html;
   kws.forEach((kw,ki)=>{
     const rs=byKw[kw]; let labels=[],mcpcArr=[],cpcArr=[];
@@ -6762,7 +6763,7 @@ function renderKwIndiv(){
       _tw.innerHTML=_th+'</table>';
     }
     const ctx=document.getElementById('kwIndivC'+ki); if(!ctx||typeof Chart==='undefined') return;
-    _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[daily?{type:'line',label:'目安CPC',data:mcpcArr,borderColor:'#9333ea',backgroundColor:'#9333ea',borderWidth:2,pointRadius:2,tension:0,spanGaps:true,order:0}:{label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea'},{type:'bar',label:'入札単価（CPC実績）',data:cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}));
+    _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{type:'bar',label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea',order:0},{type:'bar',label:'入札単価（CPC実績）',data:cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}));
   });
 }
 function renderKwBasic(){
