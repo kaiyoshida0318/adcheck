@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.920</span>
+    <span class="build-date">v1.921</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7173,8 +7173,8 @@ function renderKwIndivTableAll(){
   const spend={}; kwRows.forEach(r=>{ spend[r.itemCode]=(spend[r.itemCode]||0)+(r.spend||0); });
   codes.sort((a,b)=>(spend[b]||0)-(spend[a]||0));
   (_kwTblCharts||[]).forEach(c=>{try{c.destroy();}catch(e){}}); _kwTblCharts=[]; _kwTblCodes['tbl']=[];
-  let _items=[];
-  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes['tbl'].length,'tbl'); if(!blk) return; const _idleP=!!(productCache[code]&&productCache[code].idle); if(_kwIndivTableMode==='fix'){ if(_idleP||!blk.hasFix) return; } else if(_kwIndivTableMode==='fixx'){ if(_idleP||!blk.hasFixX) return; } else if(_kwIndivTableMode==='yellow'){ if(_idleP||!blk.hasYellow) return; } else if(_kwIndivTableMode==='idle'){ if(!_idleP) return; } _kwTblCodes['tbl'].push(code); _items.push({code:code, html:blk.html, redCount:blk.redCount||0}); });
+  let _items=[]; var _cnt={fix:0,fixx:0,yellow:0,idle:0,all:0};
+  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes['tbl'].length,'tbl'); if(!blk) return; const _idleP=!!(productCache[code]&&productCache[code].idle); _cnt.all++; if(_idleP){ _cnt.idle++; } else { if(blk.hasFix)_cnt.fix++; if(blk.hasFixX)_cnt.fixx++; if(blk.hasYellow)_cnt.yellow++; } if(_kwIndivTableMode==='fix'){ if(_idleP||!blk.hasFix) return; } else if(_kwIndivTableMode==='fixx'){ if(_idleP||!blk.hasFixX) return; } else if(_kwIndivTableMode==='yellow'){ if(_idleP||!blk.hasYellow) return; } else if(_kwIndivTableMode==='idle'){ if(!_idleP) return; } _kwTblCodes['tbl'].push(code); _items.push({code:code, html:blk.html, redCount:blk.redCount||0}); });
   const _sort=_kwIndivTableSort||'problem';
   _items.sort(function(a,b){
     if(_sort==='itemno'){ var an=(productCache[a.code]&&productCache[a.code].itemNumber)||'', bn=(productCache[b.code]&&productCache[b.code].itemNumber)||''; if(an&&!bn)return -1; if(!an&&bn)return 1; return an.localeCompare(bn,'ja',{numeric:true})||((spend[b.code]||0)-(spend[a.code]||0)); }
@@ -7182,7 +7182,9 @@ function renderKwIndivTableAll(){
     return (b.redCount-a.redCount)||((spend[b.code]||0)-(spend[a.code]||0));
   });
   let body=_items.map(function(it){return it.html;}).join(''), shown=_items.length;
-  if(cntEl) cntEl.textContent='表示中：'+shown+'商品';
+  if(cntEl){ cntEl.textContent=''; cntEl.style.display='none'; }
+  var _smc=function(id,base,nn){ var b=document.getElementById(id); if(b) b.textContent=base+' ('+nn+')'; };
+  _smc('kwIndivModeFix','修正あり',_cnt.fix); _smc('kwIndivModeFixX','修正あり（✕）',_cnt.fixx); _smc('kwIndivModeYellow','黄色あり',_cnt.yellow); _smc('kwIndivModeIdle','放置中',_cnt.idle); _smc('kwIndivModeBasic','全体',_cnt.all);
   if(empty){ if(shown){ empty.style.display='none'; } else { empty.style.display='block'; empty.textContent=(kwRows.length? (_kwIndivTableMode==='fix'?'修正ありの商品はありません。':_kwIndivTableMode==='fixx'?'✕ありの商品はありません。':_kwIndivTableMode==='yellow'?'黄色ありの商品はありません。':_kwIndivTableMode==='idle'?'放置中の商品はありません。':'KWデータがありません。') :'KWデータがありません。'); } }
   if(view) view.innerHTML= shown?body:'';
 }
