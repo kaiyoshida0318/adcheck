@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.892</span>
+    <span class="build-date">v1.893</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -571,9 +571,8 @@ header + * { margin-top: 4px; }
 </nav>
 <nav class="tab-sub-row kw-nav-row" style="position:relative;top:auto;z-index:1">
   <span class="tab-row-label" style="color:#00897B">【広告調整】</span>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-basic" onclick="switchTab('kw-basic')">KW-月別データ</button>
-  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv" onclick="switchTab('kw-indiv')">KW-個別データ&#128202;</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv-table" onclick="switchTab('kw-indiv-table')">KW-当日データ&#128203;</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv" onclick="switchTab('kw-indiv')">KW-個別データ&#128202;</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
   <span class="tab-row-label" style="color:#dc2626;padding-left:10px">【入札単価対策】</span>
   <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
@@ -6852,8 +6851,8 @@ function renderKwIndiv(){
       const _recent3=(rs,upto)=>{ let s=0,d=upto; for(let i=0;i<3&&d;i++){ s+=rs.reduce((a,r)=>a+(r.date===d?(r.cl||0):0),0); d=_prevDay(d); } return s; };
       let _h='<thead><tr>'
         +'<th style="'+_H+';background:#eef2ff">'+_dl+'</th>'
-        +'<th style="'+_H+';background:#e7ecf7">KWvol</th>'
-        +'<th style="'+_H+';background:#e7ecf7">KW割合</th>'+'<th style="'+_H+';background:#fcf2d8">実績額</th>'+'<th style="'+_H+';background:#fcf2d8">売上</th>'+'<th style="'+_H+';background:#fbe4ec">CVR</th>'+'<th style="'+_H+';background:#fbe4ec">ROAS</th>'
+        +'<th style="'+_H+';background:#e6f4ea">KWvol</th>'
+        +'<th style="'+_H+';background:#e6f4ea">KW割合</th>'+'<th style="'+_H+';background:#fcf2d8">実績額</th>'+'<th style="'+_H+';background:#fcf2d8">売上</th>'+'<th style="'+_H+';background:#fbe4ec">CVR</th>'+'<th style="'+_H+';background:#fbe4ec">ROAS</th>'
         +'<th style="'+_H+';background:#e4eefb">月クリック合計</th>'
         +'<th style="'+_H+';background:#e4eefb">直近3日クリック</th>'
         +'<th style="'+_H+';background:#ede4fb;color:#7c3aed">目安</th>'
@@ -6990,8 +6989,8 @@ function _buildKwTableBlock(code, daily, idx, pfx){
     const _n2=v=>(v==null)?'\u2014':Number(v).toLocaleString();
     let _h='<thead><tr>'
       +'<th style="'+_H+';background:#eef2ff">'+_dl+'</th>'
-      +'<th style="'+_H+';background:#e7ecf7">KWvol</th>'
-      +'<th style="'+_H+';background:#e7ecf7">KW割合</th>'+'<th style="'+_H+';background:#fcf2d8">実績額</th>'+'<th style="'+_H+';background:#fcf2d8">売上</th>'+'<th style="'+_H+';background:#fbe4ec">CVR</th>'+'<th style="'+_H+';background:#fbe4ec">ROAS</th>'
+      +'<th style="'+_H+';background:#e6f4ea">KWvol</th>'
+      +'<th style="'+_H+';background:#e6f4ea">KW割合</th>'+'<th style="'+_H+';background:#fcf2d8">実績額</th>'+'<th style="'+_H+';background:#fcf2d8">売上</th>'+'<th style="'+_H+';background:#fbe4ec">CVR</th>'+'<th style="'+_H+';background:#fbe4ec">ROAS</th>'
       +'<th style="'+_H+';background:#e4eefb">月クリック合計</th>'
       +'<th style="'+_H+';background:#e4eefb">直近3日クリック</th>'
       +'<th style="'+_H+';background:#ede4fb;color:#7c3aed">目安</th>'
