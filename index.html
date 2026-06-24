@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.906</span>
+    <span class="build-date">v1.907</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1006,7 +1006,7 @@ header + * { margin-top: 4px; }
         <input id="kwIndivTableSearch" type="text" placeholder="商品番号/管理番号/商品名で検索" oninput="setKwIndivTableSearch(this.value)" style="font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);width:200px">
         <select id="kwIndivTableSort" onchange="setKwIndivTableSort(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="problem">問題発生順</option><option value="itemno">商品番号順</option><option value="code">商品管理番号順</option></select>
         <div class="toolbar-right" style="display:flex;align-items:center;gap:8px">
-          <button onclick="_toggleKwFixCond()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">修正ありの意味等</button>
+          <button onclick="_toggleKwFixCond()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">修正あり～放置中の意味</button>
           <button onclick="_toggleKwTableLegend()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">マークの意味</button>
         </div>
       </div>
