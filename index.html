@@ -347,6 +347,7 @@ header + * { margin-top: 4px; }
 .tab-sub-row-3 { top: var(--z-tab3-top, calc(52px + 46px + 46px)); background: #ffffff; z-index: 198; }
 .tab-sub-row-3::after { border-top: none !important; }
 .kw-nav-row::after { border-top: none !important; }
+.tab-sub-row-2::after { border-top: none !important; }
 /* stickyナビの隙間に色付きヘッダーが覗くのを防ぐため、各ナビの上端外に白いカバーを配置 */
 .tab-bar::before, .tab-sub-row::before {
   content: '';
@@ -519,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.886</span>
+    <span class="build-date">v1.889</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6852,7 +6853,7 @@ function renderKwIndiv(){
       let _h='<thead><tr>'
         +'<th style="'+_H+';background:#eef2ff">'+_dl+'</th>'
         +'<th style="'+_H+'">KWvol</th>'
-        +'<th style="'+_H+'">KW割合</th>'
+        +'<th style="'+_H+'">KW割合</th>'+'<th style="'+_H+';background:#fff7e6">実績額</th>'+'<th style="'+_H+';background:#fde8ef">売上</th>'+'<th style="'+_H+';background:#e6f0fb">CVR</th>'+'<th style="'+_H+';background:#e8f7ec">ROAS</th>'
         +'<th style="'+_H+'">月クリック合計</th>'
         +'<th style="'+_H+'">直近3日クリック</th>'
         +'<th style="'+_H+';color:#7c3aed">目安</th>'
@@ -6863,7 +6864,7 @@ function renderKwIndiv(){
         _h+='<tr>'
           +'<td style="'+_T+';font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
           +'<td style="'+_T+';font-size:11px;color:'+(_volRed[kw]?'#c0392b;font-weight:700':'#555')+'">'+_n2(_kwVol[kw])+'</td>'
-          +'<td style="'+_T+';font-size:11px;color:#555">'+sh+'%</td>'
+          +'<td style="'+_T+';font-size:11px;color:#555">'+sh+'%</td>'+(function(){ var rs=byKw[kw],sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){ sp+=(r.spend||0); sa+=(r.sales||0); od+=(r.orders||0); cl+=(r.cl||0); }); var cvr=cl>0?(od/cl*100).toFixed(2)+'%':'\u2014'; var roas=sp>0?(Math.round(sa/sp*100).toLocaleString()+'%'):'\u2014'; return '<td style="'+_T+';font-size:11px;background:#fff7e6">'+(sp?Math.round(sp).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fde8ef">'+(sa?Math.round(sa).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#e6f0fb">'+cvr+'</td>'+'<td style="'+_T+';font-size:11px;background:#e8f7ec">'+roas+'</td>'; })()
           +'<td style="'+_T+';font-size:11px;color:#333">'+_n2(_mcl)+'</td>'
           +'<td style="'+_T+';font-size:11px;color:#333">'+_n2(_r3)+'</td>'
           +'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td>'
@@ -6990,7 +6991,7 @@ function _buildKwTableBlock(code, daily, idx, pfx){
     let _h='<thead><tr>'
       +'<th style="'+_H+';background:#eef2ff">'+_dl+'</th>'
       +'<th style="'+_H+'">KWvol</th>'
-      +'<th style="'+_H+'">KW割合</th>'
+      +'<th style="'+_H+'">KW割合</th>'+'<th style="'+_H+';background:#fff7e6">実績額</th>'+'<th style="'+_H+';background:#fde8ef">売上</th>'+'<th style="'+_H+';background:#e6f0fb">CVR</th>'+'<th style="'+_H+';background:#e8f7ec">ROAS</th>'
       +'<th style="'+_H+'">月クリック合計</th>'
       +'<th style="'+_H+'">直近3日クリック</th>'
       +'<th style="'+_H+';color:#7c3aed">目安</th>'
@@ -7001,7 +7002,7 @@ function _buildKwTableBlock(code, daily, idx, pfx){
       _h+='<tr>'
         +'<td style="'+_T+';font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
         +'<td style="'+_T+';font-size:11px;color:'+(_volRed[kw]?'#c0392b;font-weight:700':'#555')+'">'+_n2(_kwVol[kw])+'</td>'
-        +'<td style="'+_T+';font-size:11px;color:#555">'+sh+'%</td>'
+        +'<td style="'+_T+';font-size:11px;color:#555">'+sh+'%</td>'+(function(){ var rs=byKw[kw],sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){ sp+=(r.spend||0); sa+=(r.sales||0); od+=(r.orders||0); cl+=(r.cl||0); }); var cvr=cl>0?(od/cl*100).toFixed(2)+'%':'\u2014'; var roas=sp>0?(Math.round(sa/sp*100).toLocaleString()+'%'):'\u2014'; return '<td style="'+_T+';font-size:11px;background:#fff7e6">'+(sp?Math.round(sp).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fde8ef">'+(sa?Math.round(sa).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#e6f0fb">'+cvr+'</td>'+'<td style="'+_T+';font-size:11px;background:#e8f7ec">'+roas+'</td>'; })()
         +'<td style="'+_T+';font-size:11px;color:#333">'+_n2(_mcl)+'</td>'
         +'<td style="'+_T+';font-size:11px;color:#333">'+_n2(_r3)+'</td>'
         +'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td>'
