@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.919</span>
+    <span class="build-date">v1.920</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6854,7 +6854,7 @@ try{ _taiouFetch().then(function(ch){ if(ch){ try{_taiouApply();}catch(e){} } })
 var _TAIOU_MARKS=[['any','すべて'],['x','✕'],['tri','△'],['checkR','✓赤'],['yellow','◯黄'],['maru40','◎'],['maruG','◯緑'],['checkG','✓緑']];
 function _kwiMkKind(act,gui,streak){ if(act==null||gui==null||act<=0||gui<=0) return 'none'; if(act===40&&gui===40) return 'maru40'; if(act>gui) return 'x'; if(act===gui) return 'checkR'; if((streak||0)>=3) return 'tri'; if(gui>=100) return 'yellow'; var d=gui-act; if(d<=10) return 'maruG'; return 'checkG'; }
 function _taiouOpOk(op,val,x){ if(!op||val===''||val==null||isNaN(parseFloat(val))) return true; if(x==null||isNaN(x)) return false; var v=parseFloat(val); if(op==='>=')return x>=v; if(op==='<=')return x<=v; if(op==='>')return x>v; if(op==='<')return x<v; if(op==='=')return x===v; return true; }
-function _taiouFor(kind,vals){ for(var i=0;i<_taiouRules.length;i++){ var r=_taiouRules[i]; if(!r) continue; if(r.mark&&r.mark!=='any'&&r.mark!==kind) continue; var ok=true; var cs=r.conds||[]; for(var j=0;j<cs.length;j++){ var c=cs[j]; if(!c||!c.field) continue; if(!_taiouOpOk(c.op,c.val,vals[c.field])){ ok=false; break; } } if(ok) return r; } return null; }
+function _taiouFor(kind,vals){ for(var i=0;i<_taiouRules.length;i++){ var r=_taiouRules[i]; if(!r) continue; if(r.mark&&r.mark!=='any'&&r.mark!==kind) continue; var ok=true; var cs=r.conds||[]; for(var j=0;j<cs.length;j++){ var c=cs[j]; if(!c||!c.field) continue; if(!_taiouOpOk(c.op,c.val,vals[c.field])){ ok=false; break; } } if(ok && ((r.text||'')+'').trim()!=='') return r; } return null; }
 function _taiouTextStyle(color,weight){ var col={black:'#1a1a1a',red:'#c0392b',blue:'#1565C0'}[color||'black']||'#1a1a1a'; var w=weight||'normal'; var fw=(w==='dark')?'800':(w==='light')?'400':'600'; var op=(w==='light')?'0.6':'1'; return 'color:'+col+';font-weight:'+fw+';opacity:'+op; }
 function _taiouSel2(idx,field,cur,opts){ var h='<select onchange="_taiouSet('+idx+',\''+field+'\',this.value);_taiouApply()" style="font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:#fff">'; opts.forEach(function(o){ h+='<option value="'+o[0]+'"'+(o[0]===cur?' selected':'')+'>'+o[1]+'</option>'; }); h+='</select>'; return h; }
 var _TAIOU_FIELDS=[['kwvol','KWvol'],['share','KW割合'],['spend','実績額'],['sales','売上'],['cvr','CVR'],['roas','ROAS'],['mclick','月クリック合計'],['recent3','直近3日クリック'],['gui','目安'],['act','入札']];
