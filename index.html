@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.900</span>
+    <span class="build-date">v1.901</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -997,6 +997,7 @@ header + * { margin-top: 4px; }
       <div class="table-toolbar" style="flex-wrap:wrap;gap:8px;align-items:center">
         <div style="display:flex;gap:6px">
           <button id="kwIndivModeFix" onclick="setKwIndivTableMode('fix')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">修正あり</button>
+          <button id="kwIndivModeYellow" onclick="setKwIndivTableMode('yellow')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">黄色あり</button>
           <button id="kwIndivModeBasic" onclick="setKwIndivTableMode('basic')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">全体</button>
         </div>
         <span id="kwIndivTableCount" style="font-size:13px;font-weight:700;color:var(--text2)"></span>
@@ -1019,6 +1020,7 @@ header + * { margin-top: 4px; }
         <span style="color:#c0392b;font-weight:900;font-size:15px">&#10006;</span>　入札が目安より高い<br>
         <span style="color:#c0392b;font-weight:900;font-size:15px">&#9651;</span>　入札が目安より安い（3日以上0クリック）<br>
         <span style="color:#c0392b;font-weight:900;font-size:15px">&#10003;</span>　入札と目安が同じ<br>
+        <span style="color:#D4A017;font-weight:900;font-size:15px">&#9711;</span>　緑状態だが目安が100円以上（黄色）<br>
         <span style="color:#1e8449;font-weight:900;font-size:15px">&#9678;</span>　目安・入札が両方40円で一致（最低CPC達成）<br>
         <span style="color:#1e8449;font-weight:700;font-size:13px">&#9711;</span>　入札が目安より安い（差10円以内）<br>
         <span style="color:#1e8449;font-weight:800;font-size:14px">&#10003;</span>　入札が目安より安い（差10円超）
@@ -6849,7 +6851,7 @@ function renderKwIndiv(){
   const _kwVol={}; let _totVol=0; Object.keys(byKw).forEach(kw=>{ const v=_predVol(byKw[kw],_monthLast); _kwVol[kw]=v; _totVol+=v; });
   const _volRed={}; Object.keys(byKw).forEach(kw=>{ const dd=[...new Set(byKw[kw].filter(r=>r.ctr>0&&r.cl>0).map(r=>r.date))].filter(d=>d<=_monthLast).sort(); _volRed[kw]= dd.length ? (dd.length*2 < (_dDiff(_monthLast,dd[0])+1)) : false; });
   const kws=Object.keys(byKw).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
-  const _mkM=(act,gui,streak)=>{ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u25B3</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; };
+  const _mkM=(act,gui,streak)=>{ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u25B3</span>'; if(gui>=100) return '<span style="color:#D4A017;font-weight:900;font-size:13px">\u25EF</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; };
   const _yc2=v=>(v==null||v===0)?'\u2014':Number(v).toLocaleString();
   const _dayVal=(rs,d)=>{ let mS=0,mN=0,sp=0,cl=0,cA=0,cN=0,has=false; rs.forEach(r=>{ if(r.date!==d) return; has=true; if(r.mcpc>0){mS+=r.mcpc;mN++;} sp+=(r.spend||0); cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){cA+=ca;cN++;} }); return {has:has, cl:cl, gui:mN?Math.round(mS/mN):0, act:cN?Math.round(cA/cN):(cl>0?Math.round(sp/cl):0)}; };
   const _carry=(rs,upto)=>{ const ds=[...new Set(rs.map(r=>r.date))].filter(d=>d&&d<=upto).sort(); let gui=null,act=null; ds.forEach(d=>{ const v=_dayVal(rs,d); if(v.gui>0) gui=v.gui; if(v.act>0) act=v.act; }); const last=_dayVal(rs,upto); return {has:last.has, cl:last.cl, gui:gui!=null?gui:last.gui, act:act!=null?act:last.act}; };
@@ -6970,7 +6972,7 @@ function _kwiPrevDay(ds){ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDa
 function _kwiNextDay(ds){ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()+1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function _kwiDDiff(a,b){ return Math.round((new Date(a+'T12:00:00')-new Date(b+'T12:00:00'))/86400000); }
 function _kwiPredVol(rs,lastDate){ const impByDate={}; rs.forEach(r=>{ if(r.ctr>0&&r.cl>0){ impByDate[r.date]=(impByDate[r.date]||0)+r.cl*100/r.ctr; } }); const dataDays=Object.keys(impByDate).filter(d=>d<=lastDate).sort(); if(!dataDays.length) return 0; let sum=0,d=dataDays[0],guard=0; while(d<=lastDate && guard<400){ guard++; if(impByDate[d]!=null){ sum+=impByDate[d]; } else { let best=null,bd=Infinity; for(const dd of dataDays){ const dist=Math.abs(_kwiDDiff(dd,d)); if(dist<bd){bd=dist;best=dd;} } sum+=impByDate[best]; } d=_kwiNextDay(d); } return Math.round(sum); }
-function _kwiMkM(act,gui,streak){ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u25B3</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; }
+function _kwiMkM(act,gui,streak){ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u25B3</span>'; if(gui>=100) return '<span style="color:#D4A017;font-weight:900;font-size:13px">\u25EF</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; }
 function _kwiMkIsRed(act,gui,streak){ if(act==null||gui==null||act<=0||gui<=0) return false; if(act===40&&gui===40) return false; if(act>gui) return true; if(act===gui) return true; if((streak||0)>=3) return true; return false; }
 function _kwiDayVal(rs,d){ let mS=0,mN=0,sp=0,cl=0,cA=0,cN=0,has=false; rs.forEach(r=>{ if(r.date!==d) return; has=true; if(r.mcpc>0){mS+=r.mcpc;mN++;} sp+=(r.spend||0); cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){cA+=ca;cN++;} }); return {has:has, cl:cl, gui:mN?Math.round(mS/mN):0, act:cN?Math.round(cA/cN):(cl>0?Math.round(sp/cl):0)}; }
 function _kwiCarry(rs,upto){ const ds=[...new Set(rs.map(r=>r.date))].filter(d=>d&&d<=upto).sort(); let gui=null,act=null; ds.forEach(d=>{ const v=_kwiDayVal(rs,d); if(v.gui>0) gui=v.gui; if(v.act>0) act=v.act; }); const last=_kwiDayVal(rs,upto); return {has:last.has, cl:last.cl, gui:gui!=null?gui:last.gui, act:act!=null?act:last.act}; }
@@ -6996,8 +6998,8 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   const _kwVol={}; let _totVol=0; Object.keys(byKw).forEach(kw=>{ const v=_kwiPredVol(byKw[kw],_monthLast); _kwVol[kw]=v; _totVol+=v; });
   const _volRed={}; Object.keys(byKw).forEach(kw=>{ const dd=[...new Set(byKw[kw].filter(r=>r.ctr>0&&r.cl>0).map(r=>r.date))].filter(d=>d<=_monthLast).sort(); _volRed[kw]= dd.length ? (dd.length*2 < (_kwiDDiff(_monthLast,dd[0])+1)) : false; });
   const kws=Object.keys(byKw).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
-  let hasFix=false, _redCount=0;
-  kws.forEach((kw)=>{ const dv=_kwiCarry(byKw[kw],_latest); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; } else if(a===g){ _redCount++; hasFix=true; } else if(st>=3){ _redCount++; if(share>=10) hasFix=true; } } });
+  let hasFix=false, hasYellow=false, _redCount=0;
+  kws.forEach((kw)=>{ const dv=_kwiCarry(byKw[kw],_latest); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; } else if(a===g){ _redCount++; hasFix=true; } else if(st>=3){ _redCount++; if(share>=10) hasFix=true; } else if(g>=100){ hasYellow=true; } } });
   let _sumHtml='';
   if(_latest && kws.length){ const _dl=(+_latest.slice(5,7))+'月'+(+_latest.slice(8,10))+'日';
     const _T='border:1px solid #c9c9c9;padding:3px 8px;text-align:center;white-space:nowrap';
@@ -7037,14 +7039,16 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   const _chc='<div id="kwTblCh'+pfx+'_'+idx+'" style="display:none;margin-bottom:10px"></div>';
   const _sscell='<div style="flex:0 0 220px;align-self:flex-start;border:1px solid #b9c0cc;border-radius:8px;background:#eef1f6;padding:8px 10px;box-sizing:border-box"><div style="font-size:10px;color:#445;font-weight:700;margin:0 0 5px;text-align:center">SS / マラソン / 下げ</div>'+_ssCellBtns(code)+'</div>';
   const _flex='<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'+_sumHtml+_sscell+'</div>';
-  return { html:_head+_flex+_btn+_chc, hasFix:hasFix, redCount:_redCount };
+  return { html:_head+_flex+_btn+_chc, hasFix:hasFix, hasYellow:hasYellow, redCount:_redCount };
 }
 function _setKwIndivTableModeUI(){
   const on='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
   const off='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600';
-  const b=document.getElementById('kwIndivModeBasic'), f=document.getElementById('kwIndivModeFix');
+  const onY='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #D4A017;background:#D4A017;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
+  const b=document.getElementById('kwIndivModeBasic'), f=document.getElementById('kwIndivModeFix'), y=document.getElementById('kwIndivModeYellow');
   if(b)b.style.cssText=_kwIndivTableMode==='basic'?on:off;
   if(f)f.style.cssText=_kwIndivTableMode==='fix'?on:off;
+  if(y)y.style.cssText=_kwIndivTableMode==='yellow'?onY:off;
 }
 function setKwIndivTableMode(m){ _kwIndivTableMode=m; _setKwIndivTableModeUI(); renderKwIndivTableAll(); }
 function setKwIndivTablePeriod(p){ _kwIndivPeriod=p; _setKwIndivPeriodUI(); renderKwIndivTableAll(); }
@@ -7095,7 +7099,7 @@ function renderKwIndivTableAll(){
   codes.sort((a,b)=>(spend[b]||0)-(spend[a]||0));
   (_kwTblCharts||[]).forEach(c=>{try{c.destroy();}catch(e){}}); _kwTblCharts=[]; _kwTblCodes['tbl']=[];
   let _items=[];
-  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes['tbl'].length,'tbl'); if(!blk) return; if(_kwIndivTableMode==='fix' && !blk.hasFix) return; _kwTblCodes['tbl'].push(code); _items.push({code:code, html:blk.html, redCount:blk.redCount||0}); });
+  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes['tbl'].length,'tbl'); if(!blk) return; if(_kwIndivTableMode==='fix' && !blk.hasFix) return; if(_kwIndivTableMode==='yellow' && !blk.hasYellow) return; _kwTblCodes['tbl'].push(code); _items.push({code:code, html:blk.html, redCount:blk.redCount||0}); });
   const _sort=_kwIndivTableSort||'problem';
   _items.sort(function(a,b){
     if(_sort==='itemno'){ var an=(productCache[a.code]&&productCache[a.code].itemNumber)||'', bn=(productCache[b.code]&&productCache[b.code].itemNumber)||''; if(an&&!bn)return -1; if(!an&&bn)return 1; return an.localeCompare(bn,'ja',{numeric:true})||((spend[b.code]||0)-(spend[a.code]||0)); }
@@ -7104,7 +7108,7 @@ function renderKwIndivTableAll(){
   });
   let body=_items.map(function(it){return it.html;}).join(''), shown=_items.length;
   if(cntEl) cntEl.textContent='表示中：'+shown+'商品';
-  if(empty){ if(shown){ empty.style.display='none'; } else { empty.style.display='block'; empty.textContent=(kwRows.length? (_kwIndivTableMode==='fix'?'修正ありの商品はありません。':'KWデータがありません。') :'KWデータがありません。'); } }
+  if(empty){ if(shown){ empty.style.display='none'; } else { empty.style.display='block'; empty.textContent=(kwRows.length? (_kwIndivTableMode==='fix'?'修正ありの商品はありません。':_kwIndivTableMode==='yellow'?'黄色ありの商品はありません。':'KWデータがありません。') :'KWデータがありません。'); } }
   if(view) view.innerHTML= shown?body:'';
 }
 function _renderKwTableFiltered(containerId, pfx, filterFn){
