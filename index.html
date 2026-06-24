@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.895</span>
+    <span class="build-date">v1.896</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -930,7 +930,7 @@ header + * { margin-top: 4px; }
       </div>
       <div class="table-card">
         <div class="table-toolbar" style="flex-wrap:wrap;gap:6px">
-          <span id="daily-run-status" style="font-size:11px;color:var(--text3)"></span>
+          <span id="daily-run-status" style="font-size:11px;color:var(--text3)"></span><div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;margin-right:6px"><span style="color:var(--text3);font-weight:700">配色:</span><span style="color:#1565C0;font-weight:700">上位10%</span><span style="color:#2E7D32;font-weight:700">上位20%</span><span style="color:#1a1a1a">中間</span><span style="color:#BA7517;font-weight:700">下位20%</span><span style="color:#A32D2D;font-weight:700">下位10%</span></div>
           <div id="dailyMonthBtns" style="display:flex;flex-wrap:wrap;gap:3px;align-items:center"></div>
           <div style="display:flex;align-items:center;gap:6px">
             <input type="date" id="dailyDateFrom" autocomplete="off" class="toolbar-month" onchange="renderDailyFiltered()" style="font-size:12px;padding:4px 8px">
