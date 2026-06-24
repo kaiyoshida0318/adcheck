@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.932</span>
+    <span class="build-date">v1.933</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1004,7 +1004,7 @@ header + * { margin-top: 4px; }
         </div>
         <span id="kwIndivTableCount" style="font-size:13px;font-weight:700;color:var(--text2)"></span>
         <input id="kwIndivTableSearch" type="text" placeholder="商品番号/管理番号/商品名で検索" oninput="setKwIndivTableSearch(this.value)" style="font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);width:200px">
-        <select id="kwIndivTableSort" onchange="setKwIndivTableSort(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="problem">問題発生順</option><option value="itemno">商品番号順</option><option value="code">商品管理番号順</option></select>
+        <select id="kwIndivTableSort" onchange="setKwIndivTableSort(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="problem">問題発生金額順</option><option value="itemno">商品番号順</option><option value="code">商品管理番号順</option></select>
         <div class="toolbar-right" style="display:flex;align-items:center;gap:8px">
           <button onclick="_toggleKwFixCond()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">修正あり～放置中の意味</button>
           <button onclick="_toggleKwTableLegend()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">マークの意味</button>
@@ -7067,8 +7067,8 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   const _kwVol={}; let _totVol=0; Object.keys(byKw).forEach(kw=>{ const v=_kwiPredVol(byKw[kw],_monthLast); _kwVol[kw]=v; _totVol+=v; });
   const _volRed={}; Object.keys(byKw).forEach(kw=>{ const dd=[...new Set(byKw[kw].filter(r=>r.ctr>0&&r.cl>0).map(r=>r.date))].filter(d=>d<=_monthLast).sort(); _volRed[kw]= dd.length ? (dd.length*2 < (_kwiDDiff(_monthLast,dd[0])+1)) : false; });
   const kws=Object.keys(byKw).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
-  let hasFix=false, hasFixX=false, hasYellow=false, _redCount=0;
-  kws.forEach((kw)=>{ const dv=_kwiCarry(byKw[kw],_latest); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; hasFixX=true; } else if(a===g){ _redCount++; hasFix=true; } else if(st>=3){ _redCount++; if(share>=10) hasFix=true; } else if(g>=100){ if(share>=10) hasYellow=true; } } });
+  let hasFix=false, hasFixX=false, hasYellow=false, _redCount=0, _probSpend=0;
+  kws.forEach((kw)=>{ const dv=_kwiCarry(byKw[kw],_latest); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; hasFixX=true; _probSpend+=(_kwSpend[kw]||0); } else if(a===g){ _redCount++; hasFix=true; _probSpend+=(_kwSpend[kw]||0); } else if(st>=3){ _redCount++; _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasFix=true; } else if(g>=100){ _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasYellow=true; } } });
   let _sumHtml='';
   if(_latest && kws.length){ const _dl=(+_latest.slice(5,7))+'月'+(+_latest.slice(8,10))+'日';
     const _T='border:1px solid #c9c9c9;padding:3px 8px;text-align:center;white-space:nowrap';
@@ -7110,7 +7110,7 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   const _chc='<div id="kwTblCh'+pfx+'_'+idx+'" style="display:none;margin-bottom:10px"></div>';
   const _sscell='<div style="flex:0 0 220px;align-self:flex-start;border:1px solid #b9c0cc;border-radius:8px;background:#eef1f6;padding:8px 10px;box-sizing:border-box"><div style="font-size:10px;color:#445;font-weight:700;margin:0 0 5px;text-align:center">SS / マラソン / 下げ</div>'+_ssCellBtns(code)+'</div>';
   const _flex='<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'+_sumHtml+_sscell+'</div>';
-  return { html:_head+_flex+_btn+_chc, hasFix:hasFix, hasFixX:hasFixX, hasYellow:hasYellow, redCount:_redCount };
+  return { html:_head+_flex+_btn+_chc, hasFix:hasFix, hasFixX:hasFixX, hasYellow:hasYellow, redCount:_redCount, problemSpend:_probSpend };
 }
 function _setKwIndivTableModeUI(){
   const on='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
@@ -7178,12 +7178,12 @@ function renderKwIndivTableAll(){
   codes.sort((a,b)=>(spend[b]||0)-(spend[a]||0));
   (_kwTblCharts||[]).forEach(c=>{try{c.destroy();}catch(e){}}); _kwTblCharts=[]; _kwTblCodes['tbl']=[];
   let _items=[]; var _cnt={fix:0,fixx:0,yellow:0,idle:0,all:0};
-  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes['tbl'].length,'tbl'); if(!blk) return; const _idleP=!!(productCache[code]&&productCache[code].idle); _cnt.all++; if(_idleP){ _cnt.idle++; } else { if(blk.hasFix)_cnt.fix++; if(blk.hasFixX)_cnt.fixx++; if(blk.hasYellow)_cnt.yellow++; } if(_kwIndivTableMode==='fix'){ if(_idleP||!blk.hasFix) return; } else if(_kwIndivTableMode==='fixx'){ if(_idleP||!blk.hasFixX) return; } else if(_kwIndivTableMode==='yellow'){ if(_idleP||!blk.hasYellow) return; } else if(_kwIndivTableMode==='idle'){ if(!_idleP) return; } _kwTblCodes['tbl'].push(code); _items.push({code:code, html:blk.html, redCount:blk.redCount||0}); });
+  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes['tbl'].length,'tbl'); if(!blk) return; const _idleP=!!(productCache[code]&&productCache[code].idle); _cnt.all++; if(_idleP){ _cnt.idle++; } else { if(blk.hasFix)_cnt.fix++; if(blk.hasFixX)_cnt.fixx++; if(blk.hasYellow)_cnt.yellow++; } if(_kwIndivTableMode==='fix'){ if(_idleP||!blk.hasFix) return; } else if(_kwIndivTableMode==='fixx'){ if(_idleP||!blk.hasFixX) return; } else if(_kwIndivTableMode==='yellow'){ if(_idleP||!blk.hasYellow) return; } else if(_kwIndivTableMode==='idle'){ if(!_idleP) return; } _kwTblCodes['tbl'].push(code); _items.push({code:code, html:blk.html, redCount:blk.redCount||0, problemSpend:blk.problemSpend||0}); });
   const _sort=_kwIndivTableSort||'problem';
   _items.sort(function(a,b){
     if(_sort==='itemno'){ var an=(productCache[a.code]&&productCache[a.code].itemNumber)||'', bn=(productCache[b.code]&&productCache[b.code].itemNumber)||''; if(an&&!bn)return -1; if(!an&&bn)return 1; return an.localeCompare(bn,'ja',{numeric:true})||((spend[b.code]||0)-(spend[a.code]||0)); }
     if(_sort==='code'){ return String(a.code).localeCompare(String(b.code),'ja',{numeric:true}); }
-    return (b.redCount-a.redCount)||((spend[b.code]||0)-(spend[a.code]||0));
+    return ((b.problemSpend||0)-(a.problemSpend||0))||((spend[b.code]||0)-(spend[a.code]||0));
   });
   let body=_items.map(function(it){return it.html;}).join(''), shown=_items.length;
   if(cntEl){ cntEl.textContent=''; cntEl.style.display='none'; }
