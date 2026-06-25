@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.939</span>
+    <span class="build-date">v1.940</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7094,7 +7094,7 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   if(daily){
     const _allRows=kwRows.filter(r=>r.itemCode===code);
     const _byKwAll={}; _allRows.forEach(r=>{ const k=r.kw||'(空)'; (_byKwAll[k]||(_byKwAll[k]=[])).push(r); });
-    Object.keys(_byKwAll).forEach(kw=>{ if(byKw[kw]) return; const rs0=_byKwAll[kw]; const v=_kwiPredVol(rs0,_monthLast); _kwVol[kw]=v; _pastKws.push(kw); _pastSet[kw]=1; const _lym=rs0.reduce((m,r)=>(r.ym>m?r.ym:m),''); const _lr=rs0.filter(r=>r.ym===_lym); let sp=0,sa=0,od=0,cl=0; _lr.forEach(r=>{ sp+=(r.spend||0); sa+=(r.sales||0); od+=(r.orders||0); cl+=(r.cl||0); }); _pastAgg[kw]={ sp:sp, sa:sa, cvr:(cl>0?(od/cl*100).toFixed(2)+'%':null), roas:(sp>0?Math.round(sa/sp*100).toLocaleString()+'%':null) }; });
+    Object.keys(_byKwAll).forEach(kw=>{ if(byKw[kw]) return; const rs0=_byKwAll[kw]; const v=_kwiPredVol(rs0,_monthLast); _kwVol[kw]=v; _pastKws.push(kw); _pastSet[kw]=1; const _lym=rs0.reduce((m,r)=>(r.ym>m?r.ym:m),''); const _lr=rs0.filter(r=>r.ym===_lym); let sp=0,sa=0,od=0,cl=0; _lr.forEach(r=>{ sp+=(r.spend||0); sa+=(r.sales||0); od+=(r.orders||0); cl+=(r.cl||0); }); _pastAgg[kw]={ sp:sp, sa:sa, cvr:(cl>0?(od/cl*100).toFixed(2)+'%':null), roas:(sp>0?Math.round(sa/sp*100).toLocaleString()+'%':null), lym:_lym }; });
     _rowKws=kws.concat(_pastKws).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(x<y?-1:1));
   }
   let _sumHtml='';
@@ -7126,7 +7126,7 @@ function _buildKwTableBlock(code, daily, idx, pfx){
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
-        +'<td style="'+_Tg+'"></td>'
+        +'<td style="'+_Tg+';font-size:10px;text-align:left;color:#888;white-space:nowrap">'+(_ag.lym?('最終出稿 '+_ag.lym.slice(0,4)+'/'+_ag.lym.slice(4,6)):'')+'</td>'
         +'</tr>'; return; }
       const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_kwiCarry(byKw[kw],_latest); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_kwiRecent3(byKw[kw],_latest);
       _h+='<tr>'
