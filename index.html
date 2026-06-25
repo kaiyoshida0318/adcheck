@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.933</span>
+    <span class="build-date">v1.934</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1920,9 +1920,10 @@ function saveEditItem() {
 function _editClRender(logs) {
   const container = document.getElementById('editClRows');
   if (!container) return;
+  logs = (logs||[]).slice().sort((a,b)=>(((b&&b.date)||'').localeCompare((a&&a.date)||'')));
   container.innerHTML = logs.map((log, i) => `
     <div style="display:flex;gap:6px;align-items:center">
-      <input type="date" value="${log.date||''}" data-idx="${i}" data-field="date"
+      <input type="date" value="${log.date||''}" data-idx="${i}" data-field="date" onchange="_editClResort()"
         style="padding:4px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
       <input type="text" value="${log.note||''}" data-idx="${i}" data-field="note"
         placeholder="内容を入力..."
@@ -5119,6 +5120,8 @@ function _initItemGraphRange() {
 // ── グローバル変更記録（全-日別グラフ用） ──
 let globalChangeLogs = [];
 
+function _editClResort(){ if(typeof _editClCurrentLogs==='function') _editClRender(_editClCurrentLogs()); }
+function _globalClResort(){ const rows=document.querySelectorAll('#globalClRows > div'); const cur=[]; rows.forEach(function(row){ const d=row.querySelector('input[type="date"]'); const n=row.querySelector('input[type="text"]'); if(d&&n) cur.push({date:d.value,note:n.value}); }); globalChangeLogs=cur; _renderGlobalClRows(globalChangeLogs); }
 function openGlobalChangeLog() {
   _renderGlobalClRows(globalChangeLogs);
   document.getElementById('globalClModal').style.display = 'flex';
@@ -5128,13 +5131,15 @@ function closeGlobalChangeLog() {
 }
 function _renderGlobalClRows(logs) {
   const container = document.getElementById('globalClRows');
+  logs = (logs||[]).slice().sort((a,b)=>(((b&&b.date)||'').localeCompare((a&&a.date)||'')));
+  globalChangeLogs = logs;
   if (!logs.length) {
     container.innerHTML = '<div style="padding:16px 0;color:var(--text3);font-size:12px">まだ記録がありません。＋追加で記録してください。</div>';
     return;
   }
   container.innerHTML = logs.map((log, i) => `
     <div style="display:flex;gap:8px;align-items:center">
-      <input type="date" value="${log.date||''}"
+      <input type="date" value="${log.date||''}" onchange="_globalClResort()"
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
       <input type="text" value="${log.note||''}" placeholder="内容を入力..."
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex:1">
