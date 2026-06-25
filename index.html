@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.944</span>
+    <span class="build-date">v1.946</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6961,7 +6961,7 @@ function renderKwIndiv(){
       kws.forEach(kw=>{ const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_carry(byKw[kw],_latest); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_recent3(byKw[kw],_latest);
         _h+='<tr>'
           +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
-          +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+(_volRed[kw]?('?_'+_n2(_kwVol[kw])+'_?'):_n2(_kwVol[kw]))+'</td>'
+          +'<td style="'+_T+';background:#fff;font-size:11px;color:'+(_volRed[kw]?'#1e8449;font-weight:700':'#555')+'">'+(_volRed[kw]?('?_'+_n2(_kwVol[kw])+'_?'):_n2(_kwVol[kw]))+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+sh+'%</td>'+(function(){ var rs=byKw[kw],sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){ sp+=(r.spend||0); sa+=(r.sales||0); od+=(r.orders||0); cl+=(r.cl||0); }); var cvr=cl>0?(od/cl*100).toFixed(2)+'%':'\u2014'; var roas=sp>0?(Math.round(sa/sp*100).toLocaleString()+'%'):'\u2014'; return '<td style="'+_T+';font-size:11px;background:#fff">'+(sp?Math.round(sp).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+(sa?Math.round(sa).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+cvr+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+roas+'</td>'; })()
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">'+_n2(_mcl)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">'+_n2(_r3)+'</td>'
@@ -7118,7 +7118,7 @@ function _buildKwTableBlock(code, daily, idx, pfx){
       +'<th style="'+_H+';background:#e6f4ea">KW割合</th>'+'<th style="'+_H+';background:#fcf2d8">実績額</th>'+'<th style="'+_H+';background:#fcf2d8">売上</th>'+'<th style="'+_H+';background:#fbe4ec">CVR</th>'+'<th style="'+_H+';background:#fbe4ec">ROAS</th>'
       +'<th style="'+_H+';background:#e4eefb">月クリック合計</th>'
       +'<th style="'+_H+';background:#e4eefb">直近3日クリック</th>'
-      +'<th style="'+_H+';background:#ffe6cc;color:#b45309">前月実績</th>'+'<th style="'+_H+';background:#ede4fb;color:#7c3aed">目安</th>'
+      +'<th style="'+_H+';background:#fbe7cf">前月実績</th>'+'<th style="'+_H+';background:#ede4fb;color:#7c3aed">目安</th>'
       +'<th style="'+_H+';background:#dcefca;color:#00897B">入札</th>'
       +'<th style="'+_H+'">判定</th>'+'<th style="'+_H+';background:#eef9f0">対応</th>'
       +'</tr></thead><tbody>';
@@ -7133,7 +7133,7 @@ function _buildKwTableBlock(code, daily, idx, pfx){
         +'<td style="'+_Tg+';font-size:11px">'+_ul(_ag.roas)+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
-        +'<td style="'+_T+';background:#ffe6cc;font-size:11px;color:#b45309">'+(function(){ var pc=_prevCpcOf(kw); return pc!=null?Math.round(pc).toLocaleString():_bx; })()+'</td>'
+        +(function(){ var pc=_prevCpcOf(kw); if(pc!=null) return '<td style="'+_T+';font-size:11px;color:#333;background:#fbe7cf">'+Math.round(pc).toLocaleString()+'</td>'; return '<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'; })()
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
@@ -7142,11 +7142,11 @@ function _buildKwTableBlock(code, daily, idx, pfx){
       const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_kwiCarry(byKw[kw],_latest); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_kwiRecent3(byKw[kw],_latest);
       _h+='<tr>'
         +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
-        +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+(_volRed[kw]?('?_'+_n2(_kwVol[kw])+'_?'):_n2(_kwVol[kw]))+'</td>'
+        +'<td style="'+_T+';background:#fff;font-size:11px;color:'+(_volRed[kw]?'#1e8449;font-weight:700':'#555')+'">'+(_volRed[kw]?('?_'+_n2(_kwVol[kw])+'_?'):_n2(_kwVol[kw]))+'</td>'
         +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+sh+'%</td>'+(function(){ var rs=byKw[kw],sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){ sp+=(r.spend||0); sa+=(r.sales||0); od+=(r.orders||0); cl+=(r.cl||0); }); var cvr=cl>0?(od/cl*100).toFixed(2)+'%':'\u2014'; var roas=sp>0?(Math.round(sa/sp*100).toLocaleString()+'%'):'\u2014'; return '<td style="'+_T+';font-size:11px;background:#fff">'+(sp?Math.round(sp).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+(sa?Math.round(sa).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+cvr+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+roas+'</td>'; })()
         +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">'+_n2(_mcl)+'</td>'
         +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">'+_n2(_r3)+'</td>'
-        +'<td style="'+_T+';background:#ffe6cc;font-size:11px;color:#b45309">'+(function(){ var pc=_prevCpcOf(kw); return pc!=null?Math.round(pc).toLocaleString():'\u2014'; })()+'</td>'+'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td>'
+        +(function(){ var pc=_prevCpcOf(kw); var bg=pc!=null?'#fbe7cf':'#fff'; return '<td style="'+_T+';font-size:11px;color:#333;background:'+bg+'">'+(pc!=null?Math.round(pc).toLocaleString():'\u2014')+'</td>'; })()+'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td>'
         +'<td style="'+_T+';background:#d9edca;font-size:11px">'+_n2(dv.act)+'</td>'
         +'<td style="'+_T+';background:#fff">'+_kwiMkM(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest))+'</td>'+(function(){ var rs=byKw[kw],sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){sp+=(r.spend||0);sa+=(r.sales||0);od+=(r.orders||0);cl+=(r.cl||0);}); var vals={kwvol:_kwVol[kw],share:parseFloat(sh),spend:sp,sales:sa,cvr:cl>0?(od/cl*100):null,roas:sp>0?(sa/sp*100):null,mclick:_mcl,recent3:_r3,gui:dv.gui,act:dv.act}; var _ru=_taiouFor(_kwiMkKind(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest)),vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
         +'</tr>';
