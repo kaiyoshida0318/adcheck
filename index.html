@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.934</span>
+    <span class="build-date">v1.935</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4488,12 +4488,13 @@ function _renderTable(mode, rows) {
     const _clNotes = _clKeys[_rowClKey(r)] || null;
     const _hasLog = !!_clNotes;
     const _clTitle = _hasLog ? _clNotes.filter(Boolean).join(' / ').replace(/"/g,'&quot;') : '';
+    const _clNoteHtml = _hasLog ? _clNotes.filter(Boolean).map(function(x){return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}).join('<br>') : '';
     const _hlTop = _hasLog ? 'border-top:3px dashed #f97316;' : '';
     const _hlBot = _hasLog ? 'border-bottom:2px dashed #f97316;' : '';
     const _hlL = _hasLog ? 'border-left:2px dashed #f97316;' : '';
     const _hlR = _hasLog ? 'border-right:2px dashed #f97316;' : '';
     html += `<tr style="${_pct?'':'border-bottom:1px solid var(--border);'}${r._grpTop ? 'border-top:3px solid var(--text2);' : ''}">
-      <td ${_pct?'rowspan="2" ':''}${_hasLog?`title="${_clTitle}" `:''}style="padding:7px 6px;${_igS(dateLabel,'left')}font-weight:600;white-space:nowrap;font-size:11px;${_pct?'vertical-align:middle;':''}${_hlTop}${_hlBot}${_hlL}">${_hasLog?'📝':''}${r.label}</td>
+      <td ${_pct?'rowspan="2" ':''}${_hasLog?`title="${_clTitle}" `:''}style="padding:7px 6px;${_igS(dateLabel,'left')}font-weight:600;white-space:nowrap;font-size:11px;${_pct?'vertical-align:middle;':''}${_hlTop}${_hlBot}${_hlL}">${r.label}${_hasLog?'<div style="margin-top:3px;text-align:right"><span style="display:inline-block;background:#f97316;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;line-height:1.35;white-space:normal;max-width:180px;text-align:left">'+_clNoteHtml+'</span></div>':''}</td>
       ${cells.map((c,i) => `<td style="padding:7px 6px;${_igS(HEADS[i],'right')}font-family:'DM Mono',monospace;white-space:nowrap;background:${BG[i]};${_hlTop}${_pct?'':_hlBot}${i===cells.length-1?_hlR:''}">${c}</td>`).join('')}
     </tr>`;
     if (_pct) {
