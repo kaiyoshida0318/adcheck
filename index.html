@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.936</span>
+    <span class="build-date">v1.938</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4428,7 +4428,7 @@ function _renderTable(mode, rows) {
   (typeof globalChangeLogs !== 'undefined' ? globalChangeLogs : []).forEach(l => {
     if (!l || !l.date) return;
     const k = _daily ? String(l.date).slice(0,10) : String(l.date).slice(0,7);
-    (_clKeys[k] || (_clKeys[k] = [])).push(l.note || '');
+    (_clKeys[k] || (_clKeys[k] = [])).push({note:(l.note||''), color:(l.color||'#f97316')});
   });
   const _rowClKey = r => {
     let c = r.code != null ? String(r.code) : '';
@@ -4487,14 +4487,15 @@ function _renderTable(mode, rows) {
     const _pct = (mode === 'monthly' && _monthlyPctMode);
     const _clNotes = _clKeys[_rowClKey(r)] || null;
     const _hasLog = !!_clNotes && (typeof _clShow==='undefined'||_clShow);
-    const _clTitle = _hasLog ? _clNotes.filter(Boolean).join(' / ').replace(/"/g,'&quot;') : '';
-    const _clNoteHtml = _hasLog ? _clNotes.filter(Boolean).map(function(x){return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}).join('<br>') : '';
-    const _hlTop = _hasLog ? 'border-top:3px dashed #f97316;' : '';
-    const _hlBot = _hasLog ? 'border-bottom:2px dashed #f97316;' : '';
-    const _hlL = _hasLog ? 'border-left:2px dashed #f97316;' : '';
-    const _hlR = _hasLog ? 'border-right:2px dashed #f97316;' : '';
+    const _clColor = (_hasLog && _clNotes[0] && _clNotes[0].color) ? _clNotes[0].color : '#f97316';
+    const _clTitle = _hasLog ? _clNotes.filter(function(x){return x&&x.note;}).map(function(x){return x.note;}).join(' / ').replace(/"/g,'&quot;') : '';
+    const _clBadges = _hasLog ? _clNotes.filter(function(x){return x&&x.note;}).map(function(x){ var c=(x.color||'#f97316'); return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;line-height:1.35;white-space:normal;max-width:180px;text-align:left;margin-top:2px">'+String(x.note).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>'; }).join('<br>') : '';
+    const _hlTop = _hasLog ? ('border-top:3px dashed '+_clColor+';') : '';
+    const _hlBot = _hasLog ? ('border-bottom:2px dashed '+_clColor+';') : '';
+    const _hlL = _hasLog ? ('border-left:2px dashed '+_clColor+';') : '';
+    const _hlR = _hasLog ? ('border-right:2px dashed '+_clColor+';') : '';
     html += `<tr style="${_pct?'':'border-bottom:1px solid var(--border);'}${r._grpTop ? 'border-top:3px solid var(--text2);' : ''}">
-      <td ${_pct?'rowspan="2" ':''}${_hasLog?`title="${_clTitle}" `:''}style="padding:7px 6px;${_igS(dateLabel,'left')}font-weight:600;white-space:nowrap;font-size:11px;${_pct?'vertical-align:middle;':''}${_hlTop}${_hlBot}${_hlL}">${r.label}${_hasLog?'<div style="margin-top:3px;text-align:right"><span style="display:inline-block;background:#f97316;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;line-height:1.35;white-space:normal;max-width:180px;text-align:left">'+_clNoteHtml+'</span></div>':''}</td>
+      <td ${_pct?'rowspan="2" ':''}${_hasLog?`title="${_clTitle}" `:''}style="padding:7px 6px;${_igS(dateLabel,'left')}font-weight:600;white-space:nowrap;font-size:11px;${_pct?'vertical-align:middle;':''}${_hlTop}${_hlBot}${_hlL}">${r.label}${_hasLog?('<div style="margin-top:3px;text-align:right">'+_clBadges+'</div>'):''}</td>
       ${cells.map((c,i) => `<td style="padding:7px 6px;${_igS(HEADS[i],'right')}font-family:'DM Mono',monospace;white-space:nowrap;background:${BG[i]};${_hlTop}${_pct?'':_hlBot}${i===cells.length-1?_hlR:''}">${c}</td>`).join('')}
     </tr>`;
     if (_pct) {
@@ -5133,7 +5134,7 @@ function _initItemGraphRange() {
 let globalChangeLogs = [];
 
 function _editClResort(){ if(typeof _editClCurrentLogs==='function') _editClRender(_editClCurrentLogs()); }
-function _globalClResort(){ const rows=document.querySelectorAll('#globalClRows > div'); const cur=[]; rows.forEach(function(row){ const d=row.querySelector('input[type="date"]'); const n=row.querySelector('input[type="text"]'); if(d&&n) cur.push({date:d.value,note:n.value}); }); globalChangeLogs=cur; _renderGlobalClRows(globalChangeLogs); }
+function _globalClResort(){ const rows=document.querySelectorAll('#globalClRows > div'); const cur=[]; rows.forEach(function(row){ const d=row.querySelector('input[type="date"]'); const n=row.querySelector('input[type="text"]'); if(d&&n) cur.push({date:d.value,note:n.value,color:(row.dataset.color||'#f97316')}); }); globalChangeLogs=cur; _renderGlobalClRows(globalChangeLogs); }
 function openGlobalChangeLog() {
   _renderGlobalClRows(globalChangeLogs);
   document.getElementById('globalClModal').style.display = 'flex';
@@ -5141,6 +5142,8 @@ function openGlobalChangeLog() {
 function closeGlobalChangeLog() {
   document.getElementById('globalClModal').style.display = 'none';
 }
+const _CL_COLORS = ['#f97316','#dc2626','#d97706','#16a34a','#0ea5e9','#7c3aed','#db2777'];
+function _clPickColor(btn){ var c=btn.dataset.c; var row=btn.closest('.gcl-row'); if(!row) return; row.dataset.color=c; row.querySelectorAll('.gcl-sw').forEach(function(b){ b.style.border='2px solid '+(b.dataset.c===c?'#111':'transparent'); }); }
 function _renderGlobalClRows(logs) {
   const container = document.getElementById('globalClRows');
   logs = (logs||[]).slice().sort((a,b)=>(((b&&b.date)||'').localeCompare((a&&a.date)||'')));
@@ -5150,11 +5153,12 @@ function _renderGlobalClRows(logs) {
     return;
   }
   container.innerHTML = logs.map((log, i) => `
-    <div style="display:flex;gap:8px;align-items:center">
+    <div class="gcl-row" data-color="${log.color||'#f97316'}" style="display:flex;gap:8px;align-items:center">
       <input type="date" value="${log.date||''}" onchange="_globalClResort()"
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
       <input type="text" value="${log.note||''}" placeholder="内容を入力..."
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex:1">
+      <span style="display:inline-flex;gap:3px;flex-shrink:0">${_CL_COLORS.map(function(c){return '<button type="button" class="gcl-sw" data-c="'+c+'" onclick="_clPickColor(this)" style="width:15px;height:15px;padding:0;border-radius:50%;background:'+c+';border:2px solid '+(((log.color||'#f97316')===c)?'#111':'transparent')+';cursor:pointer"></button>';}).join('')}</span>
       <button onclick="_deleteGlobalClRow(${i})" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 4px">✕</button>
     </div>
   `).join('');
@@ -5166,11 +5170,11 @@ function addGlobalClRow() {
   rows.forEach(row => {
     const dateEl = row.querySelector('input[type="date"]');
     const noteEl = row.querySelector('input[type="text"]');
-    if (dateEl && noteEl) current.push({ date: dateEl.value, note: noteEl.value });
+    if (dateEl && noteEl) current.push({ date: dateEl.value, note: noteEl.value, color: (row.dataset.color||'#f97316') });
   });
   globalChangeLogs = current;
   // 先頭に新しい行を追加
-  globalChangeLogs.unshift({ date: new Date().toISOString().slice(0,10), note: '' });
+  globalChangeLogs.unshift({ date: new Date().toISOString().slice(0,10), note: '', color: '#f97316' });
   _renderGlobalClRows(globalChangeLogs);
 }
 function _deleteGlobalClRow(idx) {
@@ -5179,7 +5183,7 @@ function _deleteGlobalClRow(idx) {
   rows.forEach(row => {
     const dateEl = row.querySelector('input[type="date"]');
     const noteEl = row.querySelector('input[type="text"]');
-    if (dateEl && noteEl) current.push({ date: dateEl.value, note: noteEl.value });
+    if (dateEl && noteEl) current.push({ date: dateEl.value, note: noteEl.value, color: (row.dataset.color||'#f97316') });
   });
   globalChangeLogs = current;
   globalChangeLogs.splice(idx, 1);
@@ -5191,7 +5195,7 @@ function saveGlobalChangeLog() {
   rows.forEach(row => {
     const dateEl = row.querySelector('input[type="date"]');
     const noteEl = row.querySelector('input[type="text"]');
-    if (dateEl && noteEl) logs.push({ date: dateEl.value, note: noteEl.value });
+    if (dateEl && noteEl) logs.push({ date: dateEl.value, note: noteEl.value, color: (row.dataset.color||'#f97316') });
   });
   globalChangeLogs = logs.filter(l => l.date || l.note);
   if (!productCache['__global__']) productCache['__global__'] = {};
@@ -7086,6 +7090,13 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   const kws=Object.keys(byKw).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
   let hasFix=false, hasFixX=false, hasYellow=false, _redCount=0, _probSpend=0;
   kws.forEach((kw)=>{ const dv=_kwiCarry(byKw[kw],_latest); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; hasFixX=true; _probSpend+=(_kwSpend[kw]||0); } else if(a===g){ _redCount++; hasFix=true; _probSpend+=(_kwSpend[kw]||0); } else if(st>=3){ _redCount++; _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasFix=true; } else if(g>=100){ _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasYellow=true; } } });
+  let _pastKws=[];
+  if(daily){
+    const _allRows=kwRows.filter(r=>r.itemCode===code);
+    const _byKwAll={}; _allRows.forEach(r=>{ const k=r.kw||'(空)'; (_byKwAll[k]||(_byKwAll[k]=[])).push(r); });
+    Object.keys(_byKwAll).forEach(kw=>{ if(byKw[kw]) return; const v=_kwiPredVol(_byKwAll[kw],_monthLast); _kwVol[kw]=v; _pastKws.push(kw); });
+    _pastKws.sort((x,y)=>(_kwVol[y]-_kwVol[x])||(x<y?-1:1));
+  }
   let _sumHtml='';
   if(_latest && kws.length){ const _dl=(+_latest.slice(5,7))+'月'+(+_latest.slice(8,10))+'日';
     const _T='border:1px solid #c9c9c9;padding:3px 8px;text-align:center;white-space:nowrap';
@@ -7111,6 +7122,23 @@ function _buildKwTableBlock(code, daily, idx, pfx){
         +'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td>'
         +'<td style="'+_T+';background:#d9edca;font-size:11px">'+_n2(dv.act)+'</td>'
         +'<td style="'+_T+';background:#fff">'+_kwiMkM(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest))+'</td>'+(function(){ var rs=byKw[kw],sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){sp+=(r.spend||0);sa+=(r.sales||0);od+=(r.orders||0);cl+=(r.cl||0);}); var vals={kwvol:_kwVol[kw],share:parseFloat(sh),spend:sp,sales:sa,cvr:cl>0?(od/cl*100):null,roas:sp>0?(sa/sp*100):null,mclick:_mcl,recent3:_r3,gui:dv.gui,act:dv.act}; var _ru=_taiouFor(_kwiMkKind(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest)),vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
+        +'</tr>';
+    });
+    _pastKws.forEach(kw=>{ const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const _bx='□'; const _Tg=_T+';background:#fafafa';
+      _h+='<tr>'
+        +'<td style="'+_Tg+';font-weight:700;text-align:left;font-size:12px;color:#888">'+_kwEsc(kw)+'</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#666">'+_n2(_kwVol[kw])+'</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#666">'+sh+'%</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
+        +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
+        +'<td style="'+_Tg+'"></td>'
         +'</tr>';
     });
     _h+='</tbody>';
