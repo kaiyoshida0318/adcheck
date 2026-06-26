@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.955</span>
+    <span class="build-date">v1.956</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7088,6 +7088,7 @@ function _kwiLegendCard(){ return '<div style="border:1px solid #c9c9c9;border-r
   +'<span style="color:#1e8449;font-weight:800;font-size:14px">&#10003;</span>　入札が目安より安い（差10円超）'
   +'</div>'; }
 var _kwAllSort='spend';
+var _kwAllExclMaru=true;
 function renderKwAllData(){
   const cont=document.getElementById('tab-kw-all'); if(!cont) return;
   const codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))];
@@ -7116,10 +7117,11 @@ function renderKwAllData(){
       const streak=_kwiNoClickStreak(rs,monthLast);
       const r3=_kwiRecent3(rs,monthLast);
       let sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){sp+=(r.spend||0);sa+=(r.sales||0);od+=(r.orders||0);cl+=(r.cl||0);});
-      rows.push({code:code,img:img,name:name,kw:kw,date:monthLast,kwvol:volMap[kw],share:(totVol>0?(volMap[kw]/totVol*100):0),spend:sp,sales:sa,cvr:(cl>0?(od/cl*100):null),roas:(sp>0?(sa/sp*100):null),salesRoas:prodRoas,prodSpend:_pSp,mclick:cl,recent3:r3,gui:dv.gui,act:dv.act,streak:streak});
+      rows.push({code:code,img:img,name:name,kw:kw,date:monthLast,kwvol:volMap[kw],share:(totVol>0?(volMap[kw]/totVol*100):0),spend:sp,sales:sa,cvr:(cl>0?(od/cl*100):null),roas:(sp>0?(sa/sp*100):null),salesRoas:prodRoas,prodSpend:_pSp,mclick:cl,recent3:r3,gui:dv.gui,act:dv.act,streak:streak,kind:_kwiMkKind(dv.act,dv.gui,streak)});
     });
   });
   const _key=_kwAllSort;
+  if(_kwAllExclMaru){ rows=rows.filter(function(o){ return o.kind!=='maru40'; }); }
   rows.sort(function(a,b){ var x=a[_key],y=b[_key]; x=(x==null?-1:x); y=(y==null?-1:y); return (y-x)||(b.spend-a.spend); });
   var _totalSpend=rows.reduce(function(a,o){return a+(o.spend||0);},0);
   var _latestDate=rows.reduce(function(m,o){return (o.date&&o.date>m)?o.date:m;},'');
@@ -7164,9 +7166,12 @@ function renderKwAllData(){
       +'</tr>';
   });
   h+='</tbody></table>';
+  var _onSt='font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;border:1px solid #00897B;background:#00897B;color:#fff;white-space:nowrap';
+  var _offSt='font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text3);white-space:nowrap';
+  var _maruToggle='<div style="display:inline-flex;gap:4px;margin-right:12px"><button onclick="_kwAllExclMaru=true; renderKwAllData();" style="'+(_kwAllExclMaru?_onSt:_offSt)+'">◎以外</button><button onclick="_kwAllExclMaru=false; renderKwAllData();" style="'+(_kwAllExclMaru?_offSt:_onSt)+'">◎含み</button></div>';
   const opts=[['spend','実績額順'],['sales','売上順'],['kwvol','KWvol順'],['mclick','月クリック順'],['roas','ROAS順'],['cvr','CVR順']];
   const sortSel='<select onchange="_kwAllSort=this.value; renderKwAllData();" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">'+opts.map(function(p){return '<option value="'+p[0]+'"'+(_kwAllSort===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('')+'</select>';
-  const top='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px"><div style="font-size:13px;font-weight:700;color:var(--text2)">'+(_latestDate?('<span style="color:var(--text3);font-weight:600;margin-right:10px">'+_latestDate.slice(0,4)+'/'+_latestDate.slice(5,7)+'/'+_latestDate.slice(8,10)+'</span>'):'')+'全KW '+rows.length+'件</div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--text3)">並べ替え</span>'+sortSel+'</div></div>';
+  const top='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px"><div style="font-size:13px;font-weight:700;color:var(--text2)">'+(_latestDate?('<span style="color:var(--text3);font-weight:600;margin-right:10px">'+_latestDate.slice(0,4)+'/'+_latestDate.slice(5,7)+'/'+_latestDate.slice(8,10)+'</span>'):'')+'全KW '+rows.length+'件</div><div style="display:flex;align-items:center;gap:6px">'+_maruToggle+'<span style="font-size:11px;color:var(--text3)">並べ替え</span>'+sortSel+'</div></div>';
   var _roasLeg='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--text2)"><span style="font-weight:700">ROAS文字色</span>'+[['#15803d','800以上'],['#16a34a','600-800'],['#555','400-600'],['#ea580c','200-400'],['#dc2626','0-200']].map(function(pp){return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="font-weight:800;color:'+pp[0]+'">■</span>'+pp[1]+'</span>';}).join('')+'</div>';
   cont.innerHTML='<div style="padding:10px 14px">'+top+_roasLeg+'<div style="max-height:calc(100vh - 240px);overflow:auto;border:1px solid var(--border);border-radius:8px">'+h+'</div></div>';
 }
