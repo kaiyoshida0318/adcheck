@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.956</span>
+    <span class="build-date">v1.957</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -576,8 +576,9 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-indiv" onclick="switchTab('kw-indiv')">商品-個別データ&#128202;</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
   <span class="tab-row-label" style="color:#dc2626;padding-left:10px">【入札単価対策】</span>
-  <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
-  <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">セール活用単価対策<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
+  <button class="tab-btn" id="tab-btn-mar-watch" onclick="switchTab('mar-watch')">KW-注視分<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-watch"></span></button>
+  <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">商品-CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
+  <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">商品-セール活用単価対策<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3" style="border-bottom:none">
   <span class="tab-row-label red" style="color:#9333ea">【状態】</span>
@@ -1113,6 +1114,7 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-mar-kouho"></div>
   <div class="tab-panel" id="tab-mar-jisshi"></div>
   <div class="tab-panel" id="tab-mar-select"></div>
+  <div class="tab-panel" id="tab-mar-watch"></div>
   <div class="tab-panel" id="tab-mar-cpc"></div>
   <div class="tab-panel" id="tab-mar-tanka"></div>
 
@@ -7060,6 +7062,9 @@ var _IDLE_ON_I='font-size:11px;padding:4px 12px;border:1px solid #6b7280;border-
 function _styleIdleBtns(nB,iB,isIdle){ if(nB) nB.style.cssText=isIdle?_IDLE_OFF:_IDLE_ON_N; if(iB) iB.style.cssText=isIdle?_IDLE_ON_I:_IDLE_OFF; }
 var _pcSyncTimer=null;
 function _syncPC(){ try{ saveProductCache(); }catch(e){} if(!localStorage.getItem('github_pat')) return; if(_pcSyncTimer) clearTimeout(_pcSyncTimer); _pcSyncTimer=setTimeout(function(){ _pcSyncTimer=null; try{ var _r=saveProductCacheToGitHub(); if(_r&&_r.catch) _r.catch(function(){}); }catch(e){} }, 1500); }
+function _isWatched(code,kw){ var w=productCache[code]&&productCache[code].watchKws; return !!(w&&w.indexOf(kw)>=0); }
+function _toggleWatchEl(el){ var code=el.getAttribute('data-code'), kw=el.getAttribute('data-kw'); if(!productCache[code]) productCache[code]={}; var w=productCache[code].watchKws||(productCache[code].watchKws=[]); var i=w.indexOf(kw); if(el.checked){ if(i<0) w.push(kw); } else { if(i>=0) w.splice(i,1); } _syncPC(); try{ _updateMarWatchCount(); }catch(e){} }
+function _updateMarWatchCount(){ var c=0; Object.keys(productCache).forEach(function(k){ var w=productCache[k]&&productCache[k].watchKws; if(w&&w.length) c+=w.length; }); var el=document.getElementById('cnt-mar-watch'); if(el) el.textContent='('+c+')'; }
 function _setIdle(code,val,btn){ if(!productCache[code]) productCache[code]={}; productCache[code].idle=!!val; _syncPC(); try{ const w=btn.parentNode; const bs=w.getElementsByTagName('button'); _styleIdleBtns(bs[0],bs[1],!!val); }catch(e){} if(typeof _currentTab!=='undefined' && _currentTab==='kw-indiv-table' && typeof renderKwIndivTableAll==='function'){ renderKwIndivTableAll(); } }
 var _CONF_PRE='font-size:13px;padding:7px 18px;border:1px solid #d97706;border-radius:7px;background:#f59e0b;color:#fff;cursor:pointer;font-weight:700;white-space:nowrap';
 var _CONF_DONE='font-size:13px;padding:7px 18px;border:1px solid #15803d;border-radius:7px;background:#16a34a;color:#fff;cursor:pointer;font-weight:700;white-space:nowrap';
@@ -7089,8 +7094,11 @@ function _kwiLegendCard(){ return '<div style="border:1px solid #c9c9c9;border-r
   +'</div>'; }
 var _kwAllSort='spend';
 var _kwAllExclMaru=true;
-function renderKwAllData(){
-  const cont=document.getElementById('tab-kw-all'); if(!cont) return;
+function renderKwAllData(){ _renderKwTable({containerId:'tab-kw-all',watchOnly:false}); }
+function renderKwWatch(){ _renderKwTable({containerId:'tab-mar-watch',watchOnly:true}); }
+function _renderKwTable(cfg){ cfg=cfg||{};
+  const cont=document.getElementById(cfg.containerId||'tab-kw-all'); if(!cont) return;
+  var _reRender=cfg.watchOnly?'renderKwWatch()':'renderKwAllData()';
   const codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))];
   var _salesByCodeYm={}; salesRows.forEach(function(s){ if(s.itemCode&&s.ym){ var _k=s.itemCode+'|'+s.ym; _salesByCodeYm[_k]=(_salesByCodeYm[_k]||0)+(s.sales||0); } });
   let rows=[];
@@ -7121,7 +7129,8 @@ function renderKwAllData(){
     });
   });
   const _key=_kwAllSort;
-  if(_kwAllExclMaru){ rows=rows.filter(function(o){ return o.kind!=='maru40'; }); }
+  if(_kwAllExclMaru && !cfg.watchOnly){ rows=rows.filter(function(o){ return o.kind!=='maru40'; }); }
+  if(cfg.watchOnly){ rows=rows.filter(function(o){ return _isWatched(o.code,o.kw); }); }
   rows.sort(function(a,b){ var x=a[_key],y=b[_key]; x=(x==null?-1:x); y=(y==null?-1:y); return (y-x)||(b.spend-a.spend); });
   var _totalSpend=rows.reduce(function(a,o){return a+(o.spend||0);},0);
   var _latestDate=rows.reduce(function(m,o){return (o.date&&o.date>m)?o.date:m;},'');
@@ -7146,6 +7155,7 @@ function renderKwAllData(){
   h+='<th style="'+_H+';background:#ede4fb;color:#7c3aed">目安</th>';
   h+='<th style="'+_H+';background:#dcefca;color:#00897B">入札</th>';
   h+='<th style="'+_H+';background:var(--surface)">判定</th>';
+  h+='<th style="'+_H+';background:var(--surface);color:#dc2626">注視</th>';
   h+='</tr></thead><tbody>';
   rows.forEach(function(o){
     h+='<tr>'
@@ -7163,14 +7173,15 @@ function renderKwAllData(){
       +'<td style="'+_T+';background:#f3ecfd">'+n2(o.gui)+'</td>'
       +'<td style="'+_T+';background:#eaf5dd">'+n2(o.act)+'</td>'
       +'<td style="'+_T+'">'+_kwiMkM(o.act,o.gui,o.streak)+'</td>'
+      +'<td style="'+_T+'"><input type="checkbox" data-code="'+_kwEsc(o.code)+'" data-kw="'+_kwEsc(o.kw)+'" onchange="_toggleWatchEl(this)"'+(_isWatched(o.code,o.kw)?' checked':'')+' style="width:16px;height:16px;cursor:pointer"></td>'
       +'</tr>';
   });
   h+='</tbody></table>';
   var _onSt='font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;border:1px solid #00897B;background:#00897B;color:#fff;white-space:nowrap';
   var _offSt='font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text3);white-space:nowrap';
-  var _maruToggle='<div style="display:inline-flex;gap:4px;margin-right:12px"><button onclick="_kwAllExclMaru=true; renderKwAllData();" style="'+(_kwAllExclMaru?_onSt:_offSt)+'">◎以外</button><button onclick="_kwAllExclMaru=false; renderKwAllData();" style="'+(_kwAllExclMaru?_offSt:_onSt)+'">◎含み</button></div>';
+  var _maruToggle=cfg.watchOnly?'':('<div style="display:inline-flex;gap:4px;margin-right:12px"><button onclick="_kwAllExclMaru=true; '+_reRender+';" style="'+(_kwAllExclMaru?_onSt:_offSt)+'">◎以外</button><button onclick="_kwAllExclMaru=false; '+_reRender+';" style="'+(_kwAllExclMaru?_offSt:_onSt)+'">◎含み</button></div>');
   const opts=[['spend','実績額順'],['sales','売上順'],['kwvol','KWvol順'],['mclick','月クリック順'],['roas','ROAS順'],['cvr','CVR順']];
-  const sortSel='<select onchange="_kwAllSort=this.value; renderKwAllData();" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">'+opts.map(function(p){return '<option value="'+p[0]+'"'+(_kwAllSort===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('')+'</select>';
+  const sortSel='<select onchange="_kwAllSort=this.value; '+_reRender+';" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">'+opts.map(function(p){return '<option value="'+p[0]+'"'+(_kwAllSort===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('')+'</select>';
   const top='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px"><div style="font-size:13px;font-weight:700;color:var(--text2)">'+(_latestDate?('<span style="color:var(--text3);font-weight:600;margin-right:10px">'+_latestDate.slice(0,4)+'/'+_latestDate.slice(5,7)+'/'+_latestDate.slice(8,10)+'</span>'):'')+'全KW '+rows.length+'件</div><div style="display:flex;align-items:center;gap:6px">'+_maruToggle+'<span style="font-size:11px;color:var(--text3)">並べ替え</span>'+sortSel+'</div></div>';
   var _roasLeg='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--text2)"><span style="font-weight:700">ROAS文字色</span>'+[['#15803d','800以上'],['#16a34a','600-800'],['#555','400-600'],['#ea580c','200-400'],['#dc2626','0-200']].map(function(pp){return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="font-weight:800;color:'+pp[0]+'">■</span>'+pp[1]+'</span>';}).join('')+'</div>';
   cont.innerHTML='<div style="padding:10px 14px">'+top+_roasLeg+'<div style="max-height:calc(100vh - 240px);overflow:auto;border:1px solid var(--border);border-radius:8px">'+h+'</div></div>';
@@ -10331,6 +10342,7 @@ function switchTab(tab) {
   if (tab === 'kw-indiv') { _syncKwIndivMonths(); renderKwIndiv(); _kwIndivSavedFetch().then(_renderKwIndivSavedDropdown).catch(function(){}); }
   if (tab === 'kw-all') { renderKwAllData(); }
   if (tab === 'kw-indiv-table') { renderKwIndivTableAll(); }
+  if (tab === 'mar-watch') { renderKwWatch(); }
   if (tab === 'mar-cpc') { _renderKwTableFiltered('tab-mar-cpc','cpc', function(c){ return !!(productCache[c] && (productCache[c].marathon||[]).indexOf('cpc')>=0); }); }
   if (tab === 'mar-tanka') { _renderKwTableFiltered('tab-mar-tanka','tanka', function(c){ return !!(productCache[c] && (productCache[c].marathon||[]).indexOf('tanka')>=0); }); }
   if (tab === 'kw-compare') renderKwCompare();
@@ -11379,6 +11391,7 @@ function _updateStatusCounts() {
   set('ss-dec',        ssCount['12']);
   set('mar-kouho',     marCount.kouho);
   set('mar-jisshi',    marCount.jisshi);
+  (function(){ var c=0; Object.keys(productCache).forEach(function(k){ var w=productCache[k]&&productCache[k].watchKws; if(w&&w.length) c+=w.length; }); set('mar-watch', c); })();
   set('mar-cpc',       marCount.cpc);
   set('mar-tanka',     marCount.tanka);
 }
