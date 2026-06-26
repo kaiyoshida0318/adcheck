@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.961</span>
+    <span class="build-date">v1.964</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -560,11 +560,11 @@ header + * { margin-top: 4px; }
   <button class="tab-btn" id="tab-btn-renewal-thumb" onclick="switchTab('renewal-thumb')">サムネ更新済<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-thumb"></span></button>
   <span class="tab-row-label" id="label-taiou" style="color:#ea580c;padding-left:14px">【対応検討】</span>
   <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近4ヶ月</button>
-  <span class="tab-row-label" style="color:#ea580c;padding-left:16px">【セール】</span>
+  <span class="tab-row-label" style="color:#dc2626;padding-left:16px">【セール】</span>
   <button class="tab-btn" id="tab-btn-mar-kouho" onclick="switchTab('mar-kouho')">候補<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-kouho"></span></button>
-  <span class="tab-row-label" style="color:#7c3aed;padding-left:16px">【マラソン】</span>
+  <span class="tab-row-label" style="color:#2563eb;padding-left:16px">【マラソン】</span>
   <button class="tab-btn" id="tab-btn-mar-jisshi" onclick="switchTab('mar-jisshi')">実施<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-jisshi"></span></button>
-  <span class="tab-row-label blue" style="color:#db2777;padding-left:16px">【SS】</span>
+  <span class="tab-row-label blue" style="color:#059669;padding-left:16px">【SS】</span>
   <button class="tab-btn" id="tab-btn-ss-mar" onclick="switchTab('ss-mar')">3月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-mar"></span></button>
   <button class="tab-btn" id="tab-btn-ss-jun" onclick="switchTab('ss-jun')">6月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-jun"></span></button>
   <button class="tab-btn" id="tab-btn-ss-sep" onclick="switchTab('ss-sep')">9月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-sep"></span></button>
@@ -578,6 +578,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
   <span class="tab-row-label" style="color:#dc2626;padding-left:10px">【入札単価対策】</span>
   <button class="tab-btn" id="tab-btn-mar-watch" onclick="switchTab('mar-watch')">KW-注視分<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-watch"></span></button>
+  <button class="tab-btn" id="tab-btn-kw-watch-prod" onclick="switchTab('kw-watch-prod')">KW-注視分商品</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3" style="border-bottom:none">
   <span class="tab-row-label red" style="color:#9333ea">【状態】</span>
@@ -1114,6 +1115,20 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-mar-jisshi"></div>
   <div class="tab-panel" id="tab-mar-select"></div>
   <div class="tab-panel" id="tab-mar-watch"></div>
+  <div class="tab-panel" id="tab-kw-watch-prod">
+    <div class="table-card">
+      <div class="table-toolbar" style="flex-wrap:wrap;gap:8px">
+        <select id="kwWatchProdSel" onchange="_kwWatchProdLoad(this.value)" style="font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;max-width:320px"><option value="">注視KWの商品から選択</option></select>
+        <div style="display:flex;gap:4px">
+          <button id="kwWPDaily" onclick="_kwWatchProdPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">日別</button>
+          <button id="kwWPMonthly" onclick="_kwWatchProdPeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">月別</button>
+        </div>
+      </div>
+      <div id="kwIndivHeader2" style="padding:6px 2px 12px"><div id="kwIndivHeaderName2"></div></div>
+      <div id="kwIndivEmpty2" style="text-align:center;padding:50px;color:var(--text3);font-size:13px">注視KWの商品を選んでください。</div>
+      <div id="kwIndivCharts2"></div>
+    </div>
+  </div>
 
   <!-- リニューアル：全体（変更記録一覧） -->
   <div class="tab-panel" id="tab-renewal-todo">
@@ -6912,20 +6927,21 @@ function _renderTaiouEditor(){ var el=document.getElementById('taiouRulesList');
 function _toggleTaiouEditor(){ var el=document.getElementById('taiouEditor'); if(!el) return; var show=(el.style.display==='none'||!el.style.display); el.style.display=show?'flex':'none'; if(show){ _renderTaiouEditor(); _taiouFetch().then(function(ch){ if(ch){ _renderTaiouEditor(); _taiouApply(); } }); } }
 function _toggleKwYellowCond(){ const a=document.getElementById('kwIndivTableLegend'); if(a) a.style.display='none'; const b=document.getElementById('kwIndivFixCond'); if(b) b.style.display='none'; const el=document.getElementById('kwIndivYellowCond'); if(el) el.style.display = (el.style.display==='none'||!el.style.display) ? 'block' : 'none'; }
 function renderKwIndiv(){
+  var _S=(typeof _currentTab!=='undefined'&&_currentTab==='kw-watch-prod')?'2':'';
   _setKwIndivPeriodUI(); _renderKwIndivSavedDropdown();
-  const wrap=document.getElementById('kwIndivCharts'), empty=document.getElementById('kwIndivEmpty'), hd=document.getElementById('kwIndivHeaderName');
+  const wrap=document.getElementById('kwIndivCharts'+_S), empty=document.getElementById('kwIndivEmpty'+_S), hd=document.getElementById('kwIndivHeaderName'+_S);
   _kwIndivCharts.forEach(c=>{try{c.destroy();}catch(e){}}); _kwIndivCharts=[];
-  if(!_kwIndivCode){ if(wrap)wrap.innerHTML=''; if(hd)hd.innerHTML=''; if(empty){empty.style.display='block';empty.textContent='商品を検索してください。';} { const _tv=document.getElementById('kwIndivTableView'); if(_tv)_tv.innerHTML=''; const _thd=document.getElementById('kwIndivTableHeader'); if(_thd)_thd.innerHTML=''; const _te=document.getElementById('kwIndivTableEmpty'); if(_te){_te.style.display='block';_te.textContent='商品を検索してください。';} } return; }
+  if(!_kwIndivCode){ if(wrap)wrap.innerHTML=''; if(hd)hd.innerHTML=''; if(empty){empty.style.display='block';empty.textContent='商品を検索してください。';} { const _tv=document.getElementById('kwIndivTableView'+_S); if(_tv)_tv.innerHTML=''; const _thd=document.getElementById('kwIndivTableHeader'+_S); if(_thd)_thd.innerHTML=''; const _te=document.getElementById('kwIndivTableEmpty'+_S); if(_te){_te.style.display='block';_te.textContent='商品を検索してください。';} } return; }
   const code=_kwIndivCode; const daily=_kwIndivPeriod==='daily';
   let rows=kwRows.filter(r=>r.itemCode===code); let monthLabel='';
   if(daily){
-    const sel=document.getElementById('kwIndivMonth'); const ym=(sel&&sel.value)||(_kwIndivMonths(code)[0]||'');
+    const sel=document.getElementById('kwIndivMonth'+_S); const ym=(sel&&sel.value)||(_kwIndivMonths(code)[0]||'');
     rows=rows.filter(r=>r.ym===ym); monthLabel=ym?(ym.slice(0,4)+'/'+ym.slice(4,6)):'';
   }
   { const _gimg=(productCache[code]&&(productCache[code].manualImg||productCache[code].img))||null;
     if(hd) hd.innerHTML='<div style="display:flex;align-items:center;gap:10px">'+(_gimg?'<img loading="lazy" src="'+_gimg+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&monthLabel?('\u3000|\u3000'+monthLabel):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div></div></div>'; }
-  { const _tImg=(productCache[code]&&(productCache[code].manualImg||productCache[code].img))||null; const _thd=document.getElementById('kwIndivTableHeader'); if(_thd) _thd.innerHTML='<div style="display:flex;align-items:center;gap:10px">'+(_tImg?'<img loading="lazy" src="'+_tImg+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&monthLabel?('\u3000|\u3000'+monthLabel):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div></div></div>'; }
-  if(rows.length===0){ if(wrap)wrap.innerHTML=''; if(empty){empty.style.display='block';empty.textContent='この商品のKWデータがありません。';} { const _tv=document.getElementById('kwIndivTableView'); if(_tv)_tv.innerHTML=''; const _te=document.getElementById('kwIndivTableEmpty'); if(_te){_te.style.display='block';_te.textContent='この商品のKWデータがありません。';} } return; }
+  { const _tImg=(productCache[code]&&(productCache[code].manualImg||productCache[code].img))||null; const _thd=document.getElementById('kwIndivTableHeader'+_S); if(_thd) _thd.innerHTML='<div style="display:flex;align-items:center;gap:10px">'+(_tImg?'<img loading="lazy" src="'+_tImg+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+_kwEsc(code)+(daily&&monthLabel?('\u3000|\u3000'+monthLabel):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'</div></div></div>'; }
+  if(rows.length===0){ if(wrap)wrap.innerHTML=''; if(empty){empty.style.display='block';empty.textContent='この商品のKWデータがありません。';} { const _tv=document.getElementById('kwIndivTableView'+_S); if(_tv)_tv.innerHTML=''; const _te=document.getElementById('kwIndivTableEmpty'+_S); if(_te){_te.style.display='block';_te.textContent='この商品のKWデータがありません。';} } return; }
   if(empty) empty.style.display='none';
   const byKw={}; rows.forEach(r=>{ const k=r.kw||'(空)'; (byKw[k]||(byKw[k]=[])).push(r); });
   const _monthLast=rows.reduce((m,r)=>(r.date>m?r.date:m),'');
@@ -7006,9 +7022,9 @@ function renderKwIndiv(){
       t+='<tr><td style="'+_TD+';font-weight:700;background:#eef2ff">合計</td><td style="'+_TD+';background:#eef2ff"></td><td style="'+_TD+';background:#eef2ff"></td><td style="'+_TD+';font-weight:700;background:#eef2ff">'+Math.round(sum).toLocaleString()+'</td><td style="'+_TD+';background:#eef2ff"></td></tr></table>';
       _calcHtml+='<div style="overflow-x:auto">'+t+'</div>';
     });
-    const _cp=document.getElementById('kwCalcPanel'); if(_cp) _cp.innerHTML=_calcHtml;
+    const _cp=document.getElementById('kwCalcPanel'+_S); if(_cp) _cp.innerHTML=_calcHtml;
   }
-  let html=_sumHtml; kws.forEach((kw,ki)=>{ const _sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_sh+'%</span></div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+ki+'"></canvas></div><div id="kwIndivT'+ki+'"></div></div></div>'; });
+  let html=_sumHtml; kws.forEach((kw,ki)=>{ const _sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_sh+'%</span></div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+_S+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+_S+ki+'"></canvas></div><div id="kwIndivT'+_S+ki+'"></div></div></div>'; });
   if(wrap) wrap.innerHTML=html;
   let _tvBody='';
   kws.forEach((kw,ki)=>{
@@ -7024,8 +7040,8 @@ function renderKwIndiv(){
       rs.forEach(r=>{ const o=byYm[r.ym]||(byYm[r.ym]={mS:0,mN:0,spend:0,cl:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); });
       Object.keys(byYm).sort().forEach(ym=>{ const o=byYm[ym]; labels.push(ym.slice(0,4)+'/'+ym.slice(4,6)); mcpcArr.push(o.mN?Math.round(o.mS/o.mN):0); cpcArr.push(o.cl>0?Math.round(o.spend/o.cl):0); clArr.push(o.cl||0); });
     }
-    const _in=document.getElementById('kwIndivIn'+ki); if(_in) _in.style.minWidth=(labels.length*40)+'px';
-    const _tw=document.getElementById('kwIndivT'+ki);
+    const _in=document.getElementById('kwIndivIn'+_S+ki); if(_in) _in.style.minWidth=(labels.length*40)+'px';
+    const _tw=document.getElementById('kwIndivT'+_S+ki);
     if(_tw){
       const _yc=v=>(v==null||v===0)?'\u2014':(Number(v).toLocaleString()+'円');
       const _bd='border:1px solid #d0d0d0;padding:3px 2px;white-space:nowrap;vertical-align:top';
@@ -7044,7 +7060,7 @@ function renderKwIndiv(){
       let _thTV='<table style="'+_tbl+'">'+'<tr>'+_kp.map(_i=>_hd(_i)).join('')+'</tr>'+'<tr>'+_kp.map(_i=>_cell(_i)).join('')+'</tr></table>';
       _tvBody+='<div style="margin:14px 0 5px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_shT+'%</span></div><div style="overflow-x:auto;margin-bottom:18px"><div style="min-width:'+(_kp.length*38)+'px">'+_thTV+'</div></div>';
     }
-    const ctx=document.getElementById('kwIndivC'+ki); if(!ctx||typeof Chart==='undefined') return;
+    const ctx=document.getElementById('kwIndivC'+_S+ki); if(!ctx||typeof Chart==='undefined') return;
     _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{type:'bar',label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea',order:0},{type:'bar',label:'入札単価（CPC実績）',data:cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}));
   });
 }
@@ -7093,6 +7109,11 @@ var _kwAllSort='spend';
 var _kwAllExclMaru=true;
 function renderKwAllData(){ _renderKwTable({containerId:'tab-kw-all',watchOnly:false}); }
 function renderKwWatch(){ _renderKwTable({containerId:'tab-mar-watch',watchOnly:true}); }
+function _watchedCodes(){ var arr=[]; Object.keys(productCache).forEach(function(c){ var w=productCache[c]&&productCache[c].watchKws; if(w&&w.length) arr.push(c); }); return arr; }
+function _setKwWPPeriodUI(){ var d=document.getElementById('kwWPDaily'), m=document.getElementById('kwWPMonthly'); var on='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap'; var off='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap'; if(d)d.style.cssText=(_kwIndivPeriod==='daily')?on:off; if(m)m.style.cssText=(_kwIndivPeriod==='monthly')?on:off; }
+function renderKwWatchProd(){ var sel=document.getElementById('kwWatchProdSel'); var codes=_watchedCodes(); if(sel){ sel.innerHTML='<option value="">注視KWの商品から選択</option>'+codes.map(function(c){ return '<option value="'+_kwEsc(c)+'"'+(c===_kwIndivCode?' selected':'')+'>'+_kwEsc(_kwIndivName(c))+'</option>'; }).join(''); } _setKwWPPeriodUI(); renderKwIndiv(); }
+function _kwWatchProdLoad(code){ if(!code) return; _kwIndivCode=code; renderKwIndiv(); }
+function _kwWatchProdPeriod(p){ _kwIndivPeriod=p; _setKwWPPeriodUI(); renderKwIndiv(); }
 function _renderKwTable(cfg){ cfg=cfg||{};
   const cont=document.getElementById(cfg.containerId||'tab-kw-all'); if(!cont) return;
   var _reRender=cfg.watchOnly?'renderKwWatch()':'renderKwAllData()';
@@ -7146,7 +7167,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   h+='<th style="'+_H+';background:#d2ece8;color:#00796b">売上ROAS</th>';
   h+='<th style="'+_H+';background:#fbe4ec">CVR</th>';
   h+='<th style="'+_H+';background:#fbe4ec">ROAS</th>';
-  h+='<th style="'+_H+';background:#f8dcb8;color:#b45309">当商品内で<br>占める割合</th>';
+  if(!cfg.watchOnly) h+='<th style="'+_H+';background:#f8dcb8;color:#b45309">当商品内で<br>占める割合</th>';
   h+='<th style="'+_H+';background:#e4eefb">月クリック合計</th>';
   h+='<th style="'+_H+';background:#e4eefb">直近3日クリック</th>';
   h+='<th style="'+_H+';background:#ede4fb;color:#7c3aed">目安</th>';
@@ -7158,12 +7179,12 @@ function _renderKwTable(cfg){ cfg=cfg||{};
     h+='<tr>'
       +'<td style="'+_T+';text-align:left;background:var(--surface)"><div style="display:flex;align-items:center;gap:8px">'+(o.img?'<img loading="lazy" src="'+o.img+'" style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">':'<div style="width:34px;height:34px"></div>')+'<div style="text-align:left"><div style="font-size:9px;color:var(--text3);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.name)+'</div><div style="font-size:12px;font-weight:700">'+_kwEsc(o.kw)+'</div></div></div></td>'
       +'<td style="'+_T+';background:#eef7f0">'+n2(o.kwvol)+'</td>'
-      +'<td style="'+_T+';background:#fdf6e3;font-weight:700">'+yfmt(o.spend)+(_totalSpend>0?'<div style="font-size:9px;font-weight:600;color:#9a7b1a;margin-top:1px;white-space:nowrap">'+_pctFmt(o.spend/_totalSpend*100)+'%</div>':'')+'</td>'
+      +'<td style="'+_T+';background:#fdf6e3;font-weight:700">'+yfmt(o.spend)+((!cfg.watchOnly&&_totalSpend>0)?'<div style="font-size:9px;font-weight:600;color:#9a7b1a;margin-top:1px;white-space:nowrap">'+_pctFmt(o.spend/_totalSpend*100)+'%</div>':'')+'</td>'
       +'<td style="'+_T+';background:#fdf6e3">'+yfmt(o.sales)+'</td>'
       +'<td style="'+_T+';background:#e0f2f1;font-weight:700;color:#333">'+(o.salesRoas!=null?Math.round(o.salesRoas).toLocaleString()+'%':'\u2014')+'</td>'
       +'<td style="'+_T+';background:#fcecf2">'+(o.cvr!=null?o.cvr.toFixed(2)+'%':'\u2014')+'</td>'
       +'<td style="'+_T+';background:#fcecf2;font-weight:700;color:'+_roasColor(o.roas)+'">'+(o.roas!=null?Math.round(o.roas).toLocaleString()+'%':'\u2014')+'</td>'
-      +(function(){ var sh=(o.prodSpend>0&&o.spend!=null)?(o.spend/o.prodSpend*100):null; return '<td style="'+_T+';background:#fcecd9;font-weight:700;color:'+_shareColor(sh)+'">'+(sh!=null?_pctFmt(sh)+'%':'\u2014')+'</td>'; })()
+      +(cfg.watchOnly?'':(function(){ var sh=(o.prodSpend>0&&o.spend!=null)?(o.spend/o.prodSpend*100):null; return '<td style="'+_T+';background:#fcecd9;font-weight:700;color:'+_shareColor(sh)+'">'+(sh!=null?_pctFmt(sh)+'%':'\u2014')+'</td>'; })())
       +'<td style="'+_T+';background:#eef4fc">'+n2(o.mclick)+'</td>'
       +'<td style="'+_T+';background:#eef4fc">'+n2(o.recent3)+'</td>'
       +'<td style="'+_T+';background:#f3ecfd">'+n2(o.gui)+'</td>'
@@ -7181,7 +7202,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   const top='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px"><div style="font-size:13px;font-weight:700;color:var(--text2)">'+(_latestDate?('<span style="color:var(--text3);font-weight:600;margin-right:10px">'+_latestDate.slice(0,4)+'/'+_latestDate.slice(5,7)+'/'+_latestDate.slice(8,10)+'</span>'):'')+'全KW '+rows.length+'件</div><div style="display:flex;align-items:center;gap:6px">'+_maruToggle+'<span style="font-size:11px;color:var(--text3)">並べ替え</span>'+sortSel+'</div></div>';
   var _roasLeg='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--text2)"><span style="font-weight:700">ROAS文字色</span>'+[['#15803d','800以上'],['#16a34a','600-800'],['#555','400-600'],['#ea580c','200-400'],['#dc2626','0-200']].map(function(pp){return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="font-weight:800;color:'+pp[0]+'">■</span>'+pp[1]+'</span>';}).join('')+'</div>';
   var _shareLeg='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--text2)"><span style="font-weight:700">当商品内割合 文字色</span>'+[['#dc2626','70-100'],['#ea580c','50-70'],['#ca8a04','30-50'],['#555','0-30']].map(function(pp){return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="font-weight:800;color:'+pp[0]+'">■</span>'+pp[1]+'</span>';}).join('')+'</div>';
-  cont.innerHTML='<div style="padding:10px 14px">'+top+_roasLeg+_shareLeg+'<div style="max-height:calc(100vh - 240px);overflow:auto;border:1px solid var(--border);border-radius:8px">'+h+'</div></div>';
+  cont.innerHTML='<div style="padding:10px 14px">'+top+_roasLeg+(cfg.watchOnly?'':_shareLeg)+'<div style="max-height:calc(100vh - 240px);overflow:auto;border:1px solid var(--border);border-radius:8px">'+h+'</div></div>';
 }
 
 function _buildKwTableBlock(code, daily, idx, pfx){
@@ -10340,6 +10361,7 @@ function switchTab(tab) {
   if (tab === 'kw-all') { renderKwAllData(); }
   if (tab === 'kw-indiv-table') { renderKwIndivTableAll(); }
   if (tab === 'mar-watch') { renderKwWatch(); }
+  if (tab === 'kw-watch-prod') { renderKwWatchProd(); }
   if (tab === 'kw-compare') renderKwCompare();
   if (tab === 'item-graph') { _initItemGraphRange(); }
   if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
