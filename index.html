@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.953</span>
+    <span class="build-date">v1.954</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7091,6 +7091,7 @@ var _kwAllSort='spend';
 function renderKwAllData(){
   const cont=document.getElementById('tab-kw-all'); if(!cont) return;
   const codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))];
+  var _salesByCodeYm={}; salesRows.forEach(function(s){ if(s.itemCode&&s.ym){ var _k=s.itemCode+'|'+s.ym; _salesByCodeYm[_k]=(_salesByCodeYm[_k]||0)+(s.sales||0); } });
   let rows=[];
   codes.forEach(function(code){
     const prodRows=kwRows.filter(r=>r.itemCode===code);
@@ -7103,8 +7104,9 @@ function renderKwAllData(){
     const kws=Object.keys(byKw);
     const volMap={}; let totVol=0;
     kws.forEach(function(kw){ const v=_kwiPredVol(byKw[kw],monthLast); volMap[kw]=v; totVol+=v; });
-    let _pSp=0,_pSa=0; kws.forEach(function(kw){ byKw[kw].forEach(function(r){ _pSp+=(r.spend||0); _pSa+=(r.sales||0); }); });
-    const prodRoas=_pSp>0?(_pSa/_pSp*100):null;
+    let _pSp=0; kws.forEach(function(kw){ byKw[kw].forEach(function(r){ _pSp+=(r.spend||0); }); });
+    const _totSales=_salesByCodeYm[code+'|'+ym]||0;
+    const prodRoas=(_pSp>0)?(_totSales/_pSp*100):null;
     const pc=productCache[code]||{};
     const img=(pc.manualImg||pc.img)||'';
     const name=pc.name||code;
@@ -7133,7 +7135,7 @@ function renderKwAllData(){
   h+='<th style="'+_H+';background:#e6f4ea">KW割合</th>';
   h+='<th style="'+_H+';background:#fcf2d8">実績額</th>';
   h+='<th style="'+_H+';background:#fcf2d8">売上</th>';
-  h+='<th style="'+_H+';background:#fbe4ec;color:#c2185b">売上ROAS</th>';
+  h+='<th style="'+_H+';background:#d2ece8;color:#00796b">売上ROAS</th>';
   h+='<th style="'+_H+';background:#fbe4ec">CVR</th>';
   h+='<th style="'+_H+';background:#fbe4ec">ROAS</th>';
   h+='<th style="'+_H+';background:#e4eefb">月クリック合計</th>';
@@ -7149,7 +7151,7 @@ function renderKwAllData(){
       +'<td style="'+_T+';background:#eef7f0">'+o.share.toFixed(2)+'%</td>'
       +'<td style="'+_T+';background:#fdf6e3;font-weight:700">'+yfmt(o.spend)+(_totalSpend>0?'<div style="font-size:9px;font-weight:600;color:#9a7b1a;margin-top:1px">'+_pctFmt(o.spend/_totalSpend*100)+'%</div>':'')+'</td>'
       +'<td style="'+_T+';background:#fdf6e3">'+yfmt(o.sales)+'</td>'
-      +'<td style="'+_T+';background:#fcecf2;font-weight:700;color:'+_roasColor(o.salesRoas)+'">'+(o.salesRoas!=null?Math.round(o.salesRoas).toLocaleString()+'%':'\u2014')+'</td>'
+      +'<td style="'+_T+';background:#e0f2f1;font-weight:700;color:#333">'+(o.salesRoas!=null?Math.round(o.salesRoas).toLocaleString()+'%':'\u2014')+'</td>'
       +'<td style="'+_T+';background:#fcecf2">'+(o.cvr!=null?o.cvr.toFixed(2)+'%':'\u2014')+'</td>'
       +'<td style="'+_T+';background:#fcecf2;font-weight:700;color:'+_roasColor(o.roas)+'">'+(o.roas!=null?Math.round(o.roas).toLocaleString()+'%':'\u2014')+'</td>'
       +'<td style="'+_T+';background:#eef4fc">'+n2(o.mclick)+'</td>'
