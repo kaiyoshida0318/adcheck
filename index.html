@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.948</span>
+    <span class="build-date">v1.951</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7058,13 +7058,15 @@ var _IDLE_OFF='font-size:11px;padding:4px 12px;border:1px solid var(--border);bo
 var _IDLE_ON_N='font-size:11px;padding:4px 12px;border:1px solid #00897B;border-radius:6px;background:#00897B;color:#fff;cursor:pointer;font-weight:700;white-space:nowrap';
 var _IDLE_ON_I='font-size:11px;padding:4px 12px;border:1px solid #6b7280;border-radius:6px;background:#6b7280;color:#fff;cursor:pointer;font-weight:700;white-space:nowrap';
 function _styleIdleBtns(nB,iB,isIdle){ if(nB) nB.style.cssText=isIdle?_IDLE_OFF:_IDLE_ON_N; if(iB) iB.style.cssText=isIdle?_IDLE_ON_I:_IDLE_OFF; }
-function _setIdle(code,val,btn){ if(!productCache[code]) productCache[code]={}; productCache[code].idle=!!val; try{saveProductCache();}catch(e){} try{ const w=btn.parentNode; const bs=w.getElementsByTagName('button'); _styleIdleBtns(bs[0],bs[1],!!val); }catch(e){} if(typeof _currentTab!=='undefined' && _currentTab==='kw-indiv-table' && typeof renderKwIndivTableAll==='function'){ renderKwIndivTableAll(); } }
+var _pcSyncTimer=null;
+function _syncPC(){ try{ saveProductCache(); }catch(e){} if(!localStorage.getItem('github_pat')) return; if(_pcSyncTimer) clearTimeout(_pcSyncTimer); _pcSyncTimer=setTimeout(function(){ _pcSyncTimer=null; try{ var _r=saveProductCacheToGitHub(); if(_r&&_r.catch) _r.catch(function(){}); }catch(e){} }, 1500); }
+function _setIdle(code,val,btn){ if(!productCache[code]) productCache[code]={}; productCache[code].idle=!!val; _syncPC(); try{ const w=btn.parentNode; const bs=w.getElementsByTagName('button'); _styleIdleBtns(bs[0],bs[1],!!val); }catch(e){} if(typeof _currentTab!=='undefined' && _currentTab==='kw-indiv-table' && typeof renderKwIndivTableAll==='function'){ renderKwIndivTableAll(); } }
 var _CONF_PRE='font-size:13px;padding:7px 18px;border:1px solid #d97706;border-radius:7px;background:#f59e0b;color:#fff;cursor:pointer;font-weight:700;white-space:nowrap';
 var _CONF_DONE='font-size:13px;padding:7px 18px;border:1px solid #15803d;border-radius:7px;background:#16a34a;color:#fff;cursor:pointer;font-weight:700;white-space:nowrap';
 var _CONF_OFF='font-size:13px;padding:7px 18px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text3);cursor:pointer;font-weight:600;white-space:nowrap';
 function _styleConfBtns(preB,doneB,isConf){ if(preB) preB.style.cssText=isConf?_CONF_OFF:_CONF_PRE; if(doneB) doneB.style.cssText=isConf?_CONF_DONE:_CONF_OFF; }
-function _setConfirmed(code,val,btn){ if(!productCache[code]) productCache[code]={}; productCache[code].confirmed=!!val; try{saveProductCache();}catch(e){} try{ const w=btn.parentNode; const bs=w.getElementsByTagName('button'); _styleConfBtns(bs[0],bs[1],!!val); }catch(e){} }
-function _resetAllConfirmed(){ if(!confirm('すべての「確認済」を「確認前」に戻します。よろしいですか?')) return; Object.keys(productCache).forEach(function(c){ if(productCache[c]&&productCache[c].confirmed){ productCache[c].confirmed=false; } }); try{saveProductCache();}catch(e){} if(typeof renderKwIndivTableAll==='function') renderKwIndivTableAll(); }
+function _setConfirmed(code,val,btn){ if(!productCache[code]) productCache[code]={}; productCache[code].confirmed=!!val; _syncPC(); try{ const w=btn.parentNode; const bs=w.getElementsByTagName('button'); _styleConfBtns(bs[0],bs[1],!!val); }catch(e){} }
+function _resetAllConfirmed(){ if(!confirm('すべての「確認済」を「確認前」に戻します。よろしいですか?')) return; Object.keys(productCache).forEach(function(c){ if(productCache[c]&&productCache[c].confirmed){ productCache[c].confirmed=false; } }); _syncPC(); if(typeof renderKwIndivTableAll==='function') renderKwIndivTableAll(); }
 var _kwTblCharts=[]; var _kwTblCodes={};
 function _kwiPrevDay(ds){ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()-1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function _kwiNextDay(ds){ const dt=new Date(ds+'T12:00:00'); dt.setDate(dt.getDate()+1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
@@ -7115,6 +7117,11 @@ function renderKwAllData(){
   });
   const _key=_kwAllSort;
   rows.sort(function(a,b){ var x=a[_key],y=b[_key]; x=(x==null?-1:x); y=(y==null?-1:y); return (y-x)||(b.spend-a.spend); });
+  var _totalSpend=rows.reduce(function(a,o){return a+(o.spend||0);},0);
+  var _roasVals=rows.map(function(o){return o.roas;}).filter(function(v){return v!=null;}).sort(function(a,b){return a-b;}); var _nR=_roasVals.length;
+  function _roasRank(v){ if(v==null||_nR===0) return null; var lo=0,hi=_nR; while(lo<hi){ var mid=(lo+hi)>>1; if(_roasVals[mid]<=v) lo=mid+1; else hi=mid; } return lo/_nR; }
+  function _roasBg(v){ var rk=_roasRank(v); if(rk==null) return ''; if(rk>=0.9) return 'background:#b7e1cd;'; if(rk>=0.8) return 'background:#d9f0e3;'; if(rk<=0.1) return 'background:#ffc9c9;'; if(rk<=0.2) return 'background:#ffe2c4;'; return ''; }
+  function _pctFmt(x){ return (x.toFixed(1)).replace(/\.0$/,''); }
   const n2=function(v){ return (v==null)?'\u2014':Number(v).toLocaleString(); };
   const yfmt=function(v){ return (v==null)?'\u2014':Math.round(v).toLocaleString(); };
   const _H='padding:7px 8px;text-align:center;font-size:10px;font-weight:700;color:#444;border-bottom:2px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2';
@@ -7139,14 +7146,14 @@ function renderKwAllData(){
     h+='<tr>'
       +'<td style="'+_T+';text-align:left;background:var(--surface)"><div style="display:flex;align-items:center;gap:8px">'+(o.img?'<img loading="lazy" src="'+o.img+'" style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">':'<div style="width:34px;height:34px"></div>')+'<div style="text-align:left"><div style="font-size:9px;color:var(--text3);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.name)+'</div><div style="font-size:12px;font-weight:700">'+_kwEsc(o.kw)+'</div></div></div></td>'
       +'<td style="'+_T+';font-size:10px;color:#666">'+dstr+'</td>'
-      +'<td style="'+_T+'">'+n2(o.kwvol)+'</td>'
-      +'<td style="'+_T+'">'+o.share.toFixed(2)+'%</td>'
-      +'<td style="'+_T+';font-weight:700">'+yfmt(o.spend)+'</td>'
-      +'<td style="'+_T+'">'+yfmt(o.sales)+'</td>'
-      +'<td style="'+_T+'">'+(o.cvr!=null?o.cvr.toFixed(2)+'%':'\u2014')+'</td>'
-      +'<td style="'+_T+'">'+(o.roas!=null?Math.round(o.roas).toLocaleString()+'%':'\u2014')+'</td>'
-      +'<td style="'+_T+'">'+n2(o.mclick)+'</td>'
-      +'<td style="'+_T+'">'+n2(o.recent3)+'</td>'
+      +'<td style="'+_T+';background:#eef7f0">'+n2(o.kwvol)+'</td>'
+      +'<td style="'+_T+';background:#eef7f0">'+o.share.toFixed(2)+'%</td>'
+      +'<td style="'+_T+';background:#fdf6e3;font-weight:700">'+yfmt(o.spend)+(_totalSpend>0?'<div style="font-size:9px;font-weight:600;color:#9a7b1a;margin-top:1px">'+_pctFmt(o.spend/_totalSpend*100)+'%</div>':'')+'</td>'
+      +'<td style="'+_T+';background:#fdf6e3">'+yfmt(o.sales)+'</td>'
+      +'<td style="'+_T+';background:#fcecf2">'+(o.cvr!=null?o.cvr.toFixed(2)+'%':'\u2014')+'</td>'
+      +'<td style="'+_T+';font-weight:700;'+_roasBg(o.roas)+'">'+(o.roas!=null?Math.round(o.roas).toLocaleString()+'%':'\u2014')+'</td>'
+      +'<td style="'+_T+';background:#eef4fc">'+n2(o.mclick)+'</td>'
+      +'<td style="'+_T+';background:#eef4fc">'+n2(o.recent3)+'</td>'
       +'<td style="'+_T+';background:#f3ecfd">'+n2(o.gui)+'</td>'
       +'<td style="'+_T+';background:#eaf5dd">'+n2(o.act)+'</td>'
       +'<td style="'+_T+'">'+_kwiMkM(o.act,o.gui,o.streak)+'</td>'
@@ -7156,7 +7163,8 @@ function renderKwAllData(){
   const opts=[['spend','実績額順'],['sales','売上順'],['kwvol','KWvol順'],['mclick','月クリック順'],['roas','ROAS順'],['cvr','CVR順']];
   const sortSel='<select onchange="_kwAllSort=this.value; renderKwAllData();" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">'+opts.map(function(p){return '<option value="'+p[0]+'"'+(_kwAllSort===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('')+'</select>';
   const top='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px"><div style="font-size:13px;font-weight:700;color:var(--text2)">全KW '+rows.length+'件</div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--text3)">並べ替え</span>'+sortSel+'</div></div>';
-  cont.innerHTML='<div style="padding:10px 14px">'+top+'<div style="max-height:calc(100vh - 240px);overflow:auto;border:1px solid var(--border);border-radius:8px">'+h+'</div></div>';
+  var _roasLeg='<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--text2)"><span style="font-weight:700">ROAS配色</span>'+[['#b7e1cd','上位10%'],['#d9f0e3','上位20%'],['transparent','中間'],['#ffe2c4','下位20%'],['#ffc9c9','下位10%']].map(function(pp){return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:14px;height:14px;border-radius:3px;border:1px solid var(--border);background:'+pp[0]+'"></span>'+pp[1]+'</span>';}).join('')+'</div>';
+  cont.innerHTML='<div style="padding:10px 14px">'+top+_roasLeg+'<div style="max-height:calc(100vh - 240px);overflow:auto;border:1px solid var(--border);border-radius:8px">'+h+'</div></div>';
 }
 
 function _buildKwTableBlock(code, daily, idx, pfx){
@@ -12521,11 +12529,42 @@ function exportCSV() {
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`adcheck_${isDay?'day_'+_selectedDay:ym}.csv`; a.click();
 }
 
+// ── 汎用設定の全PC同期 (分析リスト/メモ・KW比較・ショップ一覧・無視カラム) ──
+var _MISC_SHARED_FILE='data/misc_shared.json';
+var _MISC_KEYS=['adcheck_analyze_lists','adcheck_analyze_memo','adcheck_kwcmp_saved','adcheck_shops','adcheck_igcol'];
+var _miscSuppress=false, _miscPubTimer=null;
+async function _miscFetch(){
+  try{
+    var pat=localStorage.getItem('github_pat'); var obj=null;
+    try{ var h={'Accept':'application/vnd.github.v3.raw'}; if(pat) h['Authorization']='token '+pat; var r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_MISC_SHARED_FILE+'?t='+Date.now(),{headers:h,cache:'no-store'}); if(r.ok){ obj=JSON.parse(await r.text()); } }catch(e){}
+    if(!obj){ var rr=await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+_MISC_SHARED_FILE+'?t='+Date.now(),{cache:'no-store'}); if(rr.ok) obj=JSON.parse(await rr.text()); }
+    if(obj && obj.data){ _miscSuppress=true; _MISC_KEYS.forEach(function(k){ if(obj.data[k]!=null){ try{ localStorage.setItem(k, obj.data[k]); }catch(e){} } }); _miscSuppress=false; return true; }
+  }catch(e){}
+  return false;
+}
+async function _miscPublish(){
+  var pat=localStorage.getItem('github_pat'); if(!pat) return false;
+  try{
+    var data={}; _MISC_KEYS.forEach(function(k){ var v=localStorage.getItem(k); if(v!=null) data[k]=v; });
+    var headers={'Authorization':'token '+pat,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+    var url='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_MISC_SHARED_FILE;
+    var getRes=await fetch(url,{headers:headers,cache:'no-store'}); var sha=getRes.ok?(await getRes.json()).sha:null;
+    var base64=btoa(unescape(encodeURIComponent(JSON.stringify({data:data,updatedAt:Date.now()}))));
+    var body={message:'Update misc shared',content:base64}; if(sha) body.sha=sha;
+    var putRes=await fetch(url,{method:'PUT',headers:headers,body:JSON.stringify(body)});
+    return putRes.ok;
+  }catch(e){ return false; }
+}
+function _miscSchedulePublish(){ if(_miscSuppress) return; if(_miscPubTimer) clearTimeout(_miscPubTimer); _miscPubTimer=setTimeout(function(){ _miscPubTimer=null; _miscPublish(); }, 1500); }
+(function(){ try{ var _o=localStorage.setItem.bind(localStorage); localStorage.setItem=function(k,v){ _o(k,v); try{ if(_MISC_KEYS.indexOf(k)>=0) _miscSchedulePublish(); }catch(e){} }; }catch(e){} })();
+
 // ── Init ──
 window.addEventListener('DOMContentLoaded', async () => {
   const id = localStorage.getItem('rakuten_app_id') || '';
   const ak = localStorage.getItem('rakuten_access_key') || '';
   updateApiStatus(id, ak);
+  // 全PC同期: 汎用設定を取得してからUIを描画
+  try{ await _miscFetch(); }catch(e){}
   // ショップメニュー初期描画
   _renderShopMenu();
   // ヘッダー高さを測定してCSS変数を更新(ズーム対応)
