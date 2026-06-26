@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.973</span>
+    <span class="build-date">v1.974</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -887,7 +887,8 @@ header + * { margin-top: 4px; }
       <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
         <button id="yoyModeYoy" onclick="setYoyMode('yoy')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">前年同月比</button>
         <button id="yoyModeMom" onclick="setYoyMode('mom')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前月比較</button>
-        <select id="yoySel" onchange="setYoyMonth(this.value)" style="margin-left:10px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select>
+        <button id="yoyModePick" onclick="setYoyMode('pick')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">特定月比較</button>
+        <select id="yoySel" onchange="setYoyMonth(this.value)" style="margin-left:10px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select><select id="yoySelA" onchange="setYoyPick('a',this.value)" style="display:none;margin-left:10px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select><span id="yoyPickArrow" style="display:none;margin:0 6px;color:var(--text3);font-weight:700">→</span><select id="yoySelB" onchange="setYoyPick('b',this.value)" style="display:none;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select>
         <button id="yoyTglUp" onclick="toggleYoyLine('up')" style="margin-left:12px;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #16a34a;background:#16a34a;color:#fff;">上昇線</button>
         <button id="yoyTglDown" onclick="toggleYoyLine('down')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #dc2626;background:#dc2626;color:#fff;">下降線</button>
         <button id="yoyColBlue" onclick="toggleYoyColor('blue')" style="margin-left:12px;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">青商品</button>
@@ -10199,15 +10200,22 @@ function _onLogoClick(e) {
 
 let _yoyMode = 'yoy';
 let _yoyMonth = '';
+let _yoyPickA='', _yoyPickB='';
 function setYoyMode(m){ _yoyMode = m; _yoyFocus=null; _setYoyModeUI(); renderYoy(); }
 function setYoyMonth(v){ _yoyMonth = v; _yoyFocus=null; renderYoy(); }
+function setYoyPick(w,v){ if(w==='a')_yoyPickA=v; else _yoyPickB=v; _yoyFocus=null; renderYoy(); }
 function _setYoyModeUI(){
   const base='font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;';
   const on='border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
   const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
-  const a=document.getElementById('yoyModeYoy'), b=document.getElementById('yoyModeMom');
+  const a=document.getElementById('yoyModeYoy'), b=document.getElementById('yoyModeMom'), c=document.getElementById('yoyModePick');
   if(a) a.style.cssText=base+((_yoyMode==='yoy')?on:off);
   if(b) b.style.cssText=base+((_yoyMode==='mom')?on:off);
+  if(c) c.style.cssText=base+((_yoyMode==='pick')?on:off);
+  const pick=(_yoyMode==='pick');
+  const s1=document.getElementById('yoySel'); if(s1) s1.style.display=pick?'none':'';
+  const sa=document.getElementById('yoySelA'), sb=document.getElementById('yoySelB'), ar=document.getElementById('yoyPickArrow');
+  if(sa) sa.style.display=pick?'':'none'; if(sb) sb.style.display=pick?'':'none'; if(ar) ar.style.display=pick?'':'none';
 }
 function _ymAdd(ym, d){ let y=+ym.slice(0,4), m=+ym.slice(4,6)-1+d; y+=Math.floor(m/12); m=((m%12)+12)%12; return String(y)+String(m+1).padStart(2,'0'); }
 let _yoyHideUp=false;
@@ -10251,19 +10259,31 @@ function renderYoy(){
   const completed=yms.filter(m=>m<curYm);
   const sel=document.getElementById('yoySel');
   if(!completed.length){ if(sel) sel.innerHTML=''; area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; return; }
-  const later=(_yoyMonth && completed.includes(_yoyMonth))?_yoyMonth:completed[completed.length-1];
-  if(sel){ sel.innerHTML=[...completed].reverse().map(m=>'<option value="'+m+'"'+(m===later?' selected':'')+'>'+m.slice(0,4)+'/'+m.slice(4,6)+'</option>').join(''); }
-  const delta=_yoyMode==='yoy'?12:1;
-  const periods=[_ymAdd(later,-2*delta), _ymAdd(later,-delta), later];
+  let periods;
+  if(_yoyMode==='pick'){
+    let A=(_yoyPickA && yms.includes(_yoyPickA))?_yoyPickA:(yms[yms.length-2]||yms[0]);
+    let B=(_yoyPickB && yms.includes(_yoyPickB))?_yoyPickB:(yms[yms.length-1]);
+    const _opt=(m,cm)=>'<option value="'+m+'"'+(m===cm?' selected':'')+'>'+m.slice(0,4)+'/'+m.slice(4,6)+'</option>';
+    const selA=document.getElementById('yoySelA'), selB=document.getElementById('yoySelB');
+    if(selA) selA.innerHTML=[...yms].reverse().map(m=>_opt(m,A)).join('');
+    if(selB) selB.innerHTML=[...yms].reverse().map(m=>_opt(m,B)).join('');
+    periods=[A,B];
+  } else {
+    const later=(_yoyMonth && completed.includes(_yoyMonth))?_yoyMonth:completed[completed.length-1];
+    if(sel){ sel.innerHTML=[...completed].reverse().map(m=>'<option value="'+m+'"'+(m===later?' selected':'')+'>'+m.slice(0,4)+'/'+m.slice(4,6)+'</option>').join(''); }
+    const delta=_yoyMode==='yoy'?12:1;
+    periods=[_ymAdd(later,-2*delta), _ymAdd(later,-delta), later];
+  }
+  const lastK=periods.length-1;
   const ymDash=m=>m.slice(0,4)+'-'+m.slice(4,6);
   const maps=periods.map(pm=>{ const dash=ymDash(pm); const agg=getMonthAgg(dash)||{}; const mp={}; Object.keys(agg).forEach(code=>{ const a=agg[code]; let sp=a.spend||0, s7=a.sales720||0; if(sp===0 && s7===0){ const st=_yoyMonthStats(code, dash); sp=st.spend; s7=st.sales720; } mp[code]={ s:a.totSales||0, sp:sp, seo:Math.max(0,(a.totSales||0)-(a.rppSales||0)), pf:Math.round(s7*0.45-sp) }; }); return mp; });
   const allCodes=new Set(); maps.forEach(mp=>Object.keys(mp).forEach(c=>allCodes.add(c)));
   let prods=[...allCodes].map(code=>{ const pc=productCache[code]||{}; const v=maps.map(mp=>mp[code]||{s:0,sp:0,seo:0,pf:0}); return { code, name:(pc.manualName||pc.name||code), img:(pc.manualImg||pc.img||''), v }; })
-    .filter(p=> p.v[2].s>1000);
+    .filter(p=> p.v[lastK].s>1000);
   if(!prods.length){ area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">比較できる売上データがありません</div>'; return; }
-  const top=[...prods].sort((a,b)=>b.v[2].s-a.v[2].s);
+  const top=[...prods].sort((a,b)=>b.v[lastK].s-a.v[lastK].s);
   const rowH=48, headerH=32, gapW=48, labelH=27, TW=452;
-  const orders=[0,1,2].map(k=> [...top].sort((a,b)=>b.v[k].s-a.v[k].s));
+  const orders=periods.map((_,k)=> [...top].sort((a,b)=>b.v[k].s-a.v[k].s));
   const idxs=orders.map(ord=>{ const m={}; ord.forEach((p,i)=>m[p.code]=i); return m; });
   const yen=v=>'¥'+Math.round(v).toLocaleString();
   const fmt=v=> v>0?yen(v):'<span style="color:var(--text3)">—</span>';
@@ -10315,16 +10335,18 @@ function renderYoy(){
     });
     return '<svg width="'+gapW+'" height="'+bodyH+'" style="display:block">'+lines+'</svg>';
   };
-  const note=_yoyMode==='yoy'?['2年前','1年前','選択月']:['2ヶ月前','前月','選択月'];
+  const note=_yoyMode==='pick'?['','']:(_yoyMode==='yoy'?['2年前','1年前','選択月']:['2ヶ月前','前月','選択月']);
   const lblStyle='text-align:center;font-weight:700;font-size:12px;height:'+labelH+'px;line-height:'+labelH+'px;color:var(--text2);background:var(--surface)';
-  const minW=TW*3+gapW*2;
+  const minW=TW*periods.length+gapW*(periods.length-1);
   const headBlock=k=>'<div style="width:'+TW+'px;flex-shrink:0;border:1px solid var(--border);border-radius:6px 6px 0 0;overflow:hidden">'
-    +'<div style="'+lblStyle+'">'+periods[k].slice(0,4)+'/'+periods[k].slice(4,6)+'（'+note[k]+'）</div>'+colH+'</div>';
+    +'<div style="'+lblStyle+'">'+periods[k].slice(0,4)+'/'+periods[k].slice(4,6)+(note[k]?'（'+note[k]+'）':'')+'</div>'+colH+'</div>';
   const rowsBlock=k=>'<div style="width:'+TW+'px;flex-shrink:0;border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;overflow:hidden">'+tableHtml(orders[k],k)+'</div>';
   const gapSpacer='<div style="width:'+gapW+'px;flex-shrink:0"></div>';
   const svgCol=(kL,kR)=>'<div style="width:'+gapW+'px;flex-shrink:0">'+svgBetween(kL,kR)+'</div>';
-  const head='<div style="display:flex;align-items:flex-end;position:sticky;top:0;z-index:10;background:var(--surface);min-width:'+minW+'px">'+headBlock(0)+gapSpacer+headBlock(1)+gapSpacer+headBlock(2)+'</div>';
-  const body='<div style="display:flex;align-items:flex-start;min-width:'+minW+'px">'+rowsBlock(0)+svgCol(0,1)+rowsBlock(1)+svgCol(1,2)+rowsBlock(2)+'</div>';
+  let _hd='', _bd='';
+  for(let k=0;k<periods.length;k++){ if(k>0){ _hd+=gapSpacer; _bd+=svgCol(k-1,k); } _hd+=headBlock(k); _bd+=rowsBlock(k); }
+  const head='<div style="display:flex;align-items:flex-end;position:sticky;top:0;z-index:10;background:var(--surface);min-width:'+minW+'px">'+_hd+'</div>';
+  const body='<div style="display:flex;align-items:flex-start;min-width:'+minW+'px">'+_bd+'</div>';
   area.innerHTML='<div style="position:relative">'+head+body+'</div>';
 }
 function toggleTopChrome(){
