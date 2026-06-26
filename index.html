@@ -560,14 +560,15 @@ header + * { margin-top: 4px; }
   <button class="tab-btn" id="tab-btn-renewal-thumb" onclick="switchTab('renewal-thumb')">サムネ更新済<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-thumb"></span></button>
   <span class="tab-row-label" id="label-taiou" style="color:#ea580c;padding-left:14px">【対応検討】</span>
   <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近4ヶ月</button>
+  <span class="tab-row-label" style="color:#ea580c;padding-left:16px">【セール】</span>
+  <button class="tab-btn" id="tab-btn-mar-kouho" onclick="switchTab('mar-kouho')">候補<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-kouho"></span></button>
+  <span class="tab-row-label" style="color:#7c3aed;padding-left:16px">【マラソン】</span>
+  <button class="tab-btn" id="tab-btn-mar-jisshi" onclick="switchTab('mar-jisshi')">実施<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-jisshi"></span></button>
   <span class="tab-row-label blue" style="color:#db2777;padding-left:16px">【SS】</span>
   <button class="tab-btn" id="tab-btn-ss-mar" onclick="switchTab('ss-mar')">3月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-mar"></span></button>
   <button class="tab-btn" id="tab-btn-ss-jun" onclick="switchTab('ss-jun')">6月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-jun"></span></button>
   <button class="tab-btn" id="tab-btn-ss-sep" onclick="switchTab('ss-sep')">9月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-sep"></span></button>
   <button class="tab-btn" id="tab-btn-ss-dec" onclick="switchTab('ss-dec')">12月<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-ss-dec"></span></button>
-  <span class="tab-row-label" style="color:#7c3aed;padding-left:16px">【マラソン】</span>
-  <button class="tab-btn" id="tab-btn-mar-kouho" onclick="switchTab('mar-kouho')">候補<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-kouho"></span></button>
-  <button class="tab-btn" id="tab-btn-mar-jisshi" onclick="switchTab('mar-jisshi')">実施中<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-jisshi"></span></button>
 </nav>
 <nav class="tab-sub-row kw-nav-row" style="position:relative;top:auto;z-index:1">
   <span class="tab-row-label" style="color:#00897B">【広告調整】</span>
@@ -577,8 +578,6 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-basic" id="tab-btn-kw-compare" onclick="switchTab('kw-compare')">KW-比較</button>
   <span class="tab-row-label" style="color:#dc2626;padding-left:10px">【入札単価対策】</span>
   <button class="tab-btn" id="tab-btn-mar-watch" onclick="switchTab('mar-watch')">KW-注視分<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-watch"></span></button>
-  <button class="tab-btn" id="tab-btn-mar-cpc" onclick="switchTab('mar-cpc')">商品-CPC下げたい◎以外<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-cpc"></span></button>
-  <button class="tab-btn" id="tab-btn-mar-tanka" onclick="switchTab('mar-tanka')">商品-セール活用単価対策<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-tanka"></span></button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3" style="border-bottom:none">
   <span class="tab-row-label red" style="color:#9333ea">【状態】</span>
@@ -1115,8 +1114,6 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-mar-jisshi"></div>
   <div class="tab-panel" id="tab-mar-select"></div>
   <div class="tab-panel" id="tab-mar-watch"></div>
-  <div class="tab-panel" id="tab-mar-cpc"></div>
-  <div class="tab-panel" id="tab-mar-tanka"></div>
 
   <!-- リニューアル：全体（変更記録一覧） -->
   <div class="tab-panel" id="tab-renewal-todo">
@@ -7269,7 +7266,7 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+(_img?'<img loading="lazy" src="'+_img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+'<span style="user-select:all;-webkit-user-select:all">'+_kwEsc(code)+'</span>'+(_itemNo?('\u3000<span style="color:#00897B;font-weight:700">'+_kwEsc(_itemNo)+'</span>'):'')+(_monthLast?('\u3000|\u3000'+_monthLast.slice(0,4)+'/'+_monthLast.slice(5,7)+'/'+_monthLast.slice(8,10)):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'\u3000'+_idleBtns+_confBtns+'</div></div></div>';
   const _btn='<button onclick="_kwTblToggleCharts(\''+pfx+'\','+idx+',this)" style="font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #00897B;background:#fff;color:#00897B;cursor:pointer;font-weight:700;margin:2px 0 8px">グラフ・表を表示</button>';
   const _chc='<div id="kwTblCh'+pfx+'_'+idx+'" style="display:none;margin-bottom:10px"></div>';
-  const _sscell='<div style="flex:0 0 220px;align-self:flex-start;border:1px solid #b9c0cc;border-radius:8px;background:#eef1f6;padding:8px 10px;box-sizing:border-box"><div style="font-size:10px;color:#445;font-weight:700;margin:0 0 5px;text-align:center">SS / マラソン / 下げ</div>'+_ssCellBtns(code)+'</div>';
+  const _sscell='<div style="flex:0 0 220px;align-self:flex-start;border:1px solid #b9c0cc;border-radius:8px;background:#eef1f6;padding:8px 10px;box-sizing:border-box"><div style="font-size:10px;color:#445;font-weight:700;margin:0 0 5px;text-align:center">マラソン/SS</div>'+_ssCellBtns(code)+'</div>';
   const _flex='<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'+_sumHtml+_sscell+'</div>';
   return { html:_head+_flex+_btn+_chc, hasFix:hasFix, hasFixX:hasFixX, hasYellow:hasYellow, redCount:_redCount, problemSpend:_probSpend };
 }
@@ -9406,7 +9403,7 @@ function _ssCellBtns(code){
     return `<button id="ss-btn-${code}-${m}" data-code="${code}" data-mon="${m}" data-active="${active?'1':'0'}" onclick="_toggleRoasTrendSS('${code}','${m}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?'#1565C0':'var(--border)'};background:${active?'#1565C0':'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;width:100%;box-sizing:border-box;white-space:nowrap;text-align:center">${lbl}</button>`; };
   const rb = function(k){ const active=mar.includes(k); const o=MARATHON_BTN[k];
     return `<button id="mar-btn-${code}-${k}" data-code="${code}" data-mar="${k}" data-active="${active?'1':'0'}" onclick="_toggleMarathon('${code}','${k}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?o.col:'var(--border)'};background:${active?o.col:'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;width:100%;box-sizing:border-box;${k==='sage'?'grid-column:1/-1;':''}white-space:nowrap;text-align:center">${o.lbl}</button>`; };
-  return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:100%;box-sizing:border-box">'+mb('03')+mb('06')+rb('kouho')+mb('09')+mb('12')+rb('jisshi')+'<div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:2px">'+rb('cpc')+rb('tanka')+'</div>'+'</div>';
+  return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:100%;box-sizing:border-box">'+rb('kouho')+mb('03')+mb('06')+rb('jisshi')+mb('09')+mb('12')+'</div>';
 }
 function _toggleMarathon(code, key, btn){
   const active = btn.getAttribute('data-active')==='1';
@@ -9838,7 +9835,7 @@ const STATUS_LABELS = {
 const SS_TABS = { 'ss-mar':'03', 'ss-jun':'06', 'ss-sep':'09', 'ss-dec':'12' };
 const SS_LABELS = { 'ss-mar':'3月', 'ss-jun':'6月', 'ss-sep':'9月', 'ss-dec':'12月' };
 const MARATHON_TABS = { 'mar-kouho':'kouho', 'mar-jisshi':'jisshi' };
-const MARATHON_LABELS = { 'mar-kouho':'候補', 'mar-jisshi':'実施中' };
+const MARATHON_LABELS = { 'mar-kouho':'候補', 'mar-jisshi':'実施' };
 const MARATHON_BTN = { kouho:{lbl:'候補',col:'#7c3aed'}, jisshi:{lbl:'実施',col:'#0891b2'}, cpc:{lbl:'CPC',col:'#ea580c'}, tanka:{lbl:'セール時対策',col:'#db2777'} };
 function _migrateMarathonTags(){ try{ Object.keys(productCache||{}).forEach(function(c){ var o=productCache[c]; if(!o||!Array.isArray(o.marathon)) return; if(o.marathon.indexOf('sage')<0) return; var nm=[]; o.marathon.forEach(function(k){ var nk=(k==='sage')?'cpc':k; if(nm.indexOf(nk)<0) nm.push(nk); }); o.marathon=nm; }); }catch(e){} }
 const SUB_TAB_STATUS = {
@@ -10343,8 +10340,6 @@ function switchTab(tab) {
   if (tab === 'kw-all') { renderKwAllData(); }
   if (tab === 'kw-indiv-table') { renderKwIndivTableAll(); }
   if (tab === 'mar-watch') { renderKwWatch(); }
-  if (tab === 'mar-cpc') { _renderKwTableFiltered('tab-mar-cpc','cpc', function(c){ return !!(productCache[c] && (productCache[c].marathon||[]).indexOf('cpc')>=0); }); }
-  if (tab === 'mar-tanka') { _renderKwTableFiltered('tab-mar-tanka','tanka', function(c){ return !!(productCache[c] && (productCache[c].marathon||[]).indexOf('tanka')>=0); }); }
   if (tab === 'kw-compare') renderKwCompare();
   if (tab === 'item-graph') { _initItemGraphRange(); }
   if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
@@ -11392,8 +11387,6 @@ function _updateStatusCounts() {
   set('mar-kouho',     marCount.kouho);
   set('mar-jisshi',    marCount.jisshi);
   (function(){ var c=0; Object.keys(productCache).forEach(function(k){ var w=productCache[k]&&productCache[k].watchKws; if(w&&w.length) c+=w.length; }); set('mar-watch', c); })();
-  set('mar-cpc',       marCount.cpc);
-  set('mar-tanka',     marCount.tanka);
 }
 
 function renderAll() {
