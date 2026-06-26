@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.967</span>
+    <span class="build-date">v1.968</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7354,7 +7354,7 @@ function renderKwIndivTableAll(){
   if(_q){ codes=codes.filter(code=>{ const pc=productCache[code]||{}; return (((pc.itemNumber||'')+' '+(code||'')+' '+(pc.name||'')).toLowerCase()).indexOf(_q)>=0; }); }
   var _gLatest=''; for(var _gi=0;_gi<kwRows.length;_gi++){ if(kwRows[_gi].date>_gLatest) _gLatest=kwRows[_gi].date; }
   var _pLatest={}; for(var _pi=0;_pi<kwRows.length;_pi++){ var _rr=kwRows[_pi]; if(!_pLatest[_rr.itemCode]||_rr.date>_pLatest[_rr.itemCode]) _pLatest[_rr.itemCode]=_rr.date; }
-  if(_gLatest){ codes=codes.filter(function(code){ return _pLatest[code]===_gLatest; }); }
+  if(_gLatest){ var _cut=new Date(_gLatest+'T00:00:00'); _cut.setMonth(_cut.getMonth()-1); codes=codes.filter(function(code){ var pl=_pLatest[code]; if(!pl) return false; return new Date(pl+'T00:00:00')>=_cut; }); }
   const spend={}; kwRows.forEach(r=>{ spend[r.itemCode]=(spend[r.itemCode]||0)+(r.spend||0); });
   codes.sort((a,b)=>(spend[b]||0)-(spend[a]||0));
   (_kwTblCharts||[]).forEach(c=>{try{c.destroy();}catch(e){}}); _kwTblCharts=[]; _kwTblCodes['tbl']=[];
