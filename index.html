@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.964</span>
+    <span class="build-date">v1.965</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7113,6 +7113,7 @@ function _watchedCodes(){ var arr=[]; Object.keys(productCache).forEach(function
 function _setKwWPPeriodUI(){ var d=document.getElementById('kwWPDaily'), m=document.getElementById('kwWPMonthly'); var on='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap'; var off='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap'; if(d)d.style.cssText=(_kwIndivPeriod==='daily')?on:off; if(m)m.style.cssText=(_kwIndivPeriod==='monthly')?on:off; }
 function renderKwWatchProd(){ var sel=document.getElementById('kwWatchProdSel'); var codes=_watchedCodes(); if(sel){ sel.innerHTML='<option value="">注視KWの商品から選択</option>'+codes.map(function(c){ return '<option value="'+_kwEsc(c)+'"'+(c===_kwIndivCode?' selected':'')+'>'+_kwEsc(_kwIndivName(c))+'</option>'; }).join(''); } _setKwWPPeriodUI(); renderKwIndiv(); }
 function _kwWatchProdLoad(code){ if(!code) return; _kwIndivCode=code; renderKwIndiv(); }
+function _kwGoWatchProd(code){ if(!code) return; _kwIndivCode=code; switchTab('kw-watch-prod'); }
 function _kwWatchProdPeriod(p){ _kwIndivPeriod=p; _setKwWPPeriodUI(); renderKwIndiv(); }
 function _renderKwTable(cfg){ cfg=cfg||{};
   const cont=document.getElementById(cfg.containerId||'tab-kw-all'); if(!cont) return;
@@ -7177,7 +7178,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   h+='</tr></thead><tbody>';
   rows.forEach(function(o){
     h+='<tr>'
-      +'<td style="'+_T+';text-align:left;background:var(--surface)"><div style="display:flex;align-items:center;gap:8px">'+(o.img?'<img loading="lazy" src="'+o.img+'" style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">':'<div style="width:34px;height:34px"></div>')+'<div style="text-align:left"><div style="font-size:9px;color:var(--text3);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.name)+'</div><div style="font-size:12px;font-weight:700">'+_kwEsc(o.kw)+'</div></div></div></td>'
+      +'<td style="'+_T+';text-align:left;background:var(--surface)"><div style="display:flex;align-items:center;gap:8px">'+(o.img?'<img loading="lazy" src="'+o.img+'" style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">':'<div style="width:34px;height:34px"></div>')+'<div style="text-align:left"><div style="display:flex;align-items:center;gap:6px"><div style="font-size:9px;color:var(--text3);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.name)+'</div><button onclick="_kwGoWatchProd(\''+o.code+'\')" style="font-size:9px;padding:1px 8px;border-radius:4px;border:none;background:#ea580c;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;flex:none">詳細</button></div><div style="font-size:12px;font-weight:700">'+_kwEsc(o.kw)+'</div></div></div></td>'
       +'<td style="'+_T+';background:#eef7f0">'+n2(o.kwvol)+'</td>'
       +'<td style="'+_T+';background:#fdf6e3;font-weight:700">'+yfmt(o.spend)+((!cfg.watchOnly&&_totalSpend>0)?'<div style="font-size:9px;font-weight:600;color:#9a7b1a;margin-top:1px;white-space:nowrap">'+_pctFmt(o.spend/_totalSpend*100)+'%</div>':'')+'</td>'
       +'<td style="'+_T+';background:#fdf6e3">'+yfmt(o.sales)+'</td>'
