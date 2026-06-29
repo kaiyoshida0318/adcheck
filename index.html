@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.975</span>
+    <span class="build-date">v1.976</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -579,6 +579,8 @@ header + * { margin-top: 4px; }
   <span class="tab-row-label" style="color:#dc2626;padding-left:10px">【入札単価対策】</span>
   <button class="tab-btn" id="tab-btn-mar-watch" onclick="switchTab('mar-watch')">注視分-KW一覧<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-watch"></span></button>
   <button class="tab-btn" id="tab-btn-kw-watch-prod" onclick="switchTab('kw-watch-prod')">注視分-商品詳細</button>
+  <span class="tab-row-label" style="color:#dc2626;padding-left:16px">【広告暴走対策】</span>
+  <button class="tab-btn" id="tab-btn-runaway" onclick="switchTab('runaway')">一覧</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3" style="border-bottom:none">
   <span class="tab-row-label red" style="color:#9333ea">【状態】</span>
@@ -683,6 +685,20 @@ header + * { margin-top: 4px; }
             </div>
           </div>
           <div id="markeList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-runaway">
+    <div style="padding:12px 16px">
+      <div class="table-card">
+        <div id="runaway-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
+        <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
+          <input type="text" id="runawaySearch" placeholder="商品管理番号・商品番号・商品名で検索..." oninput="renderRunaway()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+          <span style="margin-left:12px;font-size:11px;color:var(--text3)">直近一週間の20円実績額（商品全体の実績額 − KW実績額）</span>
+          <div class="toolbar-right"></div>
+        </div>
+        <div id="runaway-inner"><div class="tab-coming-soon"><div class="icon">🚨</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div></div>
         </div>
       </div>
     </div>
@@ -9289,6 +9305,55 @@ function renderRoasTrend() {
   if(_tb&&_hdr){ _hdr.style.top=_tb.offsetHeight+"px"; }
 }
 
+function renderRunaway(){
+  const wrap=document.getElementById('runaway-inner'); if(!wrap) return;
+  const allDates=new Set();
+  Object.keys(itemDailyData||{}).forEach(code=>{ Object.keys(itemDailyData[code]||{}).forEach(d=>allDates.add(d)); });
+  const dates=[...allDates].sort().slice(-7);
+  if(dates.length===0){ wrap.innerHTML='<div class="tab-coming-soon"><div class="icon">🚨</div><div style="font-size:13px;color:var(--text3)">日次データがありません</div></div>'; return; }
+  const q=(document.getElementById('runawaySearch')?.value||'').toLowerCase();
+  let products=Object.values(DB).filter(p=>{
+    if(productCache[p.id]?.retired) return false;
+    if(!q) return true;
+    const c=productCache[p.id]||{}; const name=(c.manualName||c.name||'').toLowerCase(); const itemNum=(c.itemNumber||'').toLowerCase();
+    return p.id.toLowerCase().includes(q)||name.includes(q)||itemNum.includes(q);
+  });
+  const val20=(code,d)=>{ const idd=itemDailyData[code]; if(!idd||!idd[d]) return null; const v=(idd[d].spend||0)-(idd[d].spendKw||0); return v>0?v:0; };
+  const sum7=p=>dates.reduce((s,d)=>{ const v=val20(p.id,d); return s+(v||0); },0);
+  products=products.filter(p=>sum7(p)>0).sort((a,b)=>sum7(b)-sum7(a));
+  const colW=`82px 76px 40px minmax(0,1fr) ${dates.map(()=>'90px').join(' ')} 100px 64px`;
+  const headerCells=dates.map(d=>`<div class="ch r" style="background:#fff8e5">${d.slice(5,7)}/${d.slice(8,10)}</div>`).join('');
+  const header=`<div class="col-header" style="grid-template-columns:${colW} !important">
+    <div class="ch">商品番号</div>
+    <div class="ch">商品管理番号</div>
+    <div class="ch" style="text-align:center;font-size:10px">画像</div>
+    <div class="ch">商品</div>
+    ${headerCells}
+    <div class="ch" style="text-align:center;font-size:10px">区分</div>
+    <div class="ch" style="text-align:center;font-size:10px">SS</div>
+  </div>`;
+  const rows=products.map(p=>{
+    const cached=productCache[p.id]||{};
+    const name=cached.manualName||cached.name||p.id;
+    const imgSrc=cached.manualImg||cached.img||null;
+    const imgEl=imgSrc?`<img loading="lazy" src="${imgSrc}" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集">`:`<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集"></div>`;
+    const dCells=dates.map(d=>{ const v=val20(p.id,d); const txt=(v===null)?'—':'¥'+Math.round(v).toLocaleString(); const col=(v>0)?'#c2410c':'var(--text3)'; return `<div class="cell r mono" style="background:#fff8e5;font-size:11px;font-weight:${v>0?700:400};color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${txt}</div>`; }).join('');
+    const statusVal=cached.status||'unset'; const statusColor=STATUS_COLORS[statusVal]||'';
+    const statusSel=`<div class="status-cell" onclick="event.stopPropagation()"><select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','out'].map(v=>{const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnout:'#C62828',out:'#6D1111'};return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;}).join('')}</select></div>`;
+    const ssCell=`<div class="status-cell" style="padding:3px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px" onclick="event.stopPropagation()">${_ssCellBtns(p.id)}</div>`;
+    return `<div class="item-row"><div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:48px;background:var(--surface)">
+      <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cached.itemNumber||'—'}</div>
+      <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.id}</div>
+      <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
+      <div style="padding:6px 8px;display:flex;align-items:center;overflow:hidden"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span></div>
+      ${dCells}
+      ${statusSel}
+      ${ssCell}
+    </div></div>`;
+  }).join('');
+  wrap.innerHTML=header+`<div>${rows}</div>`;
+}
+
 function _setRoasTrendStatus(code, val) {
   if (!productCache[code]) productCache[code] = {};
   productCache[code].status = val;
@@ -10389,6 +10454,7 @@ function switchTab(tab) {
   if (tab === 'kw-indiv-table') { renderKwIndivTableAll(); }
   if (tab === 'mar-watch') { renderKwWatch(); }
   if (tab === 'kw-watch-prod') { renderKwWatchProd(); }
+  if (tab === 'runaway') { renderRunaway(); }
   if (tab === 'kw-compare') renderKwCompare();
   if (tab === 'item-graph') { _initItemGraphRange(); }
   if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
