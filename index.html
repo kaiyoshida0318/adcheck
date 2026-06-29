@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.999</span>
+    <span class="build-date">v1.1000</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10970,8 +10970,10 @@ async function runDropZoneCheck() {
     </div>`;
   }
 
+  const cpaFiles = [];
   for (const f of Array.from(_stagedFiles)) {
     const fname = f.name.toLowerCase();
+    if (fname.includes('couponadvance')) { cpaFiles.push(f.name); continue; }
     let dateInfo = null;
     try {
       const buf = await f.arrayBuffer();
@@ -11010,7 +11012,7 @@ async function runDropZoneCheck() {
   let okCount = 0, errCount = 0, dupCount = 0;
   let detailHtml = '';
 
-  if (keys.length === 0 && warnings.length === 0) {
+  if (keys.length === 0 && warnings.length === 0 && cpaFiles.length === 0) {
     detailHtml += '<div style="color:var(--danger)">対応ファイルが見つかりませんでした</div>';
     hasError = true;
   }
@@ -11082,6 +11084,7 @@ async function runDropZoneCheck() {
   }
 
   // ショップ警告は最上部に表示
+  if (cpaFiles.length) html += '<div style="margin-top:8px;padding:7px 10px;background:#e0f7fa;border-radius:5px;font-size:11px;color:#00695c;font-weight:700">📦 クーポンアドバンス '+cpaFiles.length+'件 → 【CPA調整】に取り込みます</div>';
   result.innerHTML = shopWarningHtml + html;
   btn.disabled = false; btn.textContent = '🔍 チェック';
   // エラー時 or ショップ不一致時は反映ボタン非表示
