@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.985</span>
+    <span class="build-date">v1.986</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -547,7 +547,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-basic" id="tab-btn-retired" onclick="switchTab('retired')">引退済商品</button>
   <span class="tab-row-label" id="label-zentai" style="color:#dc2626;padding-left:7px">【全体】</span>
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">全-月別データ</button>
-  <button class="tab-btn tab-btn-all" id="tab-btn-daily" onclick="_goDailyNormal()">全-日別データ</button>
+  <button class="tab-btn tab-btn-all" id="tab-btn-daily" onclick="switchTab('daily')">全-日別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-graph" onclick="switchTab('graph')">全-日月別グラフ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-yoy" onclick="switchTab('yoy')">全-比較</button>
 </nav>
@@ -580,7 +580,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn" id="tab-btn-mar-watch" onclick="switchTab('mar-watch')">注視分-KW一覧<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-watch"></span></button>
   <button class="tab-btn" id="tab-btn-kw-watch-prod" onclick="switchTab('kw-watch-prod')">注視分-商品詳細</button>
   <span class="tab-row-label" style="color:#dc2626;padding-left:16px">【広告暴走対策】</span>
-  <button class="tab-btn" id="tab-btn-runaway-days" onclick="_goRunawayDays()">暴走日</button>
+  <button class="tab-btn" id="tab-btn-runaway-days" onclick="switchTab('runaway-days')">暴走日</button>
   <button class="tab-btn" id="tab-btn-runaway" onclick="switchTab('runaway')">一覧</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3" style="border-bottom:none">
@@ -687,6 +687,25 @@ header + * { margin-top: 4px; }
           </div>
           <div id="markeList"></div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-runaway-days">
+    <div class="container" style="max-width:1400px">
+      <div class="summary-bar-wrap" id="rundaysSummaryBarWrap">
+        <div class="summary-bar-inner collapsed" id="rundaysSummaryBarInner">
+          <div class="summary-bar" id="rundays-summary-bar" style="display:none"></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar" style="flex-wrap:wrap;gap:6px">
+          <span id="rundays-run-status" style="font-size:11px;color:var(--text3)"></span>
+          <span style="font-size:12px;font-weight:700;color:#dc2626">暴走日（20円ROAS 150以下 / 一覧=直近半年・カレンダー=直近5か月）</span>
+          <div class="toolbar-right"></div>
+        </div>
+        <div id="runawayDaysCal" style="padding:0 4px"></div>
+        <div id="rundays-col-header"></div>
+        <div id="rundays-table-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
       </div>
     </div>
   </div>
@@ -959,7 +978,6 @@ header + * { margin-top: 4px; }
           </div>
           <div class="toolbar-right"><button onclick="_openIgColPanel()" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button></div>
         </div>
-        <div id="dailyRunawayCal" style="display:none;padding:0 4px"></div>
         <div id="daily-col-header"></div>
         <div id="daily-table-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
       </div>
@@ -4458,7 +4476,7 @@ function _renderTable(mode, rows) {
 
   const _latestRow = (mode === 'monthly' && rows.length > 0) ? rows[0] : null;
   // 変更記録(グローバル)の点線枠ルックアップ
-  const _daily = (mode === 'daily');
+  const _daily = (mode === 'daily' || mode === 'rundays');
   const _clKeys = {};
   (typeof globalChangeLogs !== 'undefined' ? globalChangeLogs : []).forEach(l => {
     if (!l || !l.date) return;
@@ -4883,9 +4901,7 @@ function _setDailyRunaway(b){ _dailyRunaway=b; _setDailyRunawayUI(); renderDaily
 function _goDailyNormal(){ _dailyRunaway=false; switchTab('daily'); }
 function _goRunawayDays(){ _dailyRunaway=true; try{ const ds=dailyRows.map(r=>(r.label||'').replace(/\//g,'-')).filter(Boolean).sort(); if(ds.length){ const to=ds[ds.length-1]; const d=new Date(to+'T00:00:00'); d.setMonth(d.getMonth()-6); const from=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); const f=document.getElementById('dailyDateFrom'), t=document.getElementById('dailyDateTo'); if(f)f.value=from; if(t)t.value=to; } }catch(e){} switchTab('daily'); }
 function _renderRunawayCalendar(){
-  const cal=document.getElementById('dailyRunawayCal'); if(!cal) return;
-  if(!_dailyRunaway){ cal.style.display='none'; cal.innerHTML=''; return; }
-  cal.style.display='block';
+  const cal=document.getElementById('runawayDaysCal'); if(!cal) return;
   const byDate={}; dailyRows.forEach(r=>{ const d=(r.label||'').replace(/\//g,'-'); if(d) byDate[d]=r; });
   const allD=Object.keys(byDate).sort(); if(!allD.length){ cal.innerHTML=''; return; }
   const latest=allD[allD.length-1];
@@ -4895,6 +4911,17 @@ function _renderRunawayCalendar(){
   const cellFor=(ds)=>{ const r=byDate[ds]; const dd=String(parseInt(ds.slice(8,10),10)); if(!r){ return `<div style="height:40px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);opacity:0.35;font-size:8px;color:var(--text3);padding:1px 3px">${dd}</div>`; } const sp20=(r.spend||0)-(r.spendKw||0); const sa20=(r.sales||0)-(r.salesKw||0); const roas20=sp20>0?(sa20/sp20*100):null; const bo=(sp20>0&&roas20<=150); const bg=bo?'#fde2e2':(sp20>0?'#e6f4ea':'var(--surface)'); const rc=bo?'#dc2626':(sp20>0?'#15803d':'var(--text3)'); const r20txt=(roas20!=null)?Math.round(roas20)+'%':'—'; const sp20txt=(sp20>0)?'¥'+Math.round(sp20).toLocaleString():''; return `<div title="${ds}　20円実績${sp20txt} / 20円ROAS ${r20txt}" style="height:40px;border:1px solid ${bo?'#dc2626':'var(--border)'};border-radius:3px;background:${bg};padding:1px 3px;overflow:hidden;display:flex;flex-direction:column;font-size:8px;line-height:1.15"><div style="color:var(--text3)">${dd}</div><div style="font-weight:700;color:${rc};font-size:9px">${r20txt}</div><div style="color:var(--text2);font-size:7px;white-space:nowrap;overflow:hidden">${sp20txt}</div></div>`; };
   const monthCard=(ym)=>{ const y=ym[0], m=ym[1]; const offset=new Date(y,m-1,1).getDay(); const dim=new Date(y,m,0).getDate(); let cells=''; for(let i=0;i<offset;i++) cells+='<div></div>'; for(let d=1;d<=dim;d++){ cells+=cellFor(y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')); } return `<div style="border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--surface);flex:1 1 232px;min-width:232px"><div style="font-weight:700;font-size:12px;margin-bottom:6px">${y}/${String(m).padStart(2,'0')}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px">${wd.map((w,i)=>`<div style="text-align:center;font-size:9px;color:${i===0?'#dc2626':(i===6?'#2563eb':'var(--text3)')}">${w}</div>`).join('')}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">${cells}</div></div>`; };
   cal.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px;font-size:11px;color:var(--text2)"><span style="font-weight:700">直近5か月カレンダー（20円ROAS150以下=赤 / 出稿あり=緑 / 各セル: ROAS・20円実績）</span></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">'+months.map(monthCard).join('')+'</div>';
+}
+function renderRunawayDays(){
+  const w=document.getElementById('rundays-table-wrap');
+  if(!dailyRows||dailyRows.length===0){ if(w) w.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; const c=document.getElementById('runawayDaysCal'); if(c)c.innerHTML=''; return; }
+  const ds=dailyRows.map(r=>(r.label||'').replace(/\//g,'-')).filter(Boolean).sort();
+  const to=ds[ds.length-1]; const dd=new Date(to+'T00:00:00'); dd.setMonth(dd.getMonth()-6);
+  const fromStr=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
+  let filtered=dailyRows.filter(r=>{ const d=(r.label||'').replace(/\//g,'-'); return d>=fromStr && d<=to; });
+  filtered=filtered.filter(r=>{ const sp20=(r.spend||0)-(r.spendKw||0); if(!(sp20>0)) return false; const sa20=(r.sales||0)-(r.salesKw||0); return (sa20/sp20*100)<=150; });
+  _renderRunawayCalendar();
+  _renderTable('rundays', filtered);
 }
 function renderDailyFiltered() {
   if (dailyRows.length === 0) return;
@@ -4911,11 +4938,6 @@ function renderDailyFiltered() {
   } else {
     filtered = dailyRows;
   }
-  if(_dailyRunaway){
-    filtered=filtered.filter(r=>{ const sp20=(r.spend||0)-(r.spendKw||0); if(!(sp20>0)) return false; const sa20=(r.sales||0)-(r.salesKw||0); const roas20=sa20/sp20*100; return roas20<=150; });
-  }
-  _setDailyRunawayUI();
-  _renderRunawayCalendar();
   _renderTable('daily', filtered);
 }
 
@@ -10487,6 +10509,7 @@ function switchTab(tab) {
   if (tab === 'mar-watch') { renderKwWatch(); }
   if (tab === 'kw-watch-prod') { renderKwWatchProd(); }
   if (tab === 'runaway') { renderRunaway(); }
+  if (tab === 'runaway-days') { renderRunawayDays(); }
   if (tab === 'kw-compare') renderKwCompare();
   if (tab === 'item-graph') { _initItemGraphRange(); }
   if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
