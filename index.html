@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.976</span>
+    <span class="build-date">v1.977</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -695,7 +695,7 @@ header + * { margin-top: 4px; }
         <div id="runaway-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
         <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
           <input type="text" id="runawaySearch" placeholder="商品管理番号・商品番号・商品名で検索..." oninput="renderRunaway()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
-          <span style="margin-left:12px;font-size:11px;color:var(--text3)">直近一週間の20円実績額（商品全体の実績額 − KW実績額）</span>
+          <span style="margin-left:12px;font-size:11px;color:var(--text3)">直近10日の20円実績額（商品全体の実績額 − KW実績額）　※ 中央値５個を基準に上振れを赤表示</span>
           <div class="toolbar-right"></div>
         </div>
         <div id="runaway-inner"><div class="tab-coming-soon"><div class="icon">🚨</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div></div>
@@ -9223,7 +9223,7 @@ function renderRoasTrend() {
     <div class="ch" style="text-align:center;font-size:10px">KW_vol順</div>
     <div class="ch">記入欄</div>
     <div class="ch" style="text-align:center;font-size:10px">区分</div>
-    <div class="ch" style="text-align:center;font-size:10px">SS</div>
+    <div class="ch" style="text-align:center;font-size:10px">マラソン/SS</div>
   </div>`;
 
   // 行
@@ -9309,7 +9309,7 @@ function renderRunaway(){
   const wrap=document.getElementById('runaway-inner'); if(!wrap) return;
   const allDates=new Set();
   Object.keys(itemDailyData||{}).forEach(code=>{ Object.keys(itemDailyData[code]||{}).forEach(d=>allDates.add(d)); });
-  const dates=[...allDates].sort().slice(-7);
+  const dates=[...allDates].sort().slice(-10);
   if(dates.length===0){ wrap.innerHTML='<div class="tab-coming-soon"><div class="icon">🚨</div><div style="font-size:13px;color:var(--text3)">日次データがありません</div></div>'; return; }
   const q=(document.getElementById('runawaySearch')?.value||'').toLowerCase();
   let products=Object.values(DB).filter(p=>{
@@ -9330,14 +9330,18 @@ function renderRunaway(){
     <div class="ch">商品</div>
     ${headerCells}
     <div class="ch" style="text-align:center;font-size:10px">区分</div>
-    <div class="ch" style="text-align:center;font-size:10px">SS</div>
+    <div class="ch" style="text-align:center;font-size:10px">マラソン/SS</div>
   </div>`;
   const rows=products.map(p=>{
     const cached=productCache[p.id]||{};
     const name=cached.manualName||cached.name||p.id;
     const imgSrc=cached.manualImg||cached.img||null;
     const imgEl=imgSrc?`<img loading="lazy" src="${imgSrc}" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集">`:`<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal('${p.id}')" title="商品情報を編集"></div>`;
-    const dCells=dates.map(d=>{ const v=val20(p.id,d); const txt=(v===null)?'—':'¥'+Math.round(v).toLocaleString(); const col=(v>0)?'#c2410c':'var(--text3)'; return `<div class="cell r mono" style="background:#fff8e5;font-size:11px;font-weight:${v>0?700:400};color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${txt}</div>`; }).join('');
+    const dayVals=dates.map(d=>val20(p.id,d));
+    const _nums=dayVals.map(v=>v==null?0:v).slice().sort((a,b)=>a-b);
+    const _N=_nums.length, _st=Math.max(0,Math.floor((_N-5)/2)), _mid5=_nums.slice(_st,_st+5);
+    const _base=_mid5.length?_mid5.reduce((s,x)=>s+x,0)/_mid5.length:0, _hi=_mid5.length?Math.max(..._mid5):0;
+    const dCells=dates.map((d,di)=>{ const v=dayVals[di]; if(v==null) return `<div class="cell r mono" style="background:#fff8e5;font-size:11px;color:var(--text3)">—</div>`; const spike=(_base>0 && v>_hi); const over=spike?Math.round((v-_base)/_base*100):0; const col=spike?'#dc2626':'var(--text)'; const sub=spike?`<div style="font-size:9px;font-weight:700;color:#dc2626;margin-top:1px">+${over}%</div>`:''; return `<div class="cell r mono" style="background:#fff8e5;font-size:11px;font-weight:${spike?700:400};color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2">¥${Math.round(v).toLocaleString()}${sub}</div>`; }).join('');
     const statusVal=cached.status||'unset'; const statusColor=STATUS_COLORS[statusVal]||'';
     const statusSel=`<div class="status-cell" onclick="event.stopPropagation()"><select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','out'].map(v=>{const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnout:'#C62828',out:'#6D1111'};return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;}).join('')}</select></div>`;
     const ssCell=`<div class="status-cell" style="padding:3px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px" onclick="event.stopPropagation()">${_ssCellBtns(p.id)}</div>`;
