@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1005</span>
+    <span class="build-date">v1.1006</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4989,6 +4989,12 @@ function _cpaParseCsv(text){ text=text.replace(/^\uFEFF/,''); const rows=[]; let
 function _cpaParseInto(text, map){ const rows=_cpaParseCsv(text); if(rows.length<2) return 0; const head=rows[0].map(h=>String(h).trim()); const f=(test)=>head.findIndex(test); const iDate=f(h=>h.includes('日付')); const iCode=f(h=>h.includes('商品管理番号')); if(iDate<0||iCode<0) return 0; const iBid=f(h=>h.includes('入札単価')); const iSpend=f(h=>h.includes('実績額')); const iDisc=f(h=>h.includes('値引率')); const iSalesC=f(h=>h.includes('クーポン掲載')); const iSales=f(h=>h==='売上金額'); const iCvr=f(h=>h.includes('CVR')); const iRoas=f(h=>h.includes('ROAS')&&!h.includes('値引')); const iRoasD=f(h=>h.includes('ROAS')&&h.includes('値引')); const iCpa=f(h=>h.includes('注文獲得単価')); const num=v=>{ if(v==null) return 0; v=String(v).replace(/,/g,'').trim(); if(v===''||v==='-') return 0; const n=parseFloat(v); return isNaN(n)?0:n; }; let cnt=0; for(let r=1;r<rows.length;r++){ const row=rows[r]; if(!row||row.length<2) continue; const dm=String(row[iDate]||'').match(/(\d{4})年(\d{2})月(\d{2})日/); if(!dm) continue; const date=dm[1]+'-'+dm[2]+'-'+dm[3]; const code=String(row[iCode]||'').trim(); if(!code) continue; map[date+'|'+code]={ date:date, itemCode:code, bid:num(row[iBid]), spend:num(row[iSpend]), disc:num(row[iDisc]), salesCoupon:num(row[iSalesC]), sales:num(row[iSales]), cvr:num(row[iCvr]), roas:num(row[iRoas]), roasD:num(row[iRoasD]), cpa:num(row[iCpa]) }; cnt++; } return cnt; }
 async function _cpaImport(files){ const status=document.getElementById('cpaStatus'); if(status) status.textContent='読み込み中...'; for(const f of files){ try{ let texts=[]; if(f.name.toLowerCase().endsWith('.zip')){ const buf=await f.arrayBuffer(); const zip=await JSZip.loadAsync(buf); for(const [n,e] of Object.entries(zip.files)){ if(!e.dir && n.toLowerCase().endsWith('.csv')){ texts.push(await e.async('text')); } } } else if(f.name.toLowerCase().endsWith('.csv')) { texts.push(await f.text()); } for(const t of texts){ _cpaIngest(t); } }catch(e){ console.error('cpa import',e); } } const fi=document.getElementById('cpaFileInput'); if(fi) fi.value=''; _cpaLoad(); _cpaLoadKw(); renderCpa(); if(status) status.textContent='商品別 '+couponAdvanceRows.length+'件 / KW別 '+couponAdvanceKwRows.length+'件'; }
 function _cpaClear(){ if(!confirm('CA調整のデータを全て消去しますか？')) return; couponAdvanceRows=[]; _cpaSave(); renderCpa(); }
+let _cpaSortKey='spend';
+let _cpaSortDir='desc';
+let _cpaBandFilter='all';
+function _cpaSort(k){ if(_cpaSortKey===k){ _cpaSortDir=_cpaSortDir==='desc'?'asc':'desc'; } else { _cpaSortKey=k; _cpaSortDir=(k==='code'||k==='itemnum'||k==='name')?'asc':'desc'; } renderCpa(); }
+function _cpaSetBand(b){ _cpaBandFilter=b; renderCpa(); }
+function _cpaBand(v){ if(v===null||v===undefined) return null; if(v>=400) return 'ge400'; if(v>=200) return '200-400'; if(v>=100) return '100-200'; return 'lt100'; }
 function renderCpa(){
   _cpaLoad();
   const wrap=document.getElementById('cpa-table-wrap'); if(!wrap) return;
@@ -5009,49 +5015,63 @@ function renderCpa(){
     if(r.date>=a.lastDate){ a.lastDate=r.date; a.bid=r.bid||0; }
   });
   let prods=Object.values(agg);
+  prods.forEach(a=>{ const c=productCache[a.code]||{};
+    a.roas=a.spend>0?a.sales/a.spend*100:null;
+    a.roasD=(a.spend+a.cost)>0?a.sales/(a.spend+a.cost)*100:null;
+    a.cpa=a.orders>0?a.spend/a.orders:null;
+    a.disc=a.discDen>0?a.discNum/a.discDen:null;
+    a.itemNumber=c.itemNumber||'';
+    a.name=c.manualName||c.name||a.code;
+  });
   const q=(document.getElementById('cpaSearch')?.value||'').toLowerCase().trim();
-  if(q){ prods=prods.filter(a=>{ const c=productCache[a.code]||{}; const nm=(c.manualName||c.name||'').toLowerCase(); const itn=(c.itemNumber||'').toLowerCase(); return String(a.code).toLowerCase().includes(q)||nm.includes(q)||itn.includes(q); }); }
-  prods.sort((x,y)=>y.spend-x.spend);
-  if(st) st.textContent=curYm+'：'+prods.length+'商品 / 全'+couponAdvanceRows.length+'件';
-  if(!prods.length){ wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">この月のデータがありません</div>'; return; }
+  if(q){ prods=prods.filter(a=>String(a.code).toLowerCase().includes(q)||a.name.toLowerCase().includes(q)||String(a.itemNumber).toLowerCase().includes(q)); }
+  if(_cpaBandFilter!=='all'){ prods=prods.filter(a=>_cpaBand(a.roasD!==null?Math.round(a.roasD):null)===_cpaBandFilter); }
+  const dir=_cpaSortDir==='desc'?-1:1; const sk=_cpaSortKey;
+  prods.sort((x,y)=>{
+    if(sk==='code') return dir*String(x.code).localeCompare(String(y.code));
+    if(sk==='itemnum') return dir*String(x.itemNumber).localeCompare(String(y.itemNumber));
+    if(sk==='name') return dir*String(x.name).localeCompare(String(y.name),'ja');
+    const map={spend:'spend',sales:'sales',roas:'roas',roasd:'roasD',cpa:'cpa',bid:'bid',disc:'disc',days:'days'}; const f=map[sk]||'spend';
+    let vx=x[f], vy=y[f]; if(vx===null||vx===undefined) vx=-Infinity; if(vy===null||vy===undefined) vy=-Infinity;
+    return dir*(vx-vy);
+  });
+  if(st) st.textContent=curYm+'：'+prods.length+'商品'+(_cpaBandFilter!=='all'?'（絞込中）':'')+' / 全'+couponAdvanceRows.length+'件';
   const yen=v=>'¥'+Math.round(v).toLocaleString();
   const colW='82px 100px 40px minmax(0,1fr) 96px 96px 76px 96px 88px 80px 70px 48px';
   const bd='border-right:1px solid var(--border)';
-  const gA='background:rgba(191,0,0,0.04)';
-  const gB='background:rgba(37,99,235,0.05)';
-  const gCpa='background:rgba(8,145,178,0.10)';
-  const gC='background:rgba(5,150,105,0.04)';
+  const gA='background:rgba(191,0,0,0.04)', gB='background:rgba(37,99,235,0.05)', gCpa='background:rgba(8,145,178,0.10)', gC='background:rgba(5,150,105,0.04)';
   const rdCol=v=>{ if(v===null) return {bg:'',fg:'var(--text3)'}; if(v>=400) return {bg:'rgba(21,128,61,0.16)',fg:'#15803d'}; if(v>=200) return {bg:'rgba(37,99,235,0.12)',fg:'#1d4ed8'}; if(v>=100) return {bg:'rgba(234,88,12,0.16)',fg:'#c2410c'}; return {bg:'rgba(220,38,38,0.18)',fg:'#dc2626'}; };
-  const legend='<div style="display:flex;gap:8px;align-items:center;padding:6px 6px 8px;font-size:10px;color:var(--text3);flex-wrap:wrap">'
-    +'<span style="font-weight:700;color:var(--text2)">値引込ROAS:</span>'
-    +'<span style="padding:1px 7px;border-radius:3px;background:rgba(220,38,38,0.18);color:#dc2626;font-weight:700">100%未満</span>'
-    +'<span style="padding:1px 7px;border-radius:3px;background:rgba(234,88,12,0.16);color:#c2410c;font-weight:700">100〜200%</span>'
-    +'<span style="padding:1px 7px;border-radius:3px;background:rgba(37,99,235,0.12);color:#1d4ed8;font-weight:700">200〜400%</span>'
-    +'<span style="padding:1px 7px;border-radius:3px;background:rgba(21,128,61,0.16);color:#15803d;font-weight:700">400%以上</span></div>';
+  const bands=[['all','全体表示','var(--text2)','transparent'],['lt100','100%未満','#dc2626','rgba(220,38,38,0.18)'],['100-200','100〜200%','#c2410c','rgba(234,88,12,0.16)'],['200-400','200〜400%','#1d4ed8','rgba(37,99,235,0.12)'],['ge400','400%以上','#15803d','rgba(21,128,61,0.16)']];
+  const legend='<div style="display:flex;gap:7px;align-items:center;padding:6px 6px 9px;font-size:10px;color:var(--text3);flex-wrap:wrap"><span style="font-weight:700;color:var(--text2)">値引込ROASで絞込:</span>'
+    +bands.map(b=>{ const active=_cpaBandFilter===b[0]; const isAll=b[0]==='all'; const bg=isAll?(active?'var(--text2)':'var(--surface2)'):b[3]; const fg=isAll?(active?'#fff':'var(--text2)'):b[2]; const brd=active?('2px solid '+(isAll?'var(--text2)':b[2])):'1px solid var(--border)'; return '<button onclick="_cpaSetBand(\''+b[0]+'\')" style="padding:2px 10px;border-radius:4px;background:'+bg+';color:'+fg+';font-weight:700;font-size:10px;cursor:pointer;border:'+brd+'">'+b[1]+'</button>'; }).join('')+'</div>';
+  const arw=k=>_cpaSortKey===k?(_cpaSortDir==='desc'?' ▼':' ▲'):'';
+  const hc=(label,k,r,bg,extra)=>'<div class="ch'+(r?' r':'')+'" style="cursor:pointer;'+(bg?bg+';':'')+bd+(extra?';'+extra:'')+'" onclick="_cpaSort(\''+k+'\')">'+label+arw(k)+'</div>';
   const header='<div class="col-header" style="grid-template-columns:'+colW+' !important;position:sticky;top:0;z-index:10">'
-    +'<div class="ch" style="'+bd+'">商品番号</div>'
-    +'<div class="ch" style="'+bd+'">商品管理番号</div>'
+    +hc('商品番号','itemnum',false)
+    +hc('商品管理番号','code',false)
     +'<div class="ch" style="text-align:center;font-size:10px;'+bd+'">画像</div>'
-    +'<div class="ch" style="'+bd+'">商品名</div>'
-    +'<div class="ch r" style="'+gA+';'+bd+'">実績額</div>'
-    +'<div class="ch r" style="'+gA+';'+bd+'">売上金額</div>'
-    +'<div class="ch r" style="'+gB+';'+bd+'">ROAS</div>'
-    +'<div class="ch r" style="'+bd+'">値引込ROAS</div>'
-    +'<div class="ch r" style="'+gCpa+';color:#0891b2;'+bd+'">CPA</div>'
-    +'<div class="ch r" style="'+gC+';'+bd+'">入札単価</div>'
-    +'<div class="ch r" style="'+gC+';'+bd+'">値引率</div>'
-    +'<div class="ch r" style="'+bd+'">日数</div></div>';
+    +hc('商品名','name',false)
+    +hc('実績額','spend',true,gA)
+    +hc('売上金額','sales',true,gA)
+    +hc('ROAS','roas',true,gB)
+    +hc('値引込ROAS','roasd',true,'')
+    +hc('CPA','cpa',true,gCpa,'color:#0891b2')
+    +hc('入札単価','bid',true,gC)
+    +hc('値引率','disc',true,gC)
+    +hc('日数','days',true,'')
+    +'</div>';
   const cell=(v,bg,extra)=>'<div class="cell r mono" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+bd+';'+(bg?bg+';':'')+(extra||'')+'">'+v+'</div>';
   const idc='padding:6px 10px;font-size:10px;color:var(--text2);font-family:\'DM Mono\',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+bd;
+  if(!prods.length){ wrap.innerHTML=legend+'<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; return; }
   const rowsHtml=prods.map(a=>{
     const c=productCache[a.code]||{};
-    const name=c.manualName||c.name||a.code;
+    const name=a.name;
     const imgSrc=c.manualImg||c.img||null;
     const imgEl=imgSrc?'<img loading="lazy" src="'+imgSrc+'" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal(\''+a.code+'\')" title="商品情報を編集">':'<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal(\''+a.code+'\')" title="商品情報を編集"></div>';
-    const roas=a.spend>0?Math.round(a.sales/a.spend*100):null;
-    const roasD=(a.spend+a.cost)>0?Math.round(a.sales/(a.spend+a.cost)*100):null;
-    const cpa=a.orders>0?Math.round(a.spend/a.orders):null;
-    const disc=a.discDen>0?(a.discNum/a.discDen):null;
+    const roas=a.roas!==null?Math.round(a.roas):null;
+    const roasD=a.roasD!==null?Math.round(a.roasD):null;
+    const cpa=a.cpa!==null?Math.round(a.cpa):null;
+    const disc=a.disc;
     const rd=rdCol(roasD);
     return '<div class="item-row"><div style="display:grid;grid-template-columns:'+colW+';align-items:center;min-height:46px;background:var(--surface)">'
       +'<div style="'+idc+'">'+(c.itemNumber||'—')+'</div>'
