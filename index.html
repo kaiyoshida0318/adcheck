@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1004</span>
+    <span class="build-date">v1.1005</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -579,11 +579,11 @@ header + * { margin-top: 4px; }
   <span class="tab-row-label" style="color:#7c3aed;padding-left:10px">【入札単価対策】</span>
   <button class="tab-btn" id="tab-btn-mar-watch" onclick="switchTab('mar-watch')">注視分-KW一覧<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-watch"></span></button>
   <button class="tab-btn" id="tab-btn-kw-watch-prod" onclick="switchTab('kw-watch-prod')">注視分-商品詳細</button>
-  <span class="tab-row-label" style="color:#0891b2;padding-left:16px">【CPA調整】</span>
-  <button class="tab-btn" id="tab-btn-cpa" onclick="switchTab('cpa')">一覧</button>
   <span class="tab-row-label" style="color:#db2777;padding-left:16px">【広告暴走対策】</span>
   <button class="tab-btn" id="tab-btn-runaway-days" onclick="switchTab('runaway-days')">暴走日</button>
   <button class="tab-btn" id="tab-btn-runaway" onclick="switchTab('runaway')">直近10日</button>
+  <span class="tab-row-label" style="color:#0891b2;padding-left:16px">【CA調整】</span>
+  <button class="tab-btn" id="tab-btn-cpa" onclick="switchTab('cpa')">一覧</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-3" style="border-bottom:none">
   <span class="tab-row-label red" style="color:#9333ea">【状態】</span>
@@ -4988,7 +4988,7 @@ function _cpaSave(){ try{ localStorage.setItem(_cpaKey(), JSON.stringify(couponA
 function _cpaParseCsv(text){ text=text.replace(/^\uFEFF/,''); const rows=[]; let i=0, field='', row=[], inQ=false; while(i<text.length){ const c=text[i]; if(inQ){ if(c==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} inQ=false;i++;continue;} field+=c;i++;continue; } if(c==='"'){ inQ=true;i++;continue; } if(c===','){ row.push(field);field='';i++;continue; } if(c==='\r'){ i++;continue; } if(c==='\n'){ row.push(field);rows.push(row);row=[];field='';i++;continue; } field+=c;i++; } if(field.length||row.length){ row.push(field); rows.push(row); } return rows; }
 function _cpaParseInto(text, map){ const rows=_cpaParseCsv(text); if(rows.length<2) return 0; const head=rows[0].map(h=>String(h).trim()); const f=(test)=>head.findIndex(test); const iDate=f(h=>h.includes('日付')); const iCode=f(h=>h.includes('商品管理番号')); if(iDate<0||iCode<0) return 0; const iBid=f(h=>h.includes('入札単価')); const iSpend=f(h=>h.includes('実績額')); const iDisc=f(h=>h.includes('値引率')); const iSalesC=f(h=>h.includes('クーポン掲載')); const iSales=f(h=>h==='売上金額'); const iCvr=f(h=>h.includes('CVR')); const iRoas=f(h=>h.includes('ROAS')&&!h.includes('値引')); const iRoasD=f(h=>h.includes('ROAS')&&h.includes('値引')); const iCpa=f(h=>h.includes('注文獲得単価')); const num=v=>{ if(v==null) return 0; v=String(v).replace(/,/g,'').trim(); if(v===''||v==='-') return 0; const n=parseFloat(v); return isNaN(n)?0:n; }; let cnt=0; for(let r=1;r<rows.length;r++){ const row=rows[r]; if(!row||row.length<2) continue; const dm=String(row[iDate]||'').match(/(\d{4})年(\d{2})月(\d{2})日/); if(!dm) continue; const date=dm[1]+'-'+dm[2]+'-'+dm[3]; const code=String(row[iCode]||'').trim(); if(!code) continue; map[date+'|'+code]={ date:date, itemCode:code, bid:num(row[iBid]), spend:num(row[iSpend]), disc:num(row[iDisc]), salesCoupon:num(row[iSalesC]), sales:num(row[iSales]), cvr:num(row[iCvr]), roas:num(row[iRoas]), roasD:num(row[iRoasD]), cpa:num(row[iCpa]) }; cnt++; } return cnt; }
 async function _cpaImport(files){ const status=document.getElementById('cpaStatus'); if(status) status.textContent='読み込み中...'; for(const f of files){ try{ let texts=[]; if(f.name.toLowerCase().endsWith('.zip')){ const buf=await f.arrayBuffer(); const zip=await JSZip.loadAsync(buf); for(const [n,e] of Object.entries(zip.files)){ if(!e.dir && n.toLowerCase().endsWith('.csv')){ texts.push(await e.async('text')); } } } else if(f.name.toLowerCase().endsWith('.csv')) { texts.push(await f.text()); } for(const t of texts){ _cpaIngest(t); } }catch(e){ console.error('cpa import',e); } } const fi=document.getElementById('cpaFileInput'); if(fi) fi.value=''; _cpaLoad(); _cpaLoadKw(); renderCpa(); if(status) status.textContent='商品別 '+couponAdvanceRows.length+'件 / KW別 '+couponAdvanceKwRows.length+'件'; }
-function _cpaClear(){ if(!confirm('CPA調整のデータを全て消去しますか？')) return; couponAdvanceRows=[]; _cpaSave(); renderCpa(); }
+function _cpaClear(){ if(!confirm('CA調整のデータを全て消去しますか？')) return; couponAdvanceRows=[]; _cpaSave(); renderCpa(); }
 function renderCpa(){
   _cpaLoad();
   const wrap=document.getElementById('cpa-table-wrap'); if(!wrap) return;
@@ -11181,7 +11181,7 @@ async function runDropZoneCheck() {
   }
 
   // ショップ警告は最上部に表示
-  if (cpaFiles.length) html += '<div style="margin-top:8px;padding:7px 10px;background:#e0f7fa;border-radius:5px;font-size:11px;color:#00695c;font-weight:700">📦 クーポンアドバンス '+cpaFiles.length+'件 → 【CPA調整】に取り込みます</div>';
+  if (cpaFiles.length) html += '<div style="margin-top:8px;padding:7px 10px;background:#e0f7fa;border-radius:5px;font-size:11px;color:#00695c;font-weight:700">📦 クーポンアドバンス '+cpaFiles.length+'件 → 【CA調整】に取り込みます</div>';
   result.innerHTML = shopWarningHtml + html;
   btn.disabled = false; btn.textContent = '🔍 チェック';
   // エラー時 or ショップ不一致時は反映ボタン非表示
