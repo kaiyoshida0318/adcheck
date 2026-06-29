@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.981</span>
+    <span class="build-date">v1.982</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -959,7 +959,7 @@ header + * { margin-top: 4px; }
           </div>
           <div style="display:flex;align-items:center;gap:4px">
             <button id="dailyRunNormal" onclick="_setDailyRunaway(false)" style="font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #2563eb;background:#2563eb;color:#fff;">普通</button>
-            <button id="dailyRunOnly" onclick="_setDailyRunaway(true)" style="font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">暴走日(ROAS300%以下)</button>
+            <button id="dailyRunOnly" onclick="_setDailyRunaway(true)" style="font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">暴走日(ROAS400%以下)</button>
           </div>
           <div class="toolbar-right"><button onclick="_openIgColPanel()" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button></div>
         </div>
@@ -4883,7 +4883,7 @@ function setDailyRange(from, to) {
 let _dailyRunaway=false;
 function _setDailyRunawayUI(){ const n=document.getElementById('dailyRunNormal'), o=document.getElementById('dailyRunOnly'); const base='font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;'; const offC='border:1px solid var(--border);background:var(--surface2);color:var(--text3);'; if(n)n.style.cssText=base+(!_dailyRunaway?'border:1px solid #2563eb;background:#2563eb;color:#fff;':offC); if(o)o.style.cssText=base+(_dailyRunaway?'border:1px solid #dc2626;background:#dc2626;color:#fff;':offC); }
 function _setDailyRunaway(b){ _dailyRunaway=b; _setDailyRunawayUI(); renderDailyFiltered(); }
-function _goRunawayDays(){ _dailyRunaway=true; switchTab('daily'); }
+function _goRunawayDays(){ _dailyRunaway=true; try{ const ds=dailyRows.map(r=>(r.label||'').replace(/\//g,'-')).filter(Boolean).sort(); if(ds.length){ const to=ds[ds.length-1]; const d=new Date(to+'T00:00:00'); d.setMonth(d.getMonth()-6); const from=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); const f=document.getElementById('dailyDateFrom'), t=document.getElementById('dailyDateTo'); if(f)f.value=from; if(t)t.value=to; } }catch(e){} switchTab('daily'); }
 function renderDailyFiltered() {
   if (dailyRows.length === 0) return;
   const fromEl = document.getElementById('dailyDateFrom');
@@ -4901,7 +4901,7 @@ function renderDailyFiltered() {
   }
   if(_dailyRunaway){
     const _sbd={}; (salesRows||[]).forEach(s=>{ if(s&&s.date) _sbd[s.date]=(_sbd[s.date]||0)+(s.sales||0); });
-    filtered=filtered.filter(r=>{ if(!(r.spend>0)) return false; const ts=_sbd[(r.label||'').replace(/\//g,'-')]||0; const sr=ts>0?(ts/r.spend*100):0; return sr<300; });
+    filtered=filtered.filter(r=>{ if(!(r.spend>0)) return false; const ts=_sbd[(r.label||'').replace(/\//g,'-')]||0; const sr=ts>0?(ts/r.spend*100):0; return sr<=400; });
   }
   _setDailyRunawayUI();
   _renderTable('daily', filtered);
