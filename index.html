@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1000</span>
+    <span class="build-date">v1.1002</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1515,6 +1515,17 @@ header + * { margin-top: 4px; }
             💡 ①②のペアを同じ日付で揃えると日別データが集計されます。①のみでは集計されません。
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- 不足日確認 -->
+    <div style="text-align:left;border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden">
+      <div onclick="_toggleMissingCheck(this)" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;background:var(--surface2);font-size:12px;font-weight:700;color:var(--text2);user-select:none">
+        <span>📅 不足日を確認（取込済みの月で欠けている日）</span>
+        <span class="acc-arrow" style="font-size:10px;color:var(--text3)">▶</span>
+      </div>
+      <div style="display:none;padding:10px 14px">
+        <div id="missingDayResult" style="font-size:11px;color:var(--text3)">「▶」を押すと、取込済みデータの中で欠けている日を表示します。</div>
       </div>
     </div>
 
@@ -2901,6 +2912,7 @@ async function readFiles(files) {
     const csvTexts = [];
     let hasMonthlyFile = false;
     let hasSalesUpdate = false;
+    let hasCpaFile = false;
     const _salesListResults = []; // { name, date, hasOrdersCol, rowCount, error }
 
     // フォルダZIP（中にrpp_等のファイルが入っているZIP）を展開してフラット化
@@ -2920,6 +2932,7 @@ async function readFiles(files) {
             const _cbuf = await f.arrayBuffer(); const _czip = await JSZip.loadAsync(_cbuf);
             for (const [ _cn, _ce ] of Object.entries(_czip.files)) { if (_cn.toLowerCase().endsWith('.csv') && !_ce.dir) { _cpaIngest(await _ce.async('text')); } }
           } else if (fname.endsWith('.csv')) { _cpaIngest(await f.text()); }
+          hasCpaFile = true;
           console.log('[ADcheck] CouponAdvance ingested:', f.name);
         } catch(e){ console.error('[ADcheck] CouponAdvance import error', e); }
         continue;
@@ -3081,7 +3094,8 @@ async function readFiles(files) {
 
     if (csvTexts.length === 0) {
       console.log('[ADcheck] csvTexts is empty. hasMonthlyFile=', hasMonthlyFile, 'itemDailyData keys=', Object.keys(itemDailyData).length);
-      if (!hasMonthlyFile) alert('CSVファイルが見つかりませんでした。ZIPまたはCSVファイルを選択してください。');
+      if (!hasMonthlyFile && !hasCpaFile) alert('CSVファイルが見つかりませんでした。ZIPまたはCSVファイルを選択してください。');
+      if (hasCpaFile) console.log('[ADcheck] CouponAdvance only import done');
       // item/kwのみの場合でもsaveToGitHubを呼んでitemDailyDataを保存
       if (Object.keys(itemDailyData).length > 0) saveToGitHub();
       if (_nichinichiFiles.length > 0) await monthlyRun();
@@ -4981,6 +4995,8 @@ function _cpaLoadKw(){ try{ const s=localStorage.getItem(_cpaKwKey()); couponAdv
 function _cpaSaveKw(){ try{ localStorage.setItem(_cpaKwKey(), JSON.stringify(couponAdvanceKwRows)); }catch(e){} }
 function _cpaParseKwInto(text, map){ const rows=_cpaParseCsv(text); if(rows.length<2) return 0; const head=rows[0].map(h=>String(h).trim()); const f=(t)=>head.findIndex(t); const iDate=f(h=>h.includes('日付')), iCode=f(h=>h.includes('商品管理番号')), iKw=f(h=>h==='キーワード'); if(iDate<0||iCode<0||iKw<0) return 0; const iBid=f(h=>h.includes('キーワード入札単価')), iSpend=f(h=>h.includes('実績額')), iSales=f(h=>h==='売上金額'), iCvr=f(h=>h.includes('CVR')), iRoas=f(h=>h.includes('ROAS')&&!h.includes('値引')), iRoasD=f(h=>h.includes('ROAS')&&h.includes('値引')), iCpa=f(h=>h.includes('注文獲得単価')); const num=v=>{ if(v==null) return 0; v=String(v).replace(/,/g,'').trim(); if(v===''||v==='-') return 0; const n=parseFloat(v); return isNaN(n)?0:n; }; let cnt=0; for(let r=1;r<rows.length;r++){ const row=rows[r]; if(!row||row.length<3) continue; const dm=String(row[iDate]||'').match(/(\d{4})年(\d{2})月(\d{2})日/); if(!dm) continue; const date=dm[1]+'-'+dm[2]+'-'+dm[3]; const code=String(row[iCode]||'').trim(); const kw=String(row[iKw]||'').trim(); if(!code||!kw) continue; map[date+'|'+code+'|'+kw]={ date:date, itemCode:code, kw:kw, bid:num(row[iBid]), spend:num(row[iSpend]), sales:num(row[iSales]), cvr:num(row[iCvr]), roas:num(row[iRoas]), roasD:num(row[iRoasD]), cpa:num(row[iCpa]) }; cnt++; } return cnt; }
 function _cpaIngest(text){ const first=_cpaParseCsv(text)[0]; if(!first) return; const head=first.map(h=>String(h).trim()); const isKw=head.some(h=>h==='キーワード'); if(isKw){ _cpaLoadKw(); const map={}; couponAdvanceKwRows.forEach(r=>map[r.date+'|'+r.itemCode+'|'+r.kw]=r); _cpaParseKwInto(text, map); couponAdvanceKwRows=Object.values(map); _cpaSaveKw(); } else { _cpaLoad(); const map={}; couponAdvanceRows.forEach(r=>map[r.date+'|'+r.itemCode]=r); _cpaParseInto(text, map); couponAdvanceRows=Object.values(map); _cpaSave(); } }
+function _toggleMissingCheck(el){ const d=el.nextElementSibling; const open=d.style.display!=='none'; d.style.display=open?'none':'block'; const ar=el.querySelector('.acc-arrow'); if(ar) ar.textContent=open?'▶':'▼'; if(!open){ try{ _checkMissingDays(); }catch(e){ console.error('missingcheck',e); } } }
+function _checkMissingDays(){ const el=document.getElementById('missingDayResult'); if(!el) return; const salesSet=new Set(); (typeof salesRows!=='undefined'?salesRows:[]).forEach(r=>{ if(r&&r.date) salesSet.add(r.date); }); const dailySet=new Set(); (typeof dailyRows!=='undefined'?dailyRows:[]).forEach(r=>{ const c=String(r&&r.code||''); if(c.length===8) dailySet.add(c.slice(0,4)+'-'+c.slice(4,6)+'-'+c.slice(6,8)); }); const all=new Set([...salesSet,...dailySet]); if(all.size===0){ el.innerHTML='<div style="color:var(--text3)">データがまだありません。</div>'; return; } const sorted=[...all].sort(); const first=sorted[0], last=sorted[sorted.length-1]; const pad=n=>String(n).padStart(2,'0'); const toDate=s=>{ const a=s.split('-').map(Number); return new Date(a[0],a[1]-1,a[2]); }; const months={}; let cur=toDate(first); const end=toDate(last); while(cur<=end){ const ds=cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate()); const ms=!salesSet.has(ds), md=!dailySet.has(ds); if(ms||md){ const ym=ds.slice(0,7); (months[ym]=months[ym]||[]).push({day:cur.getDate(), miss: (ms&&md)?'both':(ms?'sales':'daily')}); } cur.setDate(cur.getDate()+1); } const yms=Object.keys(months).sort(); if(yms.length===0){ el.innerHTML='<div style="color:#2e7d32;font-weight:700">✅ 欠けている日はありません（'+first+'〜'+last+'）</div>'; return; } let html='<div style="margin-bottom:8px;color:#c62828;font-weight:700">⚠️ 欠けている日があります（対象: '+first+'〜'+last+'）</div>'; yms.forEach(ym=>{ const arr=months[ym]; const chips=arr.map(o=>{ const col=o.miss==='both'?'#c62828':(o.miss==='sales'?'#e65100':'#1565c0'); const lbl=o.miss==='both'?'':(o.miss==='sales'?'(売上)':'(日別)'); return '<span style="display:inline-block;font-family:\'DM Mono\',monospace;font-size:10px;color:#fff;background:'+col+';padding:1px 6px;border-radius:3px;margin:1px 2px 1px 0">'+pad(o.day)+lbl+'</span>'; }).join(''); html+='<div style="margin-bottom:7px"><div style="font-weight:700;font-size:11px;margin-bottom:2px">'+ym+' <span style="color:var(--text3);font-weight:400">（'+arr.length+'日不足）</span></div><div>'+chips+'</div></div>'; }); html+='<div style="margin-top:6px;font-size:10px;color:var(--text3)">赤=両方欠け／<span style="color:#e65100">橙=売上のみ</span>／<span style="color:#1565c0">青=日別のみ</span>。最新日（'+last+'）より後は対象外です。</div>'; el.innerHTML=html; }
 function renderRunawayDays(){
   const w=document.getElementById('rundays-table-wrap');
   if(!dailyRows||dailyRows.length===0){ if(w) w.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; const c=document.getElementById('runawayDaysCal'); if(c)c.innerHTML=''; return; }
