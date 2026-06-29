@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.996</span>
+    <span class="build-date">v1.997</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -579,6 +579,8 @@ header + * { margin-top: 4px; }
   <span class="tab-row-label" style="color:#7c3aed;padding-left:10px">【入札単価対策】</span>
   <button class="tab-btn" id="tab-btn-mar-watch" onclick="switchTab('mar-watch')">注視分-KW一覧<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-mar-watch"></span></button>
   <button class="tab-btn" id="tab-btn-kw-watch-prod" onclick="switchTab('kw-watch-prod')">注視分-商品詳細</button>
+  <span class="tab-row-label" style="color:#0891b2;padding-left:16px">【CPA調整】</span>
+  <button class="tab-btn" id="tab-btn-cpa" onclick="switchTab('cpa')">一覧</button>
   <span class="tab-row-label" style="color:#db2777;padding-left:16px">【広告暴走対策】</span>
   <button class="tab-btn" id="tab-btn-runaway-days" onclick="switchTab('runaway-days')">暴走日</button>
   <button class="tab-btn" id="tab-btn-runaway" onclick="switchTab('runaway')">直近10日</button>
@@ -687,6 +689,23 @@ header + * { margin-top: 4px; }
           </div>
           <div id="markeList"></div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-cpa">
+    <div class="container" style="max-width:1500px">
+      <div class="table-card">
+        <div class="table-toolbar" style="flex-wrap:wrap;gap:8px">
+          <input type="text" id="cpaSearch" placeholder="商品管理番号・商品名で検索..." oninput="renderCpa()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:280px;outline:none">
+          <span id="cpaStatus" style="font-size:11px;color:var(--text3)"></span>
+          <span style="font-size:11px;color:var(--text3);margin-left:6px">クーポンアドバンス実績（CPA=注文獲得単価）</span>
+          <div class="toolbar-right" style="display:flex;gap:6px;align-items:center">
+            <input type="file" id="cpaFileInput" accept=".csv,.zip" multiple style="display:none" onchange="_cpaImport(this.files)">
+            <button onclick="document.getElementById('cpaFileInput').click()" style="font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #0891b2;background:#0891b2;color:#fff;cursor:pointer;font-weight:700;white-space:nowrap">＋ CSV/ZIP取込</button>
+            <button onclick="_cpaClear()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">全消去</button>
+          </div>
+        </div>
+        <div id="cpa-table-wrap" style="overflow:auto;max-height:78vh"></div>
       </div>
     </div>
   </div>
@@ -4939,6 +4958,14 @@ function _renderRunawayCalendar(){
 let _rundaysAll=false;
 function _setRundaysModeUI(){ const o=document.getElementById('rundaysOnlyBtn'), a=document.getElementById('rundaysAllBtn'); const base='font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;'; const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);'; if(o)o.style.cssText=base+(!_rundaysAll?'border:1px solid #dc2626;background:#dc2626;color:#fff;':off); if(a)a.style.cssText=base+(_rundaysAll?'border:1px solid #2563eb;background:#2563eb;color:#fff;':off); }
 function _setRundaysMode(b){ _rundaysAll=b; _setRundaysModeUI(); renderRunawayDays(); }
+function _cpaKey(){ return 'adcheck_coupon_advance_'+((typeof _getCurrentShopId==='function'?_getCurrentShopId():null)||'yukaiya'); }
+function _cpaLoad(){ try{ const s=localStorage.getItem(_cpaKey()); couponAdvanceRows = s?JSON.parse(s):[]; }catch(e){ couponAdvanceRows=[]; } }
+function _cpaSave(){ try{ localStorage.setItem(_cpaKey(), JSON.stringify(couponAdvanceRows)); }catch(e){} }
+function _cpaParseCsv(text){ text=text.replace(/^\uFEFF/,''); const rows=[]; let i=0, field='', row=[], inQ=false; while(i<text.length){ const c=text[i]; if(inQ){ if(c==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} inQ=false;i++;continue;} field+=c;i++;continue; } if(c==='"'){ inQ=true;i++;continue; } if(c===','){ row.push(field);field='';i++;continue; } if(c==='\r'){ i++;continue; } if(c==='\n'){ row.push(field);rows.push(row);row=[];field='';i++;continue; } field+=c;i++; } if(field.length||row.length){ row.push(field); rows.push(row); } return rows; }
+function _cpaParseInto(text, map){ const rows=_cpaParseCsv(text); if(rows.length<2) return 0; const head=rows[0].map(h=>String(h).trim()); const f=(test)=>head.findIndex(test); const iDate=f(h=>h.includes('日付')); const iCode=f(h=>h.includes('商品管理番号')); if(iDate<0||iCode<0) return 0; const iBid=f(h=>h.includes('入札単価')); const iSpend=f(h=>h.includes('実績額')); const iDisc=f(h=>h.includes('値引率')); const iSalesC=f(h=>h.includes('クーポン掲載')); const iSales=f(h=>h==='売上金額'); const iCvr=f(h=>h.includes('CVR')); const iRoas=f(h=>h.includes('ROAS')&&!h.includes('値引')); const iRoasD=f(h=>h.includes('ROAS')&&h.includes('値引')); const iCpa=f(h=>h.includes('注文獲得単価')); const num=v=>{ if(v==null) return 0; v=String(v).replace(/,/g,'').trim(); if(v===''||v==='-') return 0; const n=parseFloat(v); return isNaN(n)?0:n; }; let cnt=0; for(let r=1;r<rows.length;r++){ const row=rows[r]; if(!row||row.length<2) continue; const dm=String(row[iDate]||'').match(/(\d{4})年(\d{2})月(\d{2})日/); if(!dm) continue; const date=dm[1]+'-'+dm[2]+'-'+dm[3]; const code=String(row[iCode]||'').trim(); if(!code) continue; map[date+'|'+code]={ date:date, itemCode:code, bid:num(row[iBid]), spend:num(row[iSpend]), disc:num(row[iDisc]), salesCoupon:num(row[iSalesC]), sales:num(row[iSales]), cvr:num(row[iCvr]), roas:num(row[iRoas]), roasD:num(row[iRoasD]), cpa:num(row[iCpa]) }; cnt++; } return cnt; }
+async function _cpaImport(files){ const status=document.getElementById('cpaStatus'); if(status) status.textContent='読み込み中...'; _cpaLoad(); const map={}; couponAdvanceRows.forEach(r=>{ map[r.date+'|'+r.itemCode]=r; }); let added=0; for(const f of files){ try{ let texts=[]; if(f.name.toLowerCase().endsWith('.zip')){ const buf=await f.arrayBuffer(); const zip=await JSZip.loadAsync(buf); for(const [n,e] of Object.entries(zip.files)){ if(!e.dir && n.toLowerCase().endsWith('.csv')){ texts.push(await e.async('text')); } } } else { texts.push(await f.text()); } for(const t of texts){ added+=_cpaParseInto(t, map); } }catch(e){ console.error('cpa import',e); } } couponAdvanceRows=Object.values(map); _cpaSave(); const fi=document.getElementById('cpaFileInput'); if(fi) fi.value=''; renderCpa(); if(status) status.textContent=couponAdvanceRows.length+'件（今回取込/更新 '+added+'行）'; }
+function _cpaClear(){ if(!confirm('CPA調整のデータを全て消去しますか？')) return; couponAdvanceRows=[]; _cpaSave(); renderCpa(); }
+function renderCpa(){ _cpaLoad(); const wrap=document.getElementById('cpa-table-wrap'); if(!wrap) return; const q=(document.getElementById('cpaSearch')?.value||'').toLowerCase().trim(); let rows=couponAdvanceRows.slice(); if(q){ rows=rows.filter(r=>{ const c=productCache[r.itemCode]||{}; const nm=(c.manualName||c.name||'').toLowerCase(); return String(r.itemCode).toLowerCase().includes(q)||nm.includes(q); }); } rows.sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:(b.spend-a.spend))); const st=document.getElementById('cpaStatus'); if(st) st.textContent=couponAdvanceRows.length+'件'; if(!rows.length){ wrap.innerHTML='<div style="padding:48px;text-align:center;color:var(--text3);font-size:13px">データがありません。右上の「＋ CSV/ZIP取込」からクーポンアドバンスのレポートを取り込んでください。</div>'; return; } const yen=v=>'¥'+Math.round(v).toLocaleString(); const heads=['日付','商品管理番号','商品名','入札単価','実績額','売上金額','ROAS(%)','値引込ROAS(%)','CVR(%)','CPA(注文獲得単価)','値引率(%)']; let html='<table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr>'+heads.map(h=>`<th style="position:sticky;top:0;z-index:5;background:var(--surface2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;font-size:11px">${h}</th>`).join('')+'</tr></thead><tbody>'; rows.forEach(r=>{ const c=productCache[r.itemCode]||{}; const nm=c.manualName||c.name||''; html+='<tr style="border-bottom:1px solid var(--border)">'+`<td style="padding:5px 10px;white-space:nowrap;font-family:'DM Mono',monospace;font-size:11px">${r.date}</td>`+`<td style="padding:5px 10px;font-family:'DM Mono',monospace;font-size:11px"><span style="user-select:all">${r.itemCode}</span></td>`+`<td style="padding:5px 10px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_kwEsc(nm)}">${_kwEsc(nm)}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${yen(r.bid)}</td>`+`<td style="padding:5px 10px;text-align:right;font-weight:600;font-family:'DM Mono',monospace">${yen(r.spend)}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${yen(r.sales)}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${r.roas?Math.round(r.roas)+'%':'—'}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${r.roasD?Math.round(r.roasD)+'%':'—'}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${r.cvr?r.cvr.toFixed(1)+'%':'—'}</td>`+`<td style="padding:5px 10px;text-align:right;font-weight:700;color:#0891b2;font-family:'DM Mono',monospace">${r.cpa?yen(r.cpa):'—'}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${r.disc?r.disc.toFixed(2)+'%':'—'}</td>`+'</tr>'; }); html+='</tbody></table>'; wrap.innerHTML=html; }
 function renderRunawayDays(){
   const w=document.getElementById('rundays-table-wrap');
   if(!dailyRows||dailyRows.length===0){ if(w) w.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; const c=document.getElementById('runawayDaysCal'); if(c)c.innerHTML=''; return; }
@@ -5241,6 +5268,7 @@ function _initItemGraphRange() {
 
 // ── グローバル変更記録（全-日別グラフ用） ──
 let globalChangeLogs = [];
+let couponAdvanceRows = [];
 
 function _editClResort(){ if(typeof _editClCurrentLogs==='function') _editClRender(_editClCurrentLogs()); }
 function _globalClResort(){ const rows=document.querySelectorAll('#globalClRows > div'); const cur=[]; rows.forEach(function(row){ const d=row.querySelector('input[type="date"]'); const n=row.querySelector('input[type="text"]'); if(d&&n) cur.push({date:d.value,note:n.value,color:(row.dataset.color||'#f97316')}); }); globalChangeLogs=cur; _renderGlobalClRows(globalChangeLogs); }
@@ -10538,6 +10566,7 @@ function switchTab(tab) {
   if (tab === 'kw-watch-prod') { renderKwWatchProd(); }
   if (tab === 'runaway') { renderRunaway(); }
   if (tab === 'runaway-days') { renderRunawayDays(); }
+  if (tab === 'cpa') { renderCpa(); }
   if (tab === 'kw-compare') renderKwCompare();
   if (tab === 'item-graph') { _initItemGraphRange(); }
   if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
