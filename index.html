@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1002</span>
+    <span class="build-date">v1.1003</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -696,6 +696,7 @@ header + * { margin-top: 4px; }
     <div class="container" style="max-width:1500px">
       <div class="table-card">
         <div class="table-toolbar" style="flex-wrap:wrap;gap:8px">
+          <select class="toolbar-month" id="cpaMonthSel" onchange="renderCpa()"></select>
           <input type="text" id="cpaSearch" placeholder="商品管理番号・商品名で検索..." oninput="renderCpa()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:280px;outline:none">
           <span id="cpaStatus" style="font-size:11px;color:var(--text3)"></span>
           <span style="font-size:11px;color:var(--text3);margin-left:6px">クーポンアドバンス実績（CPA=注文獲得単価）</span>
@@ -4988,7 +4989,64 @@ function _cpaParseCsv(text){ text=text.replace(/^\uFEFF/,''); const rows=[]; let
 function _cpaParseInto(text, map){ const rows=_cpaParseCsv(text); if(rows.length<2) return 0; const head=rows[0].map(h=>String(h).trim()); const f=(test)=>head.findIndex(test); const iDate=f(h=>h.includes('日付')); const iCode=f(h=>h.includes('商品管理番号')); if(iDate<0||iCode<0) return 0; const iBid=f(h=>h.includes('入札単価')); const iSpend=f(h=>h.includes('実績額')); const iDisc=f(h=>h.includes('値引率')); const iSalesC=f(h=>h.includes('クーポン掲載')); const iSales=f(h=>h==='売上金額'); const iCvr=f(h=>h.includes('CVR')); const iRoas=f(h=>h.includes('ROAS')&&!h.includes('値引')); const iRoasD=f(h=>h.includes('ROAS')&&h.includes('値引')); const iCpa=f(h=>h.includes('注文獲得単価')); const num=v=>{ if(v==null) return 0; v=String(v).replace(/,/g,'').trim(); if(v===''||v==='-') return 0; const n=parseFloat(v); return isNaN(n)?0:n; }; let cnt=0; for(let r=1;r<rows.length;r++){ const row=rows[r]; if(!row||row.length<2) continue; const dm=String(row[iDate]||'').match(/(\d{4})年(\d{2})月(\d{2})日/); if(!dm) continue; const date=dm[1]+'-'+dm[2]+'-'+dm[3]; const code=String(row[iCode]||'').trim(); if(!code) continue; map[date+'|'+code]={ date:date, itemCode:code, bid:num(row[iBid]), spend:num(row[iSpend]), disc:num(row[iDisc]), salesCoupon:num(row[iSalesC]), sales:num(row[iSales]), cvr:num(row[iCvr]), roas:num(row[iRoas]), roasD:num(row[iRoasD]), cpa:num(row[iCpa]) }; cnt++; } return cnt; }
 async function _cpaImport(files){ const status=document.getElementById('cpaStatus'); if(status) status.textContent='読み込み中...'; for(const f of files){ try{ let texts=[]; if(f.name.toLowerCase().endsWith('.zip')){ const buf=await f.arrayBuffer(); const zip=await JSZip.loadAsync(buf); for(const [n,e] of Object.entries(zip.files)){ if(!e.dir && n.toLowerCase().endsWith('.csv')){ texts.push(await e.async('text')); } } } else if(f.name.toLowerCase().endsWith('.csv')) { texts.push(await f.text()); } for(const t of texts){ _cpaIngest(t); } }catch(e){ console.error('cpa import',e); } } const fi=document.getElementById('cpaFileInput'); if(fi) fi.value=''; _cpaLoad(); _cpaLoadKw(); renderCpa(); if(status) status.textContent='商品別 '+couponAdvanceRows.length+'件 / KW別 '+couponAdvanceKwRows.length+'件'; }
 function _cpaClear(){ if(!confirm('CPA調整のデータを全て消去しますか？')) return; couponAdvanceRows=[]; _cpaSave(); renderCpa(); }
-function renderCpa(){ _cpaLoad(); const wrap=document.getElementById('cpa-table-wrap'); if(!wrap) return; const q=(document.getElementById('cpaSearch')?.value||'').toLowerCase().trim(); let rows=couponAdvanceRows.slice(); if(q){ rows=rows.filter(r=>{ const c=productCache[r.itemCode]||{}; const nm=(c.manualName||c.name||'').toLowerCase(); return String(r.itemCode).toLowerCase().includes(q)||nm.includes(q); }); } rows.sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:(b.spend-a.spend))); const st=document.getElementById('cpaStatus'); if(st) st.textContent=couponAdvanceRows.length+'件'; if(!rows.length){ wrap.innerHTML='<div style="padding:48px;text-align:center;color:var(--text3);font-size:13px">データがありません。上部の「レポート追加」からクーポンアドバンスのレポート（CSV/ZIP）を取り込んでください。</div>'; return; } const yen=v=>'¥'+Math.round(v).toLocaleString(); const heads=['日付','商品管理番号','商品名','入札単価','実績額','売上金額','ROAS(%)','値引込ROAS(%)','CVR(%)','CPA(注文獲得単価)','値引率(%)']; let html='<table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr>'+heads.map(h=>`<th style="position:sticky;top:0;z-index:5;background:var(--surface2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;font-size:11px">${h}</th>`).join('')+'</tr></thead><tbody>'; rows.forEach(r=>{ const c=productCache[r.itemCode]||{}; const nm=c.manualName||c.name||''; html+='<tr style="border-bottom:1px solid var(--border)">'+`<td style="padding:5px 10px;white-space:nowrap;font-family:'DM Mono',monospace;font-size:11px">${r.date}</td>`+`<td style="padding:5px 10px;font-family:'DM Mono',monospace;font-size:11px"><span style="user-select:all">${r.itemCode}</span></td>`+`<td style="padding:5px 10px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_kwEsc(nm)}">${_kwEsc(nm)}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${yen(r.bid)}</td>`+`<td style="padding:5px 10px;text-align:right;font-weight:600;font-family:'DM Mono',monospace">${yen(r.spend)}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${yen(r.sales)}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${r.roas?Math.round(r.roas)+'%':'—'}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${r.roasD?Math.round(r.roasD)+'%':'—'}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${r.cvr?r.cvr.toFixed(1)+'%':'—'}</td>`+`<td style="padding:5px 10px;text-align:right;font-weight:700;color:#0891b2;font-family:'DM Mono',monospace">${r.cpa?yen(r.cpa):'—'}</td>`+`<td style="padding:5px 10px;text-align:right;font-family:'DM Mono',monospace">${r.disc?r.disc.toFixed(2)+'%':'—'}</td>`+'</tr>'; }); html+='</tbody></table>'; wrap.innerHTML=html; }
+function renderCpa(){
+  _cpaLoad();
+  const wrap=document.getElementById('cpa-table-wrap'); if(!wrap) return;
+  const yms=[...new Set(couponAdvanceRows.map(r=>r.date.slice(0,7)))].sort().reverse();
+  const sel=document.getElementById('cpaMonthSel');
+  let curYm=sel&&sel.value;
+  if(sel){ if(!curYm||!yms.includes(curYm)) curYm=yms[0]||''; sel.innerHTML=yms.length?yms.map(ym=>{const a=ym.split('-');return '<option value="'+ym+'"'+(ym===curYm?' selected':'')+'>'+a[0]+'年'+(+a[1])+'月</option>';}).join(''):'<option value="">—</option>'; sel.value=curYm; }
+  const st=document.getElementById('cpaStatus');
+  if(!couponAdvanceRows.length){ if(st) st.textContent='0件'; wrap.innerHTML='<div style="padding:48px;text-align:center;color:var(--text3);font-size:13px">データがありません。上部の「レポート追加」からクーポンアドバンスのレポート（CSV/ZIP）を取り込んでください。</div>'; return; }
+  const monthRows=couponAdvanceRows.filter(r=>r.date.slice(0,7)===curYm);
+  const agg={};
+  monthRows.forEach(r=>{
+    let a=agg[r.itemCode]; if(!a){ a=agg[r.itemCode]={code:r.itemCode,spend:0,sales:0,salesCoupon:0,cost:0,orders:0,days:0,discNum:0,discDen:0,lastDate:'',bid:0}; }
+    a.spend+=r.spend||0; a.sales+=r.sales||0; a.salesCoupon+=r.salesCoupon||0; a.days++;
+    if(r.roasD>0&&r.sales>0){ const c=r.sales*100/r.roasD-r.spend; if(c>0) a.cost+=c; }
+    if(r.cpa>0&&r.spend>0){ a.orders+=r.spend/r.cpa; }
+    if(r.disc>0&&r.salesCoupon>0){ a.discNum+=r.disc*r.salesCoupon; a.discDen+=r.salesCoupon; }
+    if(r.date>=a.lastDate){ a.lastDate=r.date; a.bid=r.bid||0; }
+  });
+  let prods=Object.values(agg);
+  const q=(document.getElementById('cpaSearch')?.value||'').toLowerCase().trim();
+  if(q){ prods=prods.filter(a=>{ const c=productCache[a.code]||{}; const nm=(c.manualName||c.name||'').toLowerCase(); const itn=(c.itemNumber||'').toLowerCase(); return String(a.code).toLowerCase().includes(q)||nm.includes(q)||itn.includes(q); }); }
+  prods.sort((x,y)=>y.spend-x.spend);
+  if(st) st.textContent=curYm+'：'+prods.length+'商品 / 全'+couponAdvanceRows.length+'件';
+  if(!prods.length){ wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">この月のデータがありません</div>'; return; }
+  const yen=v=>'¥'+Math.round(v).toLocaleString();
+  const colW='82px 100px 40px minmax(0,1fr) 96px 96px 76px 96px 88px 80px 70px 48px';
+  const header='<div class="col-header" style="grid-template-columns:'+colW+' !important;position:sticky;top:0;z-index:10">'
+    +'<div class="ch">商品番号</div><div class="ch">商品管理番号</div><div class="ch" style="text-align:center;font-size:10px">画像</div><div class="ch">商品名</div>'
+    +'<div class="ch r">実績額</div><div class="ch r">売上金額</div><div class="ch r">ROAS</div><div class="ch r">値引込ROAS</div>'
+    +'<div class="ch r" style="color:#0891b2">CPA</div><div class="ch r">入札単価</div><div class="ch r">値引率</div><div class="ch r">日数</div></div>';
+  const cell=(v,extra)=>'<div class="cell r mono" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+(extra||'')+'">'+v+'</div>';
+  const rowsHtml=prods.map(a=>{
+    const c=productCache[a.code]||{};
+    const name=c.manualName||c.name||a.code;
+    const imgSrc=c.manualImg||c.img||null;
+    const imgEl=imgSrc?'<img loading="lazy" src="'+imgSrc+'" style="width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal(\''+a.code+'\')" title="商品情報を編集">':'<div style="width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();openEditModal(\''+a.code+'\')" title="商品情報を編集"></div>';
+    const roas=a.spend>0?Math.round(a.sales/a.spend*100):null;
+    const roasD=(a.spend+a.cost)>0?Math.round(a.sales/(a.spend+a.cost)*100):null;
+    const cpa=a.orders>0?Math.round(a.spend/a.orders):null;
+    const disc=a.discDen>0?(a.discNum/a.discDen):null;
+    return '<div class="item-row"><div style="display:grid;grid-template-columns:'+colW+';align-items:center;min-height:46px;background:var(--surface)">'
+      +'<div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:\'DM Mono\',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(c.itemNumber||'—')+'</div>'
+      +'<div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:\'DM Mono\',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="user-select:all">'+a.code+'</span></div>'
+      +'<div style="padding:4px;display:flex;align-items:center;justify-content:center">'+imgEl+'</div>'
+      +'<div style="padding:6px 10px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+_kwEsc(name)+'">'+_kwEsc(name)+'</div>'
+      +cell(yen(a.spend),'font-weight:600')
+      +cell(yen(a.sales))
+      +cell(roas!==null?roas+'%':'—')
+      +cell(roasD!==null?roasD+'%':'—')
+      +cell(cpa!==null?yen(cpa):'—','color:#0891b2;font-weight:700')
+      +cell(yen(a.bid))
+      +cell(disc!==null?disc.toFixed(1)+'%':'—')
+      +cell(a.days)
+      +'</div></div>';
+  }).join('');
+  wrap.innerHTML=header+rowsHtml;
+}
 let couponAdvanceKwRows = [];
 function _cpaKwKey(){ return 'adcheck_coupon_advance_kw_'+((typeof _getCurrentShopId==='function'?_getCurrentShopId():null)||'yukaiya'); }
 function _cpaLoadKw(){ try{ const s=localStorage.getItem(_cpaKwKey()); couponAdvanceKwRows = s?JSON.parse(s):[]; }catch(e){ couponAdvanceKwRows=[]; } }
