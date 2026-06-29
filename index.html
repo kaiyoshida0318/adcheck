@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1003</span>
+    <span class="build-date">v1.1004</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5016,11 +5016,33 @@ function renderCpa(){
   if(!prods.length){ wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">この月のデータがありません</div>'; return; }
   const yen=v=>'¥'+Math.round(v).toLocaleString();
   const colW='82px 100px 40px minmax(0,1fr) 96px 96px 76px 96px 88px 80px 70px 48px';
+  const bd='border-right:1px solid var(--border)';
+  const gA='background:rgba(191,0,0,0.04)';
+  const gB='background:rgba(37,99,235,0.05)';
+  const gCpa='background:rgba(8,145,178,0.10)';
+  const gC='background:rgba(5,150,105,0.04)';
+  const rdCol=v=>{ if(v===null) return {bg:'',fg:'var(--text3)'}; if(v>=400) return {bg:'rgba(21,128,61,0.16)',fg:'#15803d'}; if(v>=200) return {bg:'rgba(37,99,235,0.12)',fg:'#1d4ed8'}; if(v>=100) return {bg:'rgba(234,88,12,0.16)',fg:'#c2410c'}; return {bg:'rgba(220,38,38,0.18)',fg:'#dc2626'}; };
+  const legend='<div style="display:flex;gap:8px;align-items:center;padding:6px 6px 8px;font-size:10px;color:var(--text3);flex-wrap:wrap">'
+    +'<span style="font-weight:700;color:var(--text2)">値引込ROAS:</span>'
+    +'<span style="padding:1px 7px;border-radius:3px;background:rgba(220,38,38,0.18);color:#dc2626;font-weight:700">100%未満</span>'
+    +'<span style="padding:1px 7px;border-radius:3px;background:rgba(234,88,12,0.16);color:#c2410c;font-weight:700">100〜200%</span>'
+    +'<span style="padding:1px 7px;border-radius:3px;background:rgba(37,99,235,0.12);color:#1d4ed8;font-weight:700">200〜400%</span>'
+    +'<span style="padding:1px 7px;border-radius:3px;background:rgba(21,128,61,0.16);color:#15803d;font-weight:700">400%以上</span></div>';
   const header='<div class="col-header" style="grid-template-columns:'+colW+' !important;position:sticky;top:0;z-index:10">'
-    +'<div class="ch">商品番号</div><div class="ch">商品管理番号</div><div class="ch" style="text-align:center;font-size:10px">画像</div><div class="ch">商品名</div>'
-    +'<div class="ch r">実績額</div><div class="ch r">売上金額</div><div class="ch r">ROAS</div><div class="ch r">値引込ROAS</div>'
-    +'<div class="ch r" style="color:#0891b2">CPA</div><div class="ch r">入札単価</div><div class="ch r">値引率</div><div class="ch r">日数</div></div>';
-  const cell=(v,extra)=>'<div class="cell r mono" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+(extra||'')+'">'+v+'</div>';
+    +'<div class="ch" style="'+bd+'">商品番号</div>'
+    +'<div class="ch" style="'+bd+'">商品管理番号</div>'
+    +'<div class="ch" style="text-align:center;font-size:10px;'+bd+'">画像</div>'
+    +'<div class="ch" style="'+bd+'">商品名</div>'
+    +'<div class="ch r" style="'+gA+';'+bd+'">実績額</div>'
+    +'<div class="ch r" style="'+gA+';'+bd+'">売上金額</div>'
+    +'<div class="ch r" style="'+gB+';'+bd+'">ROAS</div>'
+    +'<div class="ch r" style="'+bd+'">値引込ROAS</div>'
+    +'<div class="ch r" style="'+gCpa+';color:#0891b2;'+bd+'">CPA</div>'
+    +'<div class="ch r" style="'+gC+';'+bd+'">入札単価</div>'
+    +'<div class="ch r" style="'+gC+';'+bd+'">値引率</div>'
+    +'<div class="ch r" style="'+bd+'">日数</div></div>';
+  const cell=(v,bg,extra)=>'<div class="cell r mono" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+bd+';'+(bg?bg+';':'')+(extra||'')+'">'+v+'</div>';
+  const idc='padding:6px 10px;font-size:10px;color:var(--text2);font-family:\'DM Mono\',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+bd;
   const rowsHtml=prods.map(a=>{
     const c=productCache[a.code]||{};
     const name=c.manualName||c.name||a.code;
@@ -5030,22 +5052,23 @@ function renderCpa(){
     const roasD=(a.spend+a.cost)>0?Math.round(a.sales/(a.spend+a.cost)*100):null;
     const cpa=a.orders>0?Math.round(a.spend/a.orders):null;
     const disc=a.discDen>0?(a.discNum/a.discDen):null;
+    const rd=rdCol(roasD);
     return '<div class="item-row"><div style="display:grid;grid-template-columns:'+colW+';align-items:center;min-height:46px;background:var(--surface)">'
-      +'<div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:\'DM Mono\',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(c.itemNumber||'—')+'</div>'
-      +'<div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:\'DM Mono\',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="user-select:all">'+a.code+'</span></div>'
-      +'<div style="padding:4px;display:flex;align-items:center;justify-content:center">'+imgEl+'</div>'
-      +'<div style="padding:6px 10px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+_kwEsc(name)+'">'+_kwEsc(name)+'</div>'
-      +cell(yen(a.spend),'font-weight:600')
-      +cell(yen(a.sales))
-      +cell(roas!==null?roas+'%':'—')
-      +cell(roasD!==null?roasD+'%':'—')
-      +cell(cpa!==null?yen(cpa):'—','color:#0891b2;font-weight:700')
-      +cell(yen(a.bid))
-      +cell(disc!==null?disc.toFixed(1)+'%':'—')
+      +'<div style="'+idc+'">'+(c.itemNumber||'—')+'</div>'
+      +'<div style="'+idc+'"><span style="user-select:all">'+a.code+'</span></div>'
+      +'<div style="padding:4px;display:flex;align-items:center;justify-content:center;'+bd+'">'+imgEl+'</div>'
+      +'<div style="padding:6px 10px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+bd+'" title="'+_kwEsc(name)+'">'+_kwEsc(name)+'</div>'
+      +cell(yen(a.spend),gA,'font-weight:600')
+      +cell(yen(a.sales),gA)
+      +cell(roas!==null?roas+'%':'—',gB)
+      +cell(roasD!==null?roasD+'%':'—','background:'+(rd.bg||'transparent'),'color:'+rd.fg+';font-weight:700')
+      +cell(cpa!==null?yen(cpa):'—',gCpa,'color:#0891b2;font-weight:700')
+      +cell(yen(a.bid),gC)
+      +cell(disc!==null?disc.toFixed(1)+'%':'—',gC)
       +cell(a.days)
       +'</div></div>';
   }).join('');
-  wrap.innerHTML=header+rowsHtml;
+  wrap.innerHTML=legend+header+rowsHtml;
 }
 let couponAdvanceKwRows = [];
 function _cpaKwKey(){ return 'adcheck_coupon_advance_kw_'+((typeof _getCurrentShopId==='function'?_getCurrentShopId():null)||'yukaiya'); }
