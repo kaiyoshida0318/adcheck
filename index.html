@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1043</span>
+    <span class="build-date">v1.1044</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -993,6 +993,7 @@ header + * { margin-top: 4px; }
     <div style="padding:14px 18px">
       <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
         <button id="yoyModeYoy" onclick="setYoyMode('yoy')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #3b82f6;background:#3b82f6;color:#fff;">前年同月比</button>
+        <button id="yoyModeYoy3" onclick="setYoyMode('yoy3')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前年同月比(3年分)</button>
         <button id="yoyModeMom" onclick="setYoyMode('mom')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前月比較</button>
         <button id="yoyModePick" onclick="setYoyMode('pick')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">特定月比較</button>
         <select id="yoySel" onchange="setYoyMonth(this.value)" style="margin-left:10px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select><select id="yoySelA" onchange="setYoyPick('a',this.value)" style="display:none;margin-left:10px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select><span id="yoyPickArrow" style="display:none;margin:0 6px;color:var(--text3);font-weight:700">→</span><select id="yoySelB" onchange="setYoyPick('b',this.value)" style="display:none;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select>
@@ -11088,8 +11089,9 @@ function _setYoyModeUI(){
   const base='font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;';
   const on='border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
   const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
-  const a=document.getElementById('yoyModeYoy'), b=document.getElementById('yoyModeMom'), c=document.getElementById('yoyModePick');
+  const a=document.getElementById('yoyModeYoy'), b=document.getElementById('yoyModeMom'), c=document.getElementById('yoyModePick'), d=document.getElementById('yoyModeYoy3');
   if(a) a.style.cssText=base+((_yoyMode==='yoy')?on:off);
+  if(d) d.style.cssText=base+((_yoyMode==='yoy3')?on:off);
   if(b) b.style.cssText=base+((_yoyMode==='mom')?on:off);
   if(c) c.style.cssText=base+((_yoyMode==='pick')?on:off);
   const pick=(_yoyMode==='pick');
@@ -11107,7 +11109,7 @@ let _yoyColorFilter = new Set();
 function toggleYoyColor(c){ if(_yoyColorFilter.has(c)) _yoyColorFilter.delete(c); else _yoyColorFilter.add(c); renderYoy(); }
 const _YOYCOL={blue:'#2563eb',green:'#16a34a',yellow:'#ca8a04',red:'#dc2626'};
 function _yoyCat(cur, prev){ if(cur<=0||prev<=0) return null; if(cur>=prev*1.2) return 'blue'; if(cur>prev) return 'green'; if(cur===prev) return null; if(cur>=prev*0.8) return 'yellow'; return 'red'; }
-function _yoyLatestColor(p){ return _yoyCat(p.v[2].s, p.v[1].s); }
+function _yoyLatestColor(p){ const n=p.v.length; return (n>=2)?_yoyCat(p.v[n-1].s, p.v[n-2].s):null; }
 function _setYoyColorUI(){
   const base='font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;';
   const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
@@ -11151,8 +11153,9 @@ function renderYoy(){
   } else {
     const later=(_yoyMonth && completed.includes(_yoyMonth))?_yoyMonth:completed[completed.length-1];
     if(sel){ sel.innerHTML=[...completed].reverse().map(m=>'<option value="'+m+'"'+(m===later?' selected':'')+'>'+m.slice(0,4)+'/'+m.slice(4,6)+'</option>').join(''); }
-    const delta=_yoyMode==='yoy'?12:1;
-    periods=[_ymAdd(later,-2*delta), _ymAdd(later,-delta), later];
+    if(_yoyMode==='yoy'){ periods=[_ymAdd(later,-12), later]; }
+    else if(_yoyMode==='yoy3'){ periods=[_ymAdd(later,-24), _ymAdd(later,-12), later]; }
+    else { periods=[_ymAdd(later,-2), _ymAdd(later,-1), later]; }
   }
   const lastK=periods.length-1;
   const ymDash=m=>m.slice(0,4)+'-'+m.slice(4,6);
@@ -11216,7 +11219,7 @@ function renderYoy(){
     });
     return '<svg width="'+gapW+'" height="'+bodyH+'" style="display:block">'+lines+'</svg>';
   };
-  const note=_yoyMode==='pick'?['','']:(_yoyMode==='yoy'?['2年前','1年前','選択月']:['2ヶ月前','前月','選択月']);
+  const note=_yoyMode==='pick'?['','']:(_yoyMode==='yoy'?['去年同月','今年同月']:(_yoyMode==='yoy3'?['2年前','1年前','選択月']:['2ヶ月前','前月','選択月']));
   const lblStyle='text-align:center;font-weight:700;font-size:12px;height:'+labelH+'px;line-height:'+labelH+'px;color:var(--text2);background:var(--surface)';
   const minW=TW*periods.length+gapW*(periods.length-1);
   const headBlock=k=>'<div style="width:'+TW+'px;flex-shrink:0;border:1px solid var(--border);border-radius:6px 6px 0 0;overflow:hidden">'
