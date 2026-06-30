@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1042</span>
+    <span class="build-date">v1.1043</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8710,7 +8710,7 @@ function _renderKwCompareTable(){
 
 // 【リニューアル：全体】現役商品を一覧表示。変更記録ボタンを各行に
 function _renewalSeoHeaderHtml() {
-  const colW = '90px 76px 40px minmax(0,1.2fr) 90px 90px 90px 90px 76px 76px 70px 70px 76px 110px';
+  const colW = '90px 76px 40px minmax(0,1.2fr) 90px 90px 90px 90px 76px 76px 70px 70px 76px 100px 110px';
   const cols = [
     {k:'num',     label:'\u5546\u54c1\u756a\u53f7', bg:'#f1f3f4', align:'left'},
     {k:'code',    label:'\u5546\u54c1ID', bg:'#f1f3f4', align:'left'},
@@ -8725,7 +8725,8 @@ function _renewalSeoHeaderHtml() {
     {k:'ctrAll',  label:'CTR\u5168\u4f53', bg:'#e8f0fe', align:'right'},
     {k:'cvrAll',  label:'CVR\u5168\u4f53', bg:'#e6f4ea', align:'right'},
     {k:'roasAll', label:'ROAS\u5168\u4f53', bg:'#e0f2f1', align:'right'},
-    {k:'',        label:'\u72b6\u614b', bg:'#fce8e6', align:'center'},
+    {k:'',        label:'\u533a\u5206', bg:'#f3e8ff', align:'center'},
+    {k:'',        label:'\u64cd\u4f5c', bg:'#fce8e6', align:'center'},
   ];
   const cells = cols.map(c => {
     const click = c.k ? `onclick="_renewalSortBy('${c.k}')"` : '';
@@ -8769,13 +8770,25 @@ function _renewalSeoRowHtml(code) {
   else if (hasThumb) { actBg = '#f4b400'; actColor = '#111'; actBorder = 'none'; }
   else { actBg = 'var(--surface2)'; actColor = logCount>0?'var(--green)':'var(--accent)'; actBorder = '1px solid ' + (logCount>0?'var(--green)':'var(--accent)'); }
   const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:${actBorder};background:${actBg};color:${actColor};cursor:pointer;font-weight:600;white-space:nowrap;text-shadow:${actShadow}">\u8a18\u9332${logCount>0?' ('+logCount+')':''}</button></div>`;
-  const colW = '90px 76px 40px minmax(0,1.2fr) 90px 90px 90px 90px 76px 76px 70px 70px 76px 110px';
+  const colW = '90px 76px 40px minmax(0,1.2fr) 90px 90px 90px 90px 76px 76px 70px 70px 76px 100px 110px';
+  const statusVal = cached.status || 'unset';
+  const statusColor = STATUS_COLORS[statusVal] || '';
+  const statusCell = `<div class="status-cell" onclick="event.stopPropagation()">
+      <select onchange="applyStatusColor(this);_setRoasTrendStatus('${code}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">
+        ${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(v => {
+          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
+          const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};
+          return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;
+        }).join('')}
+      </select>
+    </div>`;
   return `<div class="item-row"><div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:50px;background:var(--surface)">
     <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${num}</div>
     <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${code}</div>
     <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
     <div style="padding:6px 8px;display:flex;align-items:center;overflow:hidden"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${name}">${name}</span></div>
     ${metricCells}
+    ${statusCell}
     ${actionCell}
   </div></div>`;
 }
@@ -8954,6 +8967,7 @@ function _stickRenewalHeader(listId) {
   list.style.overscrollBehavior = 'contain';
   const tb = list.querySelector('.table-toolbar');
   const ch = list.querySelector('.col-header');
+  if (ch) { ch.style.position='sticky'; ch.style.zIndex='20'; ch.style.background='var(--surface2)'; }
   if (tb && ch && tb.offsetHeight) ch.style.top = tb.offsetHeight + 'px';
   const apply = () => {
     if (!list || list.offsetParent === null) return;
@@ -10098,8 +10112,8 @@ function renderRoasTrend() {
   }).join('');
 
   wrap.innerHTML = header + `<div>${rows}</div>`;
-  const _tb=wrap.querySelector(".table-toolbar"); const _hdr=wrap.querySelector(".col-header");
-  if(_tb&&_hdr){ _hdr.style.top=_tb.offsetHeight+"px"; }
+  const _list=document.getElementById('roas-trend-list'); const _tb=(_list&&_list.querySelector(".table-toolbar"))||wrap.querySelector(".table-toolbar"); const _hdr=wrap.querySelector(".col-header");
+  if(_hdr){ _hdr.style.position='sticky'; _hdr.style.zIndex='20'; _hdr.style.top=(_tb?_tb.offsetHeight:0)+"px"; _hdr.style.background='var(--surface2)'; }
 }
 
 function renderRunaway(){
