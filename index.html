@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1031</span>
+    <span class="build-date">v1.1033</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -551,6 +551,7 @@ header + * { margin-top: 4px; }
             <button class="tab-btn tab-btn-basic" id="tab-btn-marke" onclick="switchTab('marke')">商品-マーケデータ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-monthly-item" onclick="switchTab('monthly-item')">商品-日月別データ</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-item-graph" onclick="switchTab('item-graph')">商品-グラフ</button>
+  <button class="tab-btn tab-btn-basic" id="tab-btn-item-trend" onclick="switchTab('item-trend')">商品-推移</button>
   <button class="tab-btn tab-btn-basic" id="tab-btn-retired" onclick="switchTab('retired')">引退済商品</button>
   <span class="tab-row-label" id="label-zentai" style="color:#dc2626;padding-left:7px">【全体】</span>
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">全-月別データ</button>
@@ -865,6 +866,26 @@ header + * { margin-top: 4px; }
           商品管理番号を入力してONを押してください。
         </div>
         <div id="itemTblModeBtns" style="display:none;gap:4px;margin-top:18px"><button id="itemTblNormal" onclick="setItemTblYoy(false)">通常</button><button id="itemTblYoyB" onclick="setItemTblYoy(true)">前年同月比</button></div><div id="itemGraphDataTable" style="margin-top:8px;overflow-x:auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-item-trend">
+    <div class="container" style="max-width:1200px">
+      <div class="table-card" style="padding:20px">
+        <div style="position:relative;display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <input type="text" id="itTrendCode" placeholder="商品名・管理番号・商品番号で検索..." oninput="_itTrendSuggest(this.value)"
+            style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:240px;background:var(--surface);color:var(--text)">
+          <button onclick="_itTrendSave()"
+            style="padding:6px 14px;border-radius:6px;border:1px solid #3b82f6;background:#3b82f6;color:#fff;font-size:12px;cursor:pointer;font-weight:600">★ 保存</button>
+          <span style="font-size:12px;color:var(--text3)">対象月：</span>
+          <select id="itTrendMonthSel" class="toolbar-month" onchange="renderItemTrend()" style="font-size:13px;padding:6px 12px"></select>
+          <div id="itTrendSuggest" style="display:none;position:absolute;top:42px;left:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow);max-height:240px;overflow-y:auto;z-index:100;min-width:320px"></div>
+        </div>
+        <div id="itTrendChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+        <div style="position:relative;height:380px"><canvas id="itTrendCanvas"></canvas></div>
+        <div id="itTrendEmpty" style="display:none;text-align:center;padding:60px;color:var(--text3);font-size:13px">商品を検索して選択してください。</div>
+        <div id="itTrendTable" style="margin-top:16px;overflow-x:auto"></div>
       </div>
     </div>
   </div>
@@ -6642,6 +6663,153 @@ function _trimIncompleteMonth(rows, metric, codeKey){
   if(_monthIsIncomplete(last)) return rows.slice(0,-1);
   return rows;
 }
+let _itTrendChart=null;
+let _itTrendCode=null;
+let _itTrendSaved=(function(){ try{ return JSON.parse(localStorage.getItem('adcheck_ittrend_saved'))||[]; }catch(e){ return []; } })();
+function _itTrendSaveLS(){ try{ localStorage.setItem('adcheck_ittrend_saved', JSON.stringify(_itTrendSaved)); }catch(e){} try{ _itTrendPublishDebounced(); }catch(e){} }
+var _ITTREND_SHARED_FILE='data/ittrend_saved_shared.json';
+let _itTrendPubTimer=null;
+function _itTrendPublishDebounced(){ if(_itTrendPubTimer) clearTimeout(_itTrendPubTimer); _itTrendPubTimer=setTimeout(function(){ try{ _itTrendPublish(); }catch(e){} }, 1500); }
+async function _itTrendFetch(){
+  try{
+    var pat=localStorage.getItem('github_pat'); var obj=null;
+    try{ var h={'Accept':'application/vnd.github.v3.raw'}; if(pat) h['Authorization']='token '+pat;
+      var r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_ITTREND_SHARED_FILE+'?t='+Date.now(),{headers:h,cache:'no-store'}); if(r.ok){ obj=JSON.parse(await r.text()); } }catch(e){}
+    if(!obj){ var rr=await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+_ITTREND_SHARED_FILE+'?t='+Date.now(),{cache:'no-store'}); if(rr.ok) obj=JSON.parse(await rr.text()); }
+    if(obj && Array.isArray(obj.saved)){
+      _itTrendSaved = obj.saved.slice();
+      try{ localStorage.setItem('adcheck_ittrend_saved', JSON.stringify(_itTrendSaved)); }catch(e){}
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+async function _itTrendPublish(){
+  var pat=localStorage.getItem('github_pat'); if(!pat) return false;
+  try{
+    var headers={'Authorization':'token '+pat,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+    var url='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_ITTREND_SHARED_FILE;
+    var getRes=await fetch(url,{headers,cache:'no-store'}); var sha=getRes.ok?(await getRes.json()).sha:null;
+    var base64=btoa(unescape(encodeURIComponent(JSON.stringify({saved:_itTrendSaved,updatedAt:Date.now()}))));
+    var body={message:'Update ittrend saved',content:base64}; if(sha) body.sha=sha;
+    var putRes=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)}); return putRes.ok;
+  }catch(e){ return false; }
+}
+function _itTrendSuggest(val){
+  const box=document.getElementById('itTrendSuggest'); if(!box) return;
+  val=(val||'').trim().toLowerCase();
+  if(!val){ box.style.display='none'; return; }
+  const codes=Object.keys(itemDailyData).filter(code=>{ const c=productCache[code]||{}; return code.toLowerCase().includes(val)||(c.itemNumber||'').toLowerCase().includes(val)||(c.manualName||c.name||'').toLowerCase().includes(val); }).slice(0,30);
+  if(!codes.length){ box.style.display='none'; return; }
+  box.innerHTML=codes.map(code=>{ const c=productCache[code]||{}; const nm=c.manualName||c.name||code; const num=c.itemNumber||code; return `<div onclick="_itTrendSelect('${code}')" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'"><span style="color:var(--text3);font-size:10px;font-family:'DM Mono',monospace">${num}</span> ${nm}</div>`; }).join('');
+  box.style.display='block';
+}
+function _itTrendSelect(code){
+  _itTrendCode=code;
+  const c=productCache[code]||{};
+  const inp=document.getElementById('itTrendCode'); if(inp) inp.value=c.manualName||c.name||code;
+  const box=document.getElementById('itTrendSuggest'); if(box) box.style.display='none';
+  _populateItTrendMonths();
+  _renderItTrendChips();
+  renderItemTrend();
+}
+function _itTrendSave(){
+  if(!_itTrendCode){ return; }
+  if(!_itTrendSaved.includes(_itTrendCode)){ _itTrendSaved.push(_itTrendCode); _itTrendSaveLS(); _renderItTrendChips(); }
+}
+function _itTrendRemove(code){ _itTrendSaved=_itTrendSaved.filter(c=>c!==code); _itTrendSaveLS(); _renderItTrendChips(); }
+function _renderItTrendChips(){
+  const box=document.getElementById('itTrendChips'); if(!box) return;
+  if(!_itTrendSaved.length){ box.innerHTML='<span style="font-size:11px;color:var(--text3)">★保存した商品はここに表示されます</span>'; return; }
+  box.innerHTML=_itTrendSaved.map(code=>{ const c=productCache[code]||{}; const nm=c.manualName||c.name||code; const on=code===_itTrendCode; const sn=nm.length>18?nm.slice(0,18)+'…':nm; return `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:14px;font-size:11px;border:1px solid ${on?'#3b82f6':'var(--border)'};background:${on?'#e8f0fe':'var(--surface2)'};color:${on?'#1d4ed8':'var(--text)'}"><span style="cursor:pointer" onclick="_itTrendSelect('${code}')">${sn}</span><span style="cursor:pointer;color:var(--text3);font-weight:700" onclick="_itTrendRemove('${code}')">✕</span></span>`; }).join('');
+}
+function _populateItTrendMonths(){
+  const sel=document.getElementById('itTrendMonthSel'); if(!sel) return;
+  if(!_itTrendCode){ sel.innerHTML=''; return; }
+  const byDate=itemDailyData[_itTrendCode]||{};
+  const yms=[...new Set(Object.keys(byDate).map(d=>d.slice(0,7).replace('-','')))].filter(Boolean).sort().reverse();
+  const cur=sel.value;
+  sel.innerHTML=yms.map(ym=>`<option value="${ym}">${ym.slice(0,4)}/${ym.slice(4,6)}</option>`).join('');
+  if(cur&&yms.includes(cur)) sel.value=cur;
+}
+function renderItemTrend(){
+  const sel=document.getElementById('itTrendMonthSel');
+  const canvas=document.getElementById('itTrendCanvas');
+  const empty=document.getElementById('itTrendEmpty');
+  const tbl=document.getElementById('itTrendTable');
+  if(!canvas||!sel) return;
+  if(!_itTrendCode){ canvas.style.display='none'; if(empty){empty.style.display='block';empty.textContent='商品を検索して選択してください。';} if(tbl)tbl.innerHTML=''; if(_itTrendChart){_itTrendChart.destroy();_itTrendChart=null;} return; }
+  _populateItTrendMonths();
+  const ym=sel.value;
+  const ymDash = ym ? (ym.slice(0,4)+'-'+ym.slice(4,6)) : '';
+  const byDate=itemDailyData[_itTrendCode]||{};
+  const days=Object.keys(byDate).filter(d=>d.startsWith(ymDash)).sort().map(d=>{
+    const v=byDate[d]||{};
+    return { date:d.replace(/-/g,''), dash:d, spend:v.spend||0, sales:v.sales||0, salesKw:v.salesKw||0, spendKw:v.spendKw||0 };
+  });
+  if(!ym || !days.length){ canvas.style.display='none'; if(empty){empty.style.display='block';empty.textContent='この月の日次データがありません。';} if(tbl)tbl.innerHTML=''; if(_itTrendChart){_itTrendChart.destroy();_itTrendChart=null;} return; }
+  canvas.style.display='block'; if(empty)empty.style.display='none';
+  const salesByDate={}; salesRows.forEach(s=>{ if(s.itemCode===_itTrendCode && s.date) salesByDate[s.date]=(salesByDate[s.date]||0)+s.sales; });
+  let cSpend=0,cSales=0,cSalesKw=0,cSpendKw=0,cTot=0;
+  const rows=days.map(d=>{
+    const tot=salesByDate[d.dash]||0;
+    cSpend+=d.spend; cSales+=d.sales; cSalesKw+=d.salesKw; cSpendKw+=d.spendKw; cTot+=tot;
+    const spend20=Math.max(0,cSpend-cSpendKw), sales20=Math.max(0,cSales-cSalesKw);
+    const dSp20=Math.max(0,d.spend-d.spendKw), dSa20=Math.max(0,d.sales-d.salesKw);
+    return {
+      date:d.date,
+      daySpend:d.spend,
+      dSroas : d.spend>0 ? tot/d.spend*100 : 0,
+      dRoas  : d.spend>0 ? d.sales/d.spend*100 : 0,
+      dRoas20: dSp20>0 ? dSa20/dSp20*100 : 0,
+      dRoasKw: d.spendKw>0 ? d.salesKw/d.spendKw*100 : 0,
+      sroas : cSpend>0 ? cTot/cSpend*100 : 0,
+      roas  : cSpend>0 ? cSales/cSpend*100 : 0,
+      roasKw: cSpendKw>0 ? cSalesKw/cSpendKw*100 : 0,
+      roas20: spend20>0 ? sales20/spend20*100 : 0,
+    };
+  });
+  const labels=rows.map(r=>r.date.slice(4,6)+'/'+r.date.slice(6,8));
+  const mk=(key,color,label)=>({type:'line', label, data:rows.map(r=>r[key]>0?Math.round(r[key]*10)/10:null), borderColor:color, backgroundColor:color+'22', borderWidth:2.5, pointRadius:2.5, tension:0.3, fill:false, spanGaps:true, yAxisID:'y', order:1});
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const gridColor=isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)';
+  const textColor=isDark?'#a0aec0':'#718096';
+  if(_itTrendChart){_itTrendChart.destroy();_itTrendChart=null;}
+  const bar20={type:'bar', label:'ROAS-20(日別)', data:rows.map(r=>r.dRoas20>0?Math.round(r.dRoas20*10)/10:null), yAxisID:'y', backgroundColor:isDark?'rgba(239,68,68,0.22)':'rgba(239,68,68,0.32)', borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
+  const barKw={type:'bar', label:'ROAS-KW(日別)', data:rows.map(r=>r.dRoasKw>0?Math.round(r.dRoasKw*10)/10:null), yAxisID:'y', backgroundColor:isDark?'rgba(245,158,11,0.22)':'rgba(245,158,11,0.34)', borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
+  _itTrendChart=new Chart(canvas,{type:'line',data:{labels,datasets:[
+    bar20, barKw,
+    mk('sroas','#3b82f6','売上ROAS'),
+    mk('roas','#10b981','ROAS'),
+    mk('roasKw','#f59e0b','ROAS-KW'),
+    mk('roas20','#ef4444','ROAS-20'),
+  ]},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y.toFixed(1)+'%')}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true}}}});
+  try{ requestAnimationFrame(function(){ requestAnimationFrame(function(){ try{ if(_itTrendChart) _itTrendChart.resize(); }catch(e){} }); }); }catch(e){}
+  const fmt=v=>v>0?(Math.round(v*10)/10).toFixed(1)+'%':'<span style="color:var(--text3)">—</span>';
+  const td='padding:6px 10px;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);';
+  const th='padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap;';
+  const tdD=td+'color:var(--text2);background:rgba(127,127,127,0.05);';
+  const grp=(c,lbl)=>`<th colspan="2" style="${th}text-align:center;color:${c};border-left:1px solid var(--border)">${lbl}</th>`;
+  const sub=`<th style="${th}text-align:right;font-size:10px;color:var(--text3);border-left:1px solid var(--border)">累積</th><th style="${th}text-align:right;font-size:10px;color:var(--text3)">日別</th>`;
+  const thead=`<tr style="position:sticky;top:0;background:var(--surface2)">
+      <th rowspan="2" style="${th}text-align:left;vertical-align:bottom">日</th>
+      ${grp('#3b82f6','売上ROAS')}${grp('#10b981','ROAS')}${grp('#f59e0b','ROAS-KW')}${grp('#ef4444','ROAS-20')}
+    </tr><tr style="background:var(--surface2)">${sub}${sub}${sub}${sub}</tr>`;
+  const body=rows.slice().reverse().map((r,i)=>{
+    const last=(i===0);
+    return `<tr style="${last?'background:rgba(59,130,246,0.08);font-weight:700':''}">
+        <td style="${td}text-align:left;white-space:nowrap">${r.date.slice(4,6)}/${r.date.slice(6,8)}</td>
+        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.sroas)}</td><td style="${tdD}text-align:right">${fmt(r.dSroas)}</td>
+        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roas)}</td><td style="${tdD}text-align:right">${fmt(r.dRoas)}</td>
+        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roasKw)}</td><td style="${tdD}text-align:right">${fmt(r.dRoasKw)}</td>
+        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roas20)}</td><td style="${tdD}text-align:right">${fmt(r.dRoas20)}</td>
+      </tr>`;
+  }).join('');
+  tbl.innerHTML=`<table style="border-collapse:collapse;font-size:12px;width:100%">
+    <thead>${thead}</thead><tbody>${body}</tbody></table>
+    <div style="font-size:10px;color:var(--text3);margin-top:6px">※ 累積（月初〜当日）と日別（当日単体）を併記。最上段＝当月の確定見込み（累積）。</div>`;
+}
+
 function renderGraph() {
   const metric = document.getElementById('graphMetricSel')?.value || 'spend';
   const canvas = document.getElementById('graphCanvas');
@@ -11048,6 +11216,7 @@ function switchTab(tab) {
   if (tab === 'renewal-thumb') renderRenewalThumb();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'trend') renderTrend();
+  if (tab === 'item-trend') { _renderItTrendChips(); renderItemTrend(); try{ _itTrendFetch().then(function(ch){ if(ch){ _renderItTrendChips(); } }); }catch(e){} }
   if (tab === 'yoy') renderYoy();
   if (tab === 'kw-basic') renderKwBasic();
   if (tab === 'kw-indiv') { _syncKwIndivMonths(); renderKwIndiv(); _kwIndivSavedFetch().then(_renderKwIndivSavedDropdown).catch(function(){}); }
@@ -13357,6 +13526,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   try{ await _analyzeFetch(); }catch(e){}
   try{ await _cpaFetch(); }catch(e){}
   try{ await _miColFetch(); }catch(e){}
+  try{ await _itTrendFetch(); }catch(e){}
   if (loaded) {
     // 日付範囲フィルタを強制的に最新日までに設定（ブラウザの値復元で古い日付が残るのを防ぐ）
     try {
