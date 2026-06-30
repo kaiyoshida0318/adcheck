@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1038</span>
+    <span class="build-date">v1.1039</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -657,7 +657,7 @@ header + * { margin-top: 4px; }
             <div id="colwSharedBox" style="display:none;font-size:11px;margin-bottom:10px;padding:8px 10px;background:#eef4fb;border:1px solid #c9dff0;border-radius:6px;line-height:1.7"></div>
             <div id="colWidthPanelBody"></div>
           </div>
-          <div class="col-header" style="position:sticky;top:48px;z-index:25;background:#f8f9fa">
+          <div class="col-header with-status" style="position:sticky;top:48px;z-index:25;background:#f8f9fa">
             <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="cursor:pointer">商品番号</div>
             <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
             <div class="ch" id="ch-img" style="border-right:2px solid #c4cad2">商品画像</div>
@@ -674,6 +674,8 @@ header + * { margin-top: 4px; }
             <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer;background:#fff8e5;border-right:2px solid #f0d878">20円 ROAS</div>
             <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer;background:#e0f5f9">CA実績</div>
             <div class="ch r" id="ch-caroas" onclick="sortBy('caroas')" style="cursor:pointer;line-height:1;font-size:8px;background:#e0f5f9;border-right:2px solid #a8d8e0">値引き後<br>ROAS</div>
+            <div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>
+            <div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン/下げ</div>
             <div class="ch"></div>
           </div>
           <div id="itemList"></div>
@@ -12712,7 +12714,7 @@ function _syncColHeaderStatus() {
     const header = document.querySelector('#tab-products .col-header');
     if (header) {
       // 本体行がwith-status（区分・SS列あり）かどうかで判定
-      const useStatus = !!_subTabFilter;
+      const useStatus = true;
       header.classList.toggle('with-status', useStatus);
     }
   } catch(e) { console.warn('_syncColHeaderStatus error:', e); }
@@ -12723,7 +12725,7 @@ function _dedupeSubTabHeader(){
       var hdrs=inner.querySelectorAll(':scope > .col-header');
       for(var i=1;i<hdrs.length;i++) hdrs[i].remove();
       var hdr=inner.querySelector(':scope > .col-header');
-      if(hdr){ var seen={}; Array.prototype.slice.call(hdr.children).forEach(function(c){ var t=(c.textContent||'').trim(); if(t==='区分'||t==='SS/マラソン'){ if(seen[t]) c.remove(); else seen[t]=1; } }); }
+      if(hdr){ var seen={}; Array.prototype.slice.call(hdr.children).forEach(function(c){ var t=(c.textContent||'').trim(); if(t==='区分'||t.indexOf('SS/マラソン')===0){ if(seen[t]) c.remove(); else seen[t]=1; } }); }
     });
   }catch(e){}
 }
@@ -12784,7 +12786,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const _caSpendCell = _marathonView ? '' : `<div class="cell r mono" style="font-size:11px;background:#e0f5f9">${_caData&&_caData.spend>0?fmtY(_caData.spend):'<span style="color:var(--text3)">—</span>'}</div>`;
   const _caRoasCell = _marathonView ? '' : (() => { const _rd=(_caData&&_caData.roasD!=null)?Math.round(_caData.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px;background:#e0f5f9;border-right:2px solid #a8d8e0"><span style="color:${_rdc};font-weight:700">${_rd!=null?_rd+'%':'—'}</span></div>`; })();
   return `<div class="item-row">
-    <div class="item-basic${isExp?' expanded':''}${_subTabFilter?(_marathonView?' marathon':' with-status'):''}"${_ssTabActive?` onclick="_rowClick('${p.id}','${ym}')"`:''}>
+    <div class="item-basic${isExp?' expanded':''}${_marathonView?' marathon':' with-status'}"${_ssTabActive?` onclick="_rowClick('${p.id}','${ym}')"`:''}>
       <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${cached?.itemNumber||''}（ダブルクリックで選択）">
         ${cached?.itemNumber || '—'}
       </div>
@@ -12876,7 +12878,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
         })()}
       </div>
       ${_caSpendCell}${_caRoasCell}
-      ${_subTabFilter ? `
+      ${true ? `
       <div class="status-cell" onclick="event.stopPropagation()" style="position:relative">
         <div class="status-disp" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1px;overflow:hidden;color:${STATUS_COLORS[productCache[p.id]?.status||'unset']||'var(--text2)'}">${_statusDispHtml(productCache[p.id]?.status||'unset')}</div>
         <select id="status-sel-${p.id}" onchange="applyStatusColor(this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:11px;border:none;outline:none">
@@ -13267,7 +13269,7 @@ function _renderColwModeTabs(){
 function _renderColWidthPanel(){
   const body=document.getElementById('colWidthPanelBody'); if(!body) return;
   _renderColwModeTabs();
-  body.innerHTML=_colwDefs().filter(function(d){ return !(_colwMode==='normal' && d.ws); }).map(d=>{
+  body.innerHTML=_colwDefs().filter(function(d){ return true; }).map(d=>{
     const v=_colwVal(d.k);
     const mn=d.flex?120:40, mx=d.flex?420:220;
     const a=_colwAlign(d.k);
