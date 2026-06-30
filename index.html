@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1018</span>
+    <span class="build-date">v1.1020</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4770,8 +4770,39 @@ const MI_ALL_COLS=[
 let _miColHidden = (function(){ try{ return new Set(JSON.parse(localStorage.getItem('adcheck_mi_hidden'))||[]); }catch(e){ return new Set(); } })();
 let _miColW = (function(){ try{ return JSON.parse(localStorage.getItem('adcheck_mi_colw'))||{}; }catch(e){ return {}; } })();
 let _miColA = (function(){ try{ return JSON.parse(localStorage.getItem('adcheck_mi_align'))||{}; }catch(e){ return {}; } })();
-function _miColSave(){ try{ localStorage.setItem('adcheck_mi_hidden', JSON.stringify([..._miColHidden])); }catch(e){} }
-function _miColSaveWA(){ try{ localStorage.setItem('adcheck_mi_colw', JSON.stringify(_miColW)); localStorage.setItem('adcheck_mi_align', JSON.stringify(_miColA)); }catch(e){} }
+function _miColSave(){ try{ localStorage.setItem('adcheck_mi_hidden', JSON.stringify([..._miColHidden])); }catch(e){} try{ _miColPublishDebounced(); }catch(e){} }
+function _miColSaveWA(){ try{ localStorage.setItem('adcheck_mi_colw', JSON.stringify(_miColW)); localStorage.setItem('adcheck_mi_align', JSON.stringify(_miColA)); }catch(e){} try{ _miColPublishDebounced(); }catch(e){} }
+var _MICOL_SHARED_FILE='data/mi_colsettings_shared.json';
+let _miColPubTimer=null;
+function _miColPublishDebounced(){ if(_miColPubTimer) clearTimeout(_miColPubTimer); _miColPubTimer=setTimeout(function(){ try{ _miColPublish(); }catch(e){} }, 1500); }
+async function _miColFetch(){
+  try{
+    var pat=localStorage.getItem('github_pat'); var obj=null;
+    try{ var h={'Accept':'application/vnd.github.v3.raw'}; if(pat) h['Authorization']='token '+pat;
+      var r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_MICOL_SHARED_FILE+'?t='+Date.now(),{headers:h,cache:'no-store'}); if(r.ok){ obj=JSON.parse(await r.text()); } }catch(e){}
+    if(!obj){ var rr=await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+_MICOL_SHARED_FILE+'?t='+Date.now(),{cache:'no-store'}); if(rr.ok) obj=JSON.parse(await rr.text()); }
+    if(obj && (Array.isArray(obj.hidden)||obj.w||obj.a)){
+      _miColHidden = new Set(Array.isArray(obj.hidden)?obj.hidden:[]);
+      _miColW = (obj.w&&typeof obj.w==='object')?obj.w:{};
+      _miColA = (obj.a&&typeof obj.a==='object')?obj.a:{};
+      try{ localStorage.setItem('adcheck_mi_hidden', JSON.stringify([..._miColHidden])); }catch(e){}
+      try{ localStorage.setItem('adcheck_mi_colw', JSON.stringify(_miColW)); localStorage.setItem('adcheck_mi_align', JSON.stringify(_miColA)); }catch(e){}
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+async function _miColPublish(){
+  var pat=localStorage.getItem('github_pat'); if(!pat) return false;
+  try{
+    var headers={'Authorization':'token '+pat,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+    var url='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_MICOL_SHARED_FILE;
+    var getRes=await fetch(url,{headers,cache:'no-store'}); var sha=getRes.ok?(await getRes.json()).sha:null;
+    var base64=btoa(unescape(encodeURIComponent(JSON.stringify({hidden:[..._miColHidden],w:_miColW,a:_miColA,updatedAt:Date.now()}))));
+    var body={message:'Update mi column settings',content:base64}; if(sha) body.sha=sha;
+    var putRes=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)}); return putRes.ok;
+  }catch(e){ return false; }
+}
 function _miColSetW(k,v){ v=parseInt(v,10); if(!v||v<=0){ delete _miColW[k]; } else { _miColW[k]=Math.max(30,Math.min(300,v)); } _miColSaveWA(); renderMonthlyItem(); }
 function _miColSetA(k,a){ _miColA[k]=a; _miColSaveWA(); _renderMiColPanel(); renderMonthlyItem(); }
 function _openMiColPanel(){ var p=document.getElementById('miColPanel'); if(!p)return; if(p.parentElement!==document.body)document.body.appendChild(p); if(p.style.display==='block'){p.style.display='none';return;} _renderMiColPanel(); p.style.display='block'; }
@@ -5045,7 +5076,7 @@ function _setRundaysModeUI(){ const o=document.getElementById('rundaysOnlyBtn'),
 function _setRundaysMode(b){ _rundaysAll=b; _setRundaysModeUI(); renderRunawayDays(); }
 function _cpaKey(){ return 'adcheck_coupon_advance_'+((typeof _getCurrentShopId==='function'?_getCurrentShopId():null)||'yukaiya'); }
 function _cpaLoad(){ try{ const s=localStorage.getItem(_cpaKey()); couponAdvanceRows = s?JSON.parse(s):[]; }catch(e){ couponAdvanceRows=[]; } }
-function _cpaSave(){ try{ localStorage.setItem(_cpaKey(), JSON.stringify(couponAdvanceRows)); }catch(e){} try{ _caMonthCache={}; }catch(e){} }
+function _cpaSave(){ try{ localStorage.setItem(_cpaKey(), JSON.stringify(couponAdvanceRows)); }catch(e){} try{ _caMonthCache={}; }catch(e){} try{ _cpaPublishDebounced(); }catch(e){} }
 function _cpaParseCsv(text){ text=text.replace(/^\uFEFF/,''); const rows=[]; let i=0, field='', row=[], inQ=false; while(i<text.length){ const c=text[i]; if(inQ){ if(c==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} inQ=false;i++;continue;} field+=c;i++;continue; } if(c==='"'){ inQ=true;i++;continue; } if(c===','){ row.push(field);field='';i++;continue; } if(c==='\r'){ i++;continue; } if(c==='\n'){ row.push(field);rows.push(row);row=[];field='';i++;continue; } field+=c;i++; } if(field.length||row.length){ row.push(field); rows.push(row); } return rows; }
 function _cpaParseInto(text, map){ const rows=_cpaParseCsv(text); if(rows.length<2) return 0; const head=rows[0].map(h=>String(h).trim()); const f=(test)=>head.findIndex(test); const iDate=f(h=>h.includes('日付')); const iCode=f(h=>h.includes('商品管理番号')); if(iDate<0||iCode<0) return 0; const iBid=f(h=>h.includes('入札単価')); const iSpend=f(h=>h.includes('実績額')); const iDisc=f(h=>h.includes('値引率')); const iSalesC=f(h=>h.includes('クーポン掲載')); const iSales=f(h=>h==='売上金額'); const iCvr=f(h=>h.includes('CVR')); const iRoas=f(h=>h.includes('ROAS')&&!h.includes('値引')); const iRoasD=f(h=>h.includes('ROAS')&&h.includes('値引')); const iCpa=f(h=>h.includes('注文獲得単価')); const num=v=>{ if(v==null) return 0; v=String(v).replace(/,/g,'').trim(); if(v===''||v==='-') return 0; const n=parseFloat(v); return isNaN(n)?0:n; }; let cnt=0; for(let r=1;r<rows.length;r++){ const row=rows[r]; if(!row||row.length<2) continue; const dm=String(row[iDate]||'').match(/(\d{4})年(\d{2})月(\d{2})日/); if(!dm) continue; const date=dm[1]+'-'+dm[2]+'-'+dm[3]; const code=String(row[iCode]||'').trim(); if(!code) continue; map[date+'|'+code]={ date:date, itemCode:code, bid:num(row[iBid]), spend:num(row[iSpend]), disc:num(row[iDisc]), salesCoupon:num(row[iSalesC]), sales:num(row[iSales]), cvr:num(row[iCvr]), roas:num(row[iRoas]), roasD:num(row[iRoasD]), cpa:num(row[iCpa]) }; cnt++; } return cnt; }
 async function _cpaImport(files){ const status=document.getElementById('cpaStatus'); if(status) status.textContent='読み込み中...'; for(const f of files){ try{ let texts=[]; if(f.name.toLowerCase().endsWith('.zip')){ const buf=await f.arrayBuffer(); const zip=await JSZip.loadAsync(buf); for(const [n,e] of Object.entries(zip.files)){ if(!e.dir && n.toLowerCase().endsWith('.csv')){ texts.push(await e.async('text')); } } } else if(f.name.toLowerCase().endsWith('.csv')) { texts.push(await f.text()); } for(const t of texts){ _cpaIngest(t); } }catch(e){ console.error('cpa import',e); } } const fi=document.getElementById('cpaFileInput'); if(fi) fi.value=''; _cpaLoad(); _cpaLoadKw(); renderCpa(); if(status) status.textContent='商品別 '+couponAdvanceRows.length+'件 / KW別 '+couponAdvanceKwRows.length+'件'; }
@@ -5154,7 +5185,40 @@ function renderCpa(){
 let couponAdvanceKwRows = [];
 function _cpaKwKey(){ return 'adcheck_coupon_advance_kw_'+((typeof _getCurrentShopId==='function'?_getCurrentShopId():null)||'yukaiya'); }
 function _cpaLoadKw(){ try{ const s=localStorage.getItem(_cpaKwKey()); couponAdvanceKwRows = s?JSON.parse(s):[]; }catch(e){ couponAdvanceKwRows=[]; } }
-function _cpaSaveKw(){ try{ localStorage.setItem(_cpaKwKey(), JSON.stringify(couponAdvanceKwRows)); }catch(e){} }
+function _cpaSaveKw(){ try{ localStorage.setItem(_cpaKwKey(), JSON.stringify(couponAdvanceKwRows)); }catch(e){} try{ _cpaPublishDebounced(); }catch(e){} }
+function _cpaGhFile(){ return `${_shopDataDir()}/coupon_advance.json`; }
+let _cpaPubTimer=null;
+function _cpaPublishDebounced(){ if(_cpaPubTimer) clearTimeout(_cpaPubTimer); _cpaPubTimer=setTimeout(function(){ try{ _cpaPublish(); }catch(e){} }, 1500); }
+async function _cpaFetch(){
+  try{
+    var pat=localStorage.getItem('github_pat'); var obj=null; var file=_cpaGhFile();
+    try{ var h={'Accept':'application/vnd.github.v3.raw'}; if(pat) h['Authorization']='token '+pat;
+      var r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+file+'?t='+Date.now(),{headers:h,cache:'no-store'}); if(r.ok){ obj=JSON.parse(await r.text()); } }catch(e){}
+    if(!obj){ var rr=await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+file+'?t='+Date.now(),{cache:'no-store'}); if(rr.ok) obj=JSON.parse(await rr.text()); }
+    if(obj && (Array.isArray(obj.item)||Array.isArray(obj.kw))){
+      couponAdvanceRows = Array.isArray(obj.item)?obj.item:[];
+      couponAdvanceKwRows = Array.isArray(obj.kw)?obj.kw:[];
+      try{ localStorage.setItem(_cpaKey(), JSON.stringify(couponAdvanceRows)); }catch(e){}
+      try{ localStorage.setItem(_cpaKwKey(), JSON.stringify(couponAdvanceKwRows)); }catch(e){}
+      try{ _caMonthCache={}; }catch(e){}
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+async function _cpaPublish(){
+  var pat=localStorage.getItem('github_pat'); if(!pat) return false;
+  try{
+    _cpaLoad(); _cpaLoadKw();
+    var file=_cpaGhFile();
+    var headers={'Authorization':'token '+pat,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+    var url='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+file;
+    var getRes=await fetch(url,{headers,cache:'no-store'}); var sha=getRes.ok?(await getRes.json()).sha:null;
+    var base64=btoa(unescape(encodeURIComponent(JSON.stringify({item:couponAdvanceRows,kw:couponAdvanceKwRows,updatedAt:Date.now()}))));
+    var body={message:'Update coupon advance data',content:base64}; if(sha) body.sha=sha;
+    var putRes=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)}); return putRes.ok;
+  }catch(e){ return false; }
+}
 function _cpaParseKwInto(text, map){ const rows=_cpaParseCsv(text); if(rows.length<2) return 0; const head=rows[0].map(h=>String(h).trim()); const f=(t)=>head.findIndex(t); const iDate=f(h=>h.includes('日付')), iCode=f(h=>h.includes('商品管理番号')), iKw=f(h=>h==='キーワード'); if(iDate<0||iCode<0||iKw<0) return 0; const iBid=f(h=>h.includes('キーワード入札単価')), iSpend=f(h=>h.includes('実績額')), iSales=f(h=>h==='売上金額'), iCvr=f(h=>h.includes('CVR')), iRoas=f(h=>h.includes('ROAS')&&!h.includes('値引')), iRoasD=f(h=>h.includes('ROAS')&&h.includes('値引')), iCpa=f(h=>h.includes('注文獲得単価')); const num=v=>{ if(v==null) return 0; v=String(v).replace(/,/g,'').trim(); if(v===''||v==='-') return 0; const n=parseFloat(v); return isNaN(n)?0:n; }; let cnt=0; for(let r=1;r<rows.length;r++){ const row=rows[r]; if(!row||row.length<3) continue; const dm=String(row[iDate]||'').match(/(\d{4})年(\d{2})月(\d{2})日/); if(!dm) continue; const date=dm[1]+'-'+dm[2]+'-'+dm[3]; const code=String(row[iCode]||'').trim(); const kw=String(row[iKw]||'').trim(); if(!code||!kw) continue; map[date+'|'+code+'|'+kw]={ date:date, itemCode:code, kw:kw, bid:num(row[iBid]), spend:num(row[iSpend]), sales:num(row[iSales]), cvr:num(row[iCvr]), roas:num(row[iRoas]), roasD:num(row[iRoasD]), cpa:num(row[iCpa]) }; cnt++; } return cnt; }
 function _cpaIngest(text){ const first=_cpaParseCsv(text)[0]; if(!first) return; const head=first.map(h=>String(h).trim()); const isKw=head.some(h=>h==='キーワード'); if(isKw){ _cpaLoadKw(); const map={}; couponAdvanceKwRows.forEach(r=>map[r.date+'|'+r.itemCode+'|'+r.kw]=r); _cpaParseKwInto(text, map); couponAdvanceKwRows=Object.values(map); _cpaSaveKw(); } else { _cpaLoad(); const map={}; couponAdvanceRows.forEach(r=>map[r.date+'|'+r.itemCode]=r); _cpaParseInto(text, map); couponAdvanceRows=Object.values(map); _cpaSave(); } }
 function _toggleMissingCheck(el){ const d=el.nextElementSibling; const open=d.style.display!=='none'; d.style.display=open?'none':'block'; const ar=el.querySelector('.acc-arrow'); if(ar) ar.textContent=open?'▶':'▼'; if(!open){ try{ _checkMissingDays(); }catch(e){ console.error('missingcheck',e); } } }
@@ -10809,7 +10873,7 @@ function switchTab(tab) {
   // 月別/商品個別タブを開いたら自動でレンダリング
   if (tab === 'products') renderTable();
   if (tab === 'marke') renderMarke();
-  if (tab === 'monthly-item') renderMonthlyItem();
+  if (tab === 'monthly-item') { renderMonthlyItem(); try{ _miColFetch().then(function(ch){ if(ch){ try{populateMonthlyItemSel();}catch(e){} renderMonthlyItem(); } }); }catch(e){} }
   if (tab === 'retired') renderRetired();
   if (tab === 'roas-trend') renderRoasTrend();
   if (tab === 'renewal-todo') renderRenewalTodo();
@@ -10827,7 +10891,7 @@ function switchTab(tab) {
   if (tab === 'kw-watch-prod') { renderKwWatchProd(); }
   if (tab === 'runaway') { renderRunaway(); }
   if (tab === 'runaway-days') { renderRunawayDays(); }
-  if (tab === 'cpa') { renderCpa(); }
+  if (tab === 'cpa') { renderCpa(); try{ _cpaFetch().then(function(ch){ if(ch) renderCpa(); }); }catch(e){} }
   if (tab === 'kw-compare') renderKwCompare();
   if (tab === 'item-graph') { _initItemGraphRange(); }
   if (tab === 'monthly') { _renderMonthlyTable(nichinichiRows); }
@@ -13123,6 +13187,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   // GitHubからデータを読み込む（全PCで共有）
   const loaded = await loadFromGitHub();
   try{ await _analyzeFetch(); }catch(e){}
+  try{ await _cpaFetch(); }catch(e){}
+  try{ await _miColFetch(); }catch(e){}
   if (loaded) {
     // 日付範囲フィルタを強制的に最新日までに設定（ブラウザの値復元で古い日付が残るのを防ぐ）
     try {
