@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1039</span>
+    <span class="build-date">v1.1040</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -13264,7 +13264,8 @@ function _renderColwModeTabs(){
   const el=document.getElementById('colwModeTabs'); if(!el) return;
   const mk=function(m,lbl){ const on=_colwMode===m;
     return '<button onclick="_colwSetMode(\''+m+'\')" style="flex:1;font-size:12px;font-weight:700;padding:5px 8px;border-radius:6px;cursor:pointer;border:1.5px solid '+(on?'#1565C0':'var(--border)')+';background:'+(on?'#1565C0':'var(--surface2)')+';color:'+(on?'#fff':'var(--text3)')+'">'+lbl+'</button>'; };
-  el.innerHTML=mk('normal','通常')+mk('marathon','マラソン')+mk('marke','マーケ');
+  const caps={normal:'効く表: 商品-売上データ / 状態-全体 / SS-全体(3・6・9・12月)',marathon:'効く表: マラソン 候補 / 実施',marke:'効く表: 商品-マーケデータ'};
+  el.innerHTML='<div style="flex:1;display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:6px">'+mk('normal','売上 / 状態 / SS')+mk('marathon','候補 / 実施')+mk('marke','マーケ')+'</div><div style="font-size:10px;color:var(--text3);line-height:1.5">'+(caps[_colwMode]||'')+'</div></div>';
 }
 function _renderColWidthPanel(){
   const body=document.getElementById('colWidthPanelBody'); if(!body) return;
@@ -13294,7 +13295,7 @@ function _colwUpdateTotal(){
   if(_colwMode!=='marke') total+=28;
   const win=window.innerWidth||0; const diff=total-win; const over=diff>0;
   const diffTxt=over?('+'+diff+'px はみ出し'):((-diff)+'px 余裕'); const diffCol=over?'#C62828':'#1D9E75';
-  const modeLbl=_colwMode==='marathon'?'マラソン':'通常(状態/SS)';
+  const modeLbl=_colwMode==='marathon'?'候補/実施':(_colwMode==='marke'?'マーケ':'売上/状態/SS');
   el.innerHTML='<div style="color:var(--text2)">'+modeLbl+' 合計幅:<b style="color:var(--text)">'+total+'px</b></div>'+
     '<div style="color:var(--text2)">画面幅:'+win+'px  差分:<b style="color:'+diffCol+'">'+diffTxt+'</b></div>';
 }
