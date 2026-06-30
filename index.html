@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1027</span>
+    <span class="build-date">v1.1029</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5811,7 +5811,7 @@ function renderItemGraph() {
     try{ const _sc=_getDailySales()[code]; if(_sc){ Object.keys(_sc).forEach(d=>{ const ym=d.slice(0,7), ymc=ym.replace('-',''); if((fromM&&ymc<fromM)||(toM&&ymc>toM))return; if(!monthly[ym]) monthly[ym]={spend:0,sales:0,spendKw:0,salesKw:0,cl:0,clKw:0,orders:0,ordersKw:0,imp:0,impKw:0}; }); } }catch(e){}
     labels = Object.keys(monthly).sort();
     const _now=new Date(); const _curYm=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');
-    labels = labels.filter(m => m < _curYm);
+    if (_isAccumMetric(metric)) labels = labels.filter(m => m < _curYm);
     labels.forEach(m => { dataMap[m] = monthly[m]; }); if (typeof _itemGraphView2y!=='undefined' && _itemGraphView2y) labels=labels.slice(-24);
   }
   if (!labels.length) { canvas.style.display='none'; empty.style.display='block'; empty.textContent='\u9078\u629e\u671f\u9593\u306b\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093\u3002'; _renderItemToggles(false); _renderItemYearToggles(null); const t=document.getElementById('itemGraphDataTable'); if(t)t.innerHTML=''; return; }
@@ -6620,6 +6620,29 @@ function renderTrend(){
     <div style="font-size:10px;color:var(--text3);margin-top:6px">※ ${noteR}</div>`;
   _setTrendModeUI();
 }
+// 積み上げ系(実績額・売上など)は、途中(未確定)の最新月を既定で表示しない。
+// ROAS/CVR/割合などの比率系は途中時点でも妥当なので最新月まで表示する。
+function _monthIsIncomplete(ym){
+  if(!ym || ym.length<6) return false;
+  const y=+ym.slice(0,4), m=+ym.slice(4,6);
+  let maxDay=0;
+  dailyRows.forEach(r=>{ const c=(r.code||''); if(c.length===8 && c.slice(0,6)===ym){ const d=+c.slice(6,8); if(d>maxDay) maxDay=d; } });
+  if(maxDay===0) return false; // 日次が無ければ判定不能→落とさない
+  const lastDay=new Date(y, m, 0).getDate();
+  return maxDay < lastDay;
+}
+function _isAccumMetric(metric){
+  // 積み上げ(月内で増えていく)系
+  return metric==='spend' || metric==='sales' || metric==='orders' || metric==='units' || metric==='cl' || metric==='all';
+}
+function _trimIncompleteMonth(rows, metric, codeKey){
+  // rows: 月別(codeは'YYYYMM'始まり)昇順想定。積み上げ系かつ末尾が未確定月なら末尾を除外。
+  if(!_isAccumMetric(metric) || !rows || rows.length<=1) return rows;
+  const get=r=> (codeKey?codeKey(r):(r.code||'')).slice(0,6);
+  const last=get(rows[rows.length-1]);
+  if(_monthIsIncomplete(last)) return rows.slice(0,-1);
+  return rows;
+}
 function renderGraph() {
   const metric = document.getElementById('graphMetricSel')?.value || 'spend';
   const canvas = document.getElementById('graphCanvas');
@@ -6648,6 +6671,7 @@ function renderGraph() {
       const c = r.code || '';
       return (!fromM || c >= fromM) && (!toM || c <= toM);
     });
+    rows = _trimIncompleteMonth(rows, metric);
   }
 
   if (rows.length === 0) {
@@ -9323,7 +9347,7 @@ function renderRenewalGraph() {
     // 当月（まだ締まっていない月）は数値が不完全なので月別表示から除外
     const _now = new Date();
     const _curYm = _now.getFullYear() + '-' + String(_now.getMonth()+1).padStart(2,'0');
-    labels = labels.filter(m => m < _curYm);
+    if (_isAccumMetric(metric)) labels = labels.filter(m => m < _curYm);
     labels.forEach(m => { dataMap[m] = monthly[m]; }); if (typeof _renewalView2y!=='undefined' && _renewalView2y) labels=labels.slice(-24);
   }
 
