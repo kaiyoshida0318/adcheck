@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1041</span>
+    <span class="build-date">v1.1042</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8380,7 +8380,7 @@ function _kwCmpPick(n, code){
   _kwCmpSelIdx='';
   renderKwCompare();
 }
-var _ANALYZE_OPTS=[
+var _ANALYZE_OPTS_STATIC=[
  {v:'【基本】全体',b:'【基本】',r:'全体',c:'#2563eb',full:true},
  {v:'商品-基本データ',b:'【基本】',r:'商品-基本データ',c:'#2563eb'},
  {v:'商品-日月別データ',b:'【基本】',r:'商品-日月別データ',c:'#2563eb'},
@@ -8421,6 +8421,29 @@ var _ANALYZE_OPTS=[
  {v:'9月',b:'【SS】',r:'9月',c:'#db2777'},
  {v:'12月',b:'【SS】',r:'12月',c:'#db2777'}
 ];
+// 確認場所の選択肢は上部タブから動的生成（タブ名変更・追加に自動連動）
+function _buildAnalyzeOpts(){
+  try{
+    var els=[].slice.call(document.querySelectorAll('nav.tab-sub-row .tab-row-label, nav.tab-sub-row .tab-btn'));
+    if(!els.length) return _ANALYZE_OPTS_STATIC;
+    var out=[], curB='', curC='#666';
+    els.forEach(function(el){
+      if(el.classList.contains('tab-row-label')){
+        curB=(el.textContent||'').trim();
+        var m=(el.getAttribute('style')||'').match(/color:\s*(#[0-9a-fA-F]{3,6})/);
+        curC=m?m[1]:'#666';
+        if(curB) out.push({v:curB+'全体', b:curB, r:'全体', c:curC, full:true});
+      } else if(el.classList.contains('tab-btn')){
+        var cl=el.cloneNode(true); var sp=cl.querySelectorAll('span');
+        for(var i=0;i<sp.length;i++) sp[i].remove();
+        var lbl=(cl.textContent||'').trim();
+        if(lbl) out.push({v:lbl, b:curB, r:lbl, c:curC});
+      }
+    });
+    return out.length?out:_ANALYZE_OPTS_STATIC;
+  }catch(e){ return _ANALYZE_OPTS_STATIC; }
+}
+try{ Object.defineProperty(window,'_ANALYZE_OPTS',{get:function(){return _buildAnalyzeOpts();},configurable:true}); }catch(e){ try{ window._ANALYZE_OPTS=_buildAnalyzeOpts(); }catch(e2){} }
 var _ANALYZE_DEFAULT=[
  {place:'全-月別データ',place2:'通常 / 前年同月比',item:'売上・実績・獲得単価・CVR・ROASで明確な悪化がないかのチェック'},
  {place:'全-比較',place2:'前年同月比',item:'赤(2割超の減少)になってる商品の確認・対処すべきかを検討'},
