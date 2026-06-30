@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1026</span>
+    <span class="build-date">v1.1027</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -952,11 +952,7 @@ header + * { margin-top: 4px; }
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
           <span style="font-size:12px;color:var(--text3)">対象月：</span>
           <select id="trendMonthSel" class="toolbar-month" onchange="renderTrend()" style="font-size:13px;padding:6px 12px"></select>
-          <div style="display:flex;gap:4px;margin-left:6px">
-            <button id="trendModeCum" onclick="_setTrendMode('cum')">累積(推移)</button>
-            <button id="trendModeDay" onclick="_setTrendMode('day')">日別</button>
-          </div>
-          <span style="font-size:10px;color:var(--text3)">月末までの推移。累積＝月初からの累積ROAS（確定値に収束）／日別＝その日単体</span>
+          <span style="font-size:10px;color:var(--text3)">月末までの推移（月初からの累積ROAS。確定値に収束していきます）。表には日別値も併記。</span>
         </div>
         <div style="position:relative;height:380px"><canvas id="trendCanvas"></canvas></div>
         <div id="trendEmpty" style="display:none;text-align:center;padding:60px;color:var(--text3);font-size:13px">この月の日次データがありません。全-日別データを取り込んでください。</div>
@@ -6506,7 +6502,7 @@ function _toggleGraphMetric(i) {
 }
 
 let _trendChart=null;
-let _trendMode='cum';
+let _trendMode='cum'; // 累積固定
 function _setTrendMode(m){ _trendMode=m; _setTrendModeUI(); renderTrend(); }
 function _setTrendModeUI(){
   const on='font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:700;border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
