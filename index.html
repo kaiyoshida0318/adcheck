@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1020</span>
+    <span class="build-date">v1.1021</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -549,6 +549,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn tab-btn-all" id="tab-btn-monthly" onclick="switchTab('monthly')">全-月別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-daily" onclick="switchTab('daily')">全-日別データ</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-graph" onclick="switchTab('graph')">全-日月別グラフ</button>
+  <button class="tab-btn tab-btn-all" id="tab-btn-trend" onclick="switchTab('trend')">全-推移</button>
   <button class="tab-btn tab-btn-all" id="tab-btn-yoy" onclick="switchTab('yoy')">全-比較</button>
 </nav>
 <nav class="tab-sub-row tab-sub-row-2">
@@ -936,6 +937,26 @@ header + * { margin-top: 4px; }
   </div>
 
 </div>
+
+  <!-- 全-推移 -->
+  <div class="tab-panel" id="tab-trend">
+    <div class="container" style="max-width:1200px">
+      <div class="table-card" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--text3)">対象月：</span>
+          <select id="trendMonthSel" class="toolbar-month" onchange="renderTrend()" style="font-size:13px;padding:6px 12px"></select>
+          <div style="display:flex;gap:4px;margin-left:6px">
+            <button id="trendModeCum" onclick="_setTrendMode('cum')">累積(推移)</button>
+            <button id="trendModeDay" onclick="_setTrendMode('day')">日別</button>
+          </div>
+          <span style="font-size:10px;color:var(--text3)">月末までの推移。累積＝月初からの累積ROAS（確定値に収束）／日別＝その日単体</span>
+        </div>
+        <div style="position:relative;height:380px"><canvas id="trendCanvas"></canvas></div>
+        <div id="trendEmpty" style="display:none;text-align:center;padding:60px;color:var(--text3);font-size:13px">この月の日次データがありません。全-日別データを取り込んでください。</div>
+        <div id="trendTable" style="margin-top:16px;overflow-x:auto"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- 全-計算式 -->
   <div class="tab-panel" id="tab-yoy">
@@ -6477,6 +6498,92 @@ function _toggleGraphMetric(i) {
   _renderGraphToggles();
 }
 
+let _trendChart=null;
+let _trendMode='cum';
+function _setTrendMode(m){ _trendMode=m; _setTrendModeUI(); renderTrend(); }
+function _setTrendModeUI(){
+  const on='font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:700;border:1px solid #3b82f6;background:#3b82f6;color:#fff;';
+  const off='font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
+  const a=document.getElementById('trendModeCum'), b=document.getElementById('trendModeDay');
+  if(a)a.style.cssText=_trendMode==='cum'?on:off; if(b)b.style.cssText=_trendMode==='day'?on:off;
+}
+function _populateTrendMonths(){
+  const sel=document.getElementById('trendMonthSel'); if(!sel) return;
+  const yms=[...new Set(dailyRows.map(r=>(r.code||'').slice(0,6)).filter(Boolean))].sort().reverse();
+  const cur=sel.value;
+  sel.innerHTML=yms.map(ym=>`<option value="${ym}">${ym.slice(0,4)}/${ym.slice(4,6)}</option>`).join('');
+  if(cur && yms.includes(cur)) sel.value=cur;
+}
+function renderTrend(){
+  _populateTrendMonths();
+  const sel=document.getElementById('trendMonthSel');
+  const canvas=document.getElementById('trendCanvas');
+  const empty=document.getElementById('trendEmpty');
+  const tbl=document.getElementById('trendTable');
+  if(!canvas||!sel) return;
+  const ym=sel.value;
+  const days=dailyRows.filter(r=>(r.code||'').slice(0,6)===ym)
+    .map(r=>({ date:(r.code||''), spend:r.spend||0, sales:r.sales||0, salesKw:r.salesKw||0, spendKw:r.spendKw||0 }))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  if(!ym || !days.length){ canvas.style.display='none'; if(empty)empty.style.display='block'; if(tbl)tbl.innerHTML=''; if(_trendChart){_trendChart.destroy();_trendChart=null;} _setTrendModeUI(); return; }
+  canvas.style.display='block'; if(empty)empty.style.display='none';
+  const salesByDate={}; salesRows.forEach(s=>{ if(s.date) salesByDate[s.date]=(salesByDate[s.date]||0)+s.sales; });
+  let cSpend=0,cSales=0,cSalesKw=0,cSpendKw=0,cTot=0;
+  const rows=days.map(d=>{
+    const dd=d.date.slice(0,4)+'-'+d.date.slice(4,6)+'-'+d.date.slice(6,8);
+    const tot=salesByDate[dd]||0;
+    cSpend+=d.spend; cSales+=d.sales; cSalesKw+=d.salesKw; cSpendKw+=d.spendKw; cTot+=tot;
+    const uTot   =_trendMode==='cum'?cTot:tot;
+    const uSpend =_trendMode==='cum'?cSpend:d.spend;
+    const uSales =_trendMode==='cum'?cSales:d.sales;
+    const uSalesKw=_trendMode==='cum'?cSalesKw:d.salesKw;
+    const uSpendKw=_trendMode==='cum'?cSpendKw:d.spendKw;
+    const spend20=Math.max(0,uSpend-uSpendKw), sales20=Math.max(0,uSales-uSalesKw);
+    return {
+      date:d.date,
+      sroas : uSpend>0 ? uTot/uSpend*100 : 0,
+      roas  : uSpend>0 ? uSales/uSpend*100 : 0,
+      roasKw: uSpendKw>0 ? uSalesKw/uSpendKw*100 : 0,
+      roas20: spend20>0 ? sales20/spend20*100 : 0,
+    };
+  });
+  const labels=rows.map(r=>r.date.slice(4,6)+'/'+r.date.slice(6,8));
+  const mk=(key,color,label)=>({label, data:rows.map(r=>r[key]>0?Math.round(r[key]*10)/10:null), borderColor:color, backgroundColor:color+'22', borderWidth:2.5, pointRadius:2.5, tension:0.3, fill:false, spanGaps:true});
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const gridColor=isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)';
+  const textColor=isDark?'#a0aec0':'#718096';
+  if(_trendChart){_trendChart.destroy();_trendChart=null;}
+  _trendChart=new Chart(canvas,{type:'line',data:{labels,datasets:[
+    mk('sroas','#3b82f6','売上ROAS'),
+    mk('roas','#10b981','ROAS'),
+    mk('roasKw','#f59e0b','ROAS-KW'),
+    mk('roas20','#ef4444','ROAS-20'),
+  ]},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y.toFixed(1)+'%')}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true}}}});
+  const fmt=v=>v>0?(Math.round(v*10)/10).toFixed(1)+'%':'<span style="color:var(--text3)">—</span>';
+  const td='padding:6px 10px;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);';
+  const trows=rows.slice().reverse().map((r,i)=>{
+    const last=(i===0);
+    return `<tr style="${last?'background:rgba(59,130,246,0.08);font-weight:700':''}">
+      <td style="${td}text-align:left;white-space:nowrap">${r.date.slice(4,6)}/${r.date.slice(6,8)}</td>
+      <td style="${td}text-align:right">${fmt(r.sroas)}</td>
+      <td style="${td}text-align:right">${fmt(r.roas)}</td>
+      <td style="${td}text-align:right">${fmt(r.roasKw)}</td>
+      <td style="${td}text-align:right">${fmt(r.roas20)}</td>
+    </tr>`;
+  }).join('');
+  const modeLbl=_trendMode==='cum'?'累積':'日別';
+  const th='padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap;';
+  tbl.innerHTML=`<table style="border-collapse:collapse;font-size:12px;width:100%">
+    <thead><tr style="position:sticky;top:0;background:var(--surface2)">
+      <th style="${th}text-align:left">日</th>
+      <th style="${th}text-align:right;color:#3b82f6">売上ROAS</th>
+      <th style="${th}text-align:right;color:#10b981">ROAS</th>
+      <th style="${th}text-align:right;color:#f59e0b">ROAS-KW</th>
+      <th style="${th}text-align:right;color:#ef4444">ROAS-20</th>
+    </tr></thead><tbody>${trows}</tbody></table>
+    <div style="font-size:10px;color:var(--text3);margin-top:6px">※ ${modeLbl}値。最上段（最終日）が当月の${_trendMode==='cum'?'確定見込みROAS（月初からの累積）':'最終日ROAS'}。</div>`;
+  _setTrendModeUI();
+}
 function renderGraph() {
   const metric = document.getElementById('graphMetricSel')?.value || 'spend';
   const canvas = document.getElementById('graphCanvas');
@@ -8046,6 +8153,7 @@ var _ANALYZE_OPTS=[
  {v:'全-月別データ',b:'【全体】',r:'全-月別データ',c:'#dc2626'},
  {v:'全-日別データ',b:'【全体】',r:'全-日別データ',c:'#dc2626'},
  {v:'全-日月別グラフ',b:'【全体】',r:'全-日月別グラフ',c:'#dc2626'},
+ {v:'全-推移',b:'【全体】',r:'全-推移',c:'#dc2626'},
  {v:'全-比較',b:'【全体】',r:'全-比較',c:'#dc2626'},
  {v:'全-計算式',b:'【全体】',r:'全-計算式',c:'#dc2626'},
  {v:'【リニューアル】全体',b:'【リニューアル】',r:'全体',c:'#16a34a',full:true},
@@ -10882,6 +10990,7 @@ function switchTab(tab) {
   if (tab === 'renewal-lp') renderRenewalLp();
   if (tab === 'renewal-thumb') renderRenewalThumb();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
+  if (tab === 'trend') renderTrend();
   if (tab === 'yoy') renderYoy();
   if (tab === 'kw-basic') renderKwBasic();
   if (tab === 'kw-indiv') { _syncKwIndivMonths(); renderKwIndiv(); _kwIndivSavedFetch().then(_renderKwIndivSavedDropdown).catch(function(){}); }
