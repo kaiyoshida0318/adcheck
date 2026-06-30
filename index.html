@@ -107,8 +107,8 @@ header + * { margin-top: 4px; }
 .tbtn { font-size: 11px; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .tbtn:hover { background: var(--surface2); }
 
-.col-header { display: grid; grid-template-columns: 90px 110px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
-.col-header.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 76px 96px 28px; }
+.col-header { display: grid; grid-template-columns: 90px 110px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 84px 76px 28px; align-items: center; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.col-header.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 84px 76px 76px 96px 28px; }
 .ch { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.1s; }
 .ch:hover { color: var(--text); }
 .ch.r { text-align: right; }
@@ -121,8 +121,8 @@ header + * { margin-top: 4px; }
 
 .item-row { border-bottom: 1px solid rgba(0,0,0,0.18); }
 .item-row:last-child { border-bottom: none; }
-.item-basic { display: grid; grid-template-columns: 90px 110px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
-.item-basic.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 90px 76px 96px 28px; }
+.item-basic { display: grid; grid-template-columns: 90px 110px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 84px 76px 28px; align-items: stretch; cursor: pointer; background: var(--surface); min-height: 54px; transition: background 0.1s; }
+.item-basic.with-status { grid-template-columns: 90px 80px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 84px 76px 76px 96px 28px; }
 .col-header.marathon { grid-template-columns: 90px 80px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 76px 96px 28px !important; }
 .item-basic.marathon { grid-template-columns: 90px 80px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 92px 72px 72px 72px 72px 72px 76px 96px 28px !important; }
 .col-header.marke{grid-template-columns:90px 110px 90px 48px minmax(0,1fr) 92px 82px 92px 102px 76px 76px 76px 76px !important}
@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1007</span>
+    <span class="build-date">v1.1008</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -663,7 +663,8 @@ header + * { margin-top: 4px; }
             <div class="ch r" id="ch-kwroas" onclick="sortBy('kwroas')" style="cursor:pointer;background:#eff5ec;border-right:2px solid #b8d9a8">KW ROAS</div>
             <div class="ch r" id="ch-spend20" onclick="sortBy('spend20')" style="cursor:pointer;background:#fff8e5">20円実績</div>
             <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer;background:#fff8e5;border-right:2px solid #f0d878">20円 ROAS</div>
-            <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer;line-height:1.15">CA実績<br><span style="font-size:9px;color:var(--text3)">値引後ROAS</span></div>
+            <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer">CA実績</div>
+            <div class="ch r" id="ch-caroas" onclick="sortBy('caroas')" style="cursor:pointer;line-height:1.1">値引き後<br>ROAS</div>
             <div class="ch"></div>
           </div>
           <div id="itemList"></div>
@@ -11923,6 +11924,11 @@ function getSorted(ym) {
     const caOf = p => { const c=(typeof _caFor==='function')?_caFor(p.id,_ym):null; return c?c.spend:0; };
     return dir * (caOf(a) - caOf(b));
   }
+  if (_sortKey === 'caroas') {
+    const _ym = _subTabFilter ? _getSubTabMonth() : getSelectedMonth();
+    const rdOf = p => { const c=(typeof _caFor==='function')?_caFor(p.id,_ym):null; return (c&&c.roasD!=null)?c.roasD:-1; };
+    return dir * (rdOf(a) - rdOf(b));
+  }
   if (_sortKey === 'itemnum') {
     const an = productCache[a.id]?.itemNumber || '';
     const bn = productCache[b.id]?.itemNumber || '';
@@ -12245,7 +12251,9 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   const _genreCell = _marathonView ? `<div style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center">${cached?.genreId||'\u2014'}</div>` : '';
-  const _grossCell = _marathonView ? '' : (() => { const _ca=(typeof _caFor==='function')?_caFor(p.id,ym):null; const _cas=_ca?_ca.spend:0; const _rd=(_ca&&_ca.roasD!=null)?Math.round(_ca.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px;line-height:1.2;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:1px">`+`<span style="${_cas>0?'font-weight:700':'color:var(--text3)'}">${_cas>0?fmtY(_cas):'\u2014'}</span>`+`<span style="color:${_rdc};font-weight:700;font-size:10px">${_rd!=null?_rd+'%':'\u2014'}</span>`+`</div>`; })();
+  const _caData = _marathonView ? null : ((typeof _caFor==='function')?_caFor(p.id,ym):null);
+  const _caSpendCell = _marathonView ? '' : `<div class="cell r mono" style="font-size:11px">${_caData&&_caData.spend>0?`<span style="font-weight:700">${fmtY(_caData.spend)}</span>`:'<span style="color:var(--text3)">—</span>'}</div>`;
+  const _caRoasCell = _marathonView ? '' : (() => { const _rd=(_caData&&_caData.roasD!=null)?Math.round(_caData.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px"><span style="color:${_rdc};font-weight:700">${_rd!=null?_rd+'%':'—'}</span></div>`; })();
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}${_subTabFilter?(_marathonView?' marathon':' with-status'):''}"${_ssTabActive?` onclick="_rowClick('${p.id}','${ym}')"`:''}>
       <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${cached?.itemNumber||''}（ダブルクリックで選択）">
@@ -12336,7 +12344,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           return `<span style="color:${rc2(r20)};font-weight:700">${r20>0?r20+'%':'0%'}</span>`;
         })()}
       </div>
-      ${_grossCell}
+      ${_caSpendCell}${_caRoasCell}
       ${_subTabFilter ? `
       <div class="status-cell" onclick="event.stopPropagation()" style="position:relative">
         <div class="status-disp" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1px;overflow:hidden;color:${STATUS_COLORS[productCache[p.id]?.status||'unset']||'var(--text2)'}">${_statusDispHtml(productCache[p.id]?.status||'unset')}</div>
@@ -12618,7 +12626,8 @@ const COLW_DEFS=[
   {k:'kwroas', label:'KW ROAS',      def:72, al:'right', hid:'ch-kwroas'},
   {k:'sp20',   label:'20実績額',     def:72, al:'right', hid:'ch-spend20'},
   {k:'roas20', label:'20 ROAS',      def:72, al:'right', hid:'ch-roas20'},
-  {k:'gross',  label:'粗利',         def:90, al:'right', hid:'ch-contrib'},
+  {k:'gross',  label:'CA実績',       def:84, al:'right', hid:'ch-contrib'},
+  {k:'caroas', label:'値引後ROAS',    def:76, al:'right', hid:'ch-caroas'},
   {k:'status', label:'区分',         def:76, al:'center', ws:true},
   {k:'ss',     label:'SS/マラソン/下げ',    def:96, al:'center', ws:true},
 ];
@@ -12676,7 +12685,7 @@ function _applyColWidths(){
   // 通常 / with-status
   { const w=k=>_colwValFor(COLW_KEY,COLW_DEFS,k);
     const name='minmax('+w('name')+'px,1fr)';
-    const dataCols=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20','gross'].map(k=>w(k)+'px').join(' ');
+    const dataCols=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20','gross','caroas'].map(k=>w(k)+'px').join(' ');
     const ns=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' 28px';
     const ws=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' '+w('status')+'px '+w('ss')+'px 28px';
     css+='.col-header{grid-template-columns:'+ns+' !important}.item-basic{grid-template-columns:'+ns+' !important}.col-header.with-status{grid-template-columns:'+ws+' !important}.item-basic.with-status{grid-template-columns:'+ws+' !important}';
