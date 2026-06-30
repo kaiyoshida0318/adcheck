@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1006</span>
+    <span class="build-date">v1.1007</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -663,7 +663,7 @@ header + * { margin-top: 4px; }
             <div class="ch r" id="ch-kwroas" onclick="sortBy('kwroas')" style="cursor:pointer;background:#eff5ec;border-right:2px solid #b8d9a8">KW ROAS</div>
             <div class="ch r" id="ch-spend20" onclick="sortBy('spend20')" style="cursor:pointer;background:#fff8e5">20円実績</div>
             <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer;background:#fff8e5;border-right:2px solid #f0d878">20円 ROAS</div>
-            <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer">粗広告利益</div>
+            <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer;line-height:1.15">CA実績<br><span style="font-size:9px;color:var(--text3)">値引後ROAS</span></div>
             <div class="ch"></div>
           </div>
           <div id="itemList"></div>
@@ -4984,7 +4984,7 @@ function _setRundaysModeUI(){ const o=document.getElementById('rundaysOnlyBtn'),
 function _setRundaysMode(b){ _rundaysAll=b; _setRundaysModeUI(); renderRunawayDays(); }
 function _cpaKey(){ return 'adcheck_coupon_advance_'+((typeof _getCurrentShopId==='function'?_getCurrentShopId():null)||'yukaiya'); }
 function _cpaLoad(){ try{ const s=localStorage.getItem(_cpaKey()); couponAdvanceRows = s?JSON.parse(s):[]; }catch(e){ couponAdvanceRows=[]; } }
-function _cpaSave(){ try{ localStorage.setItem(_cpaKey(), JSON.stringify(couponAdvanceRows)); }catch(e){} }
+function _cpaSave(){ try{ localStorage.setItem(_cpaKey(), JSON.stringify(couponAdvanceRows)); }catch(e){} try{ _caMonthCache={}; }catch(e){} }
 function _cpaParseCsv(text){ text=text.replace(/^\uFEFF/,''); const rows=[]; let i=0, field='', row=[], inQ=false; while(i<text.length){ const c=text[i]; if(inQ){ if(c==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} inQ=false;i++;continue;} field+=c;i++;continue; } if(c==='"'){ inQ=true;i++;continue; } if(c===','){ row.push(field);field='';i++;continue; } if(c==='\r'){ i++;continue; } if(c==='\n'){ row.push(field);rows.push(row);row=[];field='';i++;continue; } field+=c;i++; } if(field.length||row.length){ row.push(field); rows.push(row); } return rows; }
 function _cpaParseInto(text, map){ const rows=_cpaParseCsv(text); if(rows.length<2) return 0; const head=rows[0].map(h=>String(h).trim()); const f=(test)=>head.findIndex(test); const iDate=f(h=>h.includes('日付')); const iCode=f(h=>h.includes('商品管理番号')); if(iDate<0||iCode<0) return 0; const iBid=f(h=>h.includes('入札単価')); const iSpend=f(h=>h.includes('実績額')); const iDisc=f(h=>h.includes('値引率')); const iSalesC=f(h=>h.includes('クーポン掲載')); const iSales=f(h=>h==='売上金額'); const iCvr=f(h=>h.includes('CVR')); const iRoas=f(h=>h.includes('ROAS')&&!h.includes('値引')); const iRoasD=f(h=>h.includes('ROAS')&&h.includes('値引')); const iCpa=f(h=>h.includes('注文獲得単価')); const num=v=>{ if(v==null) return 0; v=String(v).replace(/,/g,'').trim(); if(v===''||v==='-') return 0; const n=parseFloat(v); return isNaN(n)?0:n; }; let cnt=0; for(let r=1;r<rows.length;r++){ const row=rows[r]; if(!row||row.length<2) continue; const dm=String(row[iDate]||'').match(/(\d{4})年(\d{2})月(\d{2})日/); if(!dm) continue; const date=dm[1]+'-'+dm[2]+'-'+dm[3]; const code=String(row[iCode]||'').trim(); if(!code) continue; map[date+'|'+code]={ date:date, itemCode:code, bid:num(row[iBid]), spend:num(row[iSpend]), disc:num(row[iDisc]), salesCoupon:num(row[iSalesC]), sales:num(row[iSales]), cvr:num(row[iCvr]), roas:num(row[iRoas]), roasD:num(row[iRoasD]), cpa:num(row[iCpa]) }; cnt++; } return cnt; }
 async function _cpaImport(files){ const status=document.getElementById('cpaStatus'); if(status) status.textContent='読み込み中...'; for(const f of files){ try{ let texts=[]; if(f.name.toLowerCase().endsWith('.zip')){ const buf=await f.arrayBuffer(); const zip=await JSZip.loadAsync(buf); for(const [n,e] of Object.entries(zip.files)){ if(!e.dir && n.toLowerCase().endsWith('.csv')){ texts.push(await e.async('text')); } } } else if(f.name.toLowerCase().endsWith('.csv')) { texts.push(await f.text()); } for(const t of texts){ _cpaIngest(t); } }catch(e){ console.error('cpa import',e); } } const fi=document.getElementById('cpaFileInput'); if(fi) fi.value=''; _cpaLoad(); _cpaLoadKw(); renderCpa(); if(status) status.textContent='商品別 '+couponAdvanceRows.length+'件 / KW別 '+couponAdvanceKwRows.length+'件'; }
@@ -5098,6 +5098,16 @@ function _cpaParseKwInto(text, map){ const rows=_cpaParseCsv(text); if(rows.leng
 function _cpaIngest(text){ const first=_cpaParseCsv(text)[0]; if(!first) return; const head=first.map(h=>String(h).trim()); const isKw=head.some(h=>h==='キーワード'); if(isKw){ _cpaLoadKw(); const map={}; couponAdvanceKwRows.forEach(r=>map[r.date+'|'+r.itemCode+'|'+r.kw]=r); _cpaParseKwInto(text, map); couponAdvanceKwRows=Object.values(map); _cpaSaveKw(); } else { _cpaLoad(); const map={}; couponAdvanceRows.forEach(r=>map[r.date+'|'+r.itemCode]=r); _cpaParseInto(text, map); couponAdvanceRows=Object.values(map); _cpaSave(); } }
 function _toggleMissingCheck(el){ const d=el.nextElementSibling; const open=d.style.display!=='none'; d.style.display=open?'none':'block'; const ar=el.querySelector('.acc-arrow'); if(ar) ar.textContent=open?'▶':'▼'; if(!open){ try{ _checkMissingDays(); }catch(e){ console.error('missingcheck',e); } } }
 function _checkMissingDays(){ const el=document.getElementById('missingDayResult'); if(!el) return; const salesSet=new Set(); (typeof salesRows!=='undefined'?salesRows:[]).forEach(r=>{ if(r&&r.date) salesSet.add(r.date); }); const dailySet=new Set(); (typeof dailyRows!=='undefined'?dailyRows:[]).forEach(r=>{ const c=String(r&&r.code||''); if(c.length===8) dailySet.add(c.slice(0,4)+'-'+c.slice(4,6)+'-'+c.slice(6,8)); }); const all=new Set([...salesSet,...dailySet]); if(all.size===0){ el.innerHTML='<div style="color:var(--text3)">データがまだありません。</div>'; return; } const sorted=[...all].sort(); const first=sorted[0], last=sorted[sorted.length-1]; const pad=n=>String(n).padStart(2,'0'); const toDate=s=>{ const a=s.split('-').map(Number); return new Date(a[0],a[1]-1,a[2]); }; const months={}; let cur=toDate(first); const end=toDate(last); while(cur<=end){ const ds=cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate()); const ms=!salesSet.has(ds), md=!dailySet.has(ds); if(ms||md){ const ym=ds.slice(0,7); (months[ym]=months[ym]||[]).push({day:cur.getDate(), miss: (ms&&md)?'both':(ms?'sales':'daily')}); } cur.setDate(cur.getDate()+1); } const yms=Object.keys(months).sort(); if(yms.length===0){ el.innerHTML='<div style="color:#2e7d32;font-weight:700">✅ 欠けている日はありません（'+first+'〜'+last+'）</div>'; return; } let html='<div style="margin-bottom:8px;color:#c62828;font-weight:700">⚠️ 欠けている日があります（対象: '+first+'〜'+last+'）</div>'; yms.forEach(ym=>{ const arr=months[ym]; const chips=arr.map(o=>{ const col=o.miss==='both'?'#c62828':(o.miss==='sales'?'#e65100':'#1565c0'); const lbl=o.miss==='both'?'':(o.miss==='sales'?'(売上)':'(日別)'); return '<span style="display:inline-block;font-family:\'DM Mono\',monospace;font-size:10px;color:#fff;background:'+col+';padding:1px 6px;border-radius:3px;margin:1px 2px 1px 0">'+pad(o.day)+lbl+'</span>'; }).join(''); html+='<div style="margin-bottom:7px"><div style="font-weight:700;font-size:11px;margin-bottom:2px">'+ym+' <span style="color:var(--text3);font-weight:400">（'+arr.length+'日不足）</span></div><div>'+chips+'</div></div>'; }); html+='<div style="margin-top:6px;font-size:10px;color:var(--text3)">赤=両方欠け／<span style="color:#e65100">橙=売上のみ</span>／<span style="color:#1565c0">青=日別のみ</span>。最新日（'+last+'）より後は対象外です。</div>'; el.innerHTML=html; }
+let _caMonthCache={};
+function _caAgg(ym){
+  if(_caMonthCache[ym]) return _caMonthCache[ym];
+  if(typeof couponAdvanceRows==='undefined'||!couponAdvanceRows||!couponAdvanceRows.length){ try{_cpaLoad();}catch(e){} }
+  const m={};
+  (couponAdvanceRows||[]).forEach(r=>{ if(!r||r.date.slice(0,7)!==ym) return; let a=m[r.itemCode]||(m[r.itemCode]={spend:0,sales:0,cost:0}); a.spend+=r.spend||0; a.sales+=r.sales||0; if(r.roasD>0&&r.sales>0){const c=r.sales*100/r.roasD-r.spend; if(c>0)a.cost+=c;} });
+  Object.values(m).forEach(a=>{ a.roasD=(a.spend+a.cost)>0?a.sales/(a.spend+a.cost)*100:null; });
+  _caMonthCache[ym]=m; return m;
+}
+function _caFor(code,ym){ if(!ym) return null; const m=_caAgg(ym); return m[code]||null; }
 function renderRunawayDays(){
   const w=document.getElementById('rundays-table-wrap');
   if(!dailyRows||dailyRows.length===0){ if(w) w.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; const c=document.getElementById('runawayDaysCal'); if(c)c.innerHTML=''; return; }
@@ -11909,8 +11919,9 @@ function getSorted(ym) {
     return dir*(r20Of(a)-r20Of(b));
   }
   if (_sortKey === 'contrib') {
-    const grossOf = p => p.sales720 * 0.45 - p.spend;
-    return dir * (grossOf(a) - grossOf(b));
+    const _ym = _subTabFilter ? _getSubTabMonth() : getSelectedMonth();
+    const caOf = p => { const c=(typeof _caFor==='function')?_caFor(p.id,_ym):null; return c?c.spend:0; };
+    return dir * (caOf(a) - caOf(b));
   }
   if (_sortKey === 'itemnum') {
     const an = productCache[a.id]?.itemNumber || '';
@@ -12234,7 +12245,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   const _genreCell = _marathonView ? `<div style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center">${cached?.genreId||'\u2014'}</div>` : '';
-  const _grossCell = _marathonView ? '' : `<div class="cell r mono" style="font-size:11px;font-weight:700">${(() => { const grossProfit = Math.round(p.sales720 * 0.45 - p.spend); const color = grossProfit >= 0 ? 'var(--green)' : 'var(--danger)'; return `<span style="color:${color}">${grossProfit >= 0 ? '+' : ''}${fmtY(grossProfit)}</span>`; })()}</div>`;
+  const _grossCell = _marathonView ? '' : (() => { const _ca=(typeof _caFor==='function')?_caFor(p.id,ym):null; const _cas=_ca?_ca.spend:0; const _rd=(_ca&&_ca.roasD!=null)?Math.round(_ca.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px;line-height:1.2;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:1px">`+`<span style="${_cas>0?'font-weight:700':'color:var(--text3)'}">${_cas>0?fmtY(_cas):'\u2014'}</span>`+`<span style="color:${_rdc};font-weight:700;font-size:10px">${_rd!=null?_rd+'%':'\u2014'}</span>`+`</div>`; })();
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}${_subTabFilter?(_marathonView?' marathon':' with-status'):''}"${_ssTabActive?` onclick="_rowClick('${p.id}','${ym}')"`:''}>
       <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${cached?.itemNumber||''}（ダブルクリックで選択）">
@@ -12268,13 +12279,14 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
         ${(() => {
           const totS = _ag.totSales;
           const rppS = _ag.rppSales;
-          const seo = Math.max(0, totS - rppS);
-          const _adv = p.sales720 || 0; const _base = seo + _adv; const _sp = _base>0?Math.round(seo/_base*100):0;
+          const _ca=(typeof _caFor==='function')?_caFor(p.id,ym):null; const _caS=_ca?_ca.sales:0;
+          const seo = Math.max(0, totS - rppS - _caS);
+          const _adv = (p.sales720 || 0) + _caS; const _base = seo + _adv; const _sp = _base>0?Math.round(seo/_base*100):0;
           return seo > 0 ? `${fmtY(seo)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_sp)};font-weight:700;line-height:1">${_sp}%</span>` : '<span style="color:var(--text3)">—</span>';
         })()}
       </div>
       <div class="cell r mono" style="background:#eef4fb;border-right:2px solid #c9dff0">
-        ${(() => { const _t=_ag.totSales,_r=_ag.rppSales,_seo=Math.max(0,_t-_r),_adv=p.sales720||0,_base=_seo+_adv; const _ap=_base>0?(100-Math.round(_seo/_base*100)):0; return _adv>0 ? `${fmtY(_adv)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_ap)};font-weight:700;line-height:1">${_ap}%</span>` : '—'; })()}
+        ${(() => { const _t=_ag.totSales,_r=_ag.rppSales,_caX=(typeof _caFor==='function')?_caFor(p.id,ym):null,_caS=_caX?_caX.sales:0,_seo=Math.max(0,_t-_r-_caS),_adv=(p.sales720||0)+_caS,_base=_seo+_adv; const _ap=_base>0?(100-Math.round(_seo/_base*100)):0; return _adv>0 ? `${fmtY(_adv)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_ap)};font-weight:700;line-height:1">${_ap}%</span>` : '—'; })()}
       </div>
       <div class="cell r mono" style="background:#fdf0e8">
         <span>${fmtY(p.spend)}</span>
