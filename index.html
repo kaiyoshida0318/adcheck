@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1030</span>
+    <span class="build-date">v1.1031</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -662,7 +662,7 @@ header + * { margin-top: 4px; }
             <div class="ch" id="ch-img" style="border-right:2px solid #c4cad2">商品画像</div>
             <div class="ch" id="ch-name" onclick="sortBy('name')" style="border-right:2px solid #c4cad2">商品名</div>
             <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eef4fb">総売上</div>
-            <div class="ch r" id="ch-salesroas" onclick="sortBy('salesroas')" title="総売上÷実績額×100" style="cursor:pointer;background:#eef4fb">売上ROAS</div>
+            <div class="ch r" id="ch-salesroas" onclick="sortBy('salesroas')" title="総売上÷（実績額＋CA実績）×100" style="cursor:pointer;background:#eef4fb">売上ROAS</div>
             <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#eef4fb">SEO売上</div>
             <div class="ch r" id="ch-sales" onclick="sortBy('sales')" style="background:#eef4fb;border-right:2px solid #c9dff0">広告売上合計</div>
             <div class="ch r" id="ch-spend" onclick="sortBy('spend')" style="cursor:pointer;background:#fdf0e8">全広告実績</div>
@@ -12233,7 +12233,7 @@ function getSorted(ym) {
   if (_sroasFilter) {
     products = products.filter(p => {
       const ag = _aggFor(p.id, ym);
-      const sr = p.spend>0 ? Math.round(ag.totSales/p.spend*100) : 0;
+      const _ca = (typeof _caFor==='function') ? _caFor(p.id,ym) : null; const _den = (p.spend||0) + (_ca ? (_ca.spend||0) : 0); const sr = _den>0 ? Math.round(ag.totSales/_den*100) : 0;
       return _sroasCat(sr) === _sroasFilter;
     });
   }
@@ -12294,7 +12294,7 @@ function getSorted(ym) {
       return dir * (seoOf(a) - seoOf(b));
     }
     if (_sortKey === 'salesroas') {
-      const srOf = p => { const a2 = _aggFor(p.id, ym); return p.spend > 0 ? a2.totSales / p.spend : 0; };
+      const srOf = p => { const a2 = _aggFor(p.id, ym); const _ca = (typeof _caFor==='function') ? _caFor(p.id,ym) : null; const _den = (p.spend||0) + (_ca ? (_ca.spend||0) : 0); return _den > 0 ? a2.totSales / _den : 0; };
       return dir * (srOf(a) - srOf(b));
     }
     if (_sortKey === 'sales')  return dir * (a.sales720 - b.sales720);
@@ -12626,7 +12626,9 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       </div>
       <div class="cell r mono" style="background:#eef4fb">
         ${(() => {
-          const _sr = p.spend > 0 ? Math.round(_ag.totSales / p.spend * 100) : 0;
+          const _caSp = (_caData && _caData.spend>0) ? _caData.spend : 0;
+          const _den = (p.spend||0) + _caSp;
+          const _sr = _den > 0 ? Math.round(_ag.totSales / _den * 100) : 0;
           const _sc = _SROAS_COLORS[_sroasCat(_sr)];
           return _sr > 0 ? `<span style="color:${_sc};font-weight:700">${_sr}%</span>` : '<span style="color:var(--text3)">—</span>';
         })()}
