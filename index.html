@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1008</span>
+    <span class="build-date">v1.1009</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -663,8 +663,8 @@ header + * { margin-top: 4px; }
             <div class="ch r" id="ch-kwroas" onclick="sortBy('kwroas')" style="cursor:pointer;background:#eff5ec;border-right:2px solid #b8d9a8">KW ROAS</div>
             <div class="ch r" id="ch-spend20" onclick="sortBy('spend20')" style="cursor:pointer;background:#fff8e5">20円実績</div>
             <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer;background:#fff8e5;border-right:2px solid #f0d878">20円 ROAS</div>
-            <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer">CA実績</div>
-            <div class="ch r" id="ch-caroas" onclick="sortBy('caroas')" style="cursor:pointer;line-height:1.1">値引き後<br>ROAS</div>
+            <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer;background:#e0f5f9">CA実績</div>
+            <div class="ch r" id="ch-caroas" onclick="sortBy('caroas')" style="cursor:pointer;line-height:1.1;background:#e0f5f9;border-right:2px solid #a8d8e0">値引き後<br>ROAS</div>
             <div class="ch"></div>
           </div>
           <div id="itemList"></div>
@@ -5109,6 +5109,23 @@ function _caAgg(ym){
   _caMonthCache[ym]=m; return m;
 }
 function _caFor(code,ym){ if(!ym) return null; const m=_caAgg(ym); return m[code]||null; }
+function _caShopAgg(){
+  if(typeof couponAdvanceRows==='undefined'||!couponAdvanceRows||!couponAdvanceRows.length){ try{_cpaLoad();}catch(e){} }
+  const byDate={}, byYm={};
+  (couponAdvanceRows||[]).forEach(r=>{ if(!r||!r.date) return;
+    const dk=r.date, yk=r.date.slice(0,7);
+    [[byDate,dk],[byYm,yk]].forEach(pair=>{ const m=pair[0],k=pair[1]; let a=m[k]||(m[k]={spend:0,sales:0,cost:0}); a.spend+=r.spend||0; a.sales+=r.sales||0; if(r.roasD>0&&r.sales>0){const c=r.sales*100/r.roasD-r.spend; if(c>0)a.cost+=c;} });
+  });
+  const fin=m=>{ Object.values(m).forEach(a=>{ a.roasD=(a.spend+a.cost)>0?a.sales/(a.spend+a.cost)*100:0; }); };
+  fin(byDate); fin(byYm);
+  return {byDate:byDate, byYm:byYm};
+}
+function _caRowVal(agg, r){
+  const c=(r&&r.code)||''; let e=null;
+  if(c.length===8){ e=agg.byDate[c.slice(0,4)+'-'+c.slice(4,6)+'-'+c.slice(6,8)]; }
+  else { e=agg.byYm[c.slice(0,4)+'-'+c.slice(4,6)]; }
+  return e||{spend:0,roasD:0};
+}
 function renderRunawayDays(){
   const w=document.getElementById('rundays-table-wrap');
   if(!dailyRows||dailyRows.length===0){ if(w) w.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; const c=document.getElementById('runawayDaysCal'); if(c)c.innerHTML=''; return; }
@@ -6558,6 +6575,8 @@ function renderGraph() {
     });
     const data20 = rows.map((r,i) => Math.max(0, (r.spend||0) - dataKw[i]));
     const dataTotal = dataKw.map((v,i) => v + data20[i]);
+    const _caAggShop = _caShopAgg();
+    const dataCA = rows.map(r => _caRowVal(_caAggShop, r).spend);
 
     const lineDs2 = (label, data, color, extras) => ({
       label, data,
@@ -6642,6 +6661,7 @@ function renderGraph() {
           lineDs2('合計',     dataTotal, '#ef4444', { borderWidth: 3 }),
           lineDs2('KW実績',  dataKw,    '#60a5fa'),
           lineDs2('20円実績', data20,    '#f97316'),
+          lineDs2('CA実績', dataCA, '#06b6d4'),
         ]
       },
       plugins: [totalLabelPlugin],
@@ -6700,6 +6720,8 @@ function renderGraph() {
     });
 
     const dataRoas   = rows.map(r => r.roas || 0);
+    const _caAggShopR = _caShopAgg();
+    const dataCArd = rows.map(r => Math.round(_caRowVal(_caAggShopR, r).roasD*100)/100);
     const dataRoasKw = rows.map(r => {
       if (_graphPeriod === 'daily') {
         return r.spendKw > 0 ? Math.round((r.salesKw||0)/r.spendKw*10000)/100 : 0;
@@ -6759,10 +6781,12 @@ function renderGraph() {
           lineDs('KW ROAS 40円台', dataRoasKw40, '#16a34a', { borderDash: [6,3] }),
           lineDs('KW ROAS 50円+',  dataRoasKw50, '#9333ea', { borderDash: [6,3] }),
           lineDs('20円 ROAS',      dataRoas20,   '#f97316'),
+          lineDs('値引後ROAS',     dataCArd,     '#06b6d4'),
         ] : [
           lineDs('ROAS■ (全体)',   dataRoas,     '#fbbf24'),
           lineDs('KW ROAS',        dataRoasKw,   '#60a5fa'),
           lineDs('20円 ROAS',      dataRoas20,   '#f97316'),
+          lineDs('値引後ROAS',     dataCArd,     '#06b6d4'),
         ]
       },
       options: {
@@ -12252,8 +12276,8 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   const _genreCell = _marathonView ? `<div style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center">${cached?.genreId||'\u2014'}</div>` : '';
   const _caData = _marathonView ? null : ((typeof _caFor==='function')?_caFor(p.id,ym):null);
-  const _caSpendCell = _marathonView ? '' : `<div class="cell r mono" style="font-size:11px">${_caData&&_caData.spend>0?`<span style="font-weight:700">${fmtY(_caData.spend)}</span>`:'<span style="color:var(--text3)">—</span>'}</div>`;
-  const _caRoasCell = _marathonView ? '' : (() => { const _rd=(_caData&&_caData.roasD!=null)?Math.round(_caData.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px"><span style="color:${_rdc};font-weight:700">${_rd!=null?_rd+'%':'—'}</span></div>`; })();
+  const _caSpendCell = _marathonView ? '' : `<div class="cell r mono" style="font-size:11px;background:#e0f5f9">${_caData&&_caData.spend>0?`<span style="font-weight:700">${fmtY(_caData.spend)}</span>`:'<span style="color:var(--text3)">—</span>'}</div>`;
+  const _caRoasCell = _marathonView ? '' : (() => { const _rd=(_caData&&_caData.roasD!=null)?Math.round(_caData.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px;background:#e0f5f9;border-right:2px solid #a8d8e0"><span style="color:${_rdc};font-weight:700">${_rd!=null?_rd+'%':'—'}</span></div>`; })();
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}${_subTabFilter?(_marathonView?' marathon':' with-status'):''}"${_ssTabActive?` onclick="_rowClick('${p.id}','${ym}')"`:''}>
       <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${cached?.itemNumber||''}（ダブルクリックで選択）">
@@ -12736,7 +12760,7 @@ function _renderColwModeTabs(){
 function _renderColWidthPanel(){
   const body=document.getElementById('colWidthPanelBody'); if(!body) return;
   _renderColwModeTabs();
-  body.innerHTML=_colwDefs().map(d=>{
+  body.innerHTML=_colwDefs().filter(function(d){ return !(_colwMode==='normal' && d.ws); }).map(d=>{
     const v=_colwVal(d.k);
     const mn=d.flex?120:40, mx=d.flex?420:220;
     const a=_colwAlign(d.k);
