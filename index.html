@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1045</span>
+    <span class="build-date">v1.1046</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -11141,7 +11141,7 @@ function renderYoy(){
   const now=new Date(); const curYm=String(now.getFullYear())+String(now.getMonth()+1).padStart(2,'0');
   const completed=yms.filter(m=>m<curYm);
   const sel=document.getElementById('yoySel');
-  if(!completed.length){ if(sel) sel.innerHTML=''; area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; return; }
+  if(!yms.length){ if(sel) sel.innerHTML=''; area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; return; }
   let periods;
   if(_yoyMode==='pick'){
     let A=(_yoyPickA && yms.includes(_yoyPickA))?_yoyPickA:(yms[yms.length-2]||yms[0]);
@@ -11152,8 +11152,8 @@ function renderYoy(){
     if(selB) selB.innerHTML=[...yms].reverse().map(m=>_opt(m,B)).join('');
     periods=[A,B];
   } else {
-    const later=(_yoyMonth && completed.includes(_yoyMonth))?_yoyMonth:completed[completed.length-1];
-    if(sel){ sel.innerHTML=[...completed].reverse().map(m=>'<option value="'+m+'"'+(m===later?' selected':'')+'>'+m.slice(0,4)+'/'+m.slice(4,6)+'</option>').join(''); }
+    const later=(_yoyMonth && yms.includes(_yoyMonth))?_yoyMonth:yms[yms.length-1];
+    if(sel){ sel.innerHTML=[...yms].reverse().map(m=>'<option value="'+m+'"'+(m===later?' selected':'')+'>'+m.slice(0,4)+'/'+m.slice(4,6)+(m>=curYm?'(途中)':'')+'</option>').join(''); }
     if(_yoyMode==='yoy'){ periods=[_ymAdd(later,-12), later]; }
     else if(_yoyMode==='yoy3'){ periods=[_ymAdd(later,-24), _ymAdd(later,-12), later]; }
     else { periods=[_ymAdd(later,-2), _ymAdd(later,-1), later]; }
