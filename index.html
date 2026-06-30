@@ -520,7 +520,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1022</span>
+    <span class="build-date">v1.1023</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6539,9 +6539,12 @@ function renderTrend(){
     const uSalesKw=_trendMode==='cum'?cSalesKw:d.salesKw;
     const uSpendKw=_trendMode==='cum'?cSpendKw:d.spendKw;
     const spend20=Math.max(0,uSpend-uSpendKw), sales20=Math.max(0,uSales-uSalesKw);
+    const dSp20=Math.max(0,d.spend-d.spendKw), dSa20=Math.max(0,d.sales-d.salesKw);
     return {
       date:d.date,
       daySpend:d.spend,
+      dRoas20: dSp20>0 ? dSa20/dSp20*100 : 0,
+      dRoasKw: d.spendKw>0 ? d.salesKw/d.spendKw*100 : 0,
       sroas : uSpend>0 ? uTot/uSpend*100 : 0,
       roas  : uSpend>0 ? uSales/uSpend*100 : 0,
       roasKw: uSpendKw>0 ? uSalesKw/uSpendKw*100 : 0,
@@ -6554,14 +6557,15 @@ function renderTrend(){
   const gridColor=isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)';
   const textColor=isDark?'#a0aec0':'#718096';
   if(_trendChart){_trendChart.destroy();_trendChart=null;}
-  const barDS={type:'bar', label:'実績額(日別)', data:rows.map(r=>Math.round(r.daySpend||0)), yAxisID:'y1', backgroundColor:isDark?'rgba(148,163,184,0.20)':'rgba(148,163,184,0.30)', borderWidth:0, order:10, barPercentage:0.9, categoryPercentage:0.96};
+  const bar20={type:'bar', label:'ROAS-20(日別)', data:rows.map(r=>r.dRoas20>0?Math.round(r.dRoas20*10)/10:null), yAxisID:'y', backgroundColor:isDark?'rgba(239,68,68,0.22)':'rgba(239,68,68,0.32)', borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
+  const barKw={type:'bar', label:'ROAS-KW(日別)', data:rows.map(r=>r.dRoasKw>0?Math.round(r.dRoasKw*10)/10:null), yAxisID:'y', backgroundColor:isDark?'rgba(245,158,11,0.22)':'rgba(245,158,11,0.34)', borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
   _trendChart=new Chart(canvas,{type:'bar',data:{labels,datasets:[
-    barDS,
+    bar20, barKw,
     mk('sroas','#3b82f6','売上ROAS'),
     mk('roas','#10b981','ROAS'),
     mk('roasKw','#f59e0b','ROAS-KW'),
     mk('roas20','#ef4444','ROAS-20'),
-  ]},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:c=>{ if(c.dataset.type==='bar'){ return c.dataset.label+': ¥'+Math.round(c.parsed.y).toLocaleString(); } return c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y.toFixed(1)+'%'); }}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{position:'left',grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true,title:{display:true,text:'ROAS(%)',color:textColor,font:{size:10}}},y1:{position:'right',grid:{display:false},ticks:{color:textColor,font:{size:10},callback:v=>v>=1000?'¥'+(Math.round(v/100)/10)+'k':'¥'+v},beginAtZero:true,title:{display:true,text:'実績額',color:textColor,font:{size:10}}}}}});
+  ]},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y.toFixed(1)+'%')}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true}}}});
   const fmt=v=>v>0?(Math.round(v*10)/10).toFixed(1)+'%':'<span style="color:var(--text3)">—</span>';
   const td='padding:6px 10px;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);';
   const trows=rows.slice().reverse().map((r,i)=>{
