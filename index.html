@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1040</span>
+    <span class="build-date">v1.1041</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -674,8 +674,8 @@ header + * { margin-top: 4px; }
             <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer;background:#fff8e5;border-right:2px solid #f0d878">20円 ROAS</div>
             <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer;background:#e0f5f9">CA実績</div>
             <div class="ch r" id="ch-caroas" onclick="sortBy('caroas')" style="cursor:pointer;line-height:1;font-size:8px;background:#e0f5f9;border-right:2px solid #a8d8e0">値引き後<br>ROAS</div>
-            <div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>
-            <div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン/下げ</div>
+            <div class="ch" id="ch-status" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>
+            <div class="ch" id="ch-ss" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン/下げ</div>
             <div class="ch"></div>
           </div>
           <div id="itemList"></div>
@@ -10649,8 +10649,6 @@ function applyAllStatusUpdates() {
       const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
       if (lastEmpty !== -1) {
         h = h.slice(0, lastEmpty)
-          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
-          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン/下げ</div>'
           + h.slice(lastEmpty);
       }
       headerHtml = h;
@@ -10991,8 +10989,6 @@ function renderMonthlySubTab(tab) {
       const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
       if (lastEmpty !== -1) {
         h = h.slice(0, lastEmpty)
-          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
-          + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン/下げ</div>'
           + h.slice(lastEmpty);
       }
       headerHtml = h;
@@ -12659,8 +12655,6 @@ function renderPage() {
         const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
         if (lastEmpty !== -1) {
           h = h.slice(0, lastEmpty)
-            + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>'
-            + '<div class="ch" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン/下げ</div>'
             + h.slice(lastEmpty);
         }
         headerHtml = h;
@@ -13161,8 +13155,8 @@ const COLW_DEFS=[
   {k:'roas20', label:'20 ROAS',      def:72, al:'right', hid:'ch-roas20'},
   {k:'gross',  label:'CA実績',       def:84, al:'right', hid:'ch-contrib'},
   {k:'caroas', label:'値引後ROAS',    def:76, al:'right', hid:'ch-caroas'},
-  {k:'status', label:'区分',         def:76, al:'center', ws:true},
-  {k:'ss',     label:'SS/マラソン/下げ',    def:96, al:'center', ws:true},
+  {k:'status', label:'区分',         def:76, al:'center', ws:true, hid:'ch-status'},
+  {k:'ss',     label:'SS/マラソン/下げ',    def:96, al:'center', ws:true, hid:'ch-ss'},
 ];
 const COLW_KEY='adcheck_colw';
 const COLW_KEY_MK='adcheck_colw_marathon';
