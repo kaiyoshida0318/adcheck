@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1065</span>
+    <span class="build-date">v1.1066</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10355,8 +10355,12 @@ function _captureStatusSnapshot(){
   _statusSnapshot = {};
   Object.keys(DB).forEach(function(code){ const c = productCache[code]||{}; _statusSnapshot[code] = { status: c.status||'unset', ss: (c.ss||[]).slice(), marathon: (c.marathon||[]).slice() }; });
 }
-function _showApplyButtons(){ _ssDirty = true; document.querySelectorAll('#applyBtnWrap').forEach(function(w){ w.style.display = 'inline-flex'; }); try{_dedupeSubTabHeader();}catch(e){} }
+function _showApplyButtons(){ _ssDirty = true; document.querySelectorAll('#applyBtnWrap').forEach(function(w){ w.style.display = 'inline-flex'; }); try{_dedupeSubTabHeader();}catch(e){} try{_scheduleSsAutoSave();}catch(e){} }
 function _hideApplyButtons(){ document.querySelectorAll('#applyBtnWrap').forEach(function(w){ w.style.display = 'none'; }); }
+let _ssAutoTimer=null,_ssSaving=false;
+function _scheduleSsAutoSave(){ if(_ssAutoTimer)clearTimeout(_ssAutoTimer); _ssAutoTimer=setTimeout(_ssAutoSaveRun,1500); }
+function _ssAutoSaveRun(){ _ssAutoTimer=null; if(!_ssDirty||_ssSaving)return; if(typeof saveProductCacheToGitHub!=='function')return; var lock=document.getElementById('loadingLock'); if(lock&&lock.classList.contains('active'))return; _ssSaving=true; try{saveProductCache();}catch(e){} var pr; try{ pr=saveProductCacheToGitHub(); }catch(e){ _ssSaving=false; return; } Promise.resolve(pr).then(function(){ _ssSaving=false; _ssDirty=false; try{_captureStatusSnapshot();}catch(e){} try{_hideApplyButtons();}catch(e){} try{_ssAutoToast();}catch(e){} }).catch(function(e){ _ssSaving=false; console.warn('[ADcheck] SS auto-save failed',e); }); }
+function _ssAutoToast(){ try{ var t=document.getElementById('ssAutoToast'); if(!t){t=document.createElement('div');t.id='ssAutoToast';document.body.appendChild(t);} t.textContent='\u2713 自動保存しました'; t.style.cssText='position:fixed;bottom:20px;right:20px;background:#16a34a;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:99999;opacity:0;transition:opacity .2s'; void t.offsetWidth; t.style.opacity='1'; clearTimeout(t._tm); t._tm=setTimeout(function(){t.style.opacity='0';},1800); }catch(e){} }
 function _cancelStatusUpdates(){
   try {
     if (_statusSnapshot){
