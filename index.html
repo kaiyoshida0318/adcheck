@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1066</span>
+    <span class="build-date">v1.1067</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10275,7 +10275,7 @@ let _statusSnapshot = null;
 
 // 未保存変更がある時にページ離脱を防ぐ(常時設置)
 window.addEventListener('beforeunload', (e) => {
-  if (_ssDirty) {
+  if (_ssDirty && !_ssSynced) {
     e.preventDefault();
     e.returnValue = 'SS設定が未保存です。「💾 反映」ボタンで保存してから移動してください。';
     return e.returnValue;
@@ -10355,11 +10355,11 @@ function _captureStatusSnapshot(){
   _statusSnapshot = {};
   Object.keys(DB).forEach(function(code){ const c = productCache[code]||{}; _statusSnapshot[code] = { status: c.status||'unset', ss: (c.ss||[]).slice(), marathon: (c.marathon||[]).slice() }; });
 }
-function _showApplyButtons(){ _ssDirty = true; document.querySelectorAll('#applyBtnWrap').forEach(function(w){ w.style.display = 'inline-flex'; }); try{_dedupeSubTabHeader();}catch(e){} try{_scheduleSsAutoSave();}catch(e){} }
+function _showApplyButtons(){ _ssDirty = true; _ssSynced=false; _ssGen++; document.querySelectorAll('#applyBtnWrap').forEach(function(w){ w.style.display = 'inline-flex'; }); try{_dedupeSubTabHeader();}catch(e){} try{_scheduleSsAutoSave();}catch(e){} }
 function _hideApplyButtons(){ document.querySelectorAll('#applyBtnWrap').forEach(function(w){ w.style.display = 'none'; }); }
-let _ssAutoTimer=null,_ssSaving=false;
+let _ssAutoTimer=null,_ssSaving=false,_ssSynced=false,_ssGen=0;
 function _scheduleSsAutoSave(){ if(_ssAutoTimer)clearTimeout(_ssAutoTimer); _ssAutoTimer=setTimeout(_ssAutoSaveRun,1500); }
-function _ssAutoSaveRun(){ _ssAutoTimer=null; if(!_ssDirty||_ssSaving)return; if(typeof saveProductCacheToGitHub!=='function')return; var lock=document.getElementById('loadingLock'); if(lock&&lock.classList.contains('active'))return; _ssSaving=true; try{saveProductCache();}catch(e){} var pr; try{ pr=saveProductCacheToGitHub(); }catch(e){ _ssSaving=false; return; } Promise.resolve(pr).then(function(){ _ssSaving=false; _ssDirty=false; try{_captureStatusSnapshot();}catch(e){} try{_hideApplyButtons();}catch(e){} try{_ssAutoToast();}catch(e){} }).catch(function(e){ _ssSaving=false; console.warn('[ADcheck] SS auto-save failed',e); }); }
+function _ssAutoSaveRun(){ _ssAutoTimer=null; if(!_ssDirty||_ssSaving)return; if(typeof saveProductCacheToGitHub!=='function')return; var lock=document.getElementById('loadingLock'); if(lock&&lock.classList.contains('active'))return; try{ document.querySelectorAll('[id^="status-sel-"]').forEach(function(sel){ var c=sel.id.replace('status-sel-',''); if(!productCache[c])productCache[c]={}; productCache[c].status=sel.value; }); var MO=['03','06','09','12']; var sp={}; var cv=new Set(); document.querySelectorAll('[id^="ss-btn-"]').forEach(function(b){ var c=b.getAttribute('data-code'),m=b.getAttribute('data-mon'); if(!c||!m)return; if(!sp[c])sp[c]={}; sp[c][m]=(b.getAttribute('data-active')==='1'); cv.add(c); }); cv.forEach(function(c){ if(!productCache[c])productCache[c]={}; var pv=productCache[c].ss||[]; productCache[c].ss=MO.filter(function(m){ if(sp[c]&&m in sp[c])return sp[c][m]; return pv.includes(m); }); }); }catch(e){} _ssSaving=true; var gen=_ssGen; try{saveProductCache();}catch(e){} var pr; try{ pr=saveProductCacheToGitHub(); }catch(e){ _ssSaving=false; return; } Promise.resolve(pr).then(function(){ _ssSaving=false; if(_ssGen!==gen){ _scheduleSsAutoSave(); return; } _ssSynced=true; try{_captureStatusSnapshot();}catch(e){} try{_ssAutoToast();}catch(e){} }).catch(function(e){ _ssSaving=false; console.warn('[ADcheck] SS auto-save failed',e); }); }
 function _ssAutoToast(){ try{ var t=document.getElementById('ssAutoToast'); if(!t){t=document.createElement('div');t.id='ssAutoToast';document.body.appendChild(t);} t.textContent='\u2713 自動保存しました'; t.style.cssText='position:fixed;bottom:20px;right:20px;background:#16a34a;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:99999;opacity:0;transition:opacity .2s'; void t.offsetWidth; t.style.opacity='1'; clearTimeout(t._tm); t._tm=setTimeout(function(){t.style.opacity='0';},1800); }catch(e){} }
 function _cancelStatusUpdates(){
   try {
