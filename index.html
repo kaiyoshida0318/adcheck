@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1071</span>
+    <span class="build-date">v1.1072</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -674,7 +674,7 @@ header + * { margin-top: 4px; }
             <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer;background:#fff8e5;border-right:2px solid #f0d878">20円 ROAS</div>
             <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer;background:#e0f5f9">CA実績</div>
             <div class="ch r" id="ch-caroas" onclick="sortBy('caroas')" style="cursor:pointer;line-height:1;font-size:8px;background:#e0f5f9;border-right:2px solid #a8d8e0">値引き後<br>ROAS</div>
-            <div class="ch" id="ch-status" style="text-align:center;font-size:10px;color:var(--text3)">区分</div>
+            <div class="ch" id="ch-status" style="text-align:center;font-size:10px;color:var(--text3);cursor:pointer;user-select:none" onclick="sortBy('status')" title="区分で並べ替え（撤退予定▲とout記入済▲などをまとめる）">区分 &#8645;</div>
             <div class="ch" id="ch-ss" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン/下げ</div>
             <div class="ch"></div>
           </div>
@@ -12486,6 +12486,11 @@ function getSorted(ym) {
     const _ym = _subTabFilter ? _getSubTabMonth() : getSelectedMonth();
     const rdOf = p => { const c=(typeof _caFor==='function')?_caFor(p.id,_ym):null; return (c&&c.roasD!=null)?c.roasD:-1; };
     return dir * (rdOf(a) - rdOf(b));
+  }
+  if (_sortKey === 'status') {
+    const _ord = ['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'];
+    const rk = p => { const _st = productCache[p.id]?.status || 'unset'; const _i = _ord.indexOf(_st); return _i<0?999:_i; };
+    return dir * (rk(a) - rk(b));
   }
   if (_sortKey === 'itemnum') {
     const an = productCache[a.id]?.itemNumber || '';
