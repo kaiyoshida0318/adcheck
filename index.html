@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1061</span>
+    <span class="build-date">v1.1062</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8577,9 +8577,9 @@ window._imgClear=function(which){if(!LISTS[ACTIVE])return;if(!confirm('この画
 window._add=function(){closeMenus();collect();DATA.push({place:((OPTS[1]&&OPTS[1].v)||''),place2:'',item:'',purpose:''});markDirty();render();};
  var dragIdx=-1;
  function _clearDO(){var trs=document.querySelectorAll('#tbody tr');for(var k=0;k<trs.length;k++)trs[k].classList.remove('dragover');}
-var _asTimer=null,_asY=0;function _asMove(e){_asY=e.clientY;try{e.preventDefault();}catch(_e){}}function _asStop(){if(_asTimer){clearInterval(_asTimer);_asTimer=null;}document.removeEventListener('dragover',_asMove,true);}function _asStart(){if(_asTimer)return;document.addEventListener('dragover',_asMove,true);_asTimer=setInterval(function(){if(dragIdx<0){_asStop();return;}var thead=document.querySelector('thead');var hh=thead?thead.getBoundingClientRect().height:36;var topZone=hh+34,vh=window.innerHeight,step=14;if(_asY>0&&_asY<topZone){window.scrollBy(0,-step);}else if(_asY>vh-64){window.scrollBy(0,step);}},24);} window._dragStart=function(e,i){dragIdx=i;_asY=e.clientY;_asStart();try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',''+i);}catch(_e){}};
- window._dragOver=function(e){e.preventDefault();try{e.dataTransfer.dropEffect='move';}catch(_e){}var tr=e.currentTarget;if(tr&&tr.classList&&!tr.classList.contains('dragover')){_clearDO();tr.classList.add('dragover');}};
- window._dEnter=function(tr){if(tr&&tr.classList)tr.classList.add('dragover');};
+var _asTimer=null,_asY=0;function _pickRow(y){var trs=document.querySelectorAll('#tbody tr');if(!trs.length)return null;var th=document.querySelector('thead');var hb=th?th.getBoundingClientRect().bottom:0;var best=null,bd=1e9;for(var k=0;k<trs.length;k++){var r=trs[k].getBoundingClientRect();if(r.bottom<=hb)continue;var c=(r.top+r.bottom)/2;var d=Math.abs(c-y);if(d<bd){bd=d;best=trs[k];}}return best;}function _asMove(e){_asY=e.clientY;try{e.preventDefault();}catch(_e){}if(dragIdx<0)return;var el=document.elementFromPoint(e.clientX,e.clientY);var tr=el?el.closest('#tbody tr'):null;if(!tr)tr=_pickRow(e.clientY);if(tr&&!tr.classList.contains('dragover')){_clearDO();tr.classList.add('dragover');}}function _asStop(){if(_asTimer){clearInterval(_asTimer);_asTimer=null;}document.removeEventListener('dragover',_asMove,true);}function _asStart(){if(_asTimer)return;document.addEventListener('dragover',_asMove,true);_asTimer=setInterval(function(){if(dragIdx<0){_asStop();return;}var thead=document.querySelector('thead');var hh=thead?thead.getBoundingClientRect().height:36;var topZone=hh+34,vh=window.innerHeight,step=14;if(_asY>0&&_asY<topZone){window.scrollBy(0,-step);}else if(_asY>vh-64){window.scrollBy(0,step);}},24);} window._dragStart=function(e,i){dragIdx=i;_asY=e.clientY;_asStart();try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',''+i);}catch(_e){}};
+ window._dragOver=function(e){e.preventDefault();try{e.dataTransfer.dropEffect='move';}catch(_e){}};
+ window._dEnter=function(tr){};
  window._dLeave=function(tr){};
  window._dragEnd=function(){dragIdx=-1;_asStop();_clearDO();};
  window._drop=function(e,i){e.preventDefault();_asStop();_clearDO();var from=dragIdx;if(from<0){var d=parseInt(e.dataTransfer.getData('text/plain'),10);from=isNaN(d)?-1:d;}dragIdx=-1;if(from<0||from===i)return;collect();var mv=DATA.splice(from,1)[0];DATA.splice(i,0,mv);markDirty();render();};
