@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1067</span>
+    <span class="build-date">v1.1069</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10681,40 +10681,9 @@ function applyAllStatusUpdates() {
       alert('保存に失敗しました: ' + (e?.message || e));
     });
   }
-  // リスト部分のみ更新（DOM全体を書き換えず、フォーカス・スクロール位置を保持）
-  const _panel = document.getElementById('tab-' + _currentTab);
-  const _listWrap = _panel?.querySelector('#subTabListWrap');
-  // SSタブの場合は、SSフィルターで再描画(解除した商品を一覧から消す)
-  if (_ssTabActive && _currentTab in SS_TABS) {
-    setTimeout(() => renderMonthlySubTab(_currentTab), 100);
-    return;
-  }
-  if (_listWrap) {
-    const ym = _getSubTabMonth();
-    const data = getSorted(ym);
-    const maxSpend = Math.max(...data.map(d => d.spend), 1);
-    const _totSpend = data.reduce((s,p)=>s+p.spend,0);
-    const _totSales = data.reduce((s,p)=>s+p.sales720,0);
-    const _avgRoas  = _totSpend > 0 ? _totSales / _totSpend : 0;
-    const inner = data.map(p => renderRow(p, maxSpend, ym, _totSpend, _avgRoas)).join('');
-    const origHeader = document.querySelector('#tab-products .col-header');
-    let headerHtml = '';
-    if (origHeader) {
-      let h = origHeader.outerHTML.replace('class="col-header"','class="col-header with-status"');
-      const lastEmpty = h.lastIndexOf('<div class="ch"></div>');
-      if (lastEmpty !== -1) {
-        h = h.slice(0, lastEmpty)
-          + h.slice(lastEmpty);
-      }
-      headerHtml = h;
-    }
-    const _inner = _listWrap.querySelector('#subTabListInner');
-    if (_inner) { _inner.innerHTML = headerHtml + inner; _dedupeSubTabHeader(); }
-    else { renderMonthlySubTab(_currentTab); }
-  } else {
-    renderMonthlySubTab(_currentTab);
-  }
-  _updateStatusCounts();
+  // 反映しても現在の一覧はそのまま維持する。区分やSSを変えても、
+  // 別のタブ/サブタブに切り替えるまではその商品を元のページに残す（再フィルタしない）。
+  try { _updateStatusCounts(); } catch(e) {}
 }
 
 // 【状態】サブタブのレンダリング
@@ -10736,6 +10705,8 @@ function applyStatusColor(sel) {
   const wrap = sel.closest('.status-cell');
   const disp = wrap && wrap.querySelector('.status-disp');
   if (disp) { disp.innerHTML = _statusDispHtml(sel.value); disp.style.color = c || 'var(--text2)'; }
+  // 区分変更を即座に productCache へ反映＋localStorage 保存（再描画で旧値に戻るのを防ぐ）
+  try { const _code = sel.id.replace('status-sel-',''); if(_code){ if(!productCache[_code]) productCache[_code]={}; productCache[_code].status = sel.value; saveProductCache(); } } catch(e){}
   _showApplyButtons();
 }
 const STATUS_LABELS = {
