@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1072</span>
+    <span class="build-date">v1.1074</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -760,9 +760,7 @@ header + * { margin-top: 4px; }
         <div id="roas-trend-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
         <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
           <input type="text" id="roasTrendSearch" placeholder="商品管理番号・商品番号・商品名で検索..." oninput="renderRoasTrend()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
-          <button onclick="_clearRoasMemoCheckDate()" title="「チェック日」から始まる記入欄だけを空白にします" style="margin-left:10px;font-size:11px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">🗑 メモ欄-チェック日削除</button>
-          <button onclick="_clearRoasMemoAll()" title="全ての記入欄を空白にします" style="margin-left:6px;font-size:11px;padding:6px 12px;border-radius:6px;border:1px solid var(--danger);background:var(--surface2);color:var(--danger);cursor:pointer;white-space:nowrap">🗑 メモ欄-全削除</button>
-          <div class="toolbar-right"></div>
+          <div class="toolbar-right"><div id="applyBtnWrap" style="display:none;gap:6px;align-items:center"><button onclick="_cancelStatusUpdates()" style="padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">キャンセル</button><button onclick="applyAllStatusUpdates()" style="padding:5px 16px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(249,115,22,0.35)">反映する</button></div></div>
         </div>
         <div id="roas-trend-inner">
           <div class="tab-coming-soon"><div class="icon">📈</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>
@@ -10029,7 +10027,7 @@ function renderRoasTrend() {
 
   // ヘッダー
   // 列構成: 商品番号 / 商品管理番号 / 画像 / 商品名 / 月×4 / 平均 / 差分 / KW順 / 記入欄 / 区分 / SS
-  const colW = `82px 76px 40px minmax(0,1fr) ${last4.map(()=>'100px').join(' ')} 100px 100px 78px minmax(0,140px) 100px 64px`;
+  const colW = `82px 76px 40px minmax(0,1fr) ${last4.map(()=>'100px').join(' ')} 100px 100px 78px 100px 64px`;
   const headerCells = last4.map(m => {
     const [y, mo] = m.split('-');
     const isActive = _roasTrendSortKey === m;
@@ -10046,7 +10044,6 @@ function renderRoasTrend() {
     <div class="ch r" style="background:#e8f5e9;cursor:pointer" onclick="sortRoasTrend('avg')">直近4ヶ月<br><span style="font-size:9px">平均${_roasTrendSortKey==='avg' ? (_roasTrendSortDir==='desc'?' ▼':' ▲') : ''}</span></div>
     <div class="ch r" style="background:#f3e8ff;cursor:pointer" onclick="sortRoasTrend('diff')">最新月<br><span style="font-size:9px">差分${_roasTrendSortKey==='diff' ? (_roasTrendSortDir==='desc'?' ▼':' ▲') : ''}</span></div>
     <div class="ch" style="text-align:center;font-size:10px">KW_vol順</div>
-    <div class="ch">記入欄</div>
     <div class="ch" style="text-align:center;font-size:10px">区分</div>
     <div class="ch" style="text-align:center;font-size:10px">マラソン/SS</div>
   </div>`;
@@ -10118,13 +10115,14 @@ function renderRoasTrend() {
             📊 KW
           </button>
         </div>
-        ${memoCell}
+        
         ${statusSel}
         ${ssCell}
       </div>
     </div>`;
   }).join('');
 
+  if (typeof _ssDirty !== 'undefined' && !_ssDirty) { try { _captureStatusSnapshot(); } catch(e){} }
   wrap.innerHTML = header + `<div>${rows}</div>`;
   const _list=document.getElementById('roas-trend-list'); const _tb=(_list&&_list.querySelector(".table-toolbar"))||wrap.querySelector(".table-toolbar"); const _hdr=wrap.querySelector(".col-header");
   if(_hdr){ _hdr.style.position='sticky'; _hdr.style.zIndex='20'; _hdr.style.top=(_tb?_tb.offsetHeight:0)+"px"; _hdr.style.background='var(--surface2)'; }
@@ -10359,7 +10357,7 @@ function _showApplyButtons(){ _ssDirty = true; _ssSynced=false; _ssGen++; docume
 function _hideApplyButtons(){ document.querySelectorAll('#applyBtnWrap').forEach(function(w){ w.style.display = 'none'; }); }
 let _ssAutoTimer=null,_ssSaving=false,_ssSynced=false,_ssGen=0;
 function _scheduleSsAutoSave(){ if(_ssAutoTimer)clearTimeout(_ssAutoTimer); _ssAutoTimer=setTimeout(_ssAutoSaveRun,1500); }
-function _ssAutoSaveRun(){ _ssAutoTimer=null; if(!_ssDirty||_ssSaving)return; if(typeof saveProductCacheToGitHub!=='function')return; var lock=document.getElementById('loadingLock'); if(lock&&lock.classList.contains('active'))return; try{ document.querySelectorAll('[id^="status-sel-"]').forEach(function(sel){ var c=sel.id.replace('status-sel-',''); if(!productCache[c])productCache[c]={}; productCache[c].status=sel.value; }); var MO=['03','06','09','12']; var sp={}; var cv=new Set(); document.querySelectorAll('[id^="ss-btn-"]').forEach(function(b){ var c=b.getAttribute('data-code'),m=b.getAttribute('data-mon'); if(!c||!m)return; if(!sp[c])sp[c]={}; sp[c][m]=(b.getAttribute('data-active')==='1'); cv.add(c); }); cv.forEach(function(c){ if(!productCache[c])productCache[c]={}; var pv=productCache[c].ss||[]; productCache[c].ss=MO.filter(function(m){ if(sp[c]&&m in sp[c])return sp[c][m]; return pv.includes(m); }); }); }catch(e){} _ssSaving=true; var gen=_ssGen; try{saveProductCache();}catch(e){} var pr; try{ pr=saveProductCacheToGitHub(); }catch(e){ _ssSaving=false; return; } Promise.resolve(pr).then(function(){ _ssSaving=false; if(_ssGen!==gen){ _scheduleSsAutoSave(); return; } _ssSynced=true; try{_captureStatusSnapshot();}catch(e){} try{_ssAutoToast();}catch(e){} }).catch(function(e){ _ssSaving=false; console.warn('[ADcheck] SS auto-save failed',e); }); }
+function _ssAutoSaveRun(){ _ssAutoTimer=null; if(!_ssDirty||_ssSaving)return; if(typeof saveProductCacheToGitHub!=='function')return; var lock=document.getElementById('loadingLock'); if(lock&&lock.classList.contains('active'))return; try{ var _ap=document.getElementById('tab-'+(typeof _currentTab!=='undefined'?_currentTab:''))||document; _ap.querySelectorAll('[id^="status-sel-"]').forEach(function(sel){ var c=sel.id.replace('status-sel-',''); if(!productCache[c])productCache[c]={}; productCache[c].status=sel.value; }); var MO=['03','06','09','12']; var sp={}; var cv=new Set(); _ap.querySelectorAll('[id^="ss-btn-"]').forEach(function(b){ var c=b.getAttribute('data-code'),m=b.getAttribute('data-mon'); if(!c||!m)return; if(!sp[c])sp[c]={}; sp[c][m]=(b.getAttribute('data-active')==='1'); cv.add(c); }); cv.forEach(function(c){ if(!productCache[c])productCache[c]={}; var pv=productCache[c].ss||[]; productCache[c].ss=MO.filter(function(m){ if(sp[c]&&m in sp[c])return sp[c][m]; return pv.includes(m); }); }); }catch(e){} _ssSaving=true; var gen=_ssGen; try{saveProductCache();}catch(e){} var pr; try{ pr=saveProductCacheToGitHub(); }catch(e){ _ssSaving=false; return; } Promise.resolve(pr).then(function(){ _ssSaving=false; if(_ssGen!==gen){ _scheduleSsAutoSave(); return; } _ssSynced=true; try{_captureStatusSnapshot();}catch(e){} try{_ssAutoToast();}catch(e){} }).catch(function(e){ _ssSaving=false; console.warn('[ADcheck] SS auto-save failed',e); }); }
 function _ssAutoToast(){ try{ var t=document.getElementById('ssAutoToast'); if(!t){t=document.createElement('div');t.id='ssAutoToast';document.body.appendChild(t);} t.textContent='\u2713 自動保存しました'; t.style.cssText='position:fixed;bottom:20px;right:20px;background:#16a34a;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:99999;opacity:0;transition:opacity .2s'; void t.offsetWidth; t.style.opacity='1'; clearTimeout(t._tm); t._tm=setTimeout(function(){t.style.opacity='0';},1800); }catch(e){} }
 function _cancelStatusUpdates(){
   try {
@@ -10595,8 +10593,9 @@ function toggleSSBtn(code, mon, btn) {
 
 // サブタブの全行の区分・SSを一括更新
 function applyAllStatusUpdates() {
+  const _ap = document.getElementById('tab-' + _currentTab) || document;
   // 区分
-  document.querySelectorAll('[id^="status-sel-"]').forEach(sel => {
+  _ap.querySelectorAll('[id^="status-sel-"]').forEach(sel => {
     const code = sel.id.replace('status-sel-', '');
     if (!productCache[code]) productCache[code] = {};
     productCache[code].status = sel.value;
@@ -10605,7 +10604,7 @@ function applyAllStatusUpdates() {
   const MONTHS = ['03','06','09','12'];
   const ssPerCode = {};
   const codesInView = new Set();
-  document.querySelectorAll('[id^="ss-btn-"]').forEach(btn => {
+  _ap.querySelectorAll('[id^="ss-btn-"]').forEach(btn => {
     const code = btn.getAttribute('data-code');
     const mon = btn.getAttribute('data-mon');
     if (!code || !mon) {
