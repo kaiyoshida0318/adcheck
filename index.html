@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1078</span>
+    <span class="build-date">v1.1079</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10120,7 +10120,7 @@ function renderRoasTrend() {
         
         ${statusSel}
         ${ssCell}
-        <div style="display:flex;align-items:center;justify-content:center;padding:4px" onclick="event.stopPropagation()"><input type="checkbox" ${productCache[p.id]&&productCache[p.id].roasDone?'checked':''} onchange="_setRoasDone('${p.id}',this.checked)" style="width:16px;height:16px;cursor:pointer"></div>
+        <div onclick="event.stopPropagation();_toggleRoasDone('${p.id}',this)" title="クリックで完了/解除" style="display:flex;align-items:center;justify-content:center;padding:4px;cursor:pointer;user-select:none"><span class="roas-done-label" style="font-size:11px;font-weight:${cached.roasDone?'700':'400'};color:${cached.roasDone?'#1D9E75':'var(--text3)'};padding:2px 6px;border-radius:4px;background:${cached.roasDone?'#e6f6ef':'transparent'}">${cached.roasDone?'完了':'未'}</span></div>
       </div>
     </div>`;
   }).join('');
@@ -10196,6 +10196,20 @@ function _setRoasTrendStatus(code, val) {
 function _setRoasDone(code, val) {
   if (!productCache[code]) productCache[code] = {};
   productCache[code].roasDone = !!val;
+  saveProductCache(); saveToGitHub();
+}
+// クリックで 未/完了 をトグル（Ctrl+Fで「完了」を検索できるよう文字表示）
+function _toggleRoasDone(code, el) {
+  if (!productCache[code]) productCache[code] = {};
+  const now = !productCache[code].roasDone;
+  productCache[code].roasDone = now;
+  const span = el.querySelector('.roas-done-label');
+  if (span) {
+    span.textContent = now ? '完了' : '未';
+    span.style.color = now ? '#1D9E75' : 'var(--text3)';
+    span.style.fontWeight = now ? '700' : '400';
+    span.style.background = now ? '#e6f6ef' : 'transparent';
+  }
   saveProductCache(); saveToGitHub();
 }
 function _clearRoasDoneAll() {
