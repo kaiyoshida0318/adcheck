@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1075</span>
+    <span class="build-date">v1.1077</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -760,8 +760,7 @@ header + * { margin-top: 4px; }
         <div id="roas-trend-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
         <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
           <input type="text" id="roasTrendSearch" placeholder="商品管理番号・商品番号・商品名で検索..." oninput="renderRoasTrend()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
-          <button onclick="_clearRoasDoneAll()" title="全ての「対応」チェックを外します" style="margin-left:10px;font-size:11px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">全チェック解除</button>
-          <div class="toolbar-right"><div id="applyBtnWrap" style="display:none;gap:6px;align-items:center"><button onclick="_cancelStatusUpdates()" style="padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">キャンセル</button><button onclick="applyAllStatusUpdates()" style="padding:5px 16px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(249,115,22,0.35)">反映する</button></div></div>
+          <div class="toolbar-right"><button onclick="_clearRoasDoneAll()" title="全ての「対応」チェックを外します" style="font-size:11px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">全チェック解除</button><div id="applyBtnWrap" style="display:none;gap:6px;align-items:center"><button onclick="_cancelStatusUpdates()" style="padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">キャンセル</button><button onclick="applyAllStatusUpdates()" style="padding:5px 16px;border-radius:6px;border:none;background:#f97316;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(249,115,22,0.35)">反映する</button></div></div>
         </div>
         <div id="roas-trend-inner">
           <div class="tab-coming-soon"><div class="icon">📈</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div>
@@ -10028,7 +10027,7 @@ function renderRoasTrend() {
 
   // ヘッダー
   // 列構成: 商品番号 / 商品管理番号 / 画像 / 商品名 / 月×4 / 平均 / 差分 / KW順 / 記入欄 / 区分 / SS
-  const colW = `82px 76px 40px minmax(140px,1.4fr) ${last4.map(()=>'minmax(90px,1fr)').join(' ')} 100px 100px 78px 100px 64px 52px`;
+  const colW = `82px 76px 40px minmax(140px,1fr) ${last4.map(()=>'72px').join(' ')} 100px 100px 78px 100px 64px 52px`;
   const headerCells = last4.map(m => {
     const [y, mo] = m.split('-');
     const isActive = _roasTrendSortKey === m;
@@ -10063,7 +10062,7 @@ function renderRoasTrend() {
       const gp = calcGross(p, m);
       const color = gp === null ? 'var(--text3)' : gp >= 0 ? 'var(--green)' : 'var(--danger)';
       const txt = gp === null ? '—' : (gp >= 0 ? '+' : '') + '¥' + Math.abs(gp).toLocaleString();
-      return `<div class="cell r mono" style="background:#e8f5e9;font-size:11px;font-weight:700;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${txt}</div>`;
+      return `<div class="cell r mono" style="padding:8px 5px;background:#e8f5e9;font-size:11px;font-weight:700;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${txt}</div>`;
     }).join('');
 
     // 最新月差分（最新月粗広告利益 - 前3ヶ月平均粗広告利益）
@@ -10089,8 +10088,8 @@ function renderRoasTrend() {
     // 区分
     const statusVal = cached.status || 'unset';
     const statusColor = STATUS_COLORS[statusVal] || '';
-    const statusSel = `<div class="status-cell" onclick="event.stopPropagation()" style="position:relative">
-      <div class="status-disp" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1px;overflow:hidden;color:${statusColor||'var(--text2)'}">${_statusDispHtml(statusVal||'unset')}</div>
+    const statusSel = `<div class="status-cell" onclick="event.stopPropagation()" style="position:relative;min-height:44px;padding:2px">
+      <div class="status-disp" style="color:${statusColor||'var(--text2)'}">${_statusDispHtml(statusVal||'unset')}</div>
       <select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:11px;border:none;outline:none">
         ${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(v => {
           const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
