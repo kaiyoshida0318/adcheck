@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1090</span>
+    <span class="build-date">v1.1091</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8663,9 +8663,10 @@ function _renderKwCompareTable(){
   codes.forEach((code,ci)=>{
     const c=productCache[code]||{};
     const pname=c.manualName||c.name||code; const num=c.itemNumber||code;
+    const numHtml=(num&&num!==code)?(num+'<span style="font-weight:400;font-size:10px;color:var(--text3)"> / '+code+'</span>'):code;
     const img=c.manualImg||c.img||null;
     const imgEl=img?`<img src="${img}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:6px">`:'';
-    h1+=`<th style="${TH};background:${tintH(ci)}" colspan="6"><div style="display:flex;align-items:center;justify-content:center;gap:6px">${imgEl}<div style="text-align:left"><div style="font-weight:700">${num}</div><div style="font-weight:400;font-size:10px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pname}</div></div></div></th>`;
+    h1+=`<th style="${TH};background:${tintH(ci)}" colspan="6"><div style="display:flex;align-items:center;justify-content:center;gap:6px">${imgEl}<div style="text-align:left"><div style="font-weight:700">${numHtml}</div><div style="font-weight:400;font-size:10px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pname}</div></div></div></th>`;
   });
   let h2='';
   codes.forEach((_,ci)=>{ const THc=TH+';background:'+tintH(ci); h2+=`<th style="${THc}">CTR</th><th style="${THc}">\u76ee\u5b89CPC</th><th style="${THc}">\u5b9f\u7e3e\u984d</th><th style="${THc}">\u58f2\u4e0a\u984d</th><th style="${THc}">CVR<br><span style="font-weight:400;font-size:9px;color:var(--text3)">720\u6642\u9593(%)</span></th><th style="${THc}">ROAS<br><span style="font-weight:400;font-size:9px;color:var(--text3)">720\u6642\u9593(%)</span></th>`; });
