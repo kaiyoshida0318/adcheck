@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1079</span>
+    <span class="build-date">v1.1081</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1116,6 +1116,7 @@ header + * { margin-top: 4px; }
         <input id="kwIndivTableSearch" type="text" placeholder="商品番号/管理番号/商品名で検索" oninput="setKwIndivTableSearch(this.value)" style="font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);width:200px">
         <select id="kwIndivTableSort" onchange="setKwIndivTableSort(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="problem">問題発生金額順</option><option value="itemno">商品番号順</option><option value="code">商品管理番号順</option></select>
         <div class="toolbar-right" style="display:flex;align-items:center;gap:8px">
+          <button onclick="_openDailyWorkPages()" title="当日の広告調整に使う 楽天市場/RMS/ADcheck の各ページを新しいタブで一括オープン" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #2563eb;background:#2563eb;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">必要ページ一括オープン</button>
           <button onclick="_toggleKwFixCond()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">修正あり～放置中の意味</button>
           <button onclick="_toggleKwTableLegend()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">マークの意味</button>
           <button onclick="_toggleTaiouEditor()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">対応の編集</button>
@@ -11260,6 +11261,24 @@ function toggleTopChrome(){
   const collapsed = t.style.display==='none';
   t.style.display = collapsed ? '' : 'none';
   if(bar) bar.style.display = collapsed ? 'none' : 'flex';
+}
+// 当日の広告調整で使う必要ページを新しいタブで一括オープン
+function _openDailyWorkPages() {
+  const base = location.origin + location.pathname;
+  const urls = [
+    'https://www.rakuten.co.jp/?l-id=pc_header_logo',      // 楽天市場
+    'https://ad.rms.rakuten.co.jp/rpp/reports',            // RMS-パフォーマンスレポート
+    'https://ad.rms.rakuten.co.jp/rpp/items?page=1',       // RMS-商品・キーワード設定
+    'https://datatool.rms.rakuten.co.jp/realtime/item',    // RMS-商品別売上
+    base + '?tab=kw-indiv',                                // ADcheck-商品-個別データ
+    base + '?tab=products',                                // ADcheck-商品-売上データ
+    base + '?tab=roas-trend'                               // ADcheck-粗広告利益-直近4ヶ月
+  ];
+  let blocked = 0;
+  urls.forEach(u => { const w = window.open(u, '_blank'); if (!w) blocked++; });
+  if (blocked > 0) {
+    alert('ポップアップがブロックされました（' + blocked + '件）。\nブラウザのアドレスバー右のポップアップ許可アイコンから、このサイトのポップアップを常に許可に設定してください。');
+  }
 }
 function switchTab(tab) {
   _currentTab = tab;
