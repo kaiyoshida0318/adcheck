@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1102</span>
+    <span class="build-date">v1.1103</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7921,7 +7921,7 @@ function _renderKwWatchMonthlyTable(){
   var KWC='border:'+BD+';padding:0;text-align:center;vertical-align:middle;background:var(--surface);min-width:180px';
   var MC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;font-weight:600;color:#333';
   var VC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;color:#333';
-  var CC='border:'+BD+';vertical-align:middle;padding:8px;background:var(--surface);min-width:520px';
+  var CC='border:'+BD+';vertical-align:middle;padding:8px;background:var(--surface);min-width:560px';
   var COL={ sp:['#ffe0b2','#fff3e0'], spday:['#ffe0b2','#fff8e1'], sa:['#c8e6c9','#e8f5e9'], saday:['#dcedc8','#f1f8e9'], cvr:['#f8bbd0','#fce4ec'], roas:['#bbdefb','#e3f2fd'], cl:['#d1c4e9','#ede7f6'], cpc:['#b2dfdb','#e0f2f1'] };
   var metrics=[['\u5b9f\u7e3e\u984d','sp'],['\u5b9f\u7e3e\u984d/1\u65e5','spday'],['\u58f2\u4e0a','sa'],['\u58f2\u4e0a/1\u65e5','saday'],['CVR','cvr'],['ROAS','roas'],['\u6708\u30af\u30ea\u30c3\u30af\u5408\u8a08','cl'],['\u5e73\u5747\u30af\u30ea\u30c3\u30af\u5358\u4fa1','cpc']];
   var NM=metrics.length;
@@ -7949,11 +7949,11 @@ function _renderKwWatchMonthlyTable(){
     months.forEach(function(m){ var gsp=(dm[m]&&dm[m].sp)||0; var psp=(totM[m]&&totM[m].sp)||0; var pct=(psp>0)?(gsp/psp*100):null; sh+='<div style="flex:1;min-width:36px;text-align:center;background:#fff3e0;border:1px solid var(--border);border-radius:4px;padding:2px 1px"><div style="font-size:8px;color:var(--text3)">'+(+m.slice(4,6))+'\u6708</div><div style="font-size:10px;font-weight:700;color:#b45309">'+(pct!=null?Math.round(pct)+'%':'-')+'</div></div>'; });
     sh+='</div></div>';
     chartJobs.push({gi:gi,dm:dm});
-    var chartCell='<td rowspan="'+NM+'" style="'+CC+';border-top:'+GRP+'"><div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;width:100%;min-height:250px">'
-      +'<div style="position:relative;min-height:115px"><canvas id="kwwm_'+gi+'_spday"></canvas></div>'
-      +'<div style="position:relative;min-height:115px"><canvas id="kwwm_'+gi+'_saday"></canvas></div>'
-      +'<div style="position:relative;min-height:115px"><canvas id="kwwm_'+gi+'_cpc"></canvas></div>'
-      +'<div style="position:relative;min-height:115px"><canvas id="kwwm_'+gi+'_roas"></canvas></div>'
+    var chartCell='<td rowspan="'+NM+'" style="'+CC+';border-top:'+GRP+'"><div style="display:flex;flex-wrap:wrap;gap:10px;padding:2px;width:544px">'
+      +'<canvas id="kwwm_'+gi+'_spday" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'
+      +'<canvas id="kwwm_'+gi+'_saday" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'
+      +'<canvas id="kwwm_'+gi+'_cpc" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'
+      +'<canvas id="kwwm_'+gi+'_roas" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'
       +'</div></td>';
     var out='';
     metrics.forEach(function(mt,mi){ var topB=(mi===0)?(';border-top:'+GRP):''; var c=COL[mt[1]]||['#f0f0f0','#fafafa']; out+='<tr>';
@@ -7978,7 +7978,7 @@ function _renderKwWatchMonthlyTable(){
   h+='</div>';
   body.innerHTML=h;
   if(typeof Chart!=='undefined'){
-    var mkC=function(id,title,data,color,suf){ var cv=document.getElementById(id); if(!cv) return; try{ var ch=new Chart(cv,{type:'line',data:{labels:lbls,datasets:[{label:title,data:data,borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:0.25,spanGaps:true,fill:true}]},options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:title,font:{size:11,weight:'700'}},tooltip:{callbacks:{label:function(c){return (c.parsed.y!=null)?(c.parsed.y.toLocaleString()+suf):'-';}}}},scales:{y:{beginAtZero:true,ticks:{font:{size:9},callback:function(v){return v.toLocaleString()+suf;}}},x:{grid:{display:false},ticks:{font:{size:9}}}}}}); _kwwmCharts.push(ch); }catch(e){} };
+    var mkC=function(id,title,data,color,suf){ var cv=document.getElementById(id); if(!cv) return; try{ var ch=new Chart(cv,{type:'line',data:{labels:lbls,datasets:[{label:title,data:data,borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:0.25,spanGaps:true,fill:true}]},options:{animation:false,responsive:false,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:title,font:{size:11,weight:'700'}},tooltip:{callbacks:{label:function(c){return (c.parsed.y!=null)?(c.parsed.y.toLocaleString()+suf):'-';}}}},scales:{y:{beginAtZero:true,ticks:{font:{size:9},callback:function(v){return v.toLocaleString()+suf;}}},x:{grid:{display:false},ticks:{font:{size:9}}}}}}); _kwwmCharts.push(ch); }catch(e){} };
     chartJobs.forEach(function(job){
       mkC('kwwm_'+job.gi+'_spday','\u5b9f\u7e3e\u984d/1\u65e5',series(job.dm,'spday'),'#f59e0b','\u5186');
       mkC('kwwm_'+job.gi+'_saday','\u58f2\u4e0a/1\u65e5',series(job.dm,'saday'),'#43a047','\u5186');
