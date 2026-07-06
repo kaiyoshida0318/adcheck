@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1092</span>
+    <span class="build-date">v1.1093</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7901,31 +7901,47 @@ function _renderKwWatchMonthlyTable(){
   if(!code){ body.innerHTML='<div style="padding:30px;color:var(--text3);text-align:center;font-size:13px">上のドロップダウンから商品を選択してください。</div>'; return; }
   var rows=kwRows.filter(function(r){ return r.itemCode===code; });
   if(!rows.length){ body.innerHTML='<div style="padding:30px;color:var(--text3);text-align:center;font-size:13px">この商品のKWデータがありません。</div>'; return; }
-  var months=[]; rows.forEach(function(r){ if(months.indexOf(r.ym)<0) months.push(r.ym); }); months.sort().reverse();
+  var allM=[]; rows.forEach(function(r){ if(r.ym && allM.indexOf(r.ym)<0) allM.push(r.ym); }); allM.sort();
+  var months=allM.slice(-4);
   var byKw={};
-  rows.forEach(function(r){ var k=r.kw||'(空)'; if(!byKw[k]) byKw[k]={tot:0,m:{}}; var c=+r.cl||0; byKw[k].m[r.ym]=(byKw[k].m[r.ym]||0)+c; byKw[k].tot+=c; });
-  var kws=Object.keys(byKw).sort(function(a,b){ return byKw[b].tot-byKw[a].tot; });
-  var TH='padding:6px 8px;font-size:11px;font-weight:700;border-bottom:2px solid var(--border);white-space:nowrap;text-align:center;background:var(--surface2)';
-  var TD='padding:5px 8px;font-size:11px;border-bottom:1px solid var(--border);text-align:center;font-variant-numeric:tabular-nums';
-  var h='<div style="overflow-x:auto"><table style="border-collapse:collapse;min-width:100%"><thead><tr>';
-  h+='<th style="'+TH+';text-align:left;position:sticky;left:0;z-index:2">KW</th>';
-  h+='<th style="'+TH+'">合計</th>';
-  months.forEach(function(m){ h+='<th style="'+TH+'">'+m.slice(0,4)+'/'+m.slice(4,6)+'</th>'; });
+  rows.forEach(function(r){ if(months.indexOf(r.ym)<0) return; var k=r.kw||'(空)'; if(!byKw[k]) byKw[k]={m:{},totCl:0}; var mm=byKw[k].m[r.ym]; if(!mm){ mm=byKw[k].m[r.ym]={sp:0,sa:0,od:0,cl:0}; } mm.sp+=(+r.spend||0); mm.sa+=(+r.sales||0); mm.od+=(+r.orders||0); mm.cl+=(+r.cl||0); byKw[k].totCl+=(+r.cl||0); });
+  var kws=Object.keys(byKw).sort(function(a,b){ return byKw[b].totCl-byKw[a].totCl; });
+  if(!kws.length){ body.innerHTML='<div style="padding:30px;color:var(--text3);text-align:center;font-size:13px">直近4ヶ月のKWデータがありません。</div>'; return; }
+  var img=(productCache[code]&&(productCache[code].manualImg||productCache[code].img))||null;
+  var head='<div style="display:flex;align-items:center;gap:10px;padding:4px 2px 14px">'+(img?'<img loading="lazy" src="'+img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:15px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:monospace">'+_kwEsc(code)+'</div></div></div>';
+  var BD='1px solid var(--border)';
+  var TH='border:'+BD+';padding:6px 12px;font-size:12px;font-weight:700;text-align:center;background:var(--surface2);white-space:nowrap';
+  var KWC='border:'+BD+';padding:6px 12px;font-size:12px;font-weight:600;text-align:left;vertical-align:middle;background:var(--surface);min-width:150px;max-width:260px;overflow:hidden;text-overflow:ellipsis';
+  var MC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;background:var(--surface2);color:var(--text2)';
+  var VC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums';
+  var metrics=[['実績額','sp'],['売上','sa'],['CVR','cvr'],['ROAS','roas'],['月クリック合計','cl'],['平均クリック単価','cpc']];
+  var h='<div style="overflow-x:auto">'+head+'<table style="border-collapse:collapse"><thead><tr>';
+  h+='<th style="'+TH+'" colspan="2"></th>';
+  months.forEach(function(m){ h+='<th style="'+TH+'">'+(+m.slice(4,6))+'月</th>'; });
   h+='</tr></thead><tbody>';
-  kws.forEach(function(k){
-    h+='<tr>';
-    h+='<td style="'+TD+';text-align:left;white-space:nowrap;position:sticky;left:0;background:var(--surface);max-width:280px;overflow:hidden;text-overflow:ellipsis" title="'+_kwEsc(k)+'">'+_kwEsc(k)+'</td>';
-    h+='<td style="'+TD+';font-weight:700">'+byKw[k].tot.toLocaleString()+'</td>';
-    months.forEach(function(m){ var v=byKw[k].m[m]||0; h+='<td style="'+TD+';color:'+(v>0?'var(--text)':'var(--text3)')+'">'+(v>0?v.toLocaleString():'-')+'</td>'; });
-    h+='</tr>';
+  kws.forEach(function(kw){
+    metrics.forEach(function(mt,mi){
+      h+='<tr>';
+      if(mi===0){ h+='<td rowspan="6" style="'+KWC+'" title="'+_kwEsc(kw)+'">'+_kwEsc(kw)+'</td>'; }
+      h+='<td style="'+MC+'">'+mt[0]+'</td>';
+      months.forEach(function(m){
+        var mm=byKw[kw].m[m]; var out='-'; var key=mt[1];
+        if(mm){
+          if(key==='sp') out='¥'+Math.round(mm.sp).toLocaleString();
+          else if(key==='sa') out='¥'+Math.round(mm.sa).toLocaleString();
+          else if(key==='cvr') out=(mm.cl>0)?(mm.od/mm.cl*100).toFixed(2)+'%':'-';
+          else if(key==='roas') out=(mm.sp>0)?Math.round(mm.sa/mm.sp*100).toLocaleString()+'%':'-';
+          else if(key==='cl') out=mm.cl.toLocaleString();
+          else if(key==='cpc') out=(mm.cl>0)?'¥'+Math.round(mm.sp/mm.cl).toLocaleString():'-';
+        }
+        h+='<td style="'+VC+'">'+out+'</td>';
+      });
+      h+='</tr>';
+    });
   });
-  var gtot=kws.reduce(function(x,k){return x+byKw[k].tot;},0);
-  h+='<tr style="font-weight:700;background:var(--surface2)">';
-  h+='<td style="'+TD+';text-align:left;position:sticky;left:0;background:var(--surface2);border-top:2px solid var(--border)">合計</td>';
-  h+='<td style="'+TD+';border-top:2px solid var(--border)">'+gtot.toLocaleString()+'</td>';
-  months.forEach(function(m){ var mt=kws.reduce(function(x,k){return x+(byKw[k].m[m]||0);},0); h+='<td style="'+TD+';border-top:2px solid var(--border)">'+mt.toLocaleString()+'</td>'; });
-  h+='</tr></tbody></table></div>';
-  h+='<div style="padding:8px 4px;font-size:11px;color:var(--text3)">※ 数値はクリック数（KW×月）。'+kws.length+'KW × '+months.length+'ヶ月</div>';
+  h+='</tbody></table>';
+  h+='<div style="padding:10px 2px;font-size:11px;color:var(--text3)">※ 最新月から過去4ヶ月分。'+kws.length+'KW。実績額・平均クリック単価は円、CVR・ROASは%。</div>';
+  h+='</div>';
   body.innerHTML=h;
 }
 
