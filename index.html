@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1158</span>
+    <span class="build-date">v1.1159</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2130,6 +2130,18 @@ function _getShops() {
 function _saveShops(shops) {
   try { localStorage.setItem(SHOPS_KEY, JSON.stringify(shops)); } catch(e) {}
 }
+function _normalizeShops() {
+  try {
+    var raw = localStorage.getItem(SHOPS_KEY); if (!raw) return;
+    var sh = JSON.parse(raw); if (!Array.isArray(sh)) return;
+    var changed = false;
+    sh.forEach(function(x){ if (x && x.id === 'kai-ry') { x.id = 'kairy'; changed = true; } });
+    var seen = {}; var out = sh.filter(function(x){ if (!x || seen[x.id]) return false; seen[x.id]=1; return true; });
+    if (out.length !== sh.length) changed = true;
+    if (changed) localStorage.setItem(SHOPS_KEY, JSON.stringify(out));
+    if (localStorage.getItem(CURRENT_SHOP_KEY) === 'kai-ry') localStorage.setItem(CURRENT_SHOP_KEY, 'kairy');
+  } catch(e) {}
+}
 function _getCurrentShopId() {
   return localStorage.getItem(CURRENT_SHOP_KEY) || 'yukaiya';
 }
@@ -2145,6 +2157,7 @@ function _getCurrentShop() {
 // ── 初回マイグレーション ──
 // 旧データ(data/rpp_*.json)があり、shops設定が空なら自動でyukaiyaショップを作成
 function _initShopsIfNeeded() {
+  _normalizeShops();
   const shops = _getShops();
   if (shops.length === 0) {
     // 既存のlocalStorage設定を読んでyukaiyaショップとして登録
@@ -13877,7 +13890,7 @@ async function _miscFetch(){
     var pat=localStorage.getItem('github_pat'); var obj=null;
     try{ var h={'Accept':'application/vnd.github.v3.raw'}; if(pat) h['Authorization']='token '+pat; var r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_MISC_SHARED_FILE+'?t='+Date.now(),{headers:h,cache:'no-store'}); if(r.ok){ obj=JSON.parse(await r.text()); } }catch(e){}
     if(!obj){ var rr=await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+_MISC_SHARED_FILE+'?t='+Date.now(),{cache:'no-store'}); if(rr.ok) obj=JSON.parse(await rr.text()); }
-    if(obj && obj.data){ _miscSuppress=true; _MISC_KEYS.forEach(function(k){ if(obj.data[k]!=null){ try{ localStorage.setItem(k, obj.data[k]); }catch(e){} } }); _miscSuppress=false; return true; }
+    if(obj && obj.data){ _miscSuppress=true; _MISC_KEYS.forEach(function(k){ if(obj.data[k]!=null){ try{ localStorage.setItem(k, obj.data[k]); }catch(e){} } }); _miscSuppress=false; try{ _normalizeShops(); }catch(e){} return true; }
   }catch(e){}
   return false;
 }
