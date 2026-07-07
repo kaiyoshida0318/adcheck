@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1128</span>
+    <span class="build-date">v1.1129</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7948,6 +7948,8 @@ function _kwwmRenderAll(body){
     if(key==='saday'){ if(mm.sa==null) return null; var d2=dnm(m); return d2>0?Math.round(mm.sa/d2):null; }
     if(key==='seoday'){ if(mm.seo==null) return null; var dsd=dnm(m); return dsd>0?Math.round(mm.seo/dsd):null; }
     if(key==='cpc') return mm.cl>0?Math.round(mm.sp/mm.cl):null;
+    if(key==='kwcpc') return mm.kwcl>0?Math.round(mm.kwsp/mm.kwcl):null;
+    if(key==='cpc20'){ var _c20=(mm.cl||0)-(mm.kwcl||0); return _c20>0?Math.round(mm.sp20/_c20):null; }
     if(key==='kwspday'){ var dks=dnm(m); return dks>0?Math.round((mm.kwsp||0)/dks):null; }
     if(key==='sp20day'){ var d2s=dnm(m); return d2s>0?Math.round((mm.sp20||0)/d2s):null; }
     if(key==='adsaday'){ var das=dnm(m); return das>0?Math.round(((mm.kwsa||0)+(mm.sa20||0))/das):null; }
@@ -8077,6 +8079,8 @@ function _renderKwWatchMonthlyTable(){
     if(key==='saday'){ var d2=dnm(m); return d2>0?Math.round(mm.sa/d2):null; }
     if(key==='seoday'){ if(mm.seo==null) return null; var dsd=dnm(m); return dsd>0?Math.round(mm.seo/dsd):null; }
     if(key==='cpc') return mm.cl>0?Math.round(mm.sp/mm.cl):null;
+    if(key==='kwcpc') return mm.kwcl>0?Math.round(mm.kwsp/mm.kwcl):null;
+    if(key==='cpc20'){ var _c20=(mm.cl||0)-(mm.kwcl||0); return _c20>0?Math.round(mm.sp20/_c20):null; }
     if(key==='kwspday'){ var dks=dnm(m); return dks>0?Math.round((mm.kwsp||0)/dks):null; }
     if(key==='sp20day'){ var d2s=dnm(m); return d2s>0?Math.round((mm.sp20||0)/d2s):null; }
     if(key==='adsaday'){ var das=dnm(m); return das>0?Math.round(((mm.kwsa||0)+(mm.sa20||0))/das):null; }
