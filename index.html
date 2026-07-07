@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1160</span>
+    <span class="build-date">v1.1161</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1702,6 +1702,16 @@ header + * { margin-top: 4px; }
         <button onclick="manualFetchAllProductInfo()" style="font-size:11px;padding:6px 14px;border:1px solid var(--accent);border-radius:5px;background:var(--surface);color:var(--accent);cursor:pointer;font-weight:600">🖼 画像・商品名を取得(手動)</button>
       </div>
     </div>
+    <div class="modal-field">
+      <label class="modal-label">ログ（不具合報告用）</label>
+      <textarea id="dbgLogArea" readonly style="width:100%;height:170px;font-size:10px;font-family:monospace;white-space:pre;overflow:auto;border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
+      <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="modal-btn" onclick="_dbgRefresh()">🔄 更新</button>
+        <button class="modal-btn save" onclick="_dbgCopy()">📋 コピー</button>
+        <button class="modal-btn" onclick="_dbgClear()">クリア</button>
+      </div>
+      <div class="modal-hint">保存・読み込み・エラーの記録です。「📋 コピー」で全文コピーできます。不具合時はこれを貼り付けてください。</div>
+    </div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="closeSettings()">キャンセル</button>
       <button class="modal-btn" onclick="testApi()">接続テスト</button>
@@ -2114,6 +2124,49 @@ function _editClCurrentLogs() {
 const PAGE = 25;
 const DOW = ['日','月','火','水','木','金','土'];
 
+
+// ── デバッグログ（設定→ログで確認・コピー可能） ──
+var _dbgLogs = [];
+function _dbgPush(level, args){
+  try {
+    var msg = Array.prototype.map.call(args, function(a){
+      if (a instanceof Error) return (a.message||'')+' '+(a.stack||'');
+      if (a && typeof a === 'object') { try { return JSON.stringify(a); } catch(e){ return String(a); } }
+      return String(a);
+    }).join(' ');
+    var d = new Date();
+    var t = ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2)+'.'+('00'+d.getMilliseconds()).slice(-3);
+    _dbgLogs.push('['+t+'] '+level+' '+msg);
+    if (_dbgLogs.length > 800) _dbgLogs.splice(0, _dbgLogs.length - 800);
+    var el = document.getElementById('dbgLogArea');
+    if (el) { el.value = _dbgLogs.join('\n'); el.scrollTop = el.scrollHeight; }
+  } catch(e) {}
+}
+(function(){
+  try {
+    var _cl=console.log,_cw=console.warn,_ce=console.error;
+    console.log=function(){ try{ var s=String(arguments[0]||''); if(s.indexOf('[ADcheck]')>=0) _dbgPush('LOG',arguments); }catch(e){} return _cl.apply(console,arguments); };
+    console.warn=function(){ _dbgPush('WARN',arguments); return _cw.apply(console,arguments); };
+    console.error=function(){ _dbgPush('ERR',arguments); return _ce.apply(console,arguments); };
+    window.addEventListener('error',function(e){ _dbgPush('UNCAUGHT',[e.message,(e.filename||'')+':'+(e.lineno||'')]); });
+    window.addEventListener('unhandledrejection',function(e){ _dbgPush('REJECT',[String(e.reason)]); });
+    _dbgPush('INIT','ログ開始');
+  } catch(e) {}
+})();
+function _dbgRefresh(){ var el=document.getElementById('dbgLogArea'); if(el){ el.value=_dbgLogs.join('\n'); el.scrollTop=el.scrollHeight; } }
+function _dbgClear(){ _dbgLogs=[]; var el=document.getElementById('dbgLogArea'); if(el) el.value=''; }
+function _dbgToast(m){ try{ var s=document.getElementById('modalStatus'); if(s){ s.textContent=m; s.className='modal-status ok'; setTimeout(function(){ s.textContent=''; s.className='modal-status'; },1500); } }catch(e){} }
+function _dbgCopy(){
+  var el=document.getElementById('dbgLogArea'); if(!el) return;
+  var txt=el.value||'';
+  try { el.focus(); el.select(); } catch(e){}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ _dbgToast('ログをコピーしました'); }, function(){ try{document.execCommand('copy'); _dbgToast('ログをコピーしました');}catch(e){} });
+  } else {
+    try{ document.execCommand('copy'); _dbgToast('ログをコピーしました'); }catch(e){}
+  }
+}
+function _dbgLog(){ _dbgPush('APP', arguments); }
 
 // ── GitHub データ永続化 ──
 const GH_OWNER = 'kaiyoshida0318';
@@ -2931,7 +2984,7 @@ function updateApiStatus(id, ak) {
   if (id && ak) { el.textContent = 'アプリID設定済み'; el.className = 'api-status set'; }
   else { el.textContent = 'アプリID未設定'; el.className = 'api-status unset'; }
 }
-function openSettings() { loadSettings(); document.getElementById('settingsModal').classList.add('open'); }
+function openSettings() { try{_dbgRefresh();}catch(e){} loadSettings(); document.getElementById('settingsModal').classList.add('open'); }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); document.getElementById('modalStatus').className = 'modal-status'; }
 function showModalStatus(msg, type) {
   const el = document.getElementById('modalStatus');
