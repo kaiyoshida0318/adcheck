@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1106</span>
+    <span class="build-date">v1.1107</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7887,10 +7887,13 @@ function _kwWatchProdLoad(code){ if(!code) return; _kwIndivCode=code; renderKwIn
 var _kwWatchMonthlyCode='__ALL__';
 var _kwwmCharts=[];
 var _kwwmView='all';
+function _kwwmLatestYmDash(){ var gl=''; kwRows.forEach(function(r){ if(r.date && r.date>gl) gl=r.date; }); return gl?(gl.slice(0,4)+'-'+gl.slice(5,7)):''; }
+function _kwwmSortCodes(codes){ var ymd=_kwwmLatestYmDash(); var sp={}; codes.forEach(function(c){ var a=(ymd&&typeof getItemMonthAgg==='function')?getItemMonthAgg(c,ymd):null; sp[c]=(a&&a.spend)||0; }); return codes.slice().sort(function(x,y){ return (sp[y]||0)-(sp[x]||0); }); }
 function renderKwWatchMonthly(){
   var sel=document.getElementById('kwWatchMonthlySel');
   var codes=(typeof _watchedCodes==='function')?_watchedCodes():[];
   if(!codes || !codes.length){ codes=[]; kwRows.forEach(function(r){ if(r.itemCode && codes.indexOf(r.itemCode)<0) codes.push(r.itemCode); }); }
+  codes=_kwwmSortCodes(codes);
   if(sel){
     sel.innerHTML='<option value="__ALL__"'+(_kwWatchMonthlyCode==='__ALL__'?' selected':'')+'>商品全体</option>'+codes.map(function(c){ return '<option value="'+_kwEsc(c)+'"'+(c===_kwWatchMonthlyCode?' selected':'')+'>'+_kwEsc(_kwIndivName(c))+'</option>'; }).join('');
     if(_kwWatchMonthlyCode) sel.value=_kwWatchMonthlyCode;
@@ -7904,6 +7907,7 @@ function _kwwmRenderAll(body){
   var view=_kwwmView;
   var codes=(typeof _watchedCodes==='function')?_watchedCodes():[];
   if(!codes || !codes.length){ codes=[]; kwRows.forEach(function(r){ if(r.itemCode && codes.indexOf(r.itemCode)<0) codes.push(r.itemCode); }); }
+  codes=_kwwmSortCodes(codes);
   if(!codes.length){ body.innerHTML='<div style="padding:30px;color:var(--text3);text-align:center;font-size:13px">データがありません。</div>'; return; }
   var gm=[]; kwRows.forEach(function(r){ if(r.ym && gm.indexOf(r.ym)<0) gm.push(r.ym); }); gm.sort();
   var months=gm.slice(-4);
