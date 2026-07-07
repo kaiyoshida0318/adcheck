@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1113</span>
+    <span class="build-date">v1.1114</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8100,7 +8100,11 @@ function _renderKwWatchMonthlyTable(){
   } else {
     var _y20b={};
     months.forEach(function(m){ var ab=(typeof getItemMonthAgg==='function')?getItemMonthAgg(code, m.slice(0,4)+'-'+m.slice(4,6)):null; if(!ab) return; var s20b=(ab.spend||0)-(ab.kwSpend||0),sa20b=(ab.sales720||0)-(ab.kwSales||0); _y20b[m]={sp:s20b,sa:sa20b,od:null,cl:null}; });
-    h+=grp('20円全体', _y20b, true, _gi++, false);
+    var _adSpB={}; months.forEach(function(m){ _adSpB[m]=((_y20b[m]&&_y20b[m].sp)||0)+((totM[m]&&totM[m].sp)||0); });
+    var _r20b=months.map(function(m){ var dd=_adSpB[m]||0,nn=(_y20b[m]&&_y20b[m].sp)||0; return dd>0?nn/dd*100:null; });
+    var _rKWb=months.map(function(m){ var dd=_adSpB[m]||0,nn=(totM[m]&&totM[m].sp)||0; return dd>0?nn/dd*100:null; });
+    h+=grp('20円全体', _y20b, true, _gi++, false, _kwwmRatio(_r20b, '20円/KW比率', '#1d4ed8', '#eef4ff'));
+    _exKW=_kwwmRatio(_rKWb, '20円/KW比率', '#1d4ed8', '#eef4ff');
   }
   h+=grp('KW全体', totM, true, _gi++, true, _exKW);
   kws.forEach(function(kw){ h+=grp(kw, byKw[kw].m, false, _gi++, true, ''); });
