@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1161</span>
+    <span class="build-date">v1.1163</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1661,6 +1661,7 @@ header + * { margin-top: 4px; }
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
       <button class="header-btn" onclick="closeSettingsMenu();openSettings()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">⚙ 基礎情報入力</button>
       <button class="header-btn" onclick="closeSettingsMenu();openBulkNameModal()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">📋 商品情報一括更新</button>
+      <button class="header-btn" onclick="closeSettingsMenu();openDbgLog()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">📋 ログ（不具合報告用）</button>
       <button class="header-btn danger-btn" onclick="closeSettingsMenu();confirmClearAll()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">🗑 データ削除</button>
     </div>
     <div style="margin-top:20px;text-align:right">
@@ -2167,6 +2168,7 @@ function _dbgCopy(){
   }
 }
 function _dbgLog(){ _dbgPush('APP', arguments); }
+function openDbgLog(){ try{ if(typeof openSettings==='function') openSettings(); setTimeout(function(){ try{ _dbgRefresh(); var el=document.getElementById('dbgLogArea'); if(el){ el.scrollIntoView({block:'center',behavior:'smooth'}); } }catch(e){} }, 120); }catch(e){} }
 
 // ── GitHub データ永続化 ──
 const GH_OWNER = 'kaiyoshida0318';
@@ -2323,7 +2325,7 @@ async function saveToGitHub(options = {}) {
 
     const _ghPut = async (file, payload, retryCount = 0) => {
       const MAX_RETRY = 5;
-      const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${file}`, { headers });
+      const getRes = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${file}`, { headers, cache: 'no-store' });
       const sha = getRes.ok ? (await getRes.json()).sha : null;
       const jsonStr = JSON.stringify(payload);
       const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
@@ -2335,8 +2337,8 @@ async function saveToGitHub(options = {}) {
       if (!putRes.ok) {
         const err = await putRes.json();
         // 409 Conflict (SHA不一致)なら自動リトライ: 最新SHAを再取得して再PUT
-        if (putRes.status === 409 && retryCount < MAX_RETRY) {
-          console.warn(`[ADcheck] 409 Conflict, retrying (${retryCount+1}/${MAX_RETRY}):`, file);
+        if ((putRes.status === 409 || (putRes.status === 422 && /sha/i.test((err && err.message) || ''))) && retryCount < MAX_RETRY) {
+          console.warn(`[ADcheck] ${putRes.status} sha再取得でリトライ (${retryCount+1}/${MAX_RETRY}):`, file);
           await new Promise(r => setTimeout(r, 500 + retryCount * 300)); // 指数バックオフ
           return _ghPut(file, payload, retryCount + 1);
         }
