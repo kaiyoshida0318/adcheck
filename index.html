@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1104</span>
+    <span class="build-date">v1.1105</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7884,15 +7884,15 @@ function _setKwWPPeriodUI(){ var d=document.getElementById('kwWPDaily'), m=docum
 function renderKwWatchProd(){ var sel=document.getElementById('kwWatchProdSel'); var codes=_watchedCodes(); if(sel){ sel.innerHTML='<option value="">注視KWの商品から選択</option>'+codes.map(function(c){ return '<option value="'+_kwEsc(c)+'"'+(c===_kwIndivCode?' selected':'')+'>'+_kwEsc(_kwIndivName(c))+'</option>'; }).join(''); } _setKwWPPeriodUI(); renderKwIndiv(); }
 function _kwWatchProdLoad(code){ if(!code) return; _kwIndivCode=code; renderKwIndiv(); }
 
-var _kwWatchMonthlyCode='';
+var _kwWatchMonthlyCode='__ALL__';
 var _kwwmCharts=[];
-var _kwwmView='ad';
+var _kwwmView='all';
 function renderKwWatchMonthly(){
   var sel=document.getElementById('kwWatchMonthlySel');
   var codes=(typeof _watchedCodes==='function')?_watchedCodes():[];
   if(!codes || !codes.length){ codes=[]; kwRows.forEach(function(r){ if(r.itemCode && codes.indexOf(r.itemCode)<0) codes.push(r.itemCode); }); }
   if(sel){
-    sel.innerHTML='<option value="">商品を選択</option>'+codes.map(function(c){ return '<option value="'+_kwEsc(c)+'"'+(c===_kwWatchMonthlyCode?' selected':'')+'>'+_kwEsc(_kwIndivName(c))+'</option>'; }).join('');
+    sel.innerHTML='<option value="__ALL__"'+(_kwWatchMonthlyCode==='__ALL__'?' selected':'')+'>商品全体</option>'+codes.map(function(c){ return '<option value="'+_kwEsc(c)+'"'+(c===_kwWatchMonthlyCode?' selected':'')+'>'+_kwEsc(_kwIndivName(c))+'</option>'; }).join('');
     if(_kwWatchMonthlyCode) sel.value=_kwWatchMonthlyCode;
   }
   _renderKwWatchMonthlyTable();
@@ -7900,11 +7900,91 @@ function renderKwWatchMonthly(){
 function _kwWatchMonthlyPick(code){ _kwWatchMonthlyCode=code||''; _renderKwWatchMonthlyTable(); }
 function _kwwmSetViewBtns(){ try{ var on='background:#2563eb;color:#fff', off='background:var(--surface);color:var(--text2)'; var ba=document.getElementById('kwwmViewAll'), bd=document.getElementById('kwwmViewAd'); if(ba) ba.style.cssText='font-size:12px;padding:6px 16px;border:none;cursor:pointer;'+(_kwwmView==='all'?on:off); if(bd) bd.style.cssText='font-size:12px;padding:6px 16px;border:none;border-left:1px solid var(--border2);cursor:pointer;'+(_kwwmView==='ad'?on:off); }catch(e){} }
 function _kwWatchMonthlyView(v){ _kwwmView=(v==='all')?'all':'ad'; _kwwmSetViewBtns(); _renderKwWatchMonthlyTable(); }
+function _kwwmRenderAll(body){
+  var view=_kwwmView;
+  var codes=(typeof _watchedCodes==='function')?_watchedCodes():[];
+  if(!codes || !codes.length){ codes=[]; kwRows.forEach(function(r){ if(r.itemCode && codes.indexOf(r.itemCode)<0) codes.push(r.itemCode); }); }
+  if(!codes.length){ body.innerHTML='<div style="padding:30px;color:var(--text3);text-align:center;font-size:13px">データがありません。</div>'; return; }
+  var gm=[]; kwRows.forEach(function(r){ if(r.ym && gm.indexOf(r.ym)<0) gm.push(r.ym); }); gm.sort();
+  var months=gm.slice(-4);
+  var gl=''; kwRows.forEach(function(r){ if(r.date && r.date>gl) gl=r.date; });
+  var latestYm=gl?(gl.slice(0,4)+gl.slice(5,7)):''; var latestDay=gl?(+gl.slice(8,10)):0;
+  function dnm(m){ return (m===latestYm&&latestDay>0)?latestDay:new Date(+m.slice(0,4),+m.slice(4,6),0).getDate(); }
+  function cval(key,mm,m){ if(!mm) return '-';
+    if(key==='sp') return (mm.sp!=null)?'¥'+Math.round(mm.sp).toLocaleString():'-';
+    if(key==='spday'){ if(mm.sp==null) return '-'; var d=dnm(m); return d>0?'¥'+Math.round(mm.sp/d).toLocaleString():'-'; }
+    if(key==='sa') return (mm.sa!=null)?'¥'+Math.round(mm.sa).toLocaleString():'-';
+    if(key==='saday'){ if(mm.sa==null) return '-'; var d2=dnm(m); return d2>0?'¥'+Math.round(mm.sa/d2).toLocaleString():'-'; }
+    if(key==='cvr') return (mm.cl>0&&mm.od!=null)?(mm.od/mm.cl*100).toFixed(2)+'%':'-';
+    if(key==='roas') return (mm.sp>0)?Math.round(mm.sa/mm.sp*100).toLocaleString()+'%':'-';
+    if(key==='cl') return (mm.cl!=null)?mm.cl.toLocaleString():'-';
+    if(key==='cpc') return (mm.cl>0)?'¥'+Math.round(mm.sp/mm.cl).toLocaleString():'-';
+    return '-';
+  }
+  function series(dm,key){ return months.map(function(m){ var mm=dm[m]; if(!mm) return null;
+    if(key==='spday'){ if(mm.sp==null) return null; var d=dnm(m); return d>0?Math.round(mm.sp/d):null; }
+    if(key==='saday'){ if(mm.sa==null) return null; var d2=dnm(m); return d2>0?Math.round(mm.sa/d2):null; }
+    if(key==='cpc') return mm.cl>0?Math.round(mm.sp/mm.cl):null;
+    if(key==='roas') return mm.sp>0?Math.round(mm.sa/mm.sp*100):null;
+    return null; }); }
+  var BD='1px solid var(--border)';
+  var TH='border:'+BD+';padding:6px 12px;font-size:12px;font-weight:700;text-align:center;background:var(--surface2);white-space:nowrap;color:var(--text)';
+  var MC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;font-weight:600;color:#333';
+  var VC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;color:#333';
+  var CC='border:'+BD+';vertical-align:middle;padding:8px;background:var(--surface);min-width:560px';
+  var COL={ sp:['#ffe0b2','#fff3e0'], spday:['#ffe0b2','#fff8e1'], sa:['#c8e6c9','#e8f5e9'], saday:['#dcedc8','#f1f8e9'], cvr:['#f8bbd0','#fce4ec'], roas:['#bbdefb','#e3f2fd'], cl:['#d1c4e9','#ede7f6'], cpc:['#b2dfdb','#e0f2f1'] };
+  var metrics=[['実績額','sp'],['実績額/1日','spday'],['売上','sa'],['売上/1日','saday'],['CVR','cvr'],['ROAS','roas'],['月クリック合計','cl'],['平均クリック単価','cpc']];
+  var NM=metrics.length;
+  var jobs=[]; var gi=0;
+  var h='<div style="overflow-x:auto">';
+  codes.forEach(function(pc){
+    var dm={};
+    if(view==='all'){
+      months.forEach(function(m){ var a=(typeof getItemMonthAgg==='function')?getItemMonthAgg(pc,m.slice(0,4)+'-'+m.slice(4,6)):null; if(a) dm[m]={sp:a.spend||0,sa:a.totSales||0,od:a.totOrders||0,cl:a.clicks||0}; });
+    } else {
+      kwRows.forEach(function(r){ if(r.itemCode!==pc) return; if(months.indexOf(r.ym)<0) return; var mm=dm[r.ym]; if(!mm) mm=dm[r.ym]={sp:0,sa:0,od:0,cl:0}; mm.sp+=(+r.spend||0); mm.sa+=(+r.sales||0); mm.od+=(+r.orders||0); mm.cl+=(+r.cl||0); });
+    }
+    var hasData=false; for(var mk in dm){ hasData=true; break; }
+    if(!hasData) return;
+    var groupLabel=(view==='all')?'商品全体':'KW全体';
+    var img=(productCache[pc]&&(productCache[pc].manualImg||productCache[pc].img))||null;
+    var head='<div style="display:flex;align-items:center;gap:10px;padding:14px 2px 8px;'+(gi>0?'border-top:2px solid var(--border);margin-top:12px':'')+'">'+(img?'<img loading="lazy" src="'+img+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_kwIndivName(pc))+'</div><div style="font-size:11px;color:var(--text3);font-family:monospace">'+_kwEsc(pc)+'</div></div></div>';
+    var t='<table style="border-collapse:collapse"><thead><tr><th style="'+TH+'">'+groupLabel+'</th>';
+    months.forEach(function(m){ t+='<th style="'+TH+'">'+(+m.slice(4,6))+'月</th>'; });
+    t+='<th style="'+TH+'">推移グラフ</th></tr></thead><tbody>';
+    metrics.forEach(function(mt,mi){ var c=COL[mt[1]]||['#f0f0f0','#fafafa']; t+='<tr><td style="'+MC+';background:'+c[0]+'">'+mt[0]+'</td>';
+      months.forEach(function(m){ t+='<td style="'+VC+';background:'+c[1]+'">'+cval(mt[1],dm[m],m)+'</td>'; });
+      if(mi===0){ t+='<td rowspan="'+NM+'" style="'+CC+'"><div style="display:flex;flex-wrap:wrap;gap:10px;padding:2px;width:544px">'
+        +'<canvas id="kwwma_'+gi+'_spday" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'
+        +'<canvas id="kwwma_'+gi+'_saday" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'
+        +'<canvas id="kwwma_'+gi+'_cpc" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'
+        +'<canvas id="kwwma_'+gi+'_roas" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'
+        +'</div></td>'; }
+      t+='</tr>';
+    });
+    t+='</tbody></table>';
+    h+=head+t;
+    jobs.push({gi:gi,dm:dm}); gi++;
+  });
+  h+='<div style="padding:14px 2px;font-size:11px;color:var(--text3)">※ '+(view==='all'?'各商品の「商品全体」':'各商品の「KW全体（広告）」')+'を表示。最新月から過去4ヶ月分。個別商品はドロップダウンから選択。</div>';
+  h+='</div>';
+  body.innerHTML=h;
+  if(typeof Chart!=='undefined'){
+    var mkC=function(id,title,data,color,suf){ var cv=document.getElementById(id); if(!cv) return; try{ var ch=new Chart(cv,{type:'line',data:{labels:months.map(function(m){return (+m.slice(4,6))+'月';}),datasets:[{label:title,data:data,borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:0.25,spanGaps:true,fill:true}]},options:{animation:false,responsive:false,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:title,font:{size:11,weight:'700'}},tooltip:{callbacks:{label:function(c){return (c.parsed.y!=null)?(c.parsed.y.toLocaleString()+suf):'-';}}}},scales:{y:{beginAtZero:true,ticks:{font:{size:9},callback:function(v){return v.toLocaleString()+suf;}}},x:{grid:{display:false},ticks:{font:{size:9}}}}}}); _kwwmCharts.push(ch); }catch(e){} };
+    jobs.forEach(function(job){
+      mkC('kwwma_'+job.gi+'_spday','実績額/1日',series(job.dm,'spday'),'#f59e0b','円');
+      mkC('kwwma_'+job.gi+'_saday','売上/1日',series(job.dm,'saday'),'#43a047','円');
+      mkC('kwwma_'+job.gi+'_cpc','平均クリック単価',series(job.dm,'cpc'),'#00897b','円');
+      mkC('kwwma_'+job.gi+'_roas','ROAS',series(job.dm,'roas'),'#1e88e5','%');
+    });
+  }
+}
 function _renderKwWatchMonthlyTable(){
   var body=document.getElementById('kwWatchMonthlyBody'); if(!body) return;
   _kwwmCharts.forEach(function(c){try{c.destroy();}catch(e){}}); _kwwmCharts=[];
   try{_kwwmSetViewBtns();}catch(e){}
   var code=_kwWatchMonthlyCode;
+  if(code==='__ALL__'){ _kwwmRenderAll(body); return; }
   if(!code){ body.innerHTML='<div style="padding:30px;color:var(--text3);text-align:center;font-size:13px">\u4e0a\u306e\u30c9\u30ed\u30c3\u30d7\u30c0\u30a6\u30f3\u304b\u3089\u5546\u54c1\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002</div>'; return; }
   var rows=kwRows.filter(function(r){ return r.itemCode===code; });
   if(!rows.length){ body.innerHTML='<div style="padding:30px;color:var(--text3);text-align:center;font-size:13px">\u3053\u306e\u5546\u54c1\u306eKW\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093\u3002</div>'; return; }
