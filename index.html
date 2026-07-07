@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1153</span>
+    <span class="build-date">v1.1154</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7925,7 +7925,7 @@ function _kwwmRenderAll(body){
     if(key==='seo') return (mm.seo!=null)?'¥'+Math.round(mm.seo).toLocaleString():'-';
     if(key==='seoday'){ if(mm.seo==null) return '-'; var dsd=dnm(m); return dsd>0?'¥'+Math.round(mm.seo/dsd).toLocaleString():'-'; }
     if(key==='cvrKW') return (mm.kwcl>0&&mm.kwod!=null)?(mm.kwod/mm.kwcl*100).toFixed(2)+'%':'-';
-    if(key==='cvr20'){ var _c20=(mm.cl!=null&&mm.kwcl!=null)?(mm.cl-mm.kwcl):null; var _o20=(mm.od!=null&&mm.kwod!=null)?Math.max(0,mm.od-mm.kwod):null; return (_c20>0&&_o20!=null)?(_o20/_c20*100).toFixed(2)+'%':'-'; }
+    if(key==='cvr20'){ var _c20=(mm.cl!=null&&mm.kwcl!=null)?(mm.cl-mm.kwcl):null; var _adO=(mm.sa>0&&mm.od!=null)?mm.od*((mm.kwsa||0)+(mm.sa20||0))/mm.sa:null; var _o20=(_adO!=null&&mm.kwod!=null)?Math.max(0,_adO-mm.kwod):null; return (_c20>0&&_o20!=null)?(_o20/_c20*100).toFixed(2)+'%':'-'; }
     if(key==='roasAll') return (mm.sp>0)?Math.round(((mm.kwsa||0)+(mm.sa20||0))/mm.sp*100).toLocaleString()+'%':'-';
     if(key==='roasKW') return (mm.kwsp>0)?Math.round(mm.kwsa/mm.kwsp*100).toLocaleString()+'%':'-';
     if(key==='roas20') return (mm.sp20>0)?Math.round(mm.sa20/mm.sp20*100).toLocaleString()+'%':'-';
@@ -8066,7 +8066,7 @@ function _renderKwWatchMonthlyTable(){
     if(key==='seo') return (mm.seo!=null)?'¥'+Math.round(mm.seo).toLocaleString():'-';
     if(key==='seoday'){ if(mm.seo==null) return '-'; var dsd=dnm(m); return dsd>0?'¥'+Math.round(mm.seo/dsd).toLocaleString():'-'; }
     if(key==='cvrKW') return (mm.kwcl>0&&mm.kwod!=null)?(mm.kwod/mm.kwcl*100).toFixed(2)+'%':'-';
-    if(key==='cvr20'){ var _c20=(mm.cl!=null&&mm.kwcl!=null)?(mm.cl-mm.kwcl):null; var _o20=(mm.od!=null&&mm.kwod!=null)?Math.max(0,mm.od-mm.kwod):null; return (_c20>0&&_o20!=null)?(_o20/_c20*100).toFixed(2)+'%':'-'; }
+    if(key==='cvr20'){ var _c20=(mm.cl!=null&&mm.kwcl!=null)?(mm.cl-mm.kwcl):null; var _adO=(mm.sa>0&&mm.od!=null)?mm.od*((mm.kwsa||0)+(mm.sa20||0))/mm.sa:null; var _o20=(_adO!=null&&mm.kwod!=null)?Math.max(0,_adO-mm.kwod):null; return (_c20>0&&_o20!=null)?(_o20/_c20*100).toFixed(2)+'%':'-'; }
     if(key==='roasKW') return (mm.kwsp>0)?Math.round(mm.kwsa/mm.kwsp*100).toLocaleString()+'%':'-';
     if(key==='roas20') return (mm.sp20>0)?Math.round(mm.sa20/mm.sp20*100).toLocaleString()+'%':'-';
     if(key==='roasSEO') return (mm.sp>0&&mm.seo!=null)?Math.round(mm.seo/mm.sp*100).toLocaleString()+'%':'-';
@@ -8143,7 +8143,7 @@ function _renderKwWatchMonthlyTable(){
   var _y20Mets=[['実績額','sp'],['実績額/1日','spday'],['売上','sa'],['売上/1日','saday'],['CVR','cvr'],['ROAS','roas'],['クリック数','cl'],['クリック数-KW','clkw'],['クリック数-20','cl20'],['クリック数/1日','clday'],['クリック数-KW/1日','clkwday'],['クリック数-20/1日','cl20day'],['平均クリック単価','cpc']];
   if(_kwwmView==='all'){
     var _prod={},_seo={},_y20={},_ad={};
-    months.forEach(function(m){ var a=(typeof getItemMonthAgg==='function')?getItemMonthAgg(code, m.slice(0,4)+'-'+m.slice(4,6)):null; if(!a) return; _prod[m]={sp:a.spend||0,sa:a.totSales||0,od:a.totOrders||0,cl:a.clicks||0}; _seo[m]={sp:null,sa:Math.max(0,(a.totSales||0)-(a.rppSales||0)),od:null,cl:null}; var s20=(a.spend||0)-(a.kwSpend||0),sa20=(a.sales720||0)-(a.kwSales||0); _y20[m]={sp:s20,sa:sa20,od:Math.max(0,(a.totOrders||0)-((totM[m]&&totM[m].od)||0)),cl:Math.max(0,(a.clicks||0)-((totM[m]&&totM[m].cl)||0))}; var tm=totM[m]||{}; _ad[m]={sp:(tm.sp||0)+s20,sa:(tm.sa||0)+sa20,od:(tm.od||0)+((_y20[m]&&_y20[m].od)||0),cl:(tm.cl||0)+((_y20[m]&&_y20[m].cl)||0)}; _prod[m].kwsp=(tm.sp||0); _prod[m].kwsa=(tm.sa||0); _prod[m].kwod=(tm.od!=null?tm.od:0); _prod[m].kwcl=(tm.cl!=null?tm.cl:0); _prod[m].sp20=s20; _prod[m].sa20=sa20; _prod[m].seo=(_seo[m]&&_seo[m].sa)||0; });
+    months.forEach(function(m){ var a=(typeof getItemMonthAgg==='function')?getItemMonthAgg(code, m.slice(0,4)+'-'+m.slice(4,6)):null; if(!a) return; _prod[m]={sp:a.spend||0,sa:a.totSales||0,od:a.totOrders||0,cl:a.clicks||0}; _seo[m]={sp:null,sa:Math.max(0,(a.totSales||0)-(a.rppSales||0)),od:null,cl:null}; var s20=(a.spend||0)-(a.kwSpend||0),sa20=(a.sales720||0)-(a.kwSales||0); _y20[m]={sp:s20,sa:sa20,od:Math.max(0,(a.totSales>0?(a.totOrders||0)*(a.rppSales||0)/a.totSales:0)-((totM[m]&&totM[m].od)||0)),cl:Math.max(0,(a.clicks||0)-((totM[m]&&totM[m].cl)||0))}; var tm=totM[m]||{}; _ad[m]={sp:(tm.sp||0)+s20,sa:(tm.sa||0)+sa20,od:(tm.od||0)+((_y20[m]&&_y20[m].od)||0),cl:(tm.cl||0)+((_y20[m]&&_y20[m].cl)||0)}; _prod[m].kwsp=(tm.sp||0); _prod[m].kwsa=(tm.sa||0); _prod[m].kwod=(tm.od!=null?tm.od:0); _prod[m].kwcl=(tm.cl!=null?tm.cl:0); _prod[m].sp20=s20; _prod[m].sa20=sa20; _prod[m].seo=(_seo[m]&&_seo[m].sa)||0; });
     var BL='#1d4ed8', BLB='#eef4ff', GR='#15803d', GRB='#eafaf0', L20='20円/KW比率', LSEO='SEO/広告比率';
     function rr(fn){ return months.map(fn); }
     var r20=rr(function(m){ var d=(_ad[m]&&_ad[m].sp)||0,n=(_y20[m]&&_y20[m].sp)||0; return d>0?n/d*100:null; });
@@ -8160,7 +8160,7 @@ function _renderKwWatchMonthlyTable(){
     _exKW=_kwwmRatio(rKW, L20, BL, BLB);
   } else {
     var _y20b={};
-    months.forEach(function(m){ var ab=(typeof getItemMonthAgg==='function')?getItemMonthAgg(code, m.slice(0,4)+'-'+m.slice(4,6)):null; if(!ab) return; var s20b=(ab.spend||0)-(ab.kwSpend||0),sa20b=(ab.sales720||0)-(ab.kwSales||0); _y20b[m]={sp:s20b,sa:sa20b,od:Math.max(0,(ab.totOrders||0)-((totM[m]&&totM[m].od)||0)),cl:Math.max(0,(ab.clicks||0)-((totM[m]&&totM[m].cl)||0))}; });
+    months.forEach(function(m){ var ab=(typeof getItemMonthAgg==='function')?getItemMonthAgg(code, m.slice(0,4)+'-'+m.slice(4,6)):null; if(!ab) return; var s20b=(ab.spend||0)-(ab.kwSpend||0),sa20b=(ab.sales720||0)-(ab.kwSales||0); _y20b[m]={sp:s20b,sa:sa20b,od:Math.max(0,(ab.totSales>0?(ab.totOrders||0)*(ab.rppSales||0)/ab.totSales:0)-((totM[m]&&totM[m].od)||0)),cl:Math.max(0,(ab.clicks||0)-((totM[m]&&totM[m].cl)||0))}; });
     var _adSpB={}; months.forEach(function(m){ _adSpB[m]=((_y20b[m]&&_y20b[m].sp)||0)+((totM[m]&&totM[m].sp)||0); });
     var _r20b=months.map(function(m){ var dd=_adSpB[m]||0,nn=(_y20b[m]&&_y20b[m].sp)||0; return dd>0?nn/dd*100:null; });
     var _rKWb=months.map(function(m){ var dd=_adSpB[m]||0,nn=(totM[m]&&totM[m].sp)||0; return dd>0?nn/dd*100:null; });
