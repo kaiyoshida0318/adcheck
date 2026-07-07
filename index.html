@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1121</span>
+    <span class="build-date">v1.1123</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7939,6 +7939,7 @@ function _kwwmRenderAll(body){
   function series(dm,key){ return months.map(function(m){ var mm=dm[m]; if(!mm) return null;
     if(key==='spday'){ if(mm.sp==null) return null; var d=dnm(m); return d>0?Math.round(mm.sp/d):null; }
     if(key==='saday'){ if(mm.sa==null) return null; var d2=dnm(m); return d2>0?Math.round(mm.sa/d2):null; }
+    if(key==='seoday'){ if(mm.seo==null) return null; var dsd=dnm(m); return dsd>0?Math.round(mm.seo/dsd):null; }
     if(key==='cpc') return mm.cl>0?Math.round(mm.sp/mm.cl):null;
     if(key==='roas') return mm.sp>0?Math.round(mm.sa/mm.sp*100):null;
     if(key==='roasAll') return mm.sp>0?Math.round(((mm.kwsa||0)+(mm.sa20||0))/mm.sp*100):null;
@@ -7957,7 +7958,7 @@ function _kwwmRenderAll(body){
   var METS=(view==='all')?_prodMetsAll:metrics;
   var NM=METS.length;
   var jobs=[]; var gi=0;
-  var CHARTS=(view==='all')?[['spday','実績額/1日','#f59e0b','円'],['saday','売上/1日','#43a047','円'],['cpc','平均クリック単価','#00897b','円'],['cvrKW','CVR/KW','#ec407a','%'],['roas','売上ROAS','#1e88e5','%'],['roasAll','ROAS/全体','#5c6bc0','%']]:[['spday','実績額/1日','#f59e0b','円'],['saday','売上/1日','#43a047','円'],['cpc','平均クリック単価','#00897b','円'],['roas','ROAS','#1e88e5','%']];
+  var CHARTS=(view==='all')?[['spday','実績額/1日','#f59e0b','円'],['saday','売上/1日','#43a047','円'],['seoday','SEO売上/1日','#2e7d32','円'],['cvrKW','CVR/KW','#ec407a','%'],['roas','売上ROAS','#1e88e5','%'],['roasAll','ROAS/全体','#5c6bc0','%'],['cpc','平均クリック単価','#00897b','円']]:[['spday','実績額/1日','#f59e0b','円'],['saday','売上/1日','#43a047','円'],['cpc','平均クリック単価','#00897b','円'],['roas','ROAS','#1e88e5','%']];
   var _ccm2={}; CHARTS.forEach(function(cf){ _ccm2[cf[0]]=cf[2]; });
   var h='<div style="overflow-x:auto">';
   var _kwAgg={}; kwRows.forEach(function(r){ if(months.indexOf(r.ym)<0) return; if(!_kwAgg[r.itemCode]) _kwAgg[r.itemCode]={}; var _m=_kwAgg[r.itemCode][r.ym]; if(!_m) _m=_kwAgg[r.itemCode][r.ym]={sp:0,sa:0,od:0,cl:0}; _m.sp+=(+r.spend||0); _m.sa+=(+r.sales||0); _m.od+=(+r.orders||0); _m.cl+=(+r.cl||0); });
@@ -7983,7 +7984,7 @@ function _kwwmRenderAll(body){
     t+='<th style="'+TH+'">推移グラフ</th></tr></thead><tbody>';
     METS.forEach(function(mt,mi){ var c=COL[mt[1]]||['#f0f0f0','#fafafa']; var _bc2=_ccm2[mt[1]]; var _db2=_bc2?(';border-top:2px dotted '+_bc2+';border-bottom:2px dotted '+_bc2):''; t+='<tr>'+(mi===0?_kwCell:'')+'<td style="'+MC+';background:'+c[0]+_db2+(_bc2?';border-left:2px dotted '+_bc2:'')+'">'+mt[0]+'</td>';
       months.forEach(function(m,_mx){ t+='<td style="'+VC+';background:'+c[1]+_db2+((_bc2&&_mx===months.length-1)?';border-right:2px dotted '+_bc2:'')+'">'+cval(mt[1],dm[m],m)+'</td>'; });
-      if(mi===0){ t+='<td rowspan="'+NM+'" style="'+CC+'"><div style="display:flex;flex-wrap:wrap;gap:10px;padding:2px;width:544px">'+CHARTS.map(function(cf){ return '<canvas id="kwwma_'+gi+'_'+cf[0]+'" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'; }).join('')+'</div></td>'; }
+      if(mi===0){ t+='<td rowspan="'+NM+'" style="'+CC+'"><div style="display:flex;flex-wrap:wrap;gap:10px;padding:2px;width:'+(CHARTS.length>4?816:544)+'px">'+CHARTS.map(function(cf){ return '<canvas id="kwwma_'+gi+'_'+cf[0]+'" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'; }).join('')+'</div></td>'; }
       t+='</tr>';
     });
     t+='</tbody></table>';
@@ -8055,6 +8056,7 @@ function _renderKwWatchMonthlyTable(){
   function series(dm,key){ return months.map(function(m){ var mm=dm[m]; if(!mm) return null;
     if(key==='spday'){ var d=dnm(m); return d>0?Math.round(mm.sp/d):null; }
     if(key==='saday'){ var d2=dnm(m); return d2>0?Math.round(mm.sa/d2):null; }
+    if(key==='seoday'){ if(mm.seo==null) return null; var dsd=dnm(m); return dsd>0?Math.round(mm.seo/dsd):null; }
     if(key==='cpc') return mm.cl>0?Math.round(mm.sp/mm.cl):null;
     if(key==='roas') return mm.sp>0?Math.round(mm.sa/mm.sp*100):null;
     if(key==='roasAll') return mm.sp>0?Math.round(((mm.kwsa||0)+(mm.sa20||0))/mm.sp*100):null;
@@ -8064,13 +8066,13 @@ function _renderKwWatchMonthlyTable(){
   var chartJobs=[];
   function _kwwmRatio(vals,label,fg,bg){ var o='<div style="margin-top:8px"><div style="font-size:9px;color:var(--text3);margin-bottom:3px">'+label+'</div><div style="display:flex;gap:3px">'; months.forEach(function(m,ix){ var v=vals[ix]; o+='<div style="flex:1;min-width:34px;text-align:center;background:'+bg+';border:1px solid '+fg+';border-radius:4px;padding:2px 1px"><div style="font-size:8px;color:var(--text3)">'+(+m.slice(4,6))+'月</div><div style="font-size:10px;font-weight:700;color:'+fg+'">'+(v!=null?Math.round(v)+'%':'-')+'</div></div>'; }); o+='</div></div>'; return o; }
   var _defCharts=[['spday','実績額/1日','#f59e0b','円'],['saday','売上/1日','#43a047','円'],['cpc','平均クリック単価','#00897b','円'],['roas','ROAS','#1e88e5','%']];
-  var _prodCharts=[['spday','実績額/1日','#f59e0b','円'],['saday','売上/1日','#43a047','円'],['cpc','平均クリック単価','#00897b','円'],['cvrKW','CVR/KW','#ec407a','%'],['roas','売上ROAS','#1e88e5','%'],['roasAll','ROAS/全体','#5c6bc0','%']];
+  var _prodCharts=[['spday','実績額/1日','#f59e0b','円'],['saday','売上/1日','#43a047','円'],['seoday','SEO売上/1日','#2e7d32','円'],['cvrKW','CVR/KW','#ec407a','%'],['roas','売上ROAS','#1e88e5','%'],['roasAll','ROAS/全体','#5c6bc0','%'],['cpc','平均クリック単価','#00897b','円']];
   function grp(label,dm,isTot,gi,showShare,extras,mets,charts){ mets=mets||metrics; var nm=mets.length; charts=charts||_defCharts; var _ccm={}; charts.forEach(function(cf){ _ccm[cf[0]]=cf[2]; });
     var sh='<div style="margin-top:10px"><div style="font-size:9px;color:var(--text3);margin-bottom:3px">\u5b9f\u7e3e\u984d \u5360\u6709\u7387</div><div style="display:flex;gap:3px">';
     months.forEach(function(m){ var gsp=(dm[m]&&dm[m].sp)||0; var psp=(totM[m]&&totM[m].sp)||0; var pct=(psp>0)?(gsp/psp*100):null; sh+='<div style="flex:1;min-width:36px;text-align:center;background:#fff3e0;border:1px solid var(--border);border-radius:4px;padding:2px 1px"><div style="font-size:8px;color:var(--text3)">'+(+m.slice(4,6))+'\u6708</div><div style="font-size:10px;font-weight:700;color:#b45309">'+(pct!=null?Math.round(pct)+'%':'-')+'</div></div>'; });
     sh+='</div></div>';
     chartJobs.push({gi:gi,dm:dm,charts:charts});
-    var chartCell='<td rowspan="'+nm+'" style="'+CC+';border-top:'+GRP+'"><div style="display:flex;flex-wrap:wrap;gap:10px;padding:2px;width:544px">'+charts.map(function(cf){ return '<canvas id="kwwm_'+gi+'_'+cf[0]+'" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'; }).join('')+'</div></td>';
+    var chartCell='<td rowspan="'+nm+'" style="'+CC+';border-top:'+GRP+'"><div style="display:flex;flex-wrap:wrap;gap:10px;padding:2px;width:'+(charts.length>4?816:544)+'px">'+charts.map(function(cf){ return '<canvas id="kwwm_'+gi+'_'+cf[0]+'" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'; }).join('')+'</div></td>';
     var out='';
     mets.forEach(function(mt,mi){ var topB=(mi===0)?(';border-top:'+GRP):''; var c=COL[mt[1]]||['#f0f0f0','#fafafa']; out+='<tr>';
       if(mi===0){ out+='<td rowspan="'+nm+'" style="'+KWC+';border-top:'+GRP+';border-left:'+GRP+'"><div style="display:flex;flex-direction:column;height:100%;min-height:250px;padding:8px 10px;box-sizing:border-box"><div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center"><span style="font-weight:'+(isTot?'800':'600')+';font-size:12px;line-height:1.3;word-break:break-word" title="'+_kwEsc(label)+'">'+_kwEsc(label)+'</span></div>'+(extras||'')+(showShare?sh:'')+'</div></td>'; }
