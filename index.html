@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1155</span>
+    <span class="build-date">v1.1156</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2161,6 +2161,16 @@ function _initShopsIfNeeded() {
     _setCurrentShopId('yukaiya');
     console.log('[ADcheck] 初回マイグレーション: yukaiyaショップを作成');
   }
+  // 安全策: 現在ショップIDが shops 一覧に無ければ、現在の設定で復元して一覧に出す
+  try {
+    var _cid = _getCurrentShopId();
+    var _sh = _getShops();
+    if (_cid && !_sh.find(function(x){ return x.id === _cid; })) {
+      _sh.push({ id: _cid, name: _cid, shopCode: localStorage.getItem('rakuten_shop_code')||'', appId: localStorage.getItem('rakuten_app_id')||'', accessKey: localStorage.getItem('rakuten_access_key')||'' });
+      _saveShops(_sh);
+      console.log('[ADcheck] restored current shop to list: '+_cid);
+    }
+  } catch(e) { console.warn('[ADcheck] shop restore error', e); }
 }
 _initShopsIfNeeded();
 
