@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1142</span>
+    <span class="build-date">v1.1143</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7968,7 +7968,7 @@ function _kwwmRenderAll(body){
   var CC='border:'+BD+';vertical-align:middle;padding:8px;background:var(--surface);min-width:560px';
   var COL={ sp:['#ffe0b2','#fff3e0'], spday:['#ffe0b2','#fff8e1'], sa:['#a5d6a7','#d7ecd9'], saday:['#a5d6a7','#d7ecd9'], cvr:['#f8bbd0','#fce4ec'], roas:['#bbdefb','#e3f2fd'], cl:['#d1c4e9','#ede7f6'], clday:['#d1c4e9','#ede7f6'], cpc:['#b2dfdb','#e0f2f1'], kwcpc:['#ffe8cc','#fff8e1'], cpc20:['#ffe8cc','#fff8e1'], kwsp:['#ffe0b2','#fff3e0'], sp20:['#ffe0b2','#fff8e1'], kwsa:['#dcedc8','#f1f8e9'], sa20:['#dcedc8','#f1f8e9'], seo:['#a5d6a7','#d7ecd9'], seoday:['#a5d6a7','#d7ecd9'], cvrKW:['#f8bbd0','#fce4ec'], cvr20:['#f8bbd0','#fce4ec'], roasKW:['#bbdefb','#e3f2fd'], roas20:['#bbdefb','#e3f2fd'], roasAll:['#bbdefb','#e3f2fd'], kwspday:['#ffe0b2','#fff3e0'], sp20day:['#ffe0b2','#fff8e1'], adsa:['#a5d6a7','#d7ecd9'], adsaday:['#a5d6a7','#d7ecd9'] };
   var metrics=[['実績額','sp'],['実績額/1日','spday'],['売上','sa'],['売上/1日','saday'],['CVR','cvr'],['ROAS','roas'],['月クリック合計','cl'],['平均クリック単価','cpc']];
-  var _prodMetsAll=[['売上','sa'],['SEO売上','seo'],['広告売上','adsa'],['売上/1日','saday'],['SEO売上/1日','seoday'],['広告売上/1日','adsaday'],['KW売上','kwsa'],['20円売上','sa20'],['実績額','sp'],['KW実績','kwsp'],['20円実績','sp20'],['実績額/1日','spday'],['KW実績/1日','kwspday'],['20円実績/1日','sp20day'],['KW単価','kwcpc'],['20円単価','cpc20'],['CVR/KW','cvrKW'],['CVR/20','cvr20'],['売上ROAS','roas'],['ROAS/全体','roasAll'],['ROAS/KW','roasKW'],['ROAS/20','roas20'],['月クリック合計','cl'],['平均クリック単価','cpc']];
+  var _prodMetsAll=[['売上','sa'],['SEO売上','seo'],['広告売上','adsa'],['売上/1日','saday'],['SEO売上/1日','seoday'],['広告売上/1日','adsaday'],['KW売上','kwsa'],['20円売上','sa20'],['実績額','sp'],['KW実績','kwsp'],['20円実績','sp20'],['実績額/1日','spday'],['KW実績/1日','kwspday'],['20円実績/1日','sp20day'],['KW単価','kwcpc'],['20円単価','cpc20'],['売上ROAS','roas'],['ROAS/全体','roasAll'],['ROAS/KW','roasKW'],['ROAS/20','roas20'],['CVR/KW','cvrKW'],['CVR/20','cvr20'],['月クリック合計','cl'],['平均クリック単価','cpc']];
   var METS=(view==='all')?_prodMetsAll:metrics;
   var NM=METS.length;
   var jobs=[]; var gi=0;
@@ -8136,7 +8136,7 @@ function _renderKwWatchMonthlyTable(){
     var sSEO=rr(function(m){ var d=(_prod[m]&&_prod[m].sa)||0,n=(_seo[m]&&_seo[m].sa)||0; return d>0?n/d*100:null; });
     var sAD=rr(function(m){ var d=(_prod[m]&&_prod[m].sa)||0,n=(_ad[m]&&_ad[m].sa)||0; return d>0?n/d*100:null; });
     var s100prod=rr(function(m){ return (_prod[m]&&_prod[m].sa>0)?100:null; });
-    var _prodMets=[['売上','sa'],['SEO売上','seo'],['広告売上','adsa'],['売上/1日','saday'],['SEO売上/1日','seoday'],['広告売上/1日','adsaday'],['KW売上','kwsa'],['20円売上','sa20'],['実績額','sp'],['KW実績','kwsp'],['20円実績','sp20'],['実績額/1日','spday'],['KW実績/1日','kwspday'],['20円実績/1日','sp20day'],['KW単価','kwcpc'],['20円単価','cpc20'],['CVR/KW','cvrKW'],['CVR/20','cvr20'],['売上ROAS','roas'],['ROAS/全体','roasAll'],['ROAS/KW','roasKW'],['ROAS/20','roas20'],['月クリック合計','cl'],['平均クリック単価','cpc']];
+    var _prodMets=[['売上','sa'],['SEO売上','seo'],['広告売上','adsa'],['売上/1日','saday'],['SEO売上/1日','seoday'],['広告売上/1日','adsaday'],['KW売上','kwsa'],['20円売上','sa20'],['実績額','sp'],['KW実績','kwsp'],['20円実績','sp20'],['実績額/1日','spday'],['KW実績/1日','kwspday'],['20円実績/1日','sp20day'],['KW単価','kwcpc'],['20円単価','cpc20'],['売上ROAS','roas'],['ROAS/全体','roasAll'],['ROAS/KW','roasKW'],['ROAS/20','roas20'],['CVR/KW','cvrKW'],['CVR/20','cvr20'],['月クリック合計','cl'],['平均クリック単価','cpc']];
     h+=grp('商品全体', _prod, true, _gi++, false, _kwwmRatio(s100prod, LSEO, GR, GRB), _prodMets, _prodCharts);
     h+=grp('SEO全体', _seo, true, _gi++, false, _kwwmRatio(sSEO, LSEO, GR, GRB));
     h+=grp('広告全体', _ad, true, _gi++, false, _kwwmRatio(sAD, LSEO, GR, GRB)+_kwwmRatio(r100ad, L20, BL, BLB));
