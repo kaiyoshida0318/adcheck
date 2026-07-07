@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1107</span>
+    <span class="build-date">v1.1108</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8033,7 +8033,8 @@ function _renderKwWatchMonthlyTable(){
     return null; }); }
   var lbls=months.map(function(m){ return (+m.slice(4,6))+'\u6708'; });
   var chartJobs=[];
-  function grp(label,dm,isTot,gi,showShare){
+  function _kwwmRatio(vals,label,fg,bg){ var o='<div style="margin-top:8px"><div style="font-size:9px;color:var(--text3);margin-bottom:3px">'+label+'</div><div style="display:flex;gap:3px">'; months.forEach(function(m,ix){ var v=vals[ix]; o+='<div style="flex:1;min-width:34px;text-align:center;background:'+bg+';border:1px solid '+fg+';border-radius:4px;padding:2px 1px"><div style="font-size:8px;color:var(--text3)">'+(+m.slice(4,6))+'月</div><div style="font-size:10px;font-weight:700;color:'+fg+'">'+(v!=null?Math.round(v)+'%':'-')+'</div></div>'; }); o+='</div></div>'; return o; }
+  function grp(label,dm,isTot,gi,showShare,extras){
     var sh='<div style="margin-top:10px"><div style="font-size:9px;color:var(--text3);margin-bottom:3px">\u5b9f\u7e3e\u984d \u5360\u6709\u7387</div><div style="display:flex;gap:3px">';
     months.forEach(function(m){ var gsp=(dm[m]&&dm[m].sp)||0; var psp=(totM[m]&&totM[m].sp)||0; var pct=(psp>0)?(gsp/psp*100):null; sh+='<div style="flex:1;min-width:36px;text-align:center;background:#fff3e0;border:1px solid var(--border);border-radius:4px;padding:2px 1px"><div style="font-size:8px;color:var(--text3)">'+(+m.slice(4,6))+'\u6708</div><div style="font-size:10px;font-weight:700;color:#b45309">'+(pct!=null?Math.round(pct)+'%':'-')+'</div></div>'; });
     sh+='</div></div>';
@@ -8046,7 +8047,7 @@ function _renderKwWatchMonthlyTable(){
       +'</div></td>';
     var out='';
     metrics.forEach(function(mt,mi){ var topB=(mi===0)?(';border-top:'+GRP):''; var c=COL[mt[1]]||['#f0f0f0','#fafafa']; out+='<tr>';
-      if(mi===0){ out+='<td rowspan="'+NM+'" style="'+KWC+';border-top:'+GRP+';border-left:'+GRP+'"><div style="display:flex;flex-direction:column;height:100%;min-height:250px;padding:8px 10px;box-sizing:border-box"><div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center"><span style="font-weight:'+(isTot?'800':'600')+';font-size:12px;line-height:1.3;word-break:break-word" title="'+_kwEsc(label)+'">'+_kwEsc(label)+'</span></div>'+(showShare?sh:'')+'</div></td>'; }
+      if(mi===0){ out+='<td rowspan="'+NM+'" style="'+KWC+';border-top:'+GRP+';border-left:'+GRP+'"><div style="display:flex;flex-direction:column;height:100%;min-height:250px;padding:8px 10px;box-sizing:border-box"><div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center"><span style="font-weight:'+(isTot?'800':'600')+';font-size:12px;line-height:1.3;word-break:break-word" title="'+_kwEsc(label)+'">'+_kwEsc(label)+'</span></div>'+(extras||'')+(showShare?sh:'')+'</div></td>'; }
       out+='<td style="'+MC+topB+';background:'+c[0]+'">'+mt[0]+'</td>';
       months.forEach(function(m){ out+='<td style="'+VC+topB+';background:'+c[1]+'">'+cval(mt[1],dm[m],m)+'</td>'; });
       if(mi===0){ out+=chartCell; }
@@ -8060,17 +8061,26 @@ function _renderKwWatchMonthlyTable(){
   months.forEach(function(m){ h+='<th style="'+TH+'">'+(+m.slice(4,6))+'\u6708</th>'; });
   h+='<th style="'+TH+'">\u63a8\u79fb\u30b0\u30e9\u30d5\uff08\u5b9f\u7e3e\u984d/1\u65e5\u30fb\u58f2\u4e0a/1\u65e5\u30fb\u5e73\u5747\u30af\u30ea\u30c3\u30af\u5358\u4fa1\u30fbROAS\uff09</th>';
   h+='</tr></thead><tbody>';
-  var _gi=0;
+  var _gi=0; var _exKW='';
   if(_kwwmView==='all'){
     var _prod={},_seo={},_y20={},_ad={};
     months.forEach(function(m){ var a=(typeof getItemMonthAgg==='function')?getItemMonthAgg(code, m.slice(0,4)+'-'+m.slice(4,6)):null; if(!a) return; _prod[m]={sp:a.spend||0,sa:a.totSales||0,od:a.totOrders||0,cl:a.clicks||0}; _seo[m]={sp:null,sa:Math.max(0,(a.totSales||0)-(a.rppSales||0)),od:null,cl:null}; var s20=(a.spend||0)-(a.kwSpend||0),sa20=(a.sales720||0)-(a.kwSales||0); _y20[m]={sp:s20,sa:sa20,od:null,cl:null}; var tm=totM[m]||{}; _ad[m]={sp:(tm.sp||0)+s20,sa:(tm.sa||0)+sa20,od:(tm.od!=null?tm.od:0),cl:(tm.cl!=null?tm.cl:0)}; });
-    h+=grp('商品全体', _prod, true, _gi++, false);
-    h+=grp('SEO全体', _seo, true, _gi++, false);
-    h+=grp('広告全体', _ad, true, _gi++, false);
-    h+=grp('20円全体', _y20, true, _gi++, false);
+    var BL='#1d4ed8', BLB='#eef4ff', GR='#15803d', GRB='#eafaf0', L20='20円/KW比率', LSEO='SEO/広告比率';
+    function rr(fn){ return months.map(fn); }
+    var r20=rr(function(m){ var d=(_ad[m]&&_ad[m].sp)||0,n=(_y20[m]&&_y20[m].sp)||0; return d>0?n/d*100:null; });
+    var rKW=rr(function(m){ var d=(_ad[m]&&_ad[m].sp)||0,n=(totM[m]&&totM[m].sp)||0; return d>0?n/d*100:null; });
+    var r100ad=rr(function(m){ return (_ad[m]&&_ad[m].sp>0)?100:null; });
+    var sSEO=rr(function(m){ var d=(_prod[m]&&_prod[m].sa)||0,n=(_seo[m]&&_seo[m].sa)||0; return d>0?n/d*100:null; });
+    var sAD=rr(function(m){ var d=(_prod[m]&&_prod[m].sa)||0,n=(_ad[m]&&_ad[m].sa)||0; return d>0?n/d*100:null; });
+    var s100prod=rr(function(m){ return (_prod[m]&&_prod[m].sa>0)?100:null; });
+    h+=grp('商品全体', _prod, true, _gi++, false, _kwwmRatio(s100prod, LSEO, GR, GRB));
+    h+=grp('SEO全体', _seo, true, _gi++, false, _kwwmRatio(sSEO, LSEO, GR, GRB));
+    h+=grp('広告全体', _ad, true, _gi++, false, _kwwmRatio(sAD, LSEO, GR, GRB)+_kwwmRatio(r100ad, L20, BL, BLB));
+    h+=grp('20円全体', _y20, true, _gi++, false, _kwwmRatio(r20, L20, BL, BLB));
+    _exKW=_kwwmRatio(rKW, L20, BL, BLB);
   }
-  h+=grp('KW全体', totM, true, _gi++, true);
-  kws.forEach(function(kw){ h+=grp(kw, byKw[kw].m, false, _gi++, true); });
+  h+=grp('KW全体', totM, true, _gi++, true, _exKW);
+  kws.forEach(function(kw){ h+=grp(kw, byKw[kw].m, false, _gi++, true, ''); });
   h+='</tbody></table>';
   h+='<div style="padding:10px 2px;font-size:11px;color:var(--text3)">\u203b \u53f3\u306e\u30b0\u30e9\u30d5\u306f\u5404KW\u306e\u63a8\u79fb\u3002\u6700\u65b0\u6708\u304b\u3089\u904e\u53bb4\u30f6\u6708\u5206\u3002\u5b9f\u7e3e\u984d \u5360\u6709\u7387\uff1d\u5404KW\u00f7KW\u5168\u4f53\u3002/1\u65e5\uff1d\u00f7\u65e5\u6570\uff08\u904e\u53bb\u6708\uff1a\u66a6\u65e5\u3001\u6700\u65b0\u6708\uff1a\u7d4c\u904e\u65e5\uff09\u3002</div>';
   h+='</div>';
