@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1116</span>
+    <span class="build-date">v1.1117</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7915,6 +7915,16 @@ function _kwwmRenderAll(body){
   var latestYm=gl?(gl.slice(0,4)+gl.slice(5,7)):''; var latestDay=gl?(+gl.slice(8,10)):0;
   function dnm(m){ return (m===latestYm&&latestDay>0)?latestDay:new Date(+m.slice(0,4),+m.slice(4,6),0).getDate(); }
   function cval(key,mm,m){ if(!mm) return '-';
+    if(key==='kwsp') return (mm.kwsp!=null)?'¥'+Math.round(mm.kwsp).toLocaleString():'-';
+    if(key==='sp20') return (mm.sp20!=null)?'¥'+Math.round(mm.sp20).toLocaleString():'-';
+    if(key==='kwsa') return (mm.kwsa!=null)?'¥'+Math.round(mm.kwsa).toLocaleString():'-';
+    if(key==='sa20') return (mm.sa20!=null)?'¥'+Math.round(mm.sa20).toLocaleString():'-';
+    if(key==='seo') return (mm.seo!=null)?'¥'+Math.round(mm.seo).toLocaleString():'-';
+    if(key==='cvrKW') return (mm.kwcl>0&&mm.kwod!=null)?(mm.kwod/mm.kwcl*100).toFixed(2)+'%':'-';
+    if(key==='cvr20') return '-';
+    if(key==='roasAll') return (mm.sp>0)?Math.round(((mm.kwsa||0)+(mm.sa20||0))/mm.sp*100).toLocaleString()+'%':'-';
+    if(key==='roasKW') return (mm.kwsp>0)?Math.round(mm.kwsa/mm.kwsp*100).toLocaleString()+'%':'-';
+    if(key==='roas20') return (mm.sp20>0)?Math.round(mm.sa20/mm.sp20*100).toLocaleString()+'%':'-';
     if(key==='sp') return (mm.sp!=null)?'¥'+Math.round(mm.sp).toLocaleString():'-';
     if(key==='spday'){ if(mm.sp==null) return '-'; var d=dnm(m); return d>0?'¥'+Math.round(mm.sp/d).toLocaleString():'-'; }
     if(key==='sa') return (mm.sa!=null)?'¥'+Math.round(mm.sa).toLocaleString():'-';
@@ -7938,15 +7948,18 @@ function _kwwmRenderAll(body){
   var MC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;font-weight:600;color:#333';
   var VC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;color:#333';
   var CC='border:'+BD+';vertical-align:middle;padding:8px;background:var(--surface);min-width:560px';
-  var COL={ sp:['#ffe0b2','#fff3e0'], spday:['#ffe0b2','#fff8e1'], sa:['#c8e6c9','#e8f5e9'], saday:['#dcedc8','#f1f8e9'], cvr:['#f8bbd0','#fce4ec'], roas:['#bbdefb','#e3f2fd'], cl:['#d1c4e9','#ede7f6'], cpc:['#b2dfdb','#e0f2f1'] };
+  var COL={ sp:['#ffe0b2','#fff3e0'], spday:['#ffe0b2','#fff8e1'], sa:['#a5d6a7','#d7ecd9'], saday:['#a5d6a7','#d7ecd9'], cvr:['#f8bbd0','#fce4ec'], roas:['#bbdefb','#e3f2fd'], cl:['#d1c4e9','#ede7f6'], cpc:['#b2dfdb','#e0f2f1'], kwsp:['#ffe0b2','#fff3e0'], sp20:['#ffe0b2','#fff8e1'], kwsa:['#dcedc8','#f1f8e9'], sa20:['#dcedc8','#f1f8e9'], seo:['#a5d6a7','#d7ecd9'], cvrKW:['#f8bbd0','#fce4ec'], cvr20:['#f8bbd0','#fce4ec'], roasKW:['#bbdefb','#e3f2fd'], roas20:['#bbdefb','#e3f2fd'], roasAll:['#bbdefb','#e3f2fd'] };
   var metrics=[['実績額','sp'],['実績額/1日','spday'],['売上','sa'],['売上/1日','saday'],['CVR','cvr'],['ROAS','roas'],['月クリック合計','cl'],['平均クリック単価','cpc']];
-  var NM=metrics.length;
+  var _prodMetsAll=[['実績額','sp'],['KW実績','kwsp'],['20円実績','sp20'],['実績額/1日','spday'],['売上','sa'],['SEO売上','seo'],['KW売上','kwsa'],['20円売上','sa20'],['売上/1日','saday'],['CVR/KW','cvrKW'],['CVR/20','cvr20'],['売上ROAS','roas'],['ROAS/全体','roasAll'],['ROAS/KW','roasKW'],['ROAS/20','roas20'],['月クリック合計','cl'],['平均クリック単価','cpc']];
+  var METS=(view==='all')?_prodMetsAll:metrics;
+  var NM=METS.length;
   var jobs=[]; var gi=0;
   var h='<div style="overflow-x:auto">';
+  var _kwAgg={}; kwRows.forEach(function(r){ if(months.indexOf(r.ym)<0) return; if(!_kwAgg[r.itemCode]) _kwAgg[r.itemCode]={}; var _m=_kwAgg[r.itemCode][r.ym]; if(!_m) _m=_kwAgg[r.itemCode][r.ym]={sp:0,sa:0,od:0,cl:0}; _m.sp+=(+r.spend||0); _m.sa+=(+r.sales||0); _m.od+=(+r.orders||0); _m.cl+=(+r.cl||0); });
   codes.forEach(function(pc){
     var dm={};
     if(view==='all'){
-      months.forEach(function(m){ var a=(typeof getItemMonthAgg==='function')?getItemMonthAgg(pc,m.slice(0,4)+'-'+m.slice(4,6)):null; if(a) dm[m]={sp:a.spend||0,sa:a.totSales||0,od:a.totOrders||0,cl:a.clicks||0}; });
+      months.forEach(function(m){ var a=(typeof getItemMonthAgg==='function')?getItemMonthAgg(pc,m.slice(0,4)+'-'+m.slice(4,6)):null; if(a){ var kw=(_kwAgg[pc]&&_kwAgg[pc][m])||{sp:0,sa:0,od:0,cl:0}; var sp20=(a.spend||0)-(a.kwSpend||0),sa20=(a.sales720||0)-(a.kwSales||0),seo=Math.max(0,(a.totSales||0)-(a.rppSales||0)); dm[m]={sp:a.spend||0,sa:a.totSales||0,od:a.totOrders||0,cl:a.clicks||0,kwsp:kw.sp,kwsa:kw.sa,kwod:kw.od,kwcl:kw.cl,sp20:sp20,sa20:sa20,seo:seo}; } });
     } else {
       kwRows.forEach(function(r){ if(r.itemCode!==pc) return; if(months.indexOf(r.ym)<0) return; var mm=dm[r.ym]; if(!mm) mm=dm[r.ym]={sp:0,sa:0,od:0,cl:0}; mm.sp+=(+r.spend||0); mm.sa+=(+r.sales||0); mm.od+=(+r.orders||0); mm.cl+=(+r.cl||0); });
     }
@@ -7963,7 +7976,7 @@ function _kwwmRenderAll(body){
     var t='<table style="border-collapse:collapse"><thead><tr><th style="'+TH+'">KW名</th><th style="'+TH+'">項目</th>';
     months.forEach(function(m){ t+='<th style="'+TH+'">'+(+m.slice(4,6))+'月</th>'; });
     t+='<th style="'+TH+'">推移グラフ</th></tr></thead><tbody>';
-    metrics.forEach(function(mt,mi){ var c=COL[mt[1]]||['#f0f0f0','#fafafa']; t+='<tr>'+(mi===0?_kwCell:'')+'<td style="'+MC+';background:'+c[0]+'">'+mt[0]+'</td>';
+    METS.forEach(function(mt,mi){ var c=COL[mt[1]]||['#f0f0f0','#fafafa']; t+='<tr>'+(mi===0?_kwCell:'')+'<td style="'+MC+';background:'+c[0]+'">'+mt[0]+'</td>';
       months.forEach(function(m){ t+='<td style="'+VC+';background:'+c[1]+'">'+cval(mt[1],dm[m],m)+'</td>'; });
       if(mi===0){ t+='<td rowspan="'+NM+'" style="'+CC+'"><div style="display:flex;flex-wrap:wrap;gap:10px;padding:2px;width:544px">'
         +'<canvas id="kwwma_'+gi+'_spday" width="262" height="120" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'
