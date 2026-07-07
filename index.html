@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1152</span>
+    <span class="build-date">v1.1153</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7925,7 +7925,7 @@ function _kwwmRenderAll(body){
     if(key==='seo') return (mm.seo!=null)?'¥'+Math.round(mm.seo).toLocaleString():'-';
     if(key==='seoday'){ if(mm.seo==null) return '-'; var dsd=dnm(m); return dsd>0?'¥'+Math.round(mm.seo/dsd).toLocaleString():'-'; }
     if(key==='cvrKW') return (mm.kwcl>0&&mm.kwod!=null)?(mm.kwod/mm.kwcl*100).toFixed(2)+'%':'-';
-    if(key==='cvr20') return '-';
+    if(key==='cvr20'){ var _c20=(mm.cl!=null&&mm.kwcl!=null)?(mm.cl-mm.kwcl):null; var _o20=(mm.od!=null&&mm.kwod!=null)?Math.max(0,mm.od-mm.kwod):null; return (_c20>0&&_o20!=null)?(_o20/_c20*100).toFixed(2)+'%':'-'; }
     if(key==='roasAll') return (mm.sp>0)?Math.round(((mm.kwsa||0)+(mm.sa20||0))/mm.sp*100).toLocaleString()+'%':'-';
     if(key==='roasKW') return (mm.kwsp>0)?Math.round(mm.kwsa/mm.kwsp*100).toLocaleString()+'%':'-';
     if(key==='roas20') return (mm.sp20>0)?Math.round(mm.sa20/mm.sp20*100).toLocaleString()+'%':'-';
@@ -8066,7 +8066,7 @@ function _renderKwWatchMonthlyTable(){
     if(key==='seo') return (mm.seo!=null)?'¥'+Math.round(mm.seo).toLocaleString():'-';
     if(key==='seoday'){ if(mm.seo==null) return '-'; var dsd=dnm(m); return dsd>0?'¥'+Math.round(mm.seo/dsd).toLocaleString():'-'; }
     if(key==='cvrKW') return (mm.kwcl>0&&mm.kwod!=null)?(mm.kwod/mm.kwcl*100).toFixed(2)+'%':'-';
-    if(key==='cvr20') return '-';
+    if(key==='cvr20'){ var _c20=(mm.cl!=null&&mm.kwcl!=null)?(mm.cl-mm.kwcl):null; var _o20=(mm.od!=null&&mm.kwod!=null)?Math.max(0,mm.od-mm.kwod):null; return (_c20>0&&_o20!=null)?(_o20/_c20*100).toFixed(2)+'%':'-'; }
     if(key==='roasKW') return (mm.kwsp>0)?Math.round(mm.kwsa/mm.kwsp*100).toLocaleString()+'%':'-';
     if(key==='roas20') return (mm.sp20>0)?Math.round(mm.sa20/mm.sp20*100).toLocaleString()+'%':'-';
     if(key==='roasSEO') return (mm.sp>0&&mm.seo!=null)?Math.round(mm.seo/mm.sp*100).toLocaleString()+'%':'-';
