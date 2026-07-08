@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1163</span>
+    <span class="build-date">v1.1167</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1084,11 +1084,11 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-kw-indiv">
     <div class="table-card">
       <div class="table-toolbar" style="flex-wrap:wrap;gap:8px">
+        <select id="kwIndivMonth" onchange="renderKwIndiv()" style="display:none;font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
         <input type="text" id="kwIndivSearch" placeholder="商品管理番号・商品名で検索" onkeydown="if(event.key==='Enter')kwIndivSearch()" style="width:240px;font-size:13px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)">
         <button onclick="kwIndivSearch()" style="font-size:12px;font-weight:700;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">検索</button>
         <button onclick="kwIndivSave()" style="font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">保存</button>
         <select id="kwIndivSaved" onchange="kwIndivLoadSaved(this.value)" style="font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;max-width:220px"><option value="">保存済みから選択</option></select>
-        <select id="kwIndivMonth" onchange="renderKwIndiv()" style="display:none;font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
         <div class="toolbar-right" style="display:flex;align-items:center;gap:8px">
           <button onclick="_toggleKwCalc()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">計算式</button>
           <div style="display:flex;gap:4px">
@@ -7669,7 +7669,7 @@ async function _kwIndivSavedPublish(arr){
 }
 function _kwIndivName(code){ const c=productCache[code]||{}; return c.manualName||c.name||code; }
 function _renderKwIndivSavedDropdown(){
-  const list=_kwIndivSavedGet();
+  const list=_kwIndivSavedGet().filter(c=>!_isAdNone(c));
   const opts='<option value="">保存済みから選択</option>'+list.map(code=>'<option value="'+_kwEsc(code)+'"'+(code===_kwIndivCode?' selected':'')+'>'+_kwEsc(_kwIndivName(code))+'</option>').join('');
   ['kwIndivSaved','kwIndivSavedT'].forEach(id=>{ const sel=document.getElementById(id); if(sel) sel.innerHTML=opts; });
 }
@@ -7697,7 +7697,7 @@ function _kwIndivMatches(q){
   Object.keys(productCache||{}).forEach(c=>{ const n=(productCache[c].manualName||productCache[c].name||''); if(n && n.indexOf(q)>=0) set.set(c,1); });
   const spendMap={};
   kwRows.forEach(r=>{ if(!r.itemCode) return; spendMap[r.itemCode]=(spendMap[r.itemCode]||0)+(r.spend||0); if(String(r.itemCode).indexOf(q)>=0) set.set(r.itemCode,1); if(r.kw && r.kw.indexOf(q)>=0) set.set(r.itemCode,1); });
-  return [...set.keys()].sort((a,b)=>(spendMap[b]||0)-(spendMap[a]||0));
+  return [...set.keys()].filter(c=>!_isAdNone(c)).sort((a,b)=>(spendMap[b]||0)-(spendMap[a]||0));
 }
 function kwIndivSearch(){
   const el=document.getElementById('kwIndivSearch'); const q=el?el.value:'';
@@ -7960,6 +7960,7 @@ var _kwAllSort='spend';
 var _kwAllExclMaru=true;
 function renderKwAllData(){ _renderKwTable({containerId:'tab-kw-all',watchOnly:false}); }
 function renderKwWatch(){ _renderKwTable({containerId:'tab-mar-watch',watchOnly:true}); }
+function _isAdNone(code){ var st=(productCache[code]&&productCache[code].status)||''; return st==='g3'||st==='mid2'||st==='mid2y'; }
 function _watchedCodes(){ var arr=[]; Object.keys(productCache).forEach(function(c){ var w=productCache[c]&&productCache[c].watchKws; if(w&&w.length) arr.push(c); }); return arr; }
 function _setKwWPPeriodUI(){ var d=document.getElementById('kwWPDaily'), m=document.getElementById('kwWPMonthly'); var on='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap'; var off='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap'; if(d)d.style.cssText=(_kwIndivPeriod==='daily')?on:off; if(m)m.style.cssText=(_kwIndivPeriod==='monthly')?on:off; }
 function renderKwWatchProd(){ var sel=document.getElementById('kwWatchProdSel'); var codes=_watchedCodes(); if(sel){ sel.innerHTML='<option value="">注視KWの商品から選択</option>'+codes.map(function(c){ return '<option value="'+_kwEsc(c)+'"'+(c===_kwIndivCode?' selected':'')+'>'+_kwEsc(_kwIndivName(c))+'</option>'; }).join(''); } _setKwWPPeriodUI(); renderKwIndiv(); }
@@ -8271,7 +8272,7 @@ function _kwWatchProdPeriod(p){ _kwIndivPeriod=p; _setKwWPPeriodUI(); renderKwIn
 function _renderKwTable(cfg){ cfg=cfg||{};
   const cont=document.getElementById(cfg.containerId||'tab-kw-all'); if(!cont) return;
   var _reRender=cfg.watchOnly?'renderKwWatch()':'renderKwAllData()';
-  const codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))];
+  const codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))].filter(c=>!_isAdNone(c));
   var _salesByCodeYm={}; salesRows.forEach(function(s){ if(s.itemCode&&s.ym){ var _k=s.itemCode+'|'+s.ym; _salesByCodeYm[_k]=(_salesByCodeYm[_k]||0)+(s.sales||0); } });
   let rows=[];
   codes.forEach(function(code){
@@ -8503,7 +8504,7 @@ function renderKwIndivTableAll(){
   _setKwIndivPeriodUI(); _setKwIndivTableModeUI();
   const view=document.getElementById('kwIndivTableView'); const empty=document.getElementById('kwIndivTableEmpty'); const cntEl=document.getElementById('kwIndivTableCount'); const thd=document.getElementById('kwIndivTableHeader'); if(thd) thd.innerHTML='';
   const daily=true;
-  let codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))];
+  let codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))].filter(c=>!_isAdNone(c));
   const _q=(_kwIndivTableSearch||'').trim().toLowerCase();
   if(_q){ codes=codes.filter(code=>{ const pc=productCache[code]||{}; return (((pc.itemNumber||'')+' '+(code||'')+' '+(pc.name||'')).toLowerCase()).indexOf(_q)>=0; }); }
   var _gLatest=''; for(var _gi=0;_gi<kwRows.length;_gi++){ if(kwRows[_gi].date>_gLatest) _gLatest=kwRows[_gi].date; }
@@ -13024,7 +13025,16 @@ function _markeHeader(){
     +_mkH('CTR-20','ctr20','ch r','#f2ecfb','#d9c9f0')
     +_mkH('CVR-KW','cvrkw','ch r','#fdeef4','')
     +_mkH('CVR-20','cvr20','ch r','#fdeef4','')
+    +_mkH('区分','','ch','','')
     +'</div>';
+}
+function _kubunSelectHtml(code){
+  var cached=productCache[code]||{}; var sv=cached.status||'unset';
+  var labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
+  var colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};
+  var sc=colors[sv]||'';
+  var opts=['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(function(v){ return '<option value="'+v+'"'+(sv===v?' selected':'')+' '+(colors[v]?'style="color:'+colors[v]+';font-weight:600"':'')+'>'+labels[v]+'</option>'; }).join('');
+  return '<div class="status-cell" onclick="event.stopPropagation()" style="width:100%"><select onchange="applyStatusColor(this);_setRoasTrendStatus(\''+code+'\',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:'+(sc||'var(--text)')+';font-weight:'+(sc?'600':'')+';width:100%;cursor:pointer">'+opts+'</select></div>';
 }
 function _markeRow(d, maxSpend){
   var p=d.p;
@@ -13039,7 +13049,7 @@ function _markeRow(d, maxSpend){
   var _tot=d.kwSpend+d.sp20; var _kwP=_tot>0?Math.round(d.kwSpend/_tot*100):0; var _20P=_tot>0?(100-_kwP):0;
   return `<div class="item-row"><div class="item-basic marke" onclick="openRenewalGraph('${p.id}')" style="cursor:pointer">
     <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${d.itemNumber}">${d.itemNumber || '\u2014'}</div>
-    <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${p.id}">${p.id}</div>
+    <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" onclick="event.stopPropagation()" title="${p.id}">${p.id}</div>
     <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${(productCache[p.id]&&productCache[p.id].genreId)||''}">${(productCache[p.id]&&productCache[p.id].genreId)||'\u2014'}</div>
     <div class="cell-img" style="display:flex;align-items:center;justify-content:center;padding:8px 4px;border-right:2px solid #c4cad2">${imgEl}</div>
     <div class="cell-name" style="display:flex;align-items:center;gap:6px;border-right:2px solid #c4cad2"><div style="overflow:hidden">
@@ -13054,6 +13064,7 @@ function _markeRow(d, maxSpend){
     <div class="cell r mono" style="background:#f2ecfb;border-right:2px solid #d9c9f0">${pf(d.ctr20,d._ctr20C)}</div>
     <div class="cell r mono" style="background:#fdeef4">${pf(d.cvrKw,d._cvrKwC)}</div>
     <div class="cell r mono" style="background:#fdeef4">${pf(d.cvr20,d._cvr20C)}</div>
+    <div class="cell" style="display:flex;align-items:center;padding:4px 6px">${_kubunSelectHtml(p.id)}</div>
   </div></div>`;
 }
 function _markeRankColor(data, key){
@@ -13677,6 +13688,7 @@ const MK2_COLW_DEFS=[
   {k:'ctr20',   label:'CTR-20',       def:76, al:'right'},
   {k:'cvrkw',   label:'CVR-KW',       def:76, al:'right'},
   {k:'cvr20',   label:'CVR-20',       def:76, al:'right'},
+  {k:'kubun',   label:'区分',       def:120, al:'center', row:true},
 ];
 function _colwKey(){ return _colwMode==='marathon'?COLW_KEY_MK:(_colwMode==='marke'?COLW_KEY_MK2:COLW_KEY); }
 function _colwDefs(){ return _colwMode==='marathon'?MK_COLW_DEFS:(_colwMode==='marke'?MK2_COLW_DEFS:COLW_DEFS); }
@@ -13724,7 +13736,7 @@ function _applyColWidths(){
   // マーケ
   { const w=k=>_colwValFor(COLW_KEY_MK2,MK2_COLW_DEFS,k);
     const name='minmax('+w('name')+'px,1fr)';
-    const cols=['totsales','sroas','seo','adsales','kwspend','ctrkw','cvrkw','sp20','ctr20','cvr20'].map(k=>w(k)+'px').join(' ');
+    const cols=['totsales','sroas','seo','adsales','ctrkw','ctr20','cvrkw','cvr20','kubun'].map(k=>w(k)+'px').join(' ');
     const mk2=w('num')+'px '+w('code')+'px '+w('genre')+'px '+w('img')+'px '+name+' '+cols;
     css+='.col-header.marke{grid-template-columns:'+mk2+' !important}.item-basic.marke{grid-template-columns:'+mk2+' !important}';
     MK2_COLW_DEFS.forEach(function(d,i){ const n=i+1; const a=_colwAlignFor(COLW_KEY_MK2,MK2_COLW_DEFS,d.k);
