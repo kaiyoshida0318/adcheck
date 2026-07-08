@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1167</span>
+    <span class="build-date">v1.1168</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -13015,7 +13015,7 @@ function _markeHeader(){
     +_mkH('商品番号','itemnum','ch','','')
     +_mkH('商品管理番号','itemid','ch','','')
     +_mkH('ジャンルID','','ch','','')
-    +_mkH('商品画像','','ch','','#c4cad2')
+    +_mkH('商品画像','','ch','','')
     +_mkH('商品名','name','ch','','#c4cad2')
     +_mkH('総売上','totsales','ch r','#eef4fb','')
     +_mkH('売上ROAS','sroas','ch r','#eef4fb','')
@@ -13051,7 +13051,7 @@ function _markeRow(d, maxSpend){
     <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${d.itemNumber}">${d.itemNumber || '\u2014'}</div>
     <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" onclick="event.stopPropagation()" title="${p.id}">${p.id}</div>
     <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${(productCache[p.id]&&productCache[p.id].genreId)||''}">${(productCache[p.id]&&productCache[p.id].genreId)||'\u2014'}</div>
-    <div class="cell-img" style="display:flex;align-items:center;justify-content:center;padding:8px 4px;border-right:2px solid #c4cad2">${imgEl}</div>
+    <div class="cell-img" style="display:flex;align-items:center;justify-content:center;padding:8px 4px">${imgEl}</div>
     <div class="cell-name" style="display:flex;align-items:center;gap:6px;border-right:2px solid #c4cad2"><div style="overflow:hidden">
       <div class="prod-name" ondblclick="_selectAndCopyText(this,event)" data-full="${(d.name||'').replace(/"/g,'&quot;')}" title="${d.name}" style="user-select:text;cursor:text">${d.name !== p.id ? d.name.substring(0,40)+(d.name.length>40?'\u2026':'') : p.id}${d.isManual?'<span class="manual-badge" title="手動編集済み"></span>':''}</div>
       <button class="edit-btn" onclick="event.stopPropagation();openEditModal('${p.id}')" title="編集">\u270F</button>
