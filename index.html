@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1170</span>
+    <span class="build-date">v1.1172</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -565,8 +565,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn" id="tab-btn-renewal-todoseo" onclick="switchTab('renewal-todoseo')">実施前-SEO＆広告<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-todoseo"></span></button>
   <button class="tab-btn" id="tab-btn-renewal-todo" onclick="switchTab('renewal-todo')">実施前-KW＆20<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-todo"></span></button>
   <button class="tab-btn" id="tab-btn-renewal-done" onclick="switchTab('renewal-done')">実施済-全体<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-done"></span></button>
-  <button class="tab-btn" id="tab-btn-renewal-lp" onclick="switchTab('renewal-lp')">LP更新済<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-lp"></span></button>
-  <button class="tab-btn" id="tab-btn-renewal-thumb" onclick="switchTab('renewal-thumb')">サムネ更新済<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-thumb"></span></button>
+  <button class="tab-btn" id="tab-btn-renewal-monthly" onclick="switchTab('renewal-monthly')">実施済-月別推移<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-renewal-monthly"></span></button>
   <span class="tab-row-label" id="label-taiou" style="color:#ea580c;padding-left:14px">【対応検討】</span>
   <button class="tab-btn" id="tab-btn-roas-trend" onclick="switchTab('roas-trend')">粗広告利益-直近4ヶ月</button>
   <span class="tab-row-label" style="color:#dc2626;padding-left:16px">【セール】</span>
@@ -1306,38 +1305,14 @@ header + * { margin-top: 4px; }
       </div>
     </div>
   </div>
-  <!-- リニューアル：LP更新 -->
-  <div class="tab-panel" id="tab-renewal-lp">
-    <div style="padding:12px 16px">
-      <div class="table-card">
-        <div id="renewal-lp-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
-          <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
-            <input type="text" id="renewalLpSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalLp()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
-            
-            <div class="toolbar-right"></div>
-          </div>
-          <div id="renewal-lp-inner">
-            <div class="tab-coming-soon"><div class="icon">📄</div><div style="font-size:13px;color:var(--text3)">LP更新タブ（表示条件は後ほど設定します）</div></div>
-          </div>
-        </div>
+  <!-- リニューアル：実施済-月別推移（変更記録あり商品 / 注視分-月別推移と同じ見た目） -->
+  <div class="tab-panel" id="tab-renewal-monthly">
+    <div class="table-card">
+      <div class="table-toolbar" style="flex-wrap:wrap;gap:8px">
+        <label style="font-size:12px;color:var(--text2);font-weight:600;align-self:center">商品を選択：</label>
+        <select id="renewalMonthlySel" onchange="_kwWatchMonthlyPick(this.value)" style="font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;max-width:340px"><option value="">商品を選択</option></select>
       </div>
-    </div>
-  </div>
-  <!-- リニューアル：サムネ更新 -->
-  <div class="tab-panel" id="tab-renewal-thumb">
-    <div style="padding:12px 16px">
-      <div class="table-card">
-        <div id="renewal-thumb-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
-          <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
-            <input type="text" id="renewalThumbSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalThumb()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
-            
-            <div class="toolbar-right"></div>
-          </div>
-          <div id="renewal-thumb-inner">
-            <div class="tab-coming-soon"><div class="icon">🖼</div><div style="font-size:13px;color:var(--text3)">サムネ更新タブ（表示条件は後ほど設定します）</div></div>
-          </div>
-        </div>
-      </div>
+      <div id="renewalMonthlyBody"></div>
     </div>
   </div>
 
@@ -7967,13 +7942,14 @@ function renderKwWatchProd(){ var sel=document.getElementById('kwWatchProdSel');
 function _kwWatchProdLoad(code){ if(!code) return; _kwIndivCode=code; renderKwIndiv(); }
 
 var _kwWatchMonthlyCode='__ALL__';
+var _kwwmSrcFn=null; var _kwwmBodyId='kwWatchMonthlyBody'; var _kwwmSelId='kwWatchMonthlySel';
 var _kwwmCharts=[];
 var _kwwmView='all';
 function _kwwmLatestYmDash(){ var gl=''; kwRows.forEach(function(r){ if(r.date && r.date>gl) gl=r.date; }); return gl?(gl.slice(0,4)+'-'+gl.slice(5,7)):''; }
 function _kwwmSortCodes(codes){ var ymd=_kwwmLatestYmDash(); var sp={}; codes.forEach(function(c){ var a=(ymd&&typeof getItemMonthAgg==='function')?getItemMonthAgg(c,ymd):null; sp[c]=(a&&a.spend)||0; }); return codes.slice().sort(function(x,y){ return (sp[y]||0)-(sp[x]||0); }); }
 function renderKwWatchMonthly(){
-  var sel=document.getElementById('kwWatchMonthlySel');
-  var codes=(typeof _watchedCodes==='function')?_watchedCodes():[];
+  var sel=document.getElementById(_kwwmSelId);
+  var codes=_kwwmSrcFn?_kwwmSrcFn():((typeof _watchedCodes==='function')?_watchedCodes():[]);
   if(!codes || !codes.length){ codes=[]; kwRows.forEach(function(r){ if(r.itemCode && codes.indexOf(r.itemCode)<0) codes.push(r.itemCode); }); }
   codes=_kwwmSortCodes(codes);
   if(sel){
@@ -7982,12 +7958,14 @@ function renderKwWatchMonthly(){
   }
   _renderKwWatchMonthlyTable();
 }
+function _changeLogCodes(){ var arr=[]; Object.keys(productCache).forEach(function(c){ var cl=productCache[c]&&productCache[c].changeLog; if(cl&&cl.length) arr.push(c); }); return arr; }
+function renderRenewalMonthly(){ _kwwmSrcFn=_changeLogCodes; _kwwmBodyId='renewalMonthlyBody'; _kwwmSelId='renewalMonthlySel'; _kwWatchMonthlyCode='__ALL__'; renderKwWatchMonthly(); }
 function _kwWatchMonthlyPick(code){ _kwWatchMonthlyCode=code||''; _renderKwWatchMonthlyTable(); }
 function _kwwmSetViewBtns(){ try{ var on='background:#2563eb;color:#fff', off='background:var(--surface);color:var(--text2)'; var ba=document.getElementById('kwwmViewAll'), bd=document.getElementById('kwwmViewAd'); if(ba) ba.style.cssText='font-size:12px;padding:6px 16px;border:none;cursor:pointer;'+(_kwwmView==='all'?on:off); if(bd) bd.style.cssText='font-size:12px;padding:6px 16px;border:none;border-left:1px solid var(--border2);cursor:pointer;'+(_kwwmView==='ad'?on:off); }catch(e){} }
 function _kwWatchMonthlyView(v){ _kwwmView=(v==='all')?'all':'ad'; _kwwmSetViewBtns(); _renderKwWatchMonthlyTable(); }
 function _kwwmRenderAll(body){
   var view=_kwwmView;
-  var codes=(typeof _watchedCodes==='function')?_watchedCodes():[];
+  var codes=_kwwmSrcFn?_kwwmSrcFn():((typeof _watchedCodes==='function')?_watchedCodes():[]);
   if(!codes || !codes.length){ codes=[]; kwRows.forEach(function(r){ if(r.itemCode && codes.indexOf(r.itemCode)<0) codes.push(r.itemCode); }); }
   codes=_kwwmSortCodes(codes);
   if(!codes.length){ body.innerHTML='<div style="padding:30px;color:var(--text3);text-align:center;font-size:13px">データがありません。</div>'; return; }
@@ -8107,7 +8085,7 @@ function _kwwmRenderAll(body){
   }
 }
 function _renderKwWatchMonthlyTable(){
-  var body=document.getElementById('kwWatchMonthlyBody'); if(!body) return;
+  var body=document.getElementById(_kwwmBodyId); if(!body) return;
   _kwwmCharts.forEach(function(c){try{c.destroy();}catch(e){}}); _kwwmCharts=[];
   try{_kwwmSetViewBtns();}catch(e){}
   var code=_kwWatchMonthlyCode;
@@ -9593,12 +9571,12 @@ function _updateRenewalCounts() {
   const thumb = Object.keys(productCache).filter(code => _hasChangeLogType(code, 'thumb') && !productCache[code]?.retired).length;
   const e1 = document.getElementById('cnt-renewal-todo');
   const e2 = document.getElementById('cnt-renewal-done');
-  const e3 = document.getElementById('cnt-renewal-lp');
+  const e3 = document.getElementById('cnt-renewal-monthly');
   const e4 = document.getElementById('cnt-renewal-thumb');
   const e5 = document.getElementById('cnt-renewal-todoseo');
   if (e1) e1.textContent = all  > 0 ? `(${all})`  : '';
   if (e2) e2.textContent = done > 0 ? `(${done})` : '';
-  if (e3) e3.textContent = lp > 0 ? `(${lp})` : '';
+  if (e3) e3.textContent = done > 0 ? `(${done})` : '';
   if (e4) e4.textContent = thumb > 0 ? `(${thumb})` : '';
   if (e5) e5.textContent = all  > 0 ? `(${all})`  : '';
 }
@@ -11699,8 +11677,7 @@ function switchTab(tab) {
   if (tab === 'renewal-todo') renderRenewalTodo();
   if (tab === 'renewal-todoseo') renderRenewalTodoSeo();
   if (tab === 'renewal-done') renderRenewalDone();
-  if (tab === 'renewal-lp') renderRenewalLp();
-  if (tab === 'renewal-thumb') renderRenewalThumb();
+  if (tab === 'renewal-monthly') renderRenewalMonthly();
   if (tab === 'graph') { _initGraphRange(); renderGraph(); }
   if (tab === 'trend') renderTrend();
   if (tab === 'item-trend') { _renderItTrendChips(); renderItemTrend(); try{ _itTrendFetch().then(function(ch){ if(ch){ _renderItTrendChips(); } }); }catch(e){} }
@@ -11711,7 +11688,7 @@ function switchTab(tab) {
   if (tab === 'kw-indiv-table') { renderKwIndivTableAll(); }
   if (tab === 'mar-watch') { renderKwWatch(); }
   if (tab === 'kw-watch-prod') { renderKwWatchProd(); }
-  if (tab === 'kw-watch-monthly') { renderKwWatchMonthly(); }
+  if (tab === 'kw-watch-monthly') { _kwwmSrcFn=null; _kwwmBodyId='kwWatchMonthlyBody'; _kwwmSelId='kwWatchMonthlySel'; _kwWatchMonthlyCode='__ALL__'; renderKwWatchMonthly(); }
   if (tab === 'runaway') { renderRunaway(); }
   if (tab === 'runaway-days') { renderRunawayDays(); }
   if (tab === 'cpa') { renderCpa(); try{ _cpaFetch().then(function(ch){ if(ch) renderCpa(); }); }catch(e){} }
