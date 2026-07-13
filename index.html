@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1185</span>
+    <span class="build-date">v1.1186</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8373,9 +8373,11 @@ function _buildKwTableBlock(code, daily, idx, pfx){
     var _gLatest=kwRows.reduce(function(m,r){return r.date>m?r.date:m;},'');
     if(_gLatest){ Object.keys(byKw).forEach(function(kw){ if(_pastSet[kw]) return;
       var _ds=[...new Set((_byKwAll[kw]||byKw[kw]).map(function(r){return r.date;}))].filter(Boolean).sort();
-      if(!_ds.length) return; var _kmax=_ds[_ds.length-1]; var _cur=_kwiDDiff(_gLatest,_kmax);
-      var _hmax=0; for(var _i=1;_i<_ds.length;_i++){ var _g=_kwiDDiff(_ds[_i],_ds[_i-1]); if(_g>_hmax)_hmax=_g; }
-      if(_cur>=5 && _cur>=_hmax+3){ _pastSet[kw]=1; var rs0=_byKwAll[kw]||byKw[kw]; var _lym=rs0.reduce(function(m,r){return r.ym>m?r.ym:m;},''); var _lr=rs0.filter(function(r){return r.ym===_lym;}); var _sp=0,_sa=0,_od=0,_cl=0; _lr.forEach(function(r){_sp+=(r.spend||0);_sa+=(r.sales||0);_od+=(r.orders||0);_cl+=(r.cl||0);}); _pastAgg[kw]={sp:_sp,sa:_sa,cvr:(_cl>0?(_od/_cl*100).toFixed(2)+'%':null),roas:(_sp>0?Math.round(_sa/_sp*100).toLocaleString()+'%':null),lym:_lym}; }
+      if(_ds.length<2) return; var _kmax=_ds[_ds.length-1]; var _cur=_kwiDDiff(_gLatest,_kmax);
+      // 直近の稼働間隔（最後の出稿日の直前5本分の間隔の中央値）を通常間隔とする
+      var _gaps=[]; for(var _i=Math.max(1,_ds.length-5);_i<_ds.length;_i++){ _gaps.push(_kwiDDiff(_ds[_i],_ds[_i-1])); }
+      _gaps.sort(function(a,b){return a-b;}); var _typ=_gaps.length?_gaps[Math.floor(_gaps.length/2)]:1; if(_typ<1)_typ=1;
+      if(_cur>=3 && _cur>=_typ+3){ _pastSet[kw]=1; var rs0=_byKwAll[kw]||byKw[kw]; var _lym=rs0.reduce(function(m,r){return r.ym>m?r.ym:m;},''); var _lr=rs0.filter(function(r){return r.ym===_lym;}); var _sp=0,_sa=0,_od=0,_cl=0; _lr.forEach(function(r){_sp+=(r.spend||0);_sa+=(r.sales||0);_od+=(r.orders||0);_cl+=(r.cl||0);}); _pastAgg[kw]={sp:_sp,sa:_sa,cvr:(_cl>0?(_od/_cl*100).toFixed(2)+'%':null),roas:(_sp>0?Math.round(_sa/_sp*100).toLocaleString()+'%':null),lym:_lym}; }
     }); }
     _rowKws=kws.concat(_pastKws).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(x<y?-1:1));
   }
