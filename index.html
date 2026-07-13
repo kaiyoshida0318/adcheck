@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1184</span>
+    <span class="build-date">v1.1185</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8371,7 +8371,12 @@ function _buildKwTableBlock(code, daily, idx, pfx){
     const _byKwAll={}; _allRows.forEach(r=>{ const k=r.kw||'(空)'; (_byKwAll[k]||(_byKwAll[k]=[])).push(r); });
     Object.keys(_byKwAll).forEach(kw=>{ if(byKw[kw]) return; const rs0=_byKwAll[kw]; const v=_kwiPredVol(rs0,_monthLast); _kwVol[kw]=v; _pastKws.push(kw); _pastSet[kw]=1; const _lym=rs0.reduce((m,r)=>(r.ym>m?r.ym:m),''); const _lr=rs0.filter(r=>r.ym===_lym); let sp=0,sa=0,od=0,cl=0; _lr.forEach(r=>{ sp+=(r.spend||0); sa+=(r.sales||0); od+=(r.orders||0); cl+=(r.cl||0); }); _pastAgg[kw]={ sp:sp, sa:sa, cvr:(cl>0?(od/cl*100).toFixed(2)+'%':null), roas:(sp>0?Math.round(sa/sp*100).toLocaleString()+'%':null), lym:_lym }; });
     var _gLatest=kwRows.reduce(function(m,r){return r.date>m?r.date:m;},'');
-    if(_gLatest){ Object.keys(byKw).forEach(function(kw){ if(_pastSet[kw]) return; var _kmax=byKw[kw].reduce(function(m,r){return r.date>m?r.date:m;},''); if(_kmax && _kwiDDiff(_gLatest,_kmax)>=4){ _pastSet[kw]=1; var rs0=_byKwAll[kw]||byKw[kw]; var _lym=rs0.reduce(function(m,r){return r.ym>m?r.ym:m;},''); var _lr=rs0.filter(function(r){return r.ym===_lym;}); var _sp=0,_sa=0,_od=0,_cl=0; _lr.forEach(function(r){_sp+=(r.spend||0);_sa+=(r.sales||0);_od+=(r.orders||0);_cl+=(r.cl||0);}); _pastAgg[kw]={sp:_sp,sa:_sa,cvr:(_cl>0?(_od/_cl*100).toFixed(2)+'%':null),roas:(_sp>0?Math.round(_sa/_sp*100).toLocaleString()+'%':null),lym:_lym}; } }); }
+    if(_gLatest){ Object.keys(byKw).forEach(function(kw){ if(_pastSet[kw]) return;
+      var _ds=[...new Set((_byKwAll[kw]||byKw[kw]).map(function(r){return r.date;}))].filter(Boolean).sort();
+      if(!_ds.length) return; var _kmax=_ds[_ds.length-1]; var _cur=_kwiDDiff(_gLatest,_kmax);
+      var _hmax=0; for(var _i=1;_i<_ds.length;_i++){ var _g=_kwiDDiff(_ds[_i],_ds[_i-1]); if(_g>_hmax)_hmax=_g; }
+      if(_cur>=5 && _cur>=_hmax+3){ _pastSet[kw]=1; var rs0=_byKwAll[kw]||byKw[kw]; var _lym=rs0.reduce(function(m,r){return r.ym>m?r.ym:m;},''); var _lr=rs0.filter(function(r){return r.ym===_lym;}); var _sp=0,_sa=0,_od=0,_cl=0; _lr.forEach(function(r){_sp+=(r.spend||0);_sa+=(r.sales||0);_od+=(r.orders||0);_cl+=(r.cl||0);}); _pastAgg[kw]={sp:_sp,sa:_sa,cvr:(_cl>0?(_od/_cl*100).toFixed(2)+'%':null),roas:(_sp>0?Math.round(_sa/_sp*100).toLocaleString()+'%':null),lym:_lym}; }
+    }); }
     _rowKws=kws.concat(_pastKws).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(x<y?-1:1));
   }
   let _sumHtml='';
