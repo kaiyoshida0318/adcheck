@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1187</span>
+    <span class="build-date">v1.1189</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1562,18 +1562,26 @@ header + * { margin-top: 4px; }
             <div style="border:1px solid var(--border);border-radius:6px;padding:8px 12px;background:var(--surface)">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                 <span style="font-size:16px">⑤</span>
-                <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:10px;background:var(--surface2);padding:2px 6px;border-radius:3px">*couponadvance*.csv / .zip</code>
+                <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:10px;background:var(--surface2);padding:2px 6px;border-radius:3px">CouponAdvance_*_item_YYYYMMDD.csv</code>
               </div>
-              <div style="font-weight:700;color:var(--text);margin-bottom:2px">クーポンアドバンス</div>
-              <div style="color:var(--text3);font-size:10px">【CA調整】に反映。<strong style="color:var(--text)">その日のデータが無い場合もあり</strong>、その時はカレンダーで「◯skip」（実施したがデータ無し）と表示します。</div>
+              <div style="font-weight:700;color:var(--text);margin-bottom:2px">クーポンアドバンス（商品）</div>
+              <div style="color:var(--text3);font-size:10px">【CA調整】に反映。ファイル名末尾＝<strong style="color:var(--text)">その日のデータ日</strong>。<strong style="color:var(--text)">ファイル自体が無い日（データ無し）</strong>は、他レポートがある日にカレンダーで「◯skip」と自動表示します。</div>
             </div>
             <div style="border:1px solid var(--border);border-radius:6px;padding:8px 12px;background:var(--surface)">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                 <span style="font-size:16px">⑥</span>
-                <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:10px;background:var(--surface2);padding:2px 6px;border-radius:3px">rpp_item_keyword_*.csv</code>
+                <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:10px;background:var(--surface2);padding:2px 6px;border-radius:3px">CouponAdvance_*_kw_YYYYMMDD.csv</code>
+              </div>
+              <div style="font-weight:700;color:var(--text);margin-bottom:2px">クーポンアドバンス（KW）</div>
+              <div style="color:var(--text3);font-size:10px">クーポンアドバンスのKW版。⑤と同様に【CA調整】へ。データ無しの日は「◯skip」表示。</div>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:6px;padding:8px 12px;background:var(--surface)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <span style="font-size:16px">⑦</span>
+                <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:10px;background:var(--surface2);padding:2px 6px;border-radius:3px">rpp_item_keyword_*_YYYYMMDD.csv</code>
               </div>
               <div style="font-weight:700;color:var(--text);margin-bottom:2px">登録済みキーワード</div>
-              <div style="color:var(--text3);font-size:10px">現在セットされている<strong style="color:var(--text)">全KWのスナップショット</strong>（その日0impressionのKWも含む）。出稿中／停止の判定に使用します。</div>
+              <div style="color:var(--text3);font-size:10px">現在セットされている<strong style="color:var(--text)">全KWのスナップショット</strong>（その日0impressionのKWも含む）。ファイル名末尾＝取得日。出稿中／停止の判定に使用します。</div>
             </div>
           </div>
           <div style="margin-top:10px;padding:8px 10px;background:#fff8e1;border-radius:5px;font-size:10px;color:#6d4c00;border:1px solid #ffe082">
@@ -12046,17 +12054,22 @@ function _stageFiles(files) {
 let _calMonthData = {};   // 'YYYY-MM' -> { type -> { day(Number) -> {n, status:'ok'|'skip', files:[]} } }
 let _calMonths = [];      // ドロップダウンに出す月の配列（当月＋データのある月）
 const _CAL_ROWS = [
-  { k:'rpp',    badge:'①', label:'全体集計',        sub:'rpp_reports' },
-  { k:'kw',     badge:'②', label:'KW別実績',        sub:'rpp_keyword_reports' },
-  { k:'item',   badge:'③', label:'商品別日次',      sub:'rpp_item_reports' },
-  { k:'sales',  badge:'④', label:'商品別売上',      sub:'Item_SalesList' },
-  { k:'coupon', badge:'⑤', label:'クーポンアドバンス', sub:'couponadvance' },
-  { k:'itemkw', badge:'⑥', label:'登録済みKW',      sub:'rpp_item_keyword' },
+  { k:'rpp',        badge:'①', label:'全体集計',      sub:'rpp_reports' },
+  { k:'kw',         badge:'②', label:'KW別実績',      sub:'rpp_keyword_reports' },
+  { k:'item',       badge:'③', label:'商品別日次',    sub:'rpp_item_reports' },
+  { k:'sales',      badge:'④', label:'商品別売上',    sub:'Item_SalesList' },
+  { k:'coupon_item',badge:'⑤', label:'クーポン(商品)', sub:'CouponAdvance_item' },
+  { k:'coupon_kw',  badge:'⑥', label:'クーポン(KW)',  sub:'CouponAdvance_kw' },
+  { k:'itemkw',     badge:'⑦', label:'登録済みKW',    sub:'rpp_item_keyword' },
 ];
-// カレンダー行判定（既存の _nichFileType とは独立。coupon/itemkwを区別）
+// カレンダー行判定（既存の _nichFileType とは独立。coupon(商品/KW)・itemkwを区別）
 function _calFileType(name) {
   const n = String(name || '').toLowerCase();
-  if (n.includes('couponadvance'))        return 'coupon';
+  if (n.includes('couponadvance')) {
+    if (n.includes('_kw_'))   return 'coupon_kw';
+    if (n.includes('_item_')) return 'coupon_item';
+    return 'coupon_item'; // 種別不明のクーポンは商品側に寄せる
+  }
   if (n.includes('rpp_item_keyword_'))    return 'itemkw';
   if (n.includes('rpp_keyword_reports_')) return 'kw';
   if (n.includes('rpp_item_reports_'))    return 'item';
@@ -12085,6 +12098,22 @@ function _calPush(type, dateStr, status, fname) {
   if (fname) cell.files.push(fname);
   if (status === 'ok') cell.status = 'ok'; // ◯ は ◯skip を上書き（同日に実データが1つでもあれば◯）
 }
+// クーポンは「ファイル自体が無い日」も◯skip扱い（データ無し＝実施済みだがファイル無し）。
+// その日に他の日次レポート（＝その日作業した日）があり、クーポンファイルが無ければ◯skipを補完する。
+function _calFillCouponSkips() {
+  const dailyTypes = ['rpp', 'kw', 'item', 'sales'];
+  Object.keys(_calMonthData).forEach(ym => {
+    const md = _calMonthData[ym];
+    const activeDays = new Set();
+    dailyTypes.forEach(t => { if (md[t]) Object.keys(md[t]).forEach(d => activeDays.add(+d)); });
+    ['coupon_item', 'coupon_kw'].forEach(ck => {
+      if (!md[ck]) md[ck] = {};
+      activeDays.forEach(d => {
+        if (!md[ck][d]) md[ck][d] = { n: 0, status: 'skip', synthetic: true, files: [] };
+      });
+    });
+  });
+}
 // 既定表示月：ステージされたデータの中で最もファイル数が多い月（同数は最も古い月）。無ければ当月
 function _calDefaultMonth(nowYm) {
   const ms = Object.keys(_calMonthData).sort();
@@ -12109,7 +12138,7 @@ function _calBuildHtml() {
   return `<div id="dropZoneCalWrap" style="text-align:left;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;background:var(--surface)">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
       <select id="dropZoneCalMonth" onchange="_calRenderMonth(this.value)" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;padding:4px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">${opts}</select>
-      <span style="font-size:11px;color:var(--text3)">◯=取込予定の日 ／ <span style="color:var(--amber);font-weight:700">◯skip</span>=実施したがデータ無し</span>
+      <span style="font-size:11px;color:var(--text3)">◯=取込予定の日 ／ <span style="color:var(--amber);font-weight:700">◯skip</span>=実施したがファイル/データ無し（クーポンは他レポートがある日を自動補完）</span>
     </div>
     <div id="dropZoneCalGrid" style="overflow-x:auto"></div>
   </div>`;
@@ -12144,7 +12173,7 @@ function _calRenderMonth(ym) {
       const hlcol = (d === todayDay) ? 'background:#fffaf3' : '';
       let mark = '';
       if (cell) {
-        const title = (cell.files || []).join(', ');
+        const title = cell.synthetic ? 'クーポンファイル無し（実施済み・データ無し）' : (cell.files || []).join(', ');
         if (cell.status === 'skip') mark = `<span title="${title}" style="color:var(--amber);font-size:9px;font-weight:700">◯<span style="font-size:7px">skip</span></span>`;
         else mark = `<span title="${title}" style="color:var(--green);font-size:13px;font-weight:700">◯</span>`;
       }
@@ -12237,17 +12266,17 @@ async function runDropZoneCheck() {
     const fname = f.name.toLowerCase();
     const calType = _calFileType(f.name);
 
-    // ⑤ クーポンアドバンス：データ行があれば◯、ヘッダのみ（空）なら◯skip
+    // ⑤⑥ クーポンアドバンス（商品/KWの2種類）：データ行があれば◯、ヘッダのみ（空）なら◯skip
+    // ファイル名末尾の日付＝その日のデータ日なのでファイル名の日付を優先
     if (fname.includes('couponadvance')) {
       cpaFiles.push(f.name);
       let cStatus = 'ok', cText = '';
       try { cText = await _readNichText(f); } catch(e) { cText = ''; }
       const cRows = (cText || '').split(/\r?\n/).filter(l => l.trim().length > 0);
       if (cRows.length <= 1) cStatus = 'skip';
-      let cDate = null;
-      try { const di = _extractDateInfo(cText || ''); if (di) cDate = di.start; } catch(e) {}
-      if (!cDate) cDate = _calFilenameDate(f.name);
-      _calPush('coupon', cDate, cStatus, f.name);
+      let cDate = _calFilenameDate(f.name);
+      if (!cDate) { try { const di = _extractDateInfo(cText || ''); if (di) cDate = di.start; } catch(e) {} }
+      _calPush(calType || 'coupon_item', cDate, cStatus, f.name);
       continue;
     }
 
@@ -12373,7 +12402,8 @@ async function runDropZoneCheck() {
 
   // ショップ警告は最上部に表示
   if (cpaFiles.length) html += '<div style="margin-top:8px;padding:7px 10px;background:#e0f7fa;border-radius:5px;font-size:11px;color:#00695c;font-weight:700">📦 クーポンアドバンス '+cpaFiles.length+'件 → 【CA調整】に取り込みます</div>';
-  // カレンダー型プレビューを最上部に
+  // カレンダー型プレビューを最上部に（クーポンの「ファイル無し日」を◯skip補完してから描画）
+  _calFillCouponSkips();
   const calHtml = _calBuildHtml();
   result.innerHTML = calHtml + shopWarningHtml + html;
   // グリッド描画（既定表示月＝データの多い月、無ければ当月）
