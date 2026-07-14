@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1204</span>
+    <span class="build-date">v1.1205</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2392,9 +2392,10 @@ async function saveToGitHub(options = {}) {
 
 async function loadFromGitHub() {
   try {
-    // §3 現在KWスナップショット: まずローカル即時反映→GitHubから最新を非同期取得(失敗許容)
+    // §3 現在KWスナップショット: まずローカル即時反映→GitHubから最新を取得(失敗許容)
+    // ※awaitで待つ: readFiles取込直後に古いスナップショットが遅れて上書きするレースを防ぐ
     _loadCurrentKwLocal();
-    _loadCurrentKwFromGitHub();
+    try { await _loadCurrentKwFromGitHub(); } catch(e) {}
     // GitHub APIのcontents経由で最新を確実に取得(raw.githubusercontent.comはCDNキャッシュがあるため回避)
     const pat = localStorage.getItem('github_pat');
     const _apiFetch = async (path) => {
@@ -3074,6 +3075,7 @@ async function readFiles(files) {
     let hasMonthlyFile = false;
     let hasSalesUpdate = false;
     let hasCpaFile = false;
+    let hasItemKwFile = false;
     const _salesListResults = []; // { name, date, hasOrdersCol, rowCount, error }
 
     // フォルダZIP（中にrpp_等のファイルが入っているZIP）を展開してフラット化
@@ -3104,7 +3106,7 @@ async function readFiles(files) {
         try {
           const _ikText = await _readNichText(f);
           const _ok = _ingestCurrentKw(_ikText, f.name);
-          if (_ok) { try { await _saveCurrentKwToGitHub(); } catch(e){} }
+          if (_ok) { hasItemKwFile = true; try { await _saveCurrentKwToGitHub(); } catch(e){} }
           console.log('[ADcheck] 登録済みKWスナップショット取込:', f.name, 'ok=', _ok, 'codes=', Object.keys(_currentKwSnap.byCode||{}).length);
         } catch(e){ console.error('[ADcheck] 登録済みKW取込エラー', e); }
         continue;
@@ -3266,7 +3268,8 @@ async function readFiles(files) {
 
     if (csvTexts.length === 0) {
       console.log('[ADcheck] csvTexts is empty. hasMonthlyFile=', hasMonthlyFile, 'itemDailyData keys=', Object.keys(itemDailyData).length);
-      if (!hasMonthlyFile && !hasCpaFile) alert('CSVファイルが見つかりませんでした。ZIPまたはCSVファイルを選択してください。');
+      if (!hasMonthlyFile && !hasCpaFile && !hasItemKwFile) alert('CSVファイルが見つかりませんでした。ZIPまたはCSVファイルを選択してください。');
+      if (hasItemKwFile) { console.log('[ADcheck] 登録済みKW only import done'); try{ if(typeof renderKwIndivTableAll==='function') renderKwIndivTableAll(); }catch(e){} try{ if(typeof _kwIndivCode!=='undefined'&&_kwIndivCode&&typeof renderKwIndiv==='function') renderKwIndiv(); }catch(e){} }
       if (hasCpaFile) console.log('[ADcheck] CouponAdvance only import done');
       // item/kwのみの場合でもsaveToGitHubを呼んでitemDailyDataを保存
       if (Object.keys(itemDailyData).length > 0) saveToGitHub();
