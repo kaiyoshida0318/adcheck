@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1201</span>
+    <span class="build-date">v1.1204</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1146,7 +1146,8 @@ header + * { margin-top: 4px; }
         <span style="color:#1e8449;font-weight:900;font-size:15px">&#9678;</span>　目安・入札が両方40円で一致（最低CPC達成）<br>
         <span style="color:#1e8449;font-weight:700;font-size:13px">&#9711;</span>　入札が目安より安い（差10円以内）<br>
         <span style="color:#1e8449;font-weight:800;font-size:14px">&#10003;</span>　入札が目安より安い（差10円超）<br>
-        <span style="color:#c0392b;font-weight:900;font-size:14px">&#9632;</span>　出稿はしているがインプレッション無し
+        <span style="color:#c0392b;font-weight:900;font-size:14px">&#9632;</span>　出稿してるがインプレッションなし（目安45円超）<br>
+        <span style="color:#333;font-weight:900;font-size:14px">&#9632;</span>　出稿してるがインプレッションなし（目安45円以下）
       </div>
       <div id="taiouEditor" style="display:none;position:fixed;top:80px;left:50%;transform:translateX(-50%);width:920px;max-width:94vw;max-height:78vh;flex-direction:column;overflow:hidden;z-index:400;padding:14px 16px;border:1px solid var(--border);border-radius:10px;background:var(--surface);box-shadow:0 12px 40px rgba(0,0,0,.25)">
         <div onmousedown="_taiouDragStart(event)" ontouchstart="_taiouDragStart(event)" style="flex:none;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;cursor:move;user-select:none"><span style="font-weight:700;font-size:14px">✥ 対応の編集（条件 → 対応の文言）<span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:6px">（ここをドラッグで移動）</span></span><span style="display:inline-flex;align-items:center;gap:4px"><button onclick="_taiouSize('lg')" style="font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">大</button><button onclick="_taiouSize('md')" style="font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">中</button><button onclick="_taiouSize('sm')" style="font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">小</button><span style="width:1px;height:16px;background:var(--border);margin:0 3px"></span><button onclick="_moveTaiou('tr')" style="font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">右上</button><button onclick="_moveTaiou('mr')" style="font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">右中</button><button onclick="_moveTaiou('br')" style="font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">右下</button><button onclick="_toggleTaiouEditor()" style="border:none;background:none;font-size:20px;line-height:1;cursor:pointer;color:var(--text3);padding:0 0 0 4px">&#10005;</button></span></div>
@@ -5250,16 +5251,23 @@ function _ingestCurrentKw(text, fname){
   if(!text) return false;
   var rows=_cpaParseCsv(text); if(!rows.length) return false;
   var head=rows[0].map(function(h){return String(h).trim();});
-  var ci=head.indexOf('\u5546\u54C1\u7BA1\u7406\u756A\u53F7'); var ki=head.indexOf('\u30AD\u30FC\u30EF\u30FC\u30C9');
+  var ci=head.indexOf('\u5546\u54C1\u7BA1\u7406\u756A\u53F7'); var ki=head.indexOf('\u30AD\u30FC\u30EF\u30FC\u30C9'); var mi=head.indexOf('\u76EE\u5B89CPC');
   if(ci<0||ki<0) return false; // \u60F3\u5B9A\u30D8\u30C3\u30C0\u3067\u306A\u3044
-  var byCode={};
-  for(var i=1;i<rows.length;i++){ var r=rows[i]; if(!r) continue; if(r.length<=ci || r.length<=ki) continue; var code=String(r[ci]||'').trim(); var kw=String(r[ki]||'').trim(); if(!code||!kw) continue; (byCode[code]||(byCode[code]=[])).push(kw); }
-  Object.keys(byCode).forEach(function(c){ byCode[c]=[...new Set(byCode[c])]; }); // \u5546\u54C1\u5185KW\u91CD\u8907\u9664\u53BB
+  var byCode={}; // {code: {kw: \u76EE\u5B89CPC(number)}}
+  for(var i=1;i<rows.length;i++){ var r=rows[i]; if(!r) continue; if(r.length<=ci || r.length<=ki) continue; var code=String(r[ci]||'').trim(); var kw=String(r[ki]||'').trim(); if(!code||!kw) continue; var me = mi>=0 ? (parseFloat(String(r[mi]||'').replace(/[^0-9.]/g,''))||0) : 0; if(!byCode[code]) byCode[code]={}; if(byCode[code][kw]==null) byCode[code][kw]=me; }
   var date=_calFilenameDate(fname) || '';
   _currentKwSnap={ date:date, byCode:byCode };
   _saveCurrentKwLocal();
   return true;
 }
+// \u30B9\u30CA\u30C3\u30D7\u30B7\u30E7\u30C3\u30C8\u306E\u5546\u54C1KW\u3092 {kw:\u76EE\u5B89CPC} \u30DE\u30C3\u30D7\u306B\u6B63\u898F\u5316\uFF08\u65E7\u5F62\u5F0F=\u914D\u5217 \u306B\u3082\u5BFE\u5FDC\uFF09
+function _snapKwMap(raw){
+  if(!raw) return null;
+  if(Array.isArray(raw)){ var o={}; raw.forEach(function(k){ o[k]=null; }); return o; } // \u65E7\u5F62\u5F0F\u306F\u76EE\u5B89\u4E0D\u660E(null)
+  return raw;
+}
+// \u76EE\u5B89CPC\u304B\u3089 \u25A0 \u306E\u8272\u7A2E\u5225\u3092\u6C7A\u5B9A\uFF0846\u5186\u4EE5\u4E0A=\u8D64 / 46\u5186\u672A\u6E80(=45\u5186\u4EE5\u4E0B)=\u9ED2 / \u4E0D\u660E=\u8D64\uFF09
+function _zeroImpKind(mecpc){ return (mecpc!=null && mecpc<=45) ? 'zeroImpBlack' : 'zeroImpRed'; }
 async function _saveCurrentKwToGitHub(){
   var pat=localStorage.getItem('github_pat'); if(!pat) return false;
   try{
@@ -7796,18 +7804,39 @@ function _taiouDragMove(e){ if(!_taiouDrag) return; var ev=e.touches?e.touches[0
 function _taiouDragEnd(){ _taiouDrag=null; document.removeEventListener('mousemove',_taiouDragMove); document.removeEventListener('mouseup',_taiouDragEnd); document.removeEventListener('touchmove',_taiouDragMove); document.removeEventListener('touchend',_taiouDragEnd); }
 var _TAIOU_KEY='adcheck_taiou_rules';
 var _taiouRules=[]; try{ _taiouRules=JSON.parse(localStorage.getItem(_TAIOU_KEY)||'[]')||[]; }catch(e){ _taiouRules=[]; }
-// ⑧ 実績0(■)ルールを末尾に用意（明示削除されていない限り常に1つ確保）。出稿中0impのKW行の対応文言に使う。
+// ⑧赤■(目安46+) / ⑨黒■(目安46未満) ルールを用意。旧'zeroImp'は赤へ移行。明示削除された色は復活しない。
 function _taiouEnsureZeroImp(){
-  try{ if(localStorage.getItem('adcheck_taiou_zeroimp_dismissed')==='1') return false; }catch(e){}
-  var has=(_taiouRules||[]).some(function(r){ return r && r.mark==='zeroImp'; });
-  if(has) return false;
-  _taiouRules.push({mark:'zeroImp',conds:[],text:'出稿はしているがインプレッション無し。入札/目安を確認',color:'red',weight:'normal'});
-  _taiouSave();
-  return true;
+  var changed=false;
+  // 旧'zeroImp'（単色■）を赤(zeroImpRed)へ移行
+  (_taiouRules||[]).forEach(function(r){ if(r && r.mark==='zeroImp'){ r.mark='zeroImpRed'; changed=true; } });
+  // 赤黒の意味を入替（赤=46+, 黒=45-）。既存の zeroImpBlack↔zeroImpRed を一度だけ交換（文言はそのまま色が反転）
+  try{ if(localStorage.getItem('adcheck_taiou_zeroimp_swap12')!=='1'){
+    (_taiouRules||[]).forEach(function(r){ if(!r) return; if(r.mark==='zeroImpBlack'){ r.mark='zeroImpRed'; } else if(r.mark==='zeroImpRed'){ r.mark='zeroImpBlack'; } });
+    localStorage.setItem('adcheck_taiou_zeroimp_swap12','1'); changed=true;
+  } }catch(e){}
+  // 既定文言のみ最新表記（45円超/45円以下）へ更新（ユーザー編集済みの文言は触らない）
+  var _zDef={'出稿してるがインプレッションなし（目安46円以上）':1,'出稿してるがインプレッションなし（目安46円未満）':1,'出稿してるがインプレッションなし（目安45円以下）':1,'出稿してるがインプレッションなし（目安45円超）':1,'出稿はしているがインプレッション無し。入札/目安を確認':1};
+  (_taiouRules||[]).forEach(function(r){ if(!r||!r.text||!_zDef[r.text]) return; var nt = r.mark==='zeroImpRed' ? '出稿してるがインプレッションなし（目安45円超）' : (r.mark==='zeroImpBlack' ? '出稿してるがインプレッションなし（目安45円以下）' : null); if(nt && r.text!==nt){ r.text=nt; changed=true; } });
+  var dismB=false, dismR=false;
+  try{ dismB=localStorage.getItem('adcheck_taiou_zeroimpblack_dismissed')==='1'; }catch(e){}
+  try{ dismR=localStorage.getItem('adcheck_taiou_zeroimpred_dismissed')==='1'; }catch(e){}
+  var hasBlack=(_taiouRules||[]).some(function(r){ return r && r.mark==='zeroImpBlack'; });
+  var hasRed=(_taiouRules||[]).some(function(r){ return r && r.mark==='zeroImpRed'; });
+  // 黒（⑨・目安45円以下）：無ければ末尾に追加
+  if(!hasBlack && !dismB){ _taiouRules.push({mark:'zeroImpBlack',conds:[],text:'出稿してるがインプレッションなし（目安45円以下）',color:'black',weight:'normal'}); hasBlack=true; changed=true; }
+  // 赤（⑧・目安46円以上）：最初の黒の直前に挿入（無ければ末尾）→ ⑧赤 ⑨黒
+  if(!hasRed && !dismR){
+    var _bi=-1; for(var _i=0;_i<_taiouRules.length;_i++){ if(_taiouRules[_i]&&_taiouRules[_i].mark==='zeroImpBlack'){ _bi=_i; break; } }
+    var _rd={mark:'zeroImpRed',conds:[],text:'出稿してるがインプレッションなし（目安45円超）',color:'red',weight:'normal'};
+    if(_bi>=0) _taiouRules.splice(_bi,0,_rd); else _taiouRules.push(_rd);
+    changed=true;
+  }
+  if(changed) _taiouSave();
+  return changed;
 }
 try{ _taiouEnsureZeroImp(); }catch(e){}
 try{ _taiouMigrate(); }catch(e){}
-var _TAIOU_MARKS=[['any','すべて'],['x','✕'],['tri','△'],['checkR','✓赤'],['yellow','◯黄'],['maru40','◎'],['maruG','◯緑'],['checkG','✓緑'],['zeroImp','■']];
+var _TAIOU_MARKS=[['any','すべて'],['x','✕'],['tri','△'],['checkR','✓赤'],['yellow','◯黄'],['maru40','◎'],['maruG','◯緑'],['checkG','✓緑'],['zeroImpRed','■赤'],['zeroImpBlack','■黒']];
 function _kwiMkKind(act,gui,streak){ if(act==null||gui==null||act<=0||gui<=0) return 'none'; if(act===40&&gui===40) return 'maru40'; if(act>gui) return 'x'; if(act===gui) return 'checkR'; if((streak||0)>=3) return 'tri'; if(gui>=100) return 'yellow'; var d=gui-act; if(d<=10) return 'maruG'; return 'checkG'; }
 function _taiouOpOk(op,val,x){ if(!op||val===''||val==null||isNaN(parseFloat(val))) return true; if(x==null||isNaN(x)) return false; var v=parseFloat(val); if(op==='>=')return x>=v; if(op==='<=')return x<=v; if(op==='>')return x>v; if(op==='<')return x<v; if(op==='=')return x===v; return true; }
 function _taiouFor(kind,vals){ for(var i=0;i<_taiouRules.length;i++){ var r=_taiouRules[i]; if(!r) continue; if(r.mark&&r.mark!=='any'&&r.mark!==kind) continue; var ok=true; var cs=r.conds||[]; for(var j=0;j<cs.length;j++){ var c=cs[j]; if(!c||!c.field) continue; if(!_taiouOpOk(c.op,c.val,vals[c.field])){ ok=false; break; } } if(ok && ((r.text||'')+'').trim()!=='') return r; } return null; }
@@ -7831,15 +7860,15 @@ async function _taiouPublish(){ var pat=localStorage.getItem('github_pat'); if(!
 async function _taiouPublishBtn(btn){ if(btn){ btn.disabled=true; btn.textContent='保存中…'; } var ok=await _taiouPublish(); if(btn){ btn.disabled=false; btn.textContent='他PCに共有保存'; } alert(ok?'他のPCに共有保存しました。':'共有保存に失敗しました（設定でGitHub PATの登録が必要です）。'); }
 function _taiouSet(idx,field,val){ if(!_taiouRules[idx]) return; _taiouRules[idx][field]=val; _taiouSave(); }
 function _taiouAddRule(){ _taiouRules.push({mark:'any',conds:[],text:'',color:'black',weight:'normal'}); _taiouSave(); _renderTaiouEditor(); }
-function _taiouDelRule(idx){ var _r=_taiouRules[idx]; if(_r && _r.mark==='zeroImp'){ try{ localStorage.setItem('adcheck_taiou_zeroimp_dismissed','1'); }catch(e){} } _taiouRules.splice(idx,1); _taiouSave(); _renderTaiouEditor(); }
+function _taiouDelRule(idx){ var _r=_taiouRules[idx]; if(_r){ if(_r.mark==='zeroImpBlack'){ try{ localStorage.setItem('adcheck_taiou_zeroimpblack_dismissed','1'); }catch(e){} } else if(_r.mark==='zeroImpRed'||_r.mark==='zeroImp'){ try{ localStorage.setItem('adcheck_taiou_zeroimpred_dismissed','1'); }catch(e){} } } _taiouRules.splice(idx,1); _taiouSave(); _renderTaiouEditor(); }
 function _taiouApply(){ if(typeof renderKwIndivTableAll==='function'){ try{renderKwIndivTableAll();}catch(e){} } if(typeof _currentTab!=='undefined' && _currentTab==='kw-indiv' && typeof renderKwIndiv==='function'){ try{renderKwIndiv();}catch(e){} } }
 var _taiouMsgT=null;
 function _taiouSortByMark(){ var ord={}; _TAIOU_MARKS.forEach(function(m,i){ ord[m[0]]=i; }); _taiouRules.sort(function(a,b){ var oa=ord[a&&a.mark]; if(oa==null)oa=999; var ob=ord[b&&b.mark]; if(ob==null)ob=999; return oa-ob; }); _taiouSave(); }
 function _taiouApplyBtn(){ _taiouSortByMark(); _renderTaiouEditor(); _taiouApply(); var m=document.getElementById('taiouApplyMsg'); if(m){ m.textContent='\u2713 反映しました'; m.style.opacity='1'; if(_taiouMsgT) clearTimeout(_taiouMsgT); _taiouMsgT=setTimeout(function(){ if(m) m.style.opacity='0'; },2200); } }
 function _taiouOpSel(idx,field,cur){ var ops=['','>=','<=','>','<','=']; var lbl={'':'-','>=':'\u2265','<=':'\u2264','>':'>','<':'<','=':'='}; var h='<select onchange="_taiouSet('+idx+',\''+field+'\',this.value);_taiouApply()" style="font-size:11px;padding:3px 4px;border:1px solid var(--border);border-radius:4px;background:#fff">'; ops.forEach(function(o){ h+='<option value="'+o+'"'+(o===cur?' selected':'')+'>'+lbl[o]+'</option>'; }); h+='</select>'; return h; }
 function _taiouNum(idx,field,cur){ return '<input type="number" value="'+(cur==null?'':cur)+'" onchange="_taiouSet('+idx+',\''+field+'\',this.value);_taiouApply()" style="width:62px;font-size:11px;padding:3px 5px;border:1px solid var(--border);border-radius:4px;background:#fff">'; }
-var _TAIOU_MARK_LBL={any:'すべて',x:'\u2716 高い',tri:'\u25B3 安い(3日0click)',checkR:'\u2713 同じ',yellow:'\u25EF 黄(目安100+)',maru40:'\u25CE 40一致',maruG:'\u25EF 緑(差10以内)',checkG:'\u2713 緑(差10超)',zeroImp:'■ 出稿中インプレ無し'};
-function _taiouMarkGlyph(kind){ var c={any:'<span style="font-size:11px;color:#555">すべて</span>',x:'<span style="color:#c0392b;font-weight:900;font-size:15px">\u2716</span>',tri:'<span style="color:#c0392b;font-weight:900;font-size:15px">\u25B3</span>',checkR:'<span style="color:#c0392b;font-weight:900;font-size:15px">\u2713</span>',yellow:'<span style="color:#BF8F00;font-weight:900;font-size:15px;-webkit-text-stroke:0.6px #BF8F00">\u25EF</span>',maru40:'<span style="color:#1e8449;font-weight:900;font-size:15px">\u25CE</span>',maruG:'<span style="color:#1e8449;font-weight:900;font-size:14px">\u25EF</span>',checkG:'<span style="color:#1e8449;font-weight:900;font-size:15px">\u2713</span>',zeroImp:'<span style="color:#c0392b;font-weight:900;font-size:14px">\u25A0</span>'}; return c[kind]||c.any; }
+var _TAIOU_MARK_LBL={any:'すべて',x:'\u2716 高い',tri:'\u25B3 安い(3日0click)',checkR:'\u2713 同じ',yellow:'\u25EF 黄(目安100+)',maru40:'\u25CE 40一致',maruG:'\u25EF 緑(差10以内)',checkG:'\u2713 緑(差10超)',zeroImpRed:'■ 出稿中インプレ無し(目安45超)',zeroImpBlack:'■ 出稿中インプレ無し(目安45以下)'};
+function _taiouMarkGlyph(kind){ var c={any:'<span style="font-size:11px;color:#555">すべて</span>',x:'<span style="color:#c0392b;font-weight:900;font-size:15px">\u2716</span>',tri:'<span style="color:#c0392b;font-weight:900;font-size:15px">\u25B3</span>',checkR:'<span style="color:#c0392b;font-weight:900;font-size:15px">\u2713</span>',yellow:'<span style="color:#BF8F00;font-weight:900;font-size:15px;-webkit-text-stroke:0.6px #BF8F00">\u25EF</span>',maru40:'<span style="color:#1e8449;font-weight:900;font-size:15px">\u25CE</span>',maruG:'<span style="color:#1e8449;font-weight:900;font-size:14px">\u25EF</span>',checkG:'<span style="color:#1e8449;font-weight:900;font-size:15px">\u2713</span>',zeroImpBlack:'<span style="color:#333;font-weight:900;font-size:14px">\u25A0</span>',zeroImpRed:'<span style="color:#c0392b;font-weight:900;font-size:14px">\u25A0</span>'}; return c[kind]||c.any; }
 function _taiouMarkOpen(idx,btn){
   var all=document.querySelectorAll('[id^="taiouMarkDD"]');
   for(var i=0;i<all.length;i++){ if(all[i].id!=='taiouMarkDD'+idx) all[i].style.display='none'; }
@@ -7938,7 +7967,8 @@ function renderKwIndiv(){
         +'<span style="color:#1e8449;font-weight:900;font-size:15px">&#9678;</span>　目安・入札が両方40円で一致（最低CPC達成）<br>'
         +'<span style="color:#1e8449;font-weight:700;font-size:13px">&#9711;</span>　入札が目安より安い（差10円以内）<br>'
         +'<span style="color:#1e8449;font-weight:800;font-size:14px">&#10003;</span>　入札が目安より安い（差10円超）<br>'
-        +'<span style="color:#c0392b;font-weight:900;font-size:14px">&#9632;</span>　出稿はしているがインプレッション無し'
+        +'<span style="color:#c0392b;font-weight:900;font-size:14px">&#9632;</span>　出稿してるがインプレッションなし（目安45円超）<br>'
+        +'<span style="color:#333;font-weight:900;font-size:14px">&#9632;</span>　出稿してるがインプレッションなし（目安45円以下）'
         +'</div>';
       const _note='<div style="font-size:11px;color:#888;margin-top:6px"><span style="font-weight:700">?数字?</span>＝データが半数以下で、おおまかな予測の数値です。</div>';
       _sumHtml='<div style="display:flex;gap:20px;align-items:flex-start;margin:0 0 16px;flex-wrap:wrap"><div style="overflow-x:auto"><table style="border-collapse:collapse">'+_h+'</table>'+_note+'</div>'+_leg+'</div>';
@@ -8047,7 +8077,8 @@ function _kwiLegendCard(){ return '<div style="border:1px solid #c9c9c9;border-r
   +'<span style="color:#1e8449;font-weight:900;font-size:15px">&#9678;</span>　目安・入札が両方40円で一致（最低CPC達成）<br>'
   +'<span style="color:#1e8449;font-weight:700;font-size:13px">&#9711;</span>　入札が目安より安い（差10円以内）<br>'
   +'<span style="color:#1e8449;font-weight:800;font-size:14px">&#10003;</span>　入札が目安より安い（差10円超）<br>'
-  +'<span style="color:#c0392b;font-weight:900;font-size:14px">&#9632;</span>　出稿はしているがインプレッション無し'
+  +'<span style="color:#c0392b;font-weight:900;font-size:14px">&#9632;</span>　出稿してるがインプレッションなし（目安45円超）<br>'
+  +'<span style="color:#333;font-weight:900;font-size:14px">&#9632;</span>　出稿してるがインプレッションなし（目安45円以下）'
   +'</div>'; }
 var _kwAllSort='spend';
 var _kwAllExclMaru=true;
@@ -8499,20 +8530,21 @@ function _buildKwTableBlock(code, daily, idx, pfx){
     }); }
     _rowKws=kws.concat(_pastKws).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(x<y?-1:1));
     // §3: 登録済みKWスナップショット（最新月のみ）で 出稿中/停止 を上書き
-    var _zeroSet={};
+    var _zeroSet={}, _zeroMecpc={};
     (function(){
       if(!(_currentKwSnap && _currentKwSnap.byCode)) return;
-      var _snap=_currentKwSnap.byCode[code]; if(!_snap || !_snap.length) return;
+      var _snap=_snapKwMap(_currentKwSnap.byCode[code]); if(!_snap) return;
+      var _snapKws=Object.keys(_snap); if(!_snapKws.length) return;
       var _dispYm6=_monthLast?(_monthLast.slice(0,4)+_monthLast.slice(5,7)):'';
       var _gYm6=_gLatest?(_gLatest.slice(0,4)+_gLatest.slice(5,7)):'';
       if(!_dispYm6 || _dispYm6!==_gYm6) return; // 最新月のみ適用（過去日には現在の登録状態を当てない）
-      var _setKw={}; _snap.forEach(function(k){ _setKw[k]=1; });
+      var _setKw={}; _snapKws.forEach(function(k){ _setKw[k]=1; });
       // 1) スナップショットにあるKW＝出稿中 → 停止(過去KW)判定を解除
       Object.keys(_pastSet).forEach(function(kw){ if(_setKw[kw]){ delete _pastSet[kw]; } });
       _pastKws=_pastKws.filter(function(kw){ return !_setKw[kw]; });
-      // 2) 今月0impressionだが登録中のKW → 濃字「実績0」行として追加
+      // 2) 今月0impressionだが登録中のKW → 濃字「実績0」行として追加（目安CPCで黒■/赤■を区別）
       var _zeroKws=[];
-      _snap.forEach(function(kw){ if(!byKw[kw]){ _zeroSet[kw]=1; if(_kwVol[kw]==null) _kwVol[kw]=0; _zeroKws.push(kw); } });
+      _snapKws.forEach(function(kw){ if(!byKw[kw]){ _zeroSet[kw]=1; _zeroMecpc[kw]=_snap[kw]; if(_kwVol[kw]==null) _kwVol[kw]=0; _zeroKws.push(kw); } });
       // 既存（impression有KW＋停止KW）の並びは維持し、実績0の出稿中KWは末尾へ
       var _vs=function(x,y){ return (_kwVol[y]-_kwVol[x])||(x<y?-1:1); };
       _rowKws=kws.concat(_pastKws).sort(_vs).concat(_zeroKws.sort(_vs));
@@ -8554,8 +8586,10 @@ function _buildKwTableBlock(code, daily, idx, pfx){
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:10px;text-align:left;color:#888;white-space:nowrap">'+(_ag.lym?('最終出稿 '+_ag.lym.slice(0,4)+'/'+_ag.lym.slice(4,6)):'')+'</td>'
         +'</tr>'; return; }
-      if(typeof _zeroSet!=='undefined' && _zeroSet[kw]){ // §3: 出稿中だが今月0impression（濃字＋「実績0」注記）
+      if(typeof _zeroSet!=='undefined' && _zeroSet[kw]){ // §3: 出稿中だが今月0impression（目安CPCで黒■/赤■を区別）
         var _zv=_kwVol[kw]||0;
+        var _zme=(typeof _zeroMecpc!=='undefined')?_zeroMecpc[kw]:null; // 目安CPC(登録済みKWスナップショット)
+        var _zk=_zeroImpKind(_zme); // 'zeroImpBlack'(46+) / 'zeroImpRed'(45-)
         _h+='<tr>'
           +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+_n2(_zv)+'</td>'
@@ -8567,10 +8601,10 @@ function _buildKwTableBlock(code, daily, idx, pfx){
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">0</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">0</td>'
           +(function(){ var pc=_prevCpcOf(kw); var bg=pc!=null?'#fbe7cf':'#fff'; return '<td style="'+_T+';font-size:11px;color:#333;background:'+bg+'">'+(pc!=null?Math.round(pc).toLocaleString():'—')+'</td>'; })()
-          +'<td style="'+_T+';background:#e6d6fb;font-size:11px">—</td>'
+          +'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+((_zme!=null&&_zme>0)?_n2(_zme):'—')+'</td>'
           +'<td style="'+_T+';background:#d9edca;font-size:11px">—</td>'
-          +'<td style="'+_T+';background:#fff">'+_taiouMarkGlyph('zeroImp')+'</td>'
-          +(function(){ var vals={kwvol:_zv,share:0,spend:0,sales:0,cvr:null,roas:null,mclick:0,recent3:0,gui:null,act:null}; var _ru=_taiouFor('zeroImp',vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
+          +'<td style="'+_T+';background:#fff">'+_taiouMarkGlyph(_zk)+'</td>'
+          +(function(){ var vals={kwvol:_zv,share:0,spend:0,sales:0,cvr:null,roas:null,mclick:0,recent3:0,gui:(_zme!=null?_zme:null),act:null}; var _ru=_taiouFor(_zk,vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
           +'</tr>'; return; }
       const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_kwiCarry(byKw[kw],_latest); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_kwiRecent3(byKw[kw],_latest);
       _h+='<tr>'
