@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1190</span>
+    <span class="build-date">v1.1192</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1507,7 +1507,7 @@ header + * { margin-top: 4px; }
 <!-- Settings Modal -->
 <!-- ドロップゾーンモーダル -->
 <div class="modal-overlay" id="dropZoneModal" ondragover="onDropModalOver(event)" ondragleave="onDropModalLeave(event)" ondrop="onDropModalDrop(event)">
-  <div class="modal" style="max-width:min(960px,95vw);width:100%;text-align:center;max-height:92vh;height:auto;display:flex;flex-direction:column;padding:16px 20px;margin:16px 0">
+  <div class="modal" style="max-width:min(1180px,97vw);width:100%;text-align:center;max-height:92vh;height:auto;display:flex;flex-direction:column;padding:16px 20px;margin:16px 0">
     <div style="flex-shrink:0">
     <h3 style="margin:0 0 6px;font-size:16px">📂 レポートを追加</h3>
     <p style="margin-bottom:10px;font-size:11px;color:var(--text2)">楽天RMSからダウンロードしたRPPレポートのZIPまたはCSVを<br>複数まとめてドロップできます</p>
@@ -12248,8 +12248,9 @@ function _calRenderMonth(ym) {
   const nowYm = _calCurrentYm();
   const todayDay = (ym === nowYm) ? new Date().getDate() : -1;
   const data = _calMonthData[ym] || {};
-  const cw = 22; // セル幅
-  let head = `<th style="position:sticky;left:0;z-index:2;background:var(--surface2);border:1px solid var(--border);padding:4px 8px;text-align:left;font-size:10px;color:var(--text3);white-space:nowrap;min-width:150px">ファイル種別</th>`;
+  const cw = 20; // セル幅
+  const lw = 148; // ラベル列の固定幅（横スクロール防止のため固定）
+  let head = `<th style="position:sticky;left:0;z-index:2;background:var(--surface2);border:1px solid var(--border);padding:4px 8px;text-align:left;font-size:10px;color:var(--text3);width:${lw}px;min-width:${lw}px;max-width:${lw}px">ファイル種別</th>`;
   for (let d = 1; d <= days; d++) {
     const hl = (d === todayDay) ? 'background:#fff3e0;color:#e65100;font-weight:700' : 'background:var(--surface2);color:var(--text3)';
     head += `<th style="border:1px solid var(--border);padding:2px 0;font-size:9px;width:${cw}px;min-width:${cw}px;${hl}">${d}</th>`;
@@ -12258,10 +12259,10 @@ function _calRenderMonth(ym) {
   _CAL_ROWS.forEach(row => {
     const rd = data[row.k] || {};
     body += `<tr>
-      <td style="position:sticky;left:0;z-index:1;background:var(--surface);border:1px solid var(--border);padding:4px 8px;white-space:nowrap">
-        <span style="font-size:13px;margin-right:4px">${row.badge}</span>
+      <td style="position:sticky;left:0;z-index:1;background:var(--surface);border:1px solid var(--border);padding:3px 6px;width:${lw}px;min-width:${lw}px;max-width:${lw}px;white-space:normal;line-height:1.25">
+        <span style="font-size:12px;margin-right:3px">${row.badge}</span>
         <span style="font-size:11px;font-weight:700;color:var(--text)">${row.label}</span>
-        <span style="font-size:9px;color:var(--text3);margin-left:4px">${row.sub}</span>
+        <span style="font-size:8px;color:var(--text3);display:block">${row.sub}</span>
       </td>`;
     for (let d = 1; d <= days; d++) {
       const cell = rd[d];
@@ -12300,12 +12301,19 @@ async function runDropZoneCheck() {
   const detectedShopCodes = {}; // shopCode -> count
   const _extractShopFromFname = (name) => {
     // rpp_reports_<shop>_, rpp_keyword_reports_<shop>_, rpp_item_reports_<shop>_
+    // 例: yukaiya / kai-ry（ハイフン可）
     const m1 = name.match(/^rpp_reports_([^_]+(?:-[^_]+)*)_\d/i);
     if (m1) return m1[1];
     const m2 = name.match(/^rpp_keyword_reports_([^_]+(?:-[^_]+)*)_\d/i);
     if (m2) return m2[1];
+    // rpp_item_keyword_<shop>_ は rpp_item_reports_ より先に判定（前方一致の取り違え防止）
+    const m4 = name.match(/^rpp_item_keyword_([^_]+(?:-[^_]+)*)_\d/i);
+    if (m4) return m4[1];
     const m3 = name.match(/^rpp_item_reports_([^_]+(?:-[^_]+)*)_\d/i);
     if (m3) return m3[1];
+    // CouponAdvance_<shop>_item_ / CouponAdvance_<shop>_kw_
+    const m5 = name.match(/^couponadvance_([^_]+(?:-[^_]+)*)_(?:item|kw)_/i);
+    if (m5) return m5[1];
     return null;
   };
   for (const f of Array.from(_stagedFiles)) {
@@ -12357,6 +12365,7 @@ async function runDropZoneCheck() {
   }
 
   const cpaFiles = [];
+  const itemkwFiles = []; // 登録済みKW（rpp_item_keyword_）: {name, date, prod, kw}
   for (const f of Array.from(_stagedFiles)) {
     const fname = f.name.toLowerCase();
     const calType = _calFileType(f.name);
@@ -12375,11 +12384,31 @@ async function runDropZoneCheck() {
       continue;
     }
 
-    // ⑥ 登録済みKW（rpp_item_keyword_*.csv）：日付列が無いのでファイル名の日付を使う。集計グループには入れない
+    // ⑦ 登録済みKW（rpp_item_keyword_*.csv）：日付列が無いのでファイル名の日付を使う。集計グループには入れない
     if (calType === 'itemkw') {
       const iDate = _calFilenameDate(f.name);
       if (iDate) _calPush('itemkw', iDate, 'ok', f.name);
       else warnings.push(`⚠️ ${f.name}: 日付を検出できません（登録済みKW）`);
+      // 中身を軽くパースして 商品数 / KW数 を集計（保存はしない・チェック表示のみ）
+      let _prod = 0, _kw = 0;
+      try {
+        const _t = await _readNichText(f);
+        const _rows = _cpaParseCsv(_t || '');
+        if (_rows.length) {
+          const _head = _rows[0].map(h => String(h).trim());
+          const _ci = _head.indexOf('商品管理番号'), _ki = _head.indexOf('キーワード');
+          if (_ci >= 0 && _ki >= 0) {
+            const _codes = {};
+            for (let j = 1; j < _rows.length; j++) {
+              const _r = _rows[j]; if (!_r || _r.length <= _ci || _r.length <= _ki) continue;
+              const _c = String(_r[_ci] || '').trim(), _k = String(_r[_ki] || '').trim();
+              if (!_c || !_k) continue; _codes[_c] = 1; _kw++;
+            }
+            _prod = Object.keys(_codes).length;
+          }
+        }
+      } catch(e) {}
+      itemkwFiles.push({ name: f.name, date: iDate, prod: _prod, kw: _kw });
       continue;
     }
 
@@ -12424,7 +12453,7 @@ async function runDropZoneCheck() {
   let okCount = 0, errCount = 0, dupCount = 0;
   let detailHtml = '';
 
-  if (keys.length === 0 && warnings.length === 0 && cpaFiles.length === 0) {
+  if (keys.length === 0 && warnings.length === 0 && cpaFiles.length === 0 && itemkwFiles.length === 0) {
     detailHtml += '<div style="color:var(--danger)">対応ファイルが見つかりませんでした</div>';
     hasError = true;
   }
@@ -12478,7 +12507,10 @@ async function runDropZoneCheck() {
   // 件数が10件以下、または重複・エラーがあればデフォルト展開
   const defaultOpen = totalCount <= 10 || dupCount > 0 || errCount > 0;
 
-  let html = `<div style="font-size:11px">
+  // 日別レポートが1件も無く、登録済みKW/クーポンだけの場合は「0件」サマリーを出さない
+  let html = '';
+  if (totalCount > 0 || warnings.length > 0) {
+    html = `<div style="font-size:11px">
     <div onclick="(function(el){const d=el.nextElementSibling;const arr=el.querySelector('.acc-arr');const open=d.style.display!=='none';d.style.display=open?'none':'block';arr.textContent=open?'▶':'▼';})(this)"
          style="cursor:pointer;background:var(--surface2);padding:8px 12px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:12px;color:var(--text);user-select:none;border:1px solid var(--border)">
       <span>${summaryText}</span>
@@ -12486,6 +12518,7 @@ async function runDropZoneCheck() {
     </div>
     <div style="display:${defaultOpen ? 'block' : 'none'};max-height:300px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;padding:6px 12px">${detailHtml}</div>
   </div>`;
+  }
 
   if (!hasError && !shopMismatch) {
     html += '<div style="margin-top:8px;padding:7px 10px;background:#e8f5e9;border-radius:5px;font-size:11px;color:#2e7d32;font-weight:700">✅ 問題なし。「反映する」を押してください</div>';
@@ -12497,6 +12530,14 @@ async function runDropZoneCheck() {
 
   // ショップ警告は最上部に表示
   if (cpaFiles.length) html += '<div style="margin-top:8px;padding:7px 10px;background:#e0f7fa;border-radius:5px;font-size:11px;color:#00695c;font-weight:700">📦 クーポンアドバンス '+cpaFiles.length+'件 → 【CA調整】に取り込みます</div>';
+  // 登録済みKW（rpp_item_keyword_）: クーポンの下にサマリーを表示
+  if (itemkwFiles.length) {
+    const _ik = itemkwFiles[itemkwFiles.length - 1]; // 最新1枚が保存対象（複数時は最後を採用）
+    const _dt = _ik.date ? ('（' + _ik.date + ' 時点）') : '';
+    const _cnt = (_ik.prod || _ik.kw) ? (' ' + _ik.prod + '商品 / ' + _ik.kw + 'KW') : '';
+    const _multi = itemkwFiles.length > 1 ? '<br><span style="font-weight:400;color:#1976d2">※ 複数ある場合は最新1枚のみ保存します</span>' : '';
+    html += '<div style="margin-top:8px;padding:7px 10px;background:#eef7ff;border-radius:5px;font-size:11px;color:#1565c0;font-weight:700">🔑 登録済みKW ' + itemkwFiles.length + '件' + _dt + _cnt + ' → 現在の登録キーワードを更新（出稿中／停止 判定に使用）' + _multi + '</div>';
+  }
   // カレンダー型プレビューを最上部に（クーポンの「ファイル無し日」を◯skip補完してから描画）
   _calFillCouponSkips();
   const calHtml = _calBuildHtml();
