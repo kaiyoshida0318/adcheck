@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1192</span>
+    <span class="build-date">v1.1193</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12248,12 +12248,11 @@ function _calRenderMonth(ym) {
   const nowYm = _calCurrentYm();
   const todayDay = (ym === nowYm) ? new Date().getDate() : -1;
   const data = _calMonthData[ym] || {};
-  const cw = 20; // セル幅
-  const lw = 148; // ラベル列の固定幅（横スクロール防止のため固定）
+  const lw = 148; // ラベル列の固定幅（残りの日付列は均等に幅いっぱいへ広がる）
   let head = `<th style="position:sticky;left:0;z-index:2;background:var(--surface2);border:1px solid var(--border);padding:4px 8px;text-align:left;font-size:10px;color:var(--text3);width:${lw}px;min-width:${lw}px;max-width:${lw}px">ファイル種別</th>`;
   for (let d = 1; d <= days; d++) {
     const hl = (d === todayDay) ? 'background:#fff3e0;color:#e65100;font-weight:700' : 'background:var(--surface2);color:var(--text3)';
-    head += `<th style="border:1px solid var(--border);padding:2px 0;font-size:9px;width:${cw}px;min-width:${cw}px;${hl}">${d}</th>`;
+    head += `<th style="border:1px solid var(--border);padding:3px 0;font-size:10px;text-align:center;${hl}">${d}</th>`;
   }
   let body = '';
   _CAL_ROWS.forEach(row => {
@@ -12270,14 +12269,14 @@ function _calRenderMonth(ym) {
       let mark = '';
       if (cell) {
         const title = cell.synthetic ? 'クーポンファイル無し（実施済み・データ無し）' : (cell.files || []).join(', ');
-        if (cell.status === 'skip') mark = `<span title="${title}" style="color:var(--amber);font-size:9px;font-weight:700">◯<span style="font-size:7px">skip</span></span>`;
-        else mark = `<span title="${title}" style="color:var(--green);font-size:13px;font-weight:700">◯</span>`;
+        if (cell.status === 'skip') mark = `<span title="${title}" style="color:var(--amber);font-size:10px;font-weight:700;white-space:nowrap">◯<span style="font-size:8px">skip</span></span>`;
+        else mark = `<span title="${title}" style="color:var(--green);font-size:14px;font-weight:700">◯</span>`;
       }
-      body += `<td style="border:1px solid var(--border);text-align:center;height:24px;width:${cw}px;${hlcol}">${mark}</td>`;
+      body += `<td style="border:1px solid var(--border);text-align:center;height:26px;${hlcol}">${mark}</td>`;
     }
     body += `</tr>`;
   });
-  grid.innerHTML = `<table style="border-collapse:collapse;font-size:11px"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  grid.innerHTML = `<table style="border-collapse:collapse;font-size:11px;width:100%;table-layout:fixed"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
 async function runDropZoneCheck() {
