@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1211</span>
+    <span class="build-date">v1.1212</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2242,6 +2242,43 @@ function _initShopsIfNeeded() {
   } catch(e) { console.warn('[ADcheck] shop restore error', e); }
 }
 _initShopsIfNeeded();
+
+// ── URLでショップを指定して開く（スピードダイヤル用）──
+// 例: index.html?shop=yukaiya / index.html?shop=kairy
+// 一致するショップがあれば、その設定に切り替えてから初期ロードする（リロード不要）
+function _applyShopFromUrl() {
+  try {
+    var raw = null;
+    try { var qs = new URLSearchParams(location.search); raw = qs.get('shop') || qs.get('s'); } catch(_e) {}
+    if (!raw && location.hash) { var mm = location.hash.match(/shop=([a-zA-Z0-9_-]+)/); if (mm) raw = mm[1]; }
+    if (!raw) return;
+    var want = String(raw).toLowerCase().trim();
+    if (want === 'kai-ry') want = 'kairy';
+    var shops = _getShops();
+    var target = shops.find(function(s){ return String(s.id||'').toLowerCase() === want; })
+              || shops.find(function(s){ return String(s.shopCode||'').toLowerCase() === want; });
+    if (!target) { console.warn('[ADcheck] URL指定のショップが未登録です:', want); return; }
+    var curId = _getCurrentShopId();
+    if (target.id === curId) { console.log('[ADcheck] URLショップ指定: 既に', target.id); return; }
+    // 現在ショップの最新設定を保存（switchShopと同じ誤上書き防止つき）
+    var cur = shops.find(function(s){ return s.id === curId; });
+    if (cur) {
+      var lsShopCode = localStorage.getItem('rakuten_shop_code') || '';
+      var otherCodes = shops.filter(function(s){ return s.id !== curId; }).map(function(s){ return String(s.shopCode||'').toLowerCase(); });
+      if (lsShopCode && otherCodes.indexOf(lsShopCode.toLowerCase()) < 0) cur.shopCode = lsShopCode || cur.shopCode || '';
+      cur.appId     = localStorage.getItem('rakuten_app_id')     || cur.appId || '';
+      cur.accessKey = localStorage.getItem('rakuten_access_key') || cur.accessKey || '';
+      _saveShops(shops);
+    }
+    // 切替先の設定を展開
+    localStorage.setItem('rakuten_app_id',     target.appId     || '');
+    localStorage.setItem('rakuten_access_key', target.accessKey || '');
+    localStorage.setItem('rakuten_shop_code',  target.shopCode  || '');
+    _setCurrentShopId(target.id);
+    console.log('[ADcheck] URLからショップを指定:', target.id);
+  } catch(e) { console.warn('[ADcheck] _applyShopFromUrl error', e); }
+}
+_applyShopFromUrl();
 
 // 現在ショップに対応するGitHubファイルパスを返す
 function _shopDataDir() {
