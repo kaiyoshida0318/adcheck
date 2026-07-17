@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1220</span>
+    <span class="build-date">v1.1221</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9231,7 +9231,7 @@ function _analyzeHtml(){
  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
  function escA(s){return esc(s).replace(/"/g,'&quot;');}
  function getData(){try{if(op&&op._analyzeGet){var d=op._analyzeGet();if(Array.isArray(d))return d.map(function(r){return {place:r.place||'',place2:r.place2||'',item:r.item||'',purpose:r.purpose||''};});}}catch(e){} try{var ls=JSON.parse(localStorage.getItem(KEY)||'null');if(Array.isArray(ls))return ls;}catch(e){} try{if(op&&op._ANALYZE_DEFAULT)return op._ANALYZE_DEFAULT.map(function(r){return {place:r.place,place2:r.place2,item:r.item,purpose:r.purpose||''};});}catch(e){} return [];}
- function getOpts(){var base=[];try{if(op&&op._ANALYZE_OPTS)base=op._ANALYZE_OPTS.slice();}catch(e){} base.unshift({v:'★当ステップの重要目的★',b:'★当ステップの重要目的★',c:'#d81b60',full:true}); return base;}
+ function getOpts(){var base=[];try{if(op&&op._ANALYZE_OPTS)base=op._ANALYZE_OPTS.slice();}catch(e){} base.unshift({v:'★当ステップの重要目的★',b:'★当ステップの重要目的★',c:'#d81b60',full:true}); base.push({v:'その他',b:'その他',c:'#888',full:true}); return base;}
  function getData2(){try{if(op&&op._analyzeGet2){var d=op._analyzeGet2();if(d&&d.lists&&d.lists.length)return JSON.parse(JSON.stringify(d));}}catch(e){} try{var ls=JSON.parse(localStorage.getItem('adcheck_analyze_lists')||'null');if(ls&&ls.lists&&ls.lists.length)return ls;}catch(e){} return {lists:[{name:'メイン',rows:getData()}],active:0};} var OBJ=getData2(); var LISTS=OBJ.lists; var ACTIVE=0; for(var _ai=0;_ai<LISTS.length;_ai++){ if((LISTS[_ai]&&LISTS[_ai].name)!=='全体像'){ ACTIVE=_ai; break; } } if(ACTIVE<0||ACTIVE>=LISTS.length)ACTIVE=0; var DATA=LISTS[ACTIVE].rows||[]; LISTS[ACTIVE].rows=DATA; var OPTS=getOpts(); var _MK=String.fromCharCode(0x3010,0x6708,0x521d,0x3011);
  function findOpt(v){for(var i=0;i<OPTS.length;i++){if(OPTS[i].v===v)return OPTS[i];}return null;}
  function disp(o){if(o.full)return '<span style="color:'+o.c+';font-weight:700">'+esc(o.b+(o.r||''))+'</span>';return '<span style="color:'+o.c+';font-weight:700">'+esc(o.b)+'</span>'+(o.r?'<span style="color:#000">'+esc(o.r)+'</span>':'');} function trig(v){var o=findOpt(v);if(!o)return '<span style="color:#000">'+esc(v||'(未選択)')+'</span>';return disp(o);}
