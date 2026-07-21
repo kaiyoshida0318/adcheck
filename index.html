@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1227</span>
+    <span class="build-date">v1.1228</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8243,6 +8243,51 @@ var _kwAllSearch=''; // KW-全体データの検索語（入力時のみ実績0�
 function renderKwAllData(){ _renderKwTable({containerId:'tab-kw-all',watchOnly:false}); }
 function kwAllSearch(v){ _kwAllSearch=(v!=null?String(v):'').trim(); renderKwAllData(); }
 function kwAllSearchClear(){ _kwAllSearch=''; renderKwAllData(); }
+// ── KW-全体データ 項目調整（列の表示ON/OFF・幅）──
+var _KWALLCOLS=[
+ {key:'num',label:'商品番号'},{key:'code',label:'商品管理番号'},{key:'prodkw',label:'商品 / KW'},
+ {key:'kwvol',label:'KWvol'},{key:'spend',label:'実績額'},{key:'sales',label:'売上'},
+ {key:'salesroas',label:'売上ROAS'},{key:'cvr',label:'CVR'},{key:'roas',label:'ROAS'},
+ {key:'share',label:'当商品内で占める割合'},{key:'mclick',label:'月クリック合計'},{key:'recent3',label:'直近3日クリック'},
+ {key:'gui',label:'目安'},{key:'act',label:'入札'},{key:'mark',label:'判定'},{key:'watch',label:'注視'}
+];
+var _KWCOL_KEY='adcheck_kwallcol';
+function _kwColGet(){ try{ return JSON.parse(localStorage.getItem(_KWCOL_KEY)||'{}')||{}; }catch(e){ return {}; } }
+function _kwColSet(o){ try{ localStorage.setItem(_KWCOL_KEY, JSON.stringify(o)); }catch(e){} }
+function _applyKwColStyle(){
+  var o=_kwColGet(); var hid=o.hidden||{}; var wid=o.width||{}; var css='';
+  _KWALLCOLS.forEach(function(c,i){ var n=i+1;
+    if(hid[c.key]){ css+='#tab-kw-all thead th:nth-child('+n+'),#tab-kw-all tbody td:nth-child('+n+'){display:none}'; }
+    else if(wid[c.key]>0){ css+='#tab-kw-all thead th:nth-child('+n+'),#tab-kw-all tbody td:nth-child('+n+'){width:'+wid[c.key]+'px;max-width:'+wid[c.key]+'px;overflow:hidden;text-overflow:ellipsis}'; }
+  });
+  var s=document.getElementById('_kwColStyle'); if(!s){ s=document.createElement('style'); s.id='_kwColStyle'; document.head.appendChild(s); }
+  s.textContent=css;
+}
+function _kwColToggle(key,show){ var o=_kwColGet(); if(!o.hidden)o.hidden={}; if(show)delete o.hidden[key]; else o.hidden[key]=true; _kwColSet(o); _applyKwColStyle(); }
+function _kwColWidth(key,val){ var o=_kwColGet(); if(!o.width)o.width={}; var n=+val; if(n>0)o.width[key]=n; else delete o.width[key]; _kwColSet(o); _applyKwColStyle(); }
+function _kwColReset(){ try{ localStorage.removeItem(_KWCOL_KEY); }catch(e){} _applyKwColStyle(); _renderKwColPanel(); }
+function _renderKwColPanel(){
+  var body=document.getElementById('kwColPanelBody'); if(!body)return;
+  var o=_kwColGet(); var hid=o.hidden||{}; var wid=o.width||{};
+  body.innerHTML=_KWALLCOLS.map(function(c){
+    var show=!hid[c.key]; var w=(wid[c.key]!=null?wid[c.key]:'');
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+      +'<label style="display:flex;align-items:center;gap:5px;flex:1;font-size:11px;color:var(--text2);cursor:pointer;min-width:0"><input type="checkbox" '+(show?'checked':'')+' onchange="_kwColToggle(\''+c.key+'\',this.checked)" style="width:15px;height:15px;cursor:pointer;flex:none"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.label+'</span></label>'
+      +'<input type="number" min="0" max="320" value="'+w+'" placeholder="auto" onchange="_kwColWidth(\''+c.key+'\',this.value)" style="width:60px;font-size:11px;padding:2px 5px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);flex:none">'
+      +'</div>';
+  }).join('');
+}
+function _openKwColPanel(){
+  var p=document.getElementById('kwColPanel');
+  if(!p){
+    p=document.createElement('div'); p.id='kwColPanel';
+    p.style.cssText='display:none;position:fixed;top:120px;right:24px;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.25);padding:14px 16px;width:300px;max-height:74vh;overflow-y:auto';
+    p.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="font-size:13px;font-weight:700;color:var(--text)">項目調整（表示・幅）</div><div style="display:flex;gap:6px"><button onclick="_kwColReset()" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--text2);cursor:pointer">リセット</button><button onclick="document.getElementById(\'kwColPanel\').style.display=\'none\'" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--text2);cursor:pointer">閉じる</button></div></div><div style="font-size:10px;color:var(--text3);margin-bottom:10px">チェックで表示/非表示、数値で列幅(px・空=自動)</div><div id="kwColPanelBody"></div>';
+    document.body.appendChild(p);
+  }
+  if(p.style.display==='block'){ p.style.display='none'; return; }
+  _renderKwColPanel(); p.style.display='block';
+}
 function renderKwWatch(){ _renderKwTable({containerId:'tab-mar-watch',watchOnly:true}); }
 function _isAdNone(code){ var st=(productCache[code]&&productCache[code].status)||''; return st==='g3'||st==='mid2'||st==='mid2y'; }
 function _watchedCodes(){ var arr=[]; Object.keys(productCache).forEach(function(c){ var w=productCache[c]&&productCache[c].watchKws; if(w&&w.length) arr.push(c); }); return arr; }
@@ -8664,7 +8709,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
     h+='<tr>'
       +'<td style="'+_T+';text-align:left;font-size:10px;color:var(--text2)">'+_kwEsc((productCache[o.code]&&productCache[o.code].itemNumber)||'')+'</td>'
       +'<td style="'+_T+';text-align:left;font-size:10px;color:var(--text2)">'+_kwEsc(o.code||'')+'</td>'
-      +'<td style="'+_T+';text-align:left;background:var(--surface)">'+'<div style="display:flex;align-items:center;gap:10px;justify-content:space-between">'+'<div style="display:flex;align-items:center;gap:8px;min-width:0">'+(o.img?'<img loading="lazy" src="'+o.img+'" style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border);flex:none">':'<div style="width:34px;height:34px;flex:none"></div>')+'<div style="min-width:0"><div style="font-size:9px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.name)+'</div><div style="font-size:12px;font-weight:700;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.kw)+'</div></div>'+'</div>'+'<div style="display:flex;align-items:center;gap:6px;flex:none">'+(cfg.watchOnly?'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:46px;height:46px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex:none">予測</button>':'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:50px;height:30px;border-radius:5px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">予測</button>')+(cfg.watchOnly?'<button onclick="_kwOpenWatchProd(\''+o.code+'\')" style="width:46px;height:46px;border-radius:8px;border:none;background:#ea580c;color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex:none">詳細</button>':'<button onclick="_kwGoWatchProd(\''+o.code+'\')" style="width:50px;height:30px;border-radius:5px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">詳細</button>')+'</div>'+'</div></td>'
+      +'<td style="'+_T+';text-align:left;background:var(--surface)">'+'<div style="display:flex;align-items:center;gap:10px;justify-content:space-between">'+'<div style="display:flex;align-items:center;gap:8px;min-width:0">'+'<div onclick="event.stopPropagation();openRenewalGraph(\''+o.code+'\')" title="商品情報を開く（全体情報・KW詳細・編集）" style="cursor:pointer;flex:none;line-height:0">'+(o.img?'<img loading="lazy" src="'+o.img+'" style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border);flex:none">':'<div style="width:34px;height:34px;flex:none;border:1px dashed var(--border);border-radius:5px"></div>')+'</div>'+'<div style="min-width:0"><div style="font-size:9px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.name)+'</div><div style="font-size:12px;font-weight:700;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.kw)+'</div></div>'+'</div>'+'<div style="display:flex;align-items:center;gap:6px;flex:none">'+(cfg.watchOnly?'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:46px;height:46px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex:none">予測</button>':'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:50px;height:30px;border-radius:5px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">予測</button>')+(cfg.watchOnly?'<button onclick="_kwOpenWatchProd(\''+o.code+'\')" style="width:46px;height:46px;border-radius:8px;border:none;background:#ea580c;color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex:none">詳細</button>':'<button onclick="_kwGoWatchProd(\''+o.code+'\')" style="width:50px;height:30px;border-radius:5px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">詳細</button>')+'</div>'+'</div></td>'
       +'<td style="'+_T+';background:#eef7f0">'+n2(o.kwvol)+'</td>'
       +'<td style="'+_T+';background:#fdf6e3;font-weight:700">'+yfmt(o.spend)+((!cfg.watchOnly&&_totalSpend>0)?'<div style="font-size:9px;font-weight:600;color:#9a7b1a;margin-top:1px;white-space:nowrap">'+_pctFmt(o.spend/_totalSpend*100)+'%</div>':'')+'</td>'
       +'<td style="'+_T+';background:#fdf6e3">'+yfmt(o.sales)+'</td>'
@@ -8690,8 +8735,9 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   var _shareLeg='<div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--text2)"><span style="font-weight:700">当商品内割合 文字色</span>'+[['#dc2626','70-100'],['#ea580c','50-70'],['#ca8a04','30-50'],['#555','0-30']].map(function(pp){return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="font-weight:800;color:'+pp[0]+'">■</span>'+pp[1]+'</span>';}).join('')+'</div>';
   var _searchBox=cfg.watchOnly?'':('<div style="display:inline-flex;align-items:center;gap:4px;margin-right:12px"><input type="text" id="kwAllSearchInput" value="'+_kwEsc(_kwAllSearch)+'" placeholder="KW・商品名・商品番号で検索" onkeydown="if(event.key===\'Enter\')kwAllSearch(this.value)" style="width:180px;font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)"><button onclick="kwAllSearch(document.getElementById(\'kwAllSearchInput\').value)" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">検索</button>'+(_kwAllSearch?'<button onclick="kwAllSearchClear()" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">クリア</button>':'')+'</div>');
   var _searchNote=(_kwAllSearch&&!cfg.watchOnly)?('<span style="font-size:11px;color:#00796b;font-weight:600;margin-left:8px">検索:「'+_kwEsc(_kwAllSearch)+'」（実績0の登録KWも表示）</span>'):'';
-  const top='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px"><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div style="font-size:13px;font-weight:700;color:var(--text2)">'+(_latestDate?('<span style="color:var(--text3);font-weight:600;margin-right:10px">'+_latestDate.slice(0,4)+'/'+_latestDate.slice(5,7)+'/'+_latestDate.slice(8,10)+'</span>'):'')+'全KW '+rows.length+'件'+_searchNote+'</div>'+_roasLeg+(cfg.watchOnly?'':_shareLeg)+'</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+_searchBox+_maruToggle+'<span style="font-size:11px;color:var(--text3)">並べ替え</span>'+sortSel+'</div></div>';
+  const top='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px"><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div style="font-size:13px;font-weight:700;color:var(--text2)">'+(_latestDate?('<span style="color:var(--text3);font-weight:600;margin-right:10px">'+_latestDate.slice(0,4)+'/'+_latestDate.slice(5,7)+'/'+_latestDate.slice(8,10)+'</span>'):'')+'全KW '+rows.length+'件'+_searchNote+'</div>'+_roasLeg+(cfg.watchOnly?'':_shareLeg)+'</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+_searchBox+_maruToggle+'<span style="font-size:11px;color:var(--text3)">並べ替え</span>'+sortSel+(cfg.watchOnly?'':'<button onclick="_openKwColPanel()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600;margin-left:6px">項目調整</button>')+'</div></div>';
   cont.innerHTML='<div style="padding:10px 14px">'+top+'<div style="max-height:calc(100vh - 240px);overflow:auto;border:1px solid var(--border);border-radius:8px">'+h+'</div></div>';
+  if(!cfg.watchOnly){ try{ _applyKwColStyle(); }catch(e){} }
 }
 
 function _buildKwTableBlock(code, daily, idx, pfx){
