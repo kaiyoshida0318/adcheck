@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1224</span>
+    <span class="build-date">v1.1225</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3150,7 +3150,28 @@ async function readFiles(files) {
         try {
           const _ikText = await _readNichText(f);
           const _ok = _ingestCurrentKw(_ikText, f.name);
-          if (_ok) { hasItemKwFile = true; try { await _saveCurrentKwToGitHub(); } catch(e){} }
+          if (_ok) {
+            hasItemKwFile = true;
+            let _saved = false; const _pat = !!localStorage.getItem('github_pat');
+            try { _saved = await _saveCurrentKwToGitHub(); } catch(e){}
+            const _n = Object.keys(_currentKwSnap.byCode||{}).length;
+            const _st = document.getElementById('dropZoneStatus');
+            if (_saved) {
+              const _m = '✅ 登録KWを取込・保存しました（' + (_currentKwSnap.date||'日付不明') + ' / ' + _n + '商品）';
+              if (_st) { _st.textContent = _m; _st.style.color = '#2e7d32'; }
+            } else {
+              const _m = _pat
+                ? '⚠️ 登録KWは取り込みましたが、GitHubへの保存に失敗しました。通信を確認して、もう一度取り込んでください。'
+                : '⚠️ 登録KWをこの端末には取り込みましたが、GitHubに保存できませんでした（GitHub PATが未設定）。このままだと次回リロードで元に戻ります。設定でPATを登録してから、もう一度取り込んでください。';
+              if (_st) { _st.textContent = _m; _st.style.color = '#c62828'; }
+              try { alert(_m); } catch(e){}
+            }
+          } else {
+            const _st = document.getElementById('dropZoneStatus');
+            const _m = '⚠️ 登録KWファイルを認識できませんでした（「商品管理番号」「キーワード」列が見つかりません）。ファイルを確認してください。';
+            if (_st) { _st.textContent = _m; _st.style.color = '#c62828'; }
+            try { alert(_m); } catch(e){}
+          }
           console.log('[ADcheck] 登録済みKWスナップショット取込:', f.name, 'ok=', _ok, 'codes=', Object.keys(_currentKwSnap.byCode||{}).length);
         } catch(e){ console.error('[ADcheck] 登録済みKW取込エラー', e); }
         continue;
@@ -5328,10 +5349,17 @@ async function _saveCurrentKwToGitHub(){
 }
 async function _loadCurrentKwFromGitHub(){
   try{
+    // ローカルに取込済みのスナップショット日付。GitHubより新しければ上書きしない（レポート追加後のリロードで古い版に戻る事故を防ぐ）
+    var localDate=(_currentKwSnap&&_currentKwSnap.byCode&&Object.keys(_currentKwSnap.byCode).length)?(_currentKwSnap.date||''):'';
     var pat=localStorage.getItem('github_pat'); var r;
     if(pat){ r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_ghCurrentKwFile(),{headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github.v3.raw'},cache:'no-store'}); }
     else { r=await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+_ghCurrentKwFile()+'?t='+Date.now(),{cache:'no-store'}); }
-    if(r&&r.ok){ var o=await r.json(); if(o&&o.byCode){ _currentKwSnap=o; _saveCurrentKwLocal(); } }
+    if(r&&r.ok){ var o=await r.json(); if(o&&o.byCode){
+      var ghDate=o.date||'';
+      // ローカル取込の方が新しい → GitHubで上書きせず、逆にGitHubへ再保存して復旧
+      if(localDate && (!ghDate || localDate>ghDate)){ try{ if(pat) _saveCurrentKwToGitHub(); }catch(e){} return; }
+      _currentKwSnap=o; _saveCurrentKwLocal();
+    } }
   }catch(e){}
 }
 function _cpaParseCsv(text){ text=text.replace(/^\uFEFF/,''); const rows=[]; let i=0, field='', row=[], inQ=false; while(i<text.length){ const c=text[i]; if(inQ){ if(c==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} inQ=false;i++;continue;} field+=c;i++;continue; } if(c==='"'){ inQ=true;i++;continue; } if(c===','){ row.push(field);field='';i++;continue; } if(c==='\r'){ i++;continue; } if(c==='\n'){ row.push(field);rows.push(row);row=[];field='';i++;continue; } field+=c;i++; } if(field.length||row.length){ row.push(field); rows.push(row); } return rows; }
