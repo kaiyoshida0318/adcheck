@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1225</span>
+    <span class="build-date">v1.1226</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2071,7 +2071,8 @@ function saveEditItem() {
   document.querySelectorAll('#editClRows > div').forEach(row => {
     const dateEl = row.querySelector('[data-field="date"]');
     const noteEl = row.querySelector('[data-field="note"]');
-    if (dateEl && noteEl && (dateEl.value || noteEl.value)) clLogs.push({ date: dateEl.value, note: noteEl.value });
+    const typeEl = row.querySelector('[data-field="type"]');
+    if (dateEl && noteEl && (dateEl.value || noteEl.value)) { const _o = { date: dateEl.value, note: noteEl.value }; const _t = typeEl && typeEl.value; if (_t) _o.type = _t; clLogs.push(_o); }
   });
   productCache[_editItemId].changeLog = clLogs;
 
@@ -2101,6 +2102,13 @@ function _editClRender(logs) {
     <div style="display:flex;gap:6px;align-items:center">
       <input type="date" value="${log.date||''}" data-idx="${i}" data-field="date" onchange="_editClResort()"
         style="padding:4px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
+      <select data-idx="${i}" data-field="type" title="変更の種別"
+        style="padding:4px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0;cursor:pointer">
+        <option value="" ${!log.type?'selected':''}>種別なし</option>
+        <option value="lp" ${log.type==='lp'?'selected':''} style="color:#1a73e8">LP</option>
+        <option value="thumb" ${log.type==='thumb'?'selected':''} style="color:#c99700">サムネ</option>
+        <option value="both" ${log.type==='both'?'selected':''} style="color:#9333ea">両方</option>
+      </select>
       <input type="text" value="${log.note||''}" data-idx="${i}" data-field="note"
         placeholder="内容を入力..."
         style="padding:4px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex:1">
@@ -2125,7 +2133,8 @@ function _editClCurrentLogs() {
   document.querySelectorAll('#editClRows > div').forEach(row => {
     const d = row.querySelector('[data-field="date"]');
     const n = row.querySelector('[data-field="note"]');
-    if (d && n) logs.push({ date: d.value, note: n.value });
+    const t = row.querySelector('[data-field="type"]');
+    if (d && n) { const _o = { date: d.value, note: n.value }; const _tv = t && t.value; if (_tv) _o.type = _tv; logs.push(_o); }
   });
   return logs;
 }
