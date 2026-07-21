@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1229</span>
+    <span class="build-date">v1.1232</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -536,6 +536,7 @@ header + * { margin-top: 4px; }
     <span id="apiStatus" class="api-status unset" onclick="openSettings()">アプリID未設定</span>
         <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
     <button class="header-btn" onclick="openSettingsMenu()">⚙ 設定 ▾</button>
+    <button class="header-btn" onclick="openRetireModal()" title="ネクストエンジンの在庫CSVと突き合わせ、在庫0の撤退予定を撤退済■＋引退にする">+ 撤退完了反映</button>
     <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
   </div>
@@ -1858,6 +1859,27 @@ header + * { margin-top: 4px; }
       <button class="modal-btn" onclick="closeEditModal()">キャンセル</button>
       <button class="modal-btn" onclick="fetchImgFromUrl()">画像を取得</button>
       <button class="modal-btn save" onclick="saveEditItem()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 撤退完了反映モーダル -->
+<div class="modal-overlay" id="retireModal">
+  <div class="modal" style="max-width:min(1000px,96vw);width:100%;text-align:left;max-height:min(88vh,780px);height:auto;display:flex;flex-direction:column;padding:16px 20px">
+    <div style="flex-shrink:0">
+      <h3 style="margin:0 0 4px;font-size:16px">🗑 撤退完了反映</h3>
+      <p style="margin:0 0 10px;font-size:11px;color:var(--text2);line-height:1.6">ネクストエンジンの商品CSVを取り込み、区分「撤退予定-out記入済▲」「撤退予定-大サイズ-out記入済▲」の商品のうち<strong>フリー在庫が合計0</strong>のものを抽出します。確認のうえ、まとめて撤退済■＋引退商品にできます。<br>突き合わせ：ADcheckの<strong>商品番号</strong> ＝ CSVの<strong>商品コード</strong>または<strong>代表商品コード</strong>。</p>
+      <div id="retireDrop" onclick="document.getElementById('retireFileInput').click()" ondragover="event.preventDefault();this.style.background='#eef0fb'" ondragleave="this.style.background='var(--surface2)'" ondrop="_retireDrop(event)" style="border:2px dashed var(--border2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;background:var(--surface2);font-size:12px;color:var(--text2)">📥 ネクストエンジンの商品CSVをドロップ、またはクリックして選択</div>
+      <input type="file" id="retireFileInput" accept=".csv" style="display:none" onchange="_retireOnFile(this)">
+      <div id="retireSummary" style="font-size:12px;color:var(--text2);margin:10px 0 6px;min-height:16px"></div>
+    </div>
+    <div id="retireTableWrap" style="overflow:auto;flex:1 1 auto;min-height:0;border:1px solid var(--border);border-radius:8px;display:none"></div>
+    <div style="flex-shrink:0;border-top:1px solid var(--border);padding-top:12px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <button class="modal-btn" onclick="closeRetireModal()">閉じる</button>
+      <div style="display:flex;gap:8px">
+        <button id="retireDlBtn" class="modal-btn" style="display:none" onclick="_retireDownloadXlsx()">📥 抽出エクセルDL</button>
+        <button id="retireApplyBtn" class="modal-btn save" style="display:none;background:#6D1111" onclick="_retireApply()">選択分を撤退済■＋引退にする</button>
+      </div>
     </div>
   </div>
 </div>
@@ -5372,6 +5394,172 @@ async function _loadCurrentKwFromGitHub(){
   }catch(e){}
 }
 function _cpaParseCsv(text){ text=text.replace(/^\uFEFF/,''); const rows=[]; let i=0, field='', row=[], inQ=false; while(i<text.length){ const c=text[i]; if(inQ){ if(c==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} inQ=false;i++;continue;} field+=c;i++;continue; } if(c==='"'){ inQ=true;i++;continue; } if(c===','){ row.push(field);field='';i++;continue; } if(c==='\r'){ i++;continue; } if(c==='\n'){ row.push(field);rows.push(row);row=[];field='';i++;continue; } field+=c;i++; } if(field.length||row.length){ row.push(field); rows.push(row); } return rows; }
+
+// \u2500\u2500 \u64A4\u9000\u5B8C\u4E86\u53CD\u6620\uFF08\u30CD\u30AF\u30B9\u30C8\u30A8\u30F3\u30B8\u30F3\u5728\u5EABCSV\u3068\u7A81\u304D\u5408\u308F\u305B\uFF09\u2500\u2500
+var _retireData=null;
+var _RETIRE_LABELS={warn:'\u64A4\u9000\u4E88\u5B9A\u25B2',warnbig:'\u64A4\u9000\u4E88\u5B9A-\u5927\u30B5\u30A4\u30BA\u25B2',warnbigout:'\u64A4\u9000\u4E88\u5B9A-\u5927\u30B5\u30A4\u30BA-out\u8A18\u5165\u6E08\u25B2',warnout:'\u64A4\u9000\u4E88\u5B9A-out\u8A18\u5165\u6E08\u25B2'};
+function openRetireModal(){ var m=document.getElementById('retireModal'); if(!m)return; _retireData=null;
+  var s=document.getElementById('retireSummary'); if(s)s.innerHTML='';
+  var w=document.getElementById('retireTableWrap'); if(w){ w.style.display='none'; w.innerHTML=''; }
+  var d=document.getElementById('retireDlBtn'); if(d)d.style.display='none';
+  var a=document.getElementById('retireApplyBtn'); if(a)a.style.display='none';
+  var fi=document.getElementById('retireFileInput'); if(fi)fi.value='';
+  m.classList.add('open');
+}
+function closeRetireModal(){ var m=document.getElementById('retireModal'); if(m)m.classList.remove('open'); }
+function _retireDrop(e){ e.preventDefault(); var el=document.getElementById('retireDrop'); if(el)el.style.background='var(--surface2)'; var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(f)_retireReadFile(f); }
+function _retireOnFile(input){ var f=input&&input.files&&input.files[0]; if(f)_retireReadFile(f); }
+function _retireReadFile(file){
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var bytes=new Uint8Array(rd.result); var text='';
+      try{ text=new TextDecoder('utf-8',{fatal:false}).decode(bytes); }catch(e){ text=''; }
+      if(text.indexOf('\u5546\u54C1\u30B3\u30FC\u30C9')<0 || text.indexOf('\uFFFD')>=0){ try{ text=new TextDecoder('shift-jis').decode(bytes); }catch(e){} }
+      _retireProcess(text);
+    }catch(err){ var s=document.getElementById('retireSummary'); if(s)s.innerHTML='<span style="color:#c62828">CSV\u306E\u8AAD\u307F\u8FBC\u307F\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002</span>'; }
+  };
+  rd.readAsArrayBuffer(file);
+}
+function _retireProcess(text){
+  var sum=document.getElementById('retireSummary');
+  var rows=_cpaParseCsv(text||'');
+  if(!rows.length){ if(sum)sum.innerHTML='<span style="color:#c62828">\u30C7\u30FC\u30BF\u304C\u3042\u308A\u307E\u305B\u3093\u3002</span>'; return; }
+  var head=rows[0].map(function(h){return String(h).trim().replace(/^"|"$/g,'');});
+  var ci=head.indexOf('\u5546\u54C1\u30B3\u30FC\u30C9'), ri=head.indexOf('\u4EE3\u8868\u5546\u54C1\u30B3\u30FC\u30C9'), fi=head.indexOf('\u30D5\u30EA\u30FC\u5728\u5EAB\u6570(\u57FA\u672C\u62E0\u70B9)');
+  if(ci<0||ri<0||fi<0){ if(sum)sum.innerHTML='<span style="color:#c62828">\u5FC5\u8981\u306A\u5217\uFF08\u5546\u54C1\u30B3\u30FC\u30C9\uFF0F\u4EE3\u8868\u5546\u54C1\u30B3\u30FC\u30C9\uFF0F\u30D5\u30EA\u30FC\u5728\u5EAB\u6570(\u57FA\u672C\u62E0\u70B9)\uFF09\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3002\u30CD\u30AF\u30B9\u30C8\u30A8\u30F3\u30B8\u30F3\u306E\u5546\u54C1CSV\u304B\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002</span>'; return; }
+  var acc={},cnt={};
+  for(var i=1;i<rows.length;i++){ var r=rows[i]; if(!r||r.length<=ri) continue;
+    var c=String(r[ci]||'').trim(), rep=String(r[ri]||'').trim();
+    var f=parseFloat(String(r[fi]||'').replace(/[^0-9.\-]/g,''))||0;
+    if(c){ acc[c]=(acc[c]||0)+f; cnt[c]=(cnt[c]||0)+1; }
+    if(rep && rep!==c){ acc[rep]=(acc[rep]||0)+f; cnt[rep]=(cnt[rep]||0)+1; }
+  }
+  var targets=[];
+  Object.keys(productCache).forEach(function(code){ if(code==='__global__')return; var pc=productCache[code]||{};
+    if(pc.status!=='warnout'&&pc.status!=='warnbigout')return; if(pc.retired)return;
+    var num=(pc.itemNumber||'').trim(); var matched=!!(num&&Object.prototype.hasOwnProperty.call(acc,num));
+    targets.push({code:code,num:num,name:pc.manualName||pc.name||code,status:pc.status,matched:matched,free:matched?acc[num]:null,rowsN:matched?cnt[num]:0});
+  });
+  _retireData=targets;
+  _retireRenderTable();
+}
+function _retireRenderTable(){
+  var t=(_retireData||[]);
+  var byNum=function(a,b){ return String(a.num).localeCompare(String(b.num)); };
+  var zero=t.filter(function(x){return x.matched&&x.free===0;}).sort(byNum);
+  var instock=t.filter(function(x){return x.matched&&x.free>0;}).sort(byNum);
+  var nomatch=t.filter(function(x){return !x.matched;}).sort(byNum);
+  var sum=document.getElementById('retireSummary');
+  if(sum)sum.innerHTML='対象区分の商品 <strong>'+t.length+'</strong>件 ＝ ゼロ在庫 <strong style="color:#6D1111">'+zero.length+'</strong>件／在庫あり '+instock.length+'件／マッチなし '+nomatch.length+'件';
+  var H='padding:6px 8px;font-size:11px;font-weight:700;color:#444;border-bottom:2px solid var(--border);white-space:nowrap;text-align:left;background:var(--surface2);position:sticky;top:0;z-index:2';
+  var T='padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap;vertical-align:middle';
+  var groups=[
+    {key:'zero',label:'ゼロ在庫商品',color:'#6D1111',bg:'#fdecec',hbg:'#f6d5d5',items:zero},
+    {key:'instock',label:'在庫あり商品',color:'#1d4ed8',bg:'#eef4fb',hbg:'#d7e5f7',items:instock},
+    {key:'nomatch',label:'未マッチ商品',color:'#b45309',bg:'#fff4e5',hbg:'#fbe5c8',items:nomatch}
+  ];
+  var h='<table style="border-collapse:collapse;width:100%"><thead><tr>'
+    +'<th style="'+H+';text-align:center;width:34px"><input type="checkbox" id="retireChkAll" onchange="_retireToggleAll(this.checked)"></th>'
+    +'<th style="'+H+'">商品カテゴリ</th><th style="'+H+'">商品番号</th><th style="'+H+'">商品管理番号</th><th style="'+H+'">商品名</th><th style="'+H+'">現区分</th><th style="'+H+';text-align:right">マッチ行</th><th style="'+H+';text-align:right">フリー在庫合計</th><th style="'+H+'">判定</th></tr></thead><tbody>';
+  groups.forEach(function(g){
+    var _grpChk=(g.key!=='nomatch'&&g.items.length>0)?('<input type="checkbox" id="retireGrpChk_'+g.key+'" onchange="_retireToggleGroup(\''+g.key+'\',this.checked)" title="このカテゴリを一括選択" style="width:15px;height:15px;cursor:pointer;vertical-align:-2px;margin-right:8px">'):'';
+    h+='<tr><td colspan="9" style="padding:6px 10px;background:'+g.hbg+';color:'+g.color+';font-weight:800;font-size:12px;border-bottom:1px solid var(--border);position:sticky;top:29px;z-index:1">'+_grpChk+g.label+'（'+g.items.length+'件）</td></tr>';
+    if(!g.items.length){ h+='<tr><td colspan="9" style="padding:8px 10px;color:var(--text3);font-size:11px;background:'+g.bg+'">該当なし</td></tr>'; return; }
+    g.items.forEach(function(x){
+      var isZero=x.matched&&x.free===0;
+      var judge=!x.matched?'<span style="color:#b45309;font-weight:700">マッチなし</span>':(isZero?'<span style="color:#6D1111;font-weight:800">在庫0 → 撤退</span>':'<span style="color:#555">在庫あり</span>');
+      h+='<tr style="background:'+g.bg+'">'
+        +'<td style="'+T+';text-align:center">'+(x.matched?'<input type="checkbox" class="retireChk" data-grp="'+g.key+'" data-code="'+_kwEsc(x.code)+'" '+(isZero?'checked':'')+' onchange="_retireSyncApplyLabel()">':'')+'</td>'
+        +'<td style="'+T+';color:'+g.color+';font-weight:700">'+g.label+'</td>'
+        +'<td style="'+T+';font-family:\'DM Mono\',monospace">'+_kwEsc(x.num||'—')+'</td>'
+        +'<td style="'+T+';font-family:\'DM Mono\',monospace;color:var(--text3)">'+_kwEsc(x.code)+'</td>'
+        +'<td style="'+T+';max-width:240px;overflow:hidden;text-overflow:ellipsis">'+_kwEsc(x.name)+'</td>'
+        +'<td style="'+T+';color:#C62828">'+_kwEsc(_RETIRE_LABELS[x.status]||x.status)+'</td>'
+        +'<td style="'+T+';text-align:right">'+(x.matched?x.rowsN:'—')+'</td>'
+        +'<td style="'+T+';text-align:right;font-weight:700;color:'+(isZero?'#6D1111':'var(--text)')+'">'+(x.matched?Number(x.free).toLocaleString():'—')+'</td>'
+        +'<td style="'+T+'">'+judge+'</td></tr>';
+    });
+  });
+  h+='</tbody></table>';
+  var wrap=document.getElementById('retireTableWrap'); if(wrap){ wrap.innerHTML=h; wrap.style.display='block'; }
+  var dl=document.getElementById('retireDlBtn'); if(dl)dl.style.display=t.length?'inline-block':'none';
+  var ap=document.getElementById('retireApplyBtn'); if(ap)ap.style.display='inline-block';
+  _retireSyncApplyLabel();
+}
+function _xmlEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _xlsxColLetter(n){ var s=''; n++; while(n>0){ var m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
+function _buildXlsxBlob(sheetName, rows2d){
+  var sheetRows='';
+  rows2d.forEach(function(row,ri){ var cells='';
+    row.forEach(function(val,ci){ var ref=_xlsxColLetter(ci)+(ri+1);
+      if(typeof val==='number'&&isFinite(val)){ cells+='<c r="'+ref+'"><v>'+val+'</v></c>'; }
+      else { cells+='<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+_xmlEsc(val)+'</t></is></c>'; }
+    });
+    sheetRows+='<row r="'+(ri+1)+'">'+cells+'</row>';
+  });
+  var sheetXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+sheetRows+'</sheetData></worksheet>';
+  var wbXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="'+_xmlEsc(sheetName||'Sheet1')+'" sheetId="1" r:id="rId1"/></sheets></workbook>';
+  var wbRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>';
+  var rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  var ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>';
+  var zip=new JSZip();
+  zip.file('[Content_Types].xml', ct);
+  zip.folder('_rels').file('.rels', rels);
+  var xl=zip.folder('xl'); xl.file('workbook.xml', wbXml);
+  xl.folder('_rels').file('workbook.xml.rels', wbRels);
+  xl.folder('worksheets').file('sheet1.xml', sheetXml);
+  return zip.generateAsync({type:'blob'});
+}
+function _retireDownloadXlsx(){
+  var t=(_retireData||[]); if(!t.length){ alert('データがありません。'); return; }
+  var cat=function(x){ return !x.matched?'未マッチ商品':((x.free===0)?'ゼロ在庫商品':'在庫あり商品'); };
+  var order={'ゼロ在庫商品':0,'在庫あり商品':1,'未マッチ商品':2};
+  var arr=t.slice().sort(function(a,b){ return (order[cat(a)]-order[cat(b)])||String(a.num).localeCompare(String(b.num)); });
+  var rows2d=[['商品カテゴリ','商品番号','商品管理番号','商品名','現区分','マッチ行数','フリー在庫合計','判定']];
+  arr.forEach(function(x){ rows2d.push([cat(x), (x.num||''), x.code, x.name, (_RETIRE_LABELS[x.status]||x.status), (x.matched?x.rowsN:''), (x.matched?x.free:''), (!x.matched?'マッチなし':(x.free===0?'在庫0→撤退':'在庫あり'))]); });
+  _buildXlsxBlob('撤退完了反映', rows2d).then(function(blob){
+    var d=new Date(); var ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='撤退完了反映_'+ds+'.xlsx'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){URL.revokeObjectURL(a.href);},1500);
+  }).catch(function(e){ alert('エクセル生成に失敗しました: '+(e&&e.message||e)); });
+}
+function _retireToggleAll(on){ document.querySelectorAll('.retireChk').forEach(function(c){ c.checked=on; }); _retireSyncApplyLabel(); }
+function _retireToggleGroup(key,on){ document.querySelectorAll('.retireChk[data-grp="'+key+'"]').forEach(function(c){ c.checked=on; }); _retireSyncApplyLabel(); }
+function _retireSyncApplyLabel(){
+  var all=[].slice.call(document.querySelectorAll('.retireChk'));
+  var n=all.filter(function(c){return c.checked;}).length;
+  var b=document.getElementById('retireApplyBtn'); if(b)b.textContent='\u9078\u629E'+n+'\u4EF6\u3092\u64A4\u9000\u6E08\u25A0\uFF0B\u5F15\u9000\u306B\u3059\u308B';
+  ['zero','instock','nomatch'].forEach(function(k){
+    var g=[].slice.call(document.querySelectorAll('.retireChk[data-grp="'+k+'"]'));
+    var chk=document.getElementById('retireGrpChk_'+k); if(!chk)return;
+    var c=g.filter(function(x){return x.checked;}).length;
+    chk.checked=(g.length>0&&c===g.length); chk.indeterminate=(c>0&&c<g.length);
+  });
+  var master=document.getElementById('retireChkAll'); if(master){ master.checked=(all.length>0&&n===all.length); master.indeterminate=(n>0&&n<all.length); }
+}
+function _retireDownloadCsv(){
+  var t=(_retireData||[]).filter(function(x){return x.matched&&x.free===0;});
+  if(!t.length){ alert('\u5728\u5EAB0\u306E\u5BFE\u8C61\u304C\u3042\u308A\u307E\u305B\u3093\u3002'); return; }
+  var lines=[['\u5546\u54C1\u756A\u53F7','\u5546\u54C1\u7BA1\u7406\u756A\u53F7','\u5546\u54C1\u540D','\u73FE\u533A\u5206','\u30D5\u30EA\u30FC\u5728\u5EAB\u5408\u8A08']];
+  t.forEach(function(x){ lines.push([x.num,x.code,x.name,(_RETIRE_LABELS[x.status]||x.status),x.free]); });
+  var csv='\uFEFF'+lines.map(function(r){return r.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var d=new Date(); var ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='\u64A4\u9000\u5BFE\u8C61_\u5728\u5EAB0_'+ds+'.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){URL.revokeObjectURL(a.href);},1500);
+}
+function _retireApply(){
+  var checked=[].slice.call(document.querySelectorAll('.retireChk:checked')).map(function(c){return c.getAttribute('data-code');});
+  if(!checked.length){ alert('\u5BFE\u8C61\u304C\u9078\u629E\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002'); return; }
+  if(!confirm(checked.length+'\u4EF6\u3092\u300C\u64A4\u9000\u6E08\u25A0\u300D\uFF0B\u300C\u5F15\u9000\u5546\u54C1\u300D\u306B\u3057\u307E\u3059\u3002\u3088\u308D\u3057\u3044\u3067\u3059\u304B\uFF1F\n\uFF08\u533A\u5206\uFF1D\u64A4\u9000\u6E08\u25A0 / \u30B9\u30C6\u30FC\u30BF\u30B9\uFF1D\u5F15\u9000\u5546\u54C1\uFF09')) return;
+  checked.forEach(function(code){ if(!productCache[code])productCache[code]={}; productCache[code].status='out'; productCache[code].retired=true; });
+  try{ saveProductCache(); }catch(e){}
+  try{ saveToGitHub(); }catch(e){}
+  try{ if(typeof renderTable==='function')renderTable(); }catch(e){}
+  try{ if(typeof renderRetired==='function')renderRetired(); }catch(e){}
+  _retireData=(_retireData||[]).filter(function(x){return checked.indexOf(x.code)<0;});
+  _retireRenderTable();
+  var sum=document.getElementById('retireSummary'); if(sum)sum.innerHTML='<span style="color:#15803d;font-weight:700">\u2705 '+checked.length+'\u4EF6\u3092\u64A4\u9000\u6E08\u25A0\uFF0B\u5F15\u9000\u306B\u3057\u307E\u3057\u305F\u3002</span>\uFF08\u6B8B\u308A\u306E\u5BFE\u8C61\u306F\u4E0A\u306B\u8868\u793A\u4E2D\uFF09';
+}
 function _cpaParseInto(text, map){ const rows=_cpaParseCsv(text); if(rows.length<2) return 0; const head=rows[0].map(h=>String(h).trim()); const f=(test)=>head.findIndex(test); const iDate=f(h=>h.includes('日付')); const iCode=f(h=>h.includes('商品管理番号')); if(iDate<0||iCode<0) return 0; const iBid=f(h=>h.includes('入札単価')); const iSpend=f(h=>h.includes('実績額')); const iDisc=f(h=>h.includes('値引率')); const iSalesC=f(h=>h.includes('クーポン掲載')); const iSales=f(h=>h==='売上金額'); const iCvr=f(h=>h.includes('CVR')); const iRoas=f(h=>h.includes('ROAS')&&!h.includes('値引')); const iRoasD=f(h=>h.includes('ROAS')&&h.includes('値引')); const iCpa=f(h=>h.includes('注文獲得単価')); const num=v=>{ if(v==null) return 0; v=String(v).replace(/,/g,'').trim(); if(v===''||v==='-') return 0; const n=parseFloat(v); return isNaN(n)?0:n; }; let cnt=0; for(let r=1;r<rows.length;r++){ const row=rows[r]; if(!row||row.length<2) continue; const dm=String(row[iDate]||'').match(/(\d{4})年(\d{2})月(\d{2})日/); if(!dm) continue; const date=dm[1]+'-'+dm[2]+'-'+dm[3]; const code=String(row[iCode]||'').trim(); if(!code) continue; map[date+'|'+code]={ date:date, itemCode:code, bid:num(row[iBid]), spend:num(row[iSpend]), disc:num(row[iDisc]), salesCoupon:num(row[iSalesC]), sales:num(row[iSales]), cvr:num(row[iCvr]), roas:num(row[iRoas]), roasD:num(row[iRoasD]), cpa:num(row[iCpa]) }; cnt++; } return cnt; }
 async function _cpaImport(files){ const status=document.getElementById('cpaStatus'); if(status) status.textContent='読み込み中...'; for(const f of files){ try{ let texts=[]; if(f.name.toLowerCase().endsWith('.zip')){ const buf=await f.arrayBuffer(); const zip=await JSZip.loadAsync(buf); for(const [n,e] of Object.entries(zip.files)){ if(!e.dir && n.toLowerCase().endsWith('.csv')){ texts.push(await e.async('text')); } } } else if(f.name.toLowerCase().endsWith('.csv')) { texts.push(await f.text()); } for(const t of texts){ _cpaIngest(t); } }catch(e){ console.error('cpa import',e); } } const fi=document.getElementById('cpaFileInput'); if(fi) fi.value=''; _cpaLoad(); _cpaLoadKw(); renderCpa(); if(status) status.textContent='商品別 '+couponAdvanceRows.length+'件 / KW別 '+couponAdvanceKwRows.length+'件'; }
 function _cpaClear(){ if(!confirm('CA調整のデータを全て消去しますか？')) return; couponAdvanceRows=[]; _cpaSave(); renderCpa(); }
