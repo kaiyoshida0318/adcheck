@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1228</span>
+    <span class="build-date">v1.1229</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8289,7 +8289,7 @@ function _openKwColPanel(){
   _renderKwColPanel(); p.style.display='block';
 }
 function renderKwWatch(){ _renderKwTable({containerId:'tab-mar-watch',watchOnly:true}); }
-function _isAdNone(code){ var st=(productCache[code]&&productCache[code].status)||''; return st==='g3'||st==='mid2'||st==='mid2y'; }
+function _isAdNone(code){ var pc=productCache[code]||{}; if(pc.retired) return true; /* 引退商品は広告調整の各一覧から除外（引退済商品タブのみ表示） */ var st=pc.status||''; return st==='g3'||st==='mid2'||st==='mid2y'; }
 function _watchedCodes(){ var arr=[]; Object.keys(productCache).forEach(function(c){ var w=productCache[c]&&productCache[c].watchKws; if(w&&w.length) arr.push(c); }); return arr; }
 function _setKwWPPeriodUI(){ var d=document.getElementById('kwWPDaily'), m=document.getElementById('kwWPMonthly'); var on='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap'; var off='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap'; if(d)d.style.cssText=(_kwIndivPeriod==='daily')?on:off; if(m)m.style.cssText=(_kwIndivPeriod==='monthly')?on:off; }
 function renderKwWatchProd(){ var sel=document.getElementById('kwWatchProdSel'); var codes=_watchedCodes(); if(sel){ sel.innerHTML='<option value="">注視KWの商品から選択</option>'+codes.map(function(c){ return '<option value="'+_kwEsc(c)+'"'+(c===_kwIndivCode?' selected':'')+'>'+_kwEsc(_kwIndivName(c))+'</option>'; }).join(''); } _setKwWPPeriodUI(); renderKwIndiv(); }
