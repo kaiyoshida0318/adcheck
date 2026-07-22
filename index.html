@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1232</span>
+    <span class="build-date">v1.1234</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1868,7 +1868,7 @@ header + * { margin-top: 4px; }
   <div class="modal" style="max-width:min(1000px,96vw);width:100%;text-align:left;max-height:min(88vh,780px);height:auto;display:flex;flex-direction:column;padding:16px 20px">
     <div style="flex-shrink:0">
       <h3 style="margin:0 0 4px;font-size:16px">🗑 撤退完了反映</h3>
-      <p style="margin:0 0 10px;font-size:11px;color:var(--text2);line-height:1.6">ネクストエンジンの商品CSVを取り込み、区分「撤退予定-out記入済▲」「撤退予定-大サイズ-out記入済▲」の商品のうち<strong>フリー在庫が合計0</strong>のものを抽出します。確認のうえ、まとめて撤退済■＋引退商品にできます。<br>突き合わせ：ADcheckの<strong>商品番号</strong> ＝ CSVの<strong>商品コード</strong>または<strong>代表商品コード</strong>。</p>
+      <p style="margin:0 0 10px;font-size:11px;color:var(--text2);line-height:1.6">ネクストエンジンの商品CSVを取り込み、区分「撤退予定-out記入済▲」「撤退予定-大サイズ-out記入済▲」の商品のうち<strong>フリー在庫が合計0</strong>のものを抽出します。確認のうえ、まとめて撤退済■＋引退商品にできます。<br>突き合わせ：ADcheckの<strong>商品番号</strong> ＝ CSVの<strong>商品コード</strong>または<strong>代表商品コード</strong>。<br><span style="color:#b45309">※ 取り込むCSVは、ネクストエンジンの「詳細検索」で<strong>商品名に「out」</strong>を入れて検索し、出てきた商品を書き出したデータです。</span></p>
       <div id="retireDrop" onclick="document.getElementById('retireFileInput').click()" ondragover="event.preventDefault();this.style.background='#eef0fb'" ondragleave="this.style.background='var(--surface2)'" ondrop="_retireDrop(event)" style="border:2px dashed var(--border2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;background:var(--surface2);font-size:12px;color:var(--text2)">📥 ネクストエンジンの商品CSVをドロップ、またはクリックして選択</div>
       <input type="file" id="retireFileInput" accept=".csv" style="display:none" onchange="_retireOnFile(this)">
       <div id="retireSummary" style="font-size:12px;color:var(--text2);margin:10px 0 6px;min-height:16px"></div>
@@ -2317,6 +2317,11 @@ function _applyShopFromUrl() {
   } catch(e) { console.warn('[ADcheck] _applyShopFromUrl error', e); }
 }
 _applyShopFromUrl();
+
+// このタブが実際に読み込んで表示しているショップを固定保持する。
+// （localStorageの現在ショップは全タブ共有のため、別タブでの切替に引きずられないようにする）
+var _sessionShopId = (function(){ try{ return _getCurrentShopId(); }catch(e){ return ''; } })();
+function _getSessionShopId(){ return _sessionShopId || (function(){ try{ return _getCurrentShopId(); }catch(e){ return ''; } })(); }
 
 // 現在ショップに対応するGitHubファイルパスを返す
 function _shopDataDir() {
@@ -5461,10 +5466,11 @@ function _retireRenderTable(){
   ];
   var h='<table style="border-collapse:collapse;width:100%"><thead><tr>'
     +'<th style="'+H+';text-align:center;width:34px"><input type="checkbox" id="retireChkAll" onchange="_retireToggleAll(this.checked)"></th>'
-    +'<th style="'+H+'">商品カテゴリ</th><th style="'+H+'">商品番号</th><th style="'+H+'">商品管理番号</th><th style="'+H+'">商品名</th><th style="'+H+'">現区分</th><th style="'+H+';text-align:right">マッチ行</th><th style="'+H+';text-align:right">フリー在庫合計</th><th style="'+H+'">判定</th></tr></thead><tbody>';
+    +'<th style="'+H+'">商品カテゴリ</th><th style="'+H+'">商品番号 <button onclick="_retireCopyNums(\'all\',this)" title="全商品番号をコピー" style="font-size:9px;font-weight:600;padding:1px 7px;border:1px solid #00897B;border-radius:4px;background:#fff;color:#00897B;cursor:pointer;margin-left:4px">📋コピー</button></th><th style="'+H+'">商品管理番号</th><th style="'+H+'">商品名</th><th style="'+H+'">現区分</th><th style="'+H+';text-align:right">マッチ行</th><th style="'+H+';text-align:right">フリー在庫合計</th><th style="'+H+'">判定</th></tr></thead><tbody>';
   groups.forEach(function(g){
     var _grpChk=(g.key!=='nomatch'&&g.items.length>0)?('<input type="checkbox" id="retireGrpChk_'+g.key+'" onchange="_retireToggleGroup(\''+g.key+'\',this.checked)" title="このカテゴリを一括選択" style="width:15px;height:15px;cursor:pointer;vertical-align:-2px;margin-right:8px">'):'';
-    h+='<tr><td colspan="9" style="padding:6px 10px;background:'+g.hbg+';color:'+g.color+';font-weight:800;font-size:12px;border-bottom:1px solid var(--border);position:sticky;top:29px;z-index:1">'+_grpChk+g.label+'（'+g.items.length+'件）</td></tr>';
+    var _grpCopy=g.items.length>0?('<button onclick="_retireCopyNums(\''+g.key+'\',this)" title="このカテゴリの商品番号をコピー" style="font-size:10px;font-weight:600;padding:2px 9px;border:1px solid '+g.color+';border-radius:4px;background:#fff;color:'+g.color+';cursor:pointer;margin-left:10px;vertical-align:1px">📋商品番号コピー</button>'):'';
+    h+='<tr><td colspan="9" style="padding:6px 10px;background:'+g.hbg+';color:'+g.color+';font-weight:800;font-size:12px;border-bottom:1px solid var(--border);position:sticky;top:29px;z-index:1">'+_grpChk+g.label+'（'+g.items.length+'件）'+_grpCopy+'</td></tr>';
     if(!g.items.length){ h+='<tr><td colspan="9" style="padding:8px 10px;color:var(--text3);font-size:11px;background:'+g.bg+'">該当なし</td></tr>'; return; }
     g.items.forEach(function(x){
       var isZero=x.matched&&x.free===0;
@@ -5525,6 +5531,15 @@ function _retireDownloadXlsx(){
 }
 function _retireToggleAll(on){ document.querySelectorAll('.retireChk').forEach(function(c){ c.checked=on; }); _retireSyncApplyLabel(); }
 function _retireToggleGroup(key,on){ document.querySelectorAll('.retireChk[data-grp="'+key+'"]').forEach(function(c){ c.checked=on; }); _retireSyncApplyLabel(); }
+function _retireCopyFallback(text){ try{ var ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }catch(e){} }
+function _retireCopyNums(scope, btn){
+  var t=(_retireData||[]);
+  var cat=function(x){ return !x.matched?'nomatch':((x.free===0)?'zero':'instock'); };
+  var list=t.filter(function(x){ return scope==='all' || cat(x)===scope; }).map(function(x){ return x.num||''; }).filter(Boolean);
+  var text=list.join('\n');
+  var done=function(){ if(btn){ if(!btn.getAttribute('data-lbl'))btn.setAttribute('data-lbl',btn.innerHTML); var _o=btn.getAttribute('data-lbl'); btn.textContent='✓コピー '+list.length+'件'; setTimeout(function(){ btn.innerHTML=_o; },1300); } };
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done,function(){ _retireCopyFallback(text); done(); }); } else { _retireCopyFallback(text); done(); } }catch(e){ _retireCopyFallback(text); done(); }
+}
 function _retireSyncApplyLabel(){
   var all=[].slice.call(document.querySelectorAll('.retireChk'));
   var n=all.filter(function(c){return c.checked;}).length;
@@ -12294,8 +12309,8 @@ function toggleTopChrome(){
 // 当日の広告調整で使う必要ページを新しいタブで一括オープン
 function _openDailyWorkPages() {
   const base = location.origin + location.pathname;
-  // 現在選択中のショップを引き継いで開く（ゆかい屋ならゆかい屋、KAIRYならKAIRYで開く）
-  const sid = (typeof _getCurrentShopId === 'function' ? _getCurrentShopId() : '') || '';
+  // このタブが表示中のショップを引き継いで開く（別タブの切替でlocalStorageが変わっても影響されない）
+  const sid = (typeof _getSessionShopId === 'function' ? _getSessionShopId() : ((typeof _getCurrentShopId === 'function' ? _getCurrentShopId() : ''))) || '';
   const shopQ = sid ? ('&shop=' + encodeURIComponent(sid)) : '';
   const urls = [
     'https://ad.rms.rakuten.co.jp/rpp/items?page=1',       // RMS-商品・キーワード設定
