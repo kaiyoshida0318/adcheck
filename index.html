@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1234</span>
+    <span class="build-date">v1.1235</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1869,6 +1869,10 @@ header + * { margin-top: 4px; }
     <div style="flex-shrink:0">
       <h3 style="margin:0 0 4px;font-size:16px">🗑 撤退完了反映</h3>
       <p style="margin:0 0 10px;font-size:11px;color:var(--text2);line-height:1.6">ネクストエンジンの商品CSVを取り込み、区分「撤退予定-out記入済▲」「撤退予定-大サイズ-out記入済▲」の商品のうち<strong>フリー在庫が合計0</strong>のものを抽出します。確認のうえ、まとめて撤退済■＋引退商品にできます。<br>突き合わせ：ADcheckの<strong>商品番号</strong> ＝ CSVの<strong>商品コード</strong>または<strong>代表商品コード</strong>。<br><span style="color:#b45309">※ 取り込むCSVは、ネクストエンジンの「詳細検索」で<strong>商品名に「out」</strong>を入れて検索し、出てきた商品を書き出したデータです。</span></p>
+      <div style="display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:8px 10px;background:#f5f6fd;border:1px solid #d7dbe8;border-radius:8px">
+        <button onclick="_retireDownloadTargetNums()" style="font-size:12px;font-weight:700;padding:6px 14px;border:none;border-radius:6px;background:#3949AB;color:#fff;cursor:pointer;white-space:nowrap">📥 対象の商品番号をCSVでDL</button>
+        <span style="font-size:10px;color:var(--text2);line-height:1.5">ADcheck内の区分「撤退予定-out記入済▲」「撤退予定-大サイズ-out記入済▲」の商品番号一覧。<br>これをネクストエンジンの詳細検索などに使えます。</span>
+      </div>
       <div id="retireDrop" onclick="document.getElementById('retireFileInput').click()" ondragover="event.preventDefault();this.style.background='#eef0fb'" ondragleave="this.style.background='var(--surface2)'" ondrop="_retireDrop(event)" style="border:2px dashed var(--border2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;background:var(--surface2);font-size:12px;color:var(--text2)">📥 ネクストエンジンの商品CSVをドロップ、またはクリックして選択</div>
       <input type="file" id="retireFileInput" accept=".csv" style="display:none" onchange="_retireOnFile(this)">
       <div id="retireSummary" style="font-size:12px;color:var(--text2);margin:10px 0 6px;min-height:16px"></div>
@@ -5539,6 +5543,21 @@ function _retireCopyNums(scope, btn){
   var text=list.join('\n');
   var done=function(){ if(btn){ if(!btn.getAttribute('data-lbl'))btn.setAttribute('data-lbl',btn.innerHTML); var _o=btn.getAttribute('data-lbl'); btn.textContent='✓コピー '+list.length+'件'; setTimeout(function(){ btn.innerHTML=_o; },1300); } };
   try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done,function(){ _retireCopyFallback(text); done(); }); } else { _retireCopyFallback(text); done(); } }catch(e){ _retireCopyFallback(text); done(); }
+}
+function _retireDownloadTargetNums(){
+  var arr=[];
+  Object.keys(productCache).forEach(function(code){ if(code==='__global__')return; var pc=productCache[code]||{};
+    if(pc.status!=='warnout'&&pc.status!=='warnbigout')return; if(pc.retired)return;
+    arr.push({num:(pc.itemNumber||'').trim(), code:code, name:pc.manualName||pc.name||code, status:pc.status});
+  });
+  if(!arr.length){ alert('対象区分（撤退予定-out記入済▲／撤退予定-大サイズ-out記入済▲）の商品がありません。'); return; }
+  arr.sort(function(a,b){ return String(a.num).localeCompare(String(b.num)); });
+  var lines=[['商品番号','商品管理番号','商品名','現区分']];
+  arr.forEach(function(x){ lines.push([x.num, x.code, x.name, (_RETIRE_LABELS[x.status]||x.status)]); });
+  var csv='﻿'+lines.map(function(r){return r.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var d=new Date(); var ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='撤退予定_商品番号_'+ds+'.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){URL.revokeObjectURL(a.href);},1500);
 }
 function _retireSyncApplyLabel(){
   var all=[].slice.call(document.querySelectorAll('.retireChk'));
