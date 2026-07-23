@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1236</span>
+    <span class="build-date">v1.1238</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -667,14 +667,14 @@ header + * { margin-top: 4px; }
             <div class="ch r" id="ch-salesroas" onclick="sortBy('salesroas')" title="総売上÷（実績額＋CA実績）×100" style="cursor:pointer;background:#eef4fb">売上ROAS</div>
             <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#eef4fb">SEO売上</div>
             <div class="ch r" id="ch-sales" onclick="sortBy('sales')" style="background:#eef4fb;border-right:2px solid #c9dff0">広告売上合計</div>
-            <div class="ch r" id="ch-spend" onclick="sortBy('spend')" style="cursor:pointer;background:#fdf0e8">全広告実績</div>
-            <div class="ch r" id="ch-roas" onclick="sortBy('roas')" style="cursor:pointer;background:#fdf0e8;border-right:2px solid #f0c9a8">全広告ROAS</div>
-            <div class="ch r" id="ch-kwspend" onclick="sortBy('kwspend')" style="cursor:pointer;background:#eff5ec">KW実績</div>
-            <div class="ch r" id="ch-kwroas" onclick="sortBy('kwroas')" style="cursor:pointer;background:#eff5ec;border-right:2px solid #b8d9a8">KW ROAS</div>
-            <div class="ch r" id="ch-spend20" onclick="sortBy('spend20')" style="cursor:pointer;background:#fff8e5">20円実績</div>
-            <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer;background:#fff8e5;border-right:2px solid #f0d878">20円 ROAS</div>
-            <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer;background:#e0f5f9">CA実績</div>
-            <div class="ch r" id="ch-caroas" onclick="sortBy('caroas')" style="cursor:pointer;line-height:1;font-size:8px;background:#e0f5f9;border-right:2px solid #a8d8e0">値引き後<br>ROAS</div>
+            <div class="ch r" id="ch-spend" onclick="sortBy('spend')" style="cursor:pointer;background:#e9f5e6;border-right:1px solid #c3e0c3">全広告実績</div>
+            <div class="ch r" id="ch-roas" onclick="sortBy('roas')" style="cursor:pointer;background:#dcefd6;border-right:2px solid #a8d3a8">全広告ROAS</div>
+            <div class="ch r" id="ch-kwspend" onclick="sortBy('kwspend')" style="cursor:pointer;background:#e9f5e6;border-right:1px solid #c3e0c3">KW実績</div>
+            <div class="ch r" id="ch-kwroas" onclick="sortBy('kwroas')" style="cursor:pointer;background:#dcefd6;border-right:2px solid #a8d3a8">KW ROAS</div>
+            <div class="ch r" id="ch-spend20" onclick="sortBy('spend20')" style="cursor:pointer;background:#e9f5e6;border-right:1px solid #c3e0c3">20円実績</div>
+            <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer;background:#dcefd6;border-right:2px solid #a8d3a8">20円 ROAS</div>
+            <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer;background:#e9f5e6;border-right:1px solid #c3e0c3">CA実績</div>
+            <div class="ch r" id="ch-caroas" onclick="sortBy('caroas')" style="cursor:pointer;line-height:1;font-size:8px;background:#dcefd6;border-right:2px solid #a8d3a8">値引き後<br>ROAS</div>
             <div class="ch" id="ch-status" style="text-align:center;font-size:10px;color:var(--text3);cursor:pointer;user-select:none" onclick="sortBy('status')" title="区分で並べ替え（撤退予定▲とout記入済▲などをまとめる）">区分 &#8645;</div>
             <div class="ch" id="ch-ss" style="text-align:center;font-size:10px;color:var(--text3)">SS/マラソン</div>
             <div class="ch"></div>
@@ -10678,6 +10678,11 @@ function renderRenewalGraph() {
     const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const yf=v=>'\u00a5'+Math.round(v).toLocaleString();
     datasets=_ITEM_SALES_DEFS.map(d=>({label:d.label,data:sa[d.key],_fmt:yf,borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.5,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
     yCallback=yf; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+yf(ctx.raw);
+  } else if (metric === 'seoad') {
+    const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const ad=labels.map(l=>(dataMap[l]||{}).sales||0); const pf=v=>v+'%';
+    const seoP=sa.tot.map((tv,i)=>tv>0?Math.round(sa.seo[i]/tv*1000)/10:0); const adP=sa.tot.map((tv,i)=>tv>0?Math.round(ad[i]/tv*1000)/10:0);
+    datasets=[{label:'SEO\u58f2\u4e0a\u6bd4\u7387',data:seoP,_fmt:pf,borderColor:'#7c3aed',backgroundColor:'#7c3aed22',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false},{label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',data:adP,_fmt:pf,borderColor:'#10b981',backgroundColor:'#10b98122',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}];
+    yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+ctx.raw+'%';
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas; const data=_renewalMetricValues(metric,labels,dataMap,code);
     datasets=[{label:meta.label,data,_fmt:meta.fmt,borderColor:meta.color,backgroundColor:meta.color+'22',borderWidth:2.5,pointRadius:4,pointHoverRadius:6,tension:0.3,fill:false}];
@@ -10695,6 +10700,7 @@ function renderRenewalGraph() {
       else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
       else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa'; series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:'#f59e0b',fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:'#38bdf8',fmt:uf,vals:tri.p20}]; }
       else if (metric==='sales'){ const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
+      else if (metric==='seoad'){ const sa=_prodSalesArrays(labels,dataMap,code,false); const ad=labels.map(l=>(dataMap[l]||{}).sales||0); const pf=v=>v+'%'; const seoP=sa.tot.map((tv,i)=>tv>0?Math.round(sa.seo[i]/tv*1000)/10:0); const adP=sa.tot.map((tv,i)=>tv>0?Math.round(ad[i]/tv*1000)/10:0); series=[{key:'seoP',label:'SEO\u58f2\u4e0a\u6bd4\u7387',color:'#7c3aed',fmt:pf,vals:seoP},{key:'adP',label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',color:'#10b981',fmt:pf,vals:adP}]; }
       else { const fmt=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).fmt; const lbl=(metric==='ctr')?'CTR-KW':(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).label; series=[{key:'_single',label:lbl,color:(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color,fmt,vals:_renewalRepValue(metric,labels,dataMap,code)}]; }
       const multi=series.length>1; _renewalAllYearMode=multi; _renewalSeries=series; datasets=[];
       series.forEach(se=>{ let pv=se.vals; if(normalize){const nz=se.vals.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} pv=se.vals.map(v=>mid>0?Math.round(v/mid*50*10)/10:0);} _years.forEach((fy,yi)=>{ const rec=_years.length-1-yi; const arr=new Array(12).fill(null),arrR=new Array(12).fill(null); labels.forEach((ym,idx)=>{ if(_fyOf(ym)!==fy)return; const fmi=_fmiOf(ym); arr[fmi]=pv[idx]; arrR[fmi]=se.vals[idx]; }); const color=se.color; datasets.push({label:multi?(se.label+' '+fy):(fy+'\u5e74'),data:arr,_raw:arrR,_fmt:se.fmt,_mk:se.key,_fy:fy,borderColor:color,backgroundColor:color+'22',borderDash:_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length],borderWidth:rec===0?(multi?2.4:2.6):(multi?1.6:1.9),pointRadius:multi?2.5:3,pointHoverRadius:multi?5:6,tension:0.3,fill:false,spanGaps:true,hidden:_renewalHiddenMetric.has(se.key)||_renewalHiddenFY.has(fy)}); }); });
@@ -10775,6 +10781,10 @@ function _renderRenewalTable(labels, dataMap, code){
   } else if (metric==='sales'){
     const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily');
     cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
+  } else if (metric==='seoad'){
+    const sa=_prodSalesArrays(labels,dataMap,code,daily); const ad=labels.map(l=>dataMap[l]?.sales||0);
+    const seoP=sa.tot.map((tv,i)=>tv>0?Math.round(sa.seo[i]/tv*1000)/10:0); const adP=sa.tot.map((tv,i)=>tv>0?Math.round(ad[i]/tv*1000)/10:0);
+    cols=[{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo,dep:true},{label:'SEO\u58f2\u4e0a\u6bd4\u7387',color:'#7c3aed',fmt:pf,vals:seoP,dep:true},{label:'\u5e83\u544a\u58f2\u4e0a',color:'#10b981',fmt:yf,vals:ad,dep:true},{label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',color:'#10b981',fmt:pf,vals:adP,dep:true}];
   } else if (metric==='all'){
     cols=_allTableCols(labels,dataMap,code).filter(se=>se.label==='総売上'||se.label==='売上ROAS'||se.label==='全広告ROAS').map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:!!se.roas,colBg:({a:'background:#eef4fb;',b:'background:#fdf0e8;',c:'background:#eff5ec;',d:'background:#fff8e5;'}[se.grp]||'')}));
   } else {
@@ -14145,8 +14155,8 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   const _genreCell = _marathonView ? `<div style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center">${cached?.genreId||'\u2014'}</div>` : '';
   const _caData = _marathonView ? null : ((typeof _caFor==='function')?_caFor(p.id,ym):null);
-  const _caSpendCell = _marathonView ? '' : `<div class="cell r mono" style="font-size:11px;background:#e0f5f9">${_caData&&_caData.spend>0?fmtY(_caData.spend):'<span style="color:var(--text3)">—</span>'}</div>`;
-  const _caRoasCell = _marathonView ? '' : (() => { const _rd=(_caData&&_caData.roasD!=null)?Math.round(_caData.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px;background:#e0f5f9;border-right:2px solid #a8d8e0"><span style="color:${_rdc};font-weight:700">${_rd!=null?_rd+'%':'—'}</span></div>`; })();
+  const _caSpendCell = _marathonView ? '' : `<div class="cell r mono" style="font-size:11px;background:#e9f5e6;border-right:1px solid #c3e0c3">${_caData&&_caData.spend>0?fmtY(_caData.spend):'<span style="color:var(--text3)">—</span>'}</div>`;
+  const _caRoasCell = _marathonView ? '' : (() => { const _rd=(_caData&&_caData.roasD!=null)?Math.round(_caData.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px;background:#dcefd6;border-right:2px solid #a8d3a8"><span style="color:${_rdc};font-weight:700">${_rd!=null?_rd+'%':'—'}</span></div>`; })();
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}${_marathonView?' marathon':' with-status'}"${_ssTabActive?` onclick="_rowClick('${p.id}','${ym}')"`:''}>
       <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${cached?.itemNumber||''}（ダブルクリックで選択）">
@@ -14191,13 +14201,13 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       <div class="cell r mono" style="background:#eef4fb;border-right:2px solid #c9dff0">
         ${(() => { const _t=_ag.totSales,_r=_ag.rppSales,_caX=(typeof _caFor==='function')?_caFor(p.id,ym):null,_caS=_caX?_caX.sales:0,_seo=Math.max(0,_t-_r-_caS),_adv=(p.sales720||0)+_caS,_base=_seo+_adv; const _ap=_base>0?(100-Math.round(_seo/_base*100)):0; return _adv>0 ? `${fmtY(_adv)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_ap)};font-weight:700;line-height:1">${_ap}%</span>` : '—'; })()}
       </div>
-      <div class="cell r mono" style="background:#fdf0e8">
+      <div class="cell r mono" style="background:#e9f5e6;border-right:1px solid #c3e0c3">
         <span>${fmtY(p.spend)}</span>
       </div>
-      <div class="roas-cell" style="background:#fdf0e8;border-right:2px solid #f0c9a8">
+      <div class="roas-cell" style="background:#dcefd6;border-right:2px solid #a8d3a8">
         <div class="roas-val ${p.avgRoas===0 ? 'rb' : rc(p.avgRoas)}">${p.avgRoas>0?fmt(p.avgRoas)+'%':'0%'}</div>
       </div>
-      <div class="cell r mono" style="font-size:11px;background:#eff5ec">
+      <div class="cell r mono" style="font-size:11px;background:#e9f5e6;border-right:1px solid #c3e0c3">
         ${(() => {
           const pKwSpend = _ag.kwSpend;
           const p20 = Math.max(0, p.spend - pKwSpend);
@@ -14208,7 +14218,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
             : '—';
         })()}
       </div>
-      <div class="cell r" style="font-size:11px;font-weight:700;background:#eff5ec;border-right:2px solid #b8d9a8">
+      <div class="cell r" style="font-size:11px;font-weight:700;background:#dcefd6;border-right:2px solid #a8d3a8">
         ${(() => {
           const pKwSpend = _ag.kwSpend;
           const pKwSales = _ag.kwSales;
@@ -14217,7 +14227,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
           return `<span style="color:${rc2(kwR)};font-weight:700">${kwR>0?kwR+'%':'0%'}</span>`;
         })()}
       </div>
-      <div class="cell r mono" style="font-size:11px;background:#fff8e5">
+      <div class="cell r mono" style="font-size:11px;background:#e9f5e6;border-right:1px solid #c3e0c3">
         ${(() => {
           const pKwSpend = _ag.kwSpend;
           const p20Spend = Math.max(0,p.spend-pKwSpend);
@@ -14228,7 +14238,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
             : '—';
         })()}
       </div>
-      <div class="cell r" style="font-size:11px;font-weight:700;background:#fff8e5;border-right:2px solid #f0d878">
+      <div class="cell r" style="font-size:11px;font-weight:700;background:#dcefd6;border-right:2px solid #a8d3a8">
         ${(() => {
           const pKwSpend = _ag.kwSpend;
           const pKwSales = _ag.kwSales;
@@ -15030,6 +15040,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
       <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
         <option value="all">売上＆ROAS</option>
+        <option value="seoad">SEO売上＆広告売上比率</option>
         <option value="sales">両方-売上</option>
         <option value="spend">広告-実績額</option>
         <option value="roas">広告-ROAS</option>
