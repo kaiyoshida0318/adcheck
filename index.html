@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1240</span>
+    <span class="build-date">v1.1242</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -11887,12 +11887,17 @@ function _subTabToolbar(tab, currentYm) {
   const csvBtn = (isSS || isMarathon)
     ? `<button onclick="${_csvFn}" style="padding:7px 16px;border-radius:8px;border:2px solid var(--accent);background:#e3f2fd;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(21,101,192,0.15);transition:all 0.15s" onmouseover="this.style.background='#bbdefb';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(21,101,192,0.25)'" onmouseout="this.style.background='#e3f2fd';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(21,101,192,0.15)'" title="この月の商品管理番号と広告出稿有無をCSVでダウンロード">📥 SALE一括用ファイル出力</button>`
     : '';
+  // SS各月タブ: その月の選択を一括解除するボタン
+  const _ssMonLbl = isSS ? ({'03':'3月','06':'6月','09':'9月','12':'12月'}[SS_TABS[tab]]||'') : '';
+  const ssClearBtn = isSS
+    ? `<button onclick="clearSSMonth('${tab}')" style="padding:7px 16px;border-radius:8px;border:2px solid #dc2626;background:#fdecec;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(220,38,38,0.15);transition:all 0.15s" onmouseover="this.style.background='#fbd5d5';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(220,38,38,0.25)'" onmouseout="this.style.background='#fdecec';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(220,38,38,0.15)'" title="${_ssMonLbl}に選択されている商品をすべて解除して、この一覧から消します">🗑 ${_ssMonLbl}を一括解除する</button>`
+    : '';
   // 【マラソン】候補のみ: クリックでドロップ枠を開く→ドロップ→取り込んで反映
   const moveBtn = (tab === 'mar-kouho')
-    ? `<button onclick="_toggleMarMoveDrop()" style="padding:7px 16px;border-radius:8px;border:2px solid #0891b2;background:#e0f7fa;color:#0891b2;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(8,145,178,0.15);transition:all 0.15s" onmouseover="this.style.background='#b2ebf2';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(8,145,178,0.25)'" onmouseout="this.style.background='#e0f7fa';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(8,145,178,0.15)'" title="参加決定（商品管理番号）CSVを取り込み、該当商品を候補から実施中へ一括移動します">📤 対象分を実施中へ移動</button>`
+    ? `<button onclick="_toggleMarMoveDrop()" style="padding:7px 16px;border-radius:8px;border:2px solid #0891b2;background:#e0f7fa;color:#0891b2;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(8,145,178,0.15);transition:all 0.15s" onmouseover="this.style.background='#b2ebf2';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(8,145,178,0.25)'" onmouseout="this.style.background='#e0f7fa';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(8,145,178,0.15)'" title="参加決定（商品管理番号）CSVを取り込み、該当商品を実施に表示します（候補には全商品が残ります）">📤 対象分を実施中に表示</button>`
     : '';
   const dropPanel = (tab === 'mar-kouho')
-    ? `<div id="marMoveDropWrap" style="display:none;flex:0 0 100%;width:100%;margin-top:2px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);box-sizing:border-box"><div style="font-size:11px;color:var(--text2);font-weight:700;margin-bottom:8px">参加決定（商品管理番号）CSVを取り込み、候補→実施中へ一括移動します</div><div style="display:flex;gap:12px;align-items:stretch;flex-wrap:wrap"><div id="marMoveDropZone" ondragover="_marMoveDragOver(event)" ondragleave="_marMoveDragLeave(event)" ondrop="_marMoveDrop(event)" onclick="document.getElementById('marMoveFileInput').click()" style="flex:1;min-width:240px;min-height:70px;display:flex;align-items:center;justify-content:center;text-align:center;border:2px dashed #0891b2;border-radius:8px;background:#e0f7fa;color:#0891b2;font-size:12px;font-weight:600;cursor:pointer;padding:10px;box-sizing:border-box">ここにファイルをドロップ／クリックして選択</div><div style="display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:170px"><span id="marMoveFileName" style="font-size:11px;color:var(--text3);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ファイル未選択</span><button id="marMoveApplyBtn" onclick="applyMarMove()" disabled style="padding:8px 16px;border-radius:8px;border:none;background:#9aa0a6;color:#fff;font-size:12px;font-weight:700;cursor:not-allowed;white-space:nowrap">取り込んで反映</button><button onclick="_cancelMarMove()" style="padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:11px;cursor:pointer;white-space:nowrap">キャンセル</button></div></div><input type="file" id="marMoveFileInput" accept=".csv,.txt" style="display:none" onchange="_onMarMoveFile(this.files)"></div>`
+    ? `<div id="marMoveDropWrap" style="display:none;flex:0 0 100%;width:100%;margin-top:2px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);box-sizing:border-box"><div style="font-size:11px;color:var(--text2);font-weight:700;margin-bottom:8px">参加決定（商品管理番号）CSVを取り込み、該当商品を実施に表示します（候補には全商品が残ります）</div><div style="display:flex;gap:12px;align-items:stretch;flex-wrap:wrap"><div id="marMoveDropZone" ondragover="_marMoveDragOver(event)" ondragleave="_marMoveDragLeave(event)" ondrop="_marMoveDrop(event)" onclick="document.getElementById('marMoveFileInput').click()" style="flex:1;min-width:240px;min-height:70px;display:flex;align-items:center;justify-content:center;text-align:center;border:2px dashed #0891b2;border-radius:8px;background:#e0f7fa;color:#0891b2;font-size:12px;font-weight:600;cursor:pointer;padding:10px;box-sizing:border-box">ここにファイルをドロップ／クリックして選択</div><div style="display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:170px"><span id="marMoveFileName" style="font-size:11px;color:var(--text3);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ファイル未選択</span><button id="marMoveApplyBtn" onclick="applyMarMove()" disabled style="padding:8px 16px;border-radius:8px;border:none;background:#9aa0a6;color:#fff;font-size:12px;font-weight:700;cursor:not-allowed;white-space:nowrap">取り込んで反映</button><button onclick="_cancelMarMove()" style="padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:11px;cursor:pointer;white-space:nowrap">キャンセル</button></div></div><input type="file" id="marMoveFileInput" accept=".csv,.txt" style="display:none" onchange="_onMarMoveFile(this.files)"></div>`
     : '';
   // 【マラソン】実施中のみ: 全件の実施を一括解除（候補へ戻す）
   const returnBtn = (tab === 'mar-jisshi')
@@ -11903,7 +11908,7 @@ function _subTabToolbar(tab, currentYm) {
   return `<div class="table-toolbar">
     <select class="toolbar-month" id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)">${monthOpts}</select>
     <input type="text" class="toolbar-search" id="subTabSearchBox" placeholder="商品名・商品番号で検索..." oninput="renderMonthlySubTab(_currentTab)" style="width:220px">
-    ${sroasBtns}<div class="toolbar-right">${colwBtn}${csvBtn}${moveBtn}${returnBtn}${updateBtn}</div>
+    ${sroasBtns}<div class="toolbar-right">${colwBtn}${csvBtn}${ssClearBtn}${moveBtn}${returnBtn}${updateBtn}</div>
     ${dropPanel}
   </div>`;
 }
@@ -12021,7 +12026,7 @@ function _processMarMoveFile(file){
       saveProductCache();
       _ssDirty=true; _markApplyBtnDirty();
       if(_ssTabActive && typeof _currentTab!=='undefined' && _currentTab in MARATHON_TABS){ renderMonthlySubTab(_currentTab); }
-      let msg='実施中へ一括移動しました\n\n対象 '+uniq.length+'件\n移動 '+moved+'件';
+      let msg='実施に表示しました\n\n対象 '+uniq.length+'件\n追加 '+moved+'件';
       if(already>0) msg+='\n既に実施中 '+already+'件';
       if(notfound>0) msg+='\n該当する商品管理番号なし '+notfound+'件';
       msg+='\n\n反映（GitHub保存）するには「反映する」を押してください。';
@@ -12056,6 +12061,27 @@ function returnAllJisshiToKouho(){
   alert(msg);
 }
 
+// SS該当月の選択を全商品から一括解除（その月の一覧から消える）
+function clearSSMonth(tab){
+  const mon = SS_TABS[tab]; if(!mon) return;
+  const lbl = {'03':'3月','06':'6月','09':'9月','12':'12月'}[mon]||mon+'月';
+  const codes = Object.keys(productCache).filter(function(code){
+    if(productCache[code] && productCache[code].retired) return false;
+    return ((productCache[code] && productCache[code].ss) || []).indexOf(mon)>=0;
+  });
+  if(codes.length===0){ alert(lbl+'に選択されている商品はありません'); return; }
+  if(!confirm(lbl+'の選択を '+codes.length+'件すべて解除します（この一覧から消えます）。よろしいですか？')) return;
+  codes.forEach(function(code){
+    if(!productCache[code]) productCache[code]={};
+    const cur = productCache[code].ss||[];
+    productCache[code].ss = cur.filter(function(m){return m!==mon;});
+  });
+  saveProductCache();
+  _ssDirty=true; _markApplyBtnDirty();
+  if(_ssTabActive && typeof _currentTab!=='undefined' && _currentTab in SS_TABS){ renderMonthlySubTab(_currentTab); }
+  alert(lbl+'の選択を '+codes.length+'件解除しました。\n\n反映（GitHub保存）するには「反映する」を押してください。');
+}
+
 function renderMonthlySubTab(tab) {
   const isStatus = tab in SUB_TAB_STATUS;
   const isSS     = tab in SS_TABS;
@@ -12079,7 +12105,7 @@ function renderMonthlySubTab(tab) {
     const qEl = document.getElementById('subTabSearchBox');
     const q = (qEl ? qEl.value : '').toLowerCase().trim();
     const allCodes = Object.keys(DB).filter(code => !productCache[code]?.retired);
-    let codes = isSelect ? allCodes.filter(c => { try{ return getStats(DB[c],ym).spend > 0; }catch(e){ return false; } }) : (isMarathon ? allCodes.filter(code => (productCache[code]?.marathon || []).includes(marKey)) : allCodes.filter(code => (productCache[code]?.ss || []).includes(mon)));
+    let codes = isSelect ? allCodes.filter(c => { try{ return getStats(DB[c],ym).spend > 0; }catch(e){ return false; } }) : (isMarathon ? (marKey==='kouho' ? allCodes.slice() : allCodes.filter(code => (productCache[code]?.marathon || []).includes(marKey))) : allCodes.filter(code => (productCache[code]?.ss || []).includes(mon)));
     if (isSelect) { codes.sort((a,b)=>{ const sa=getStats(DB[a],ym), sb=getStats(DB[b],ym); const ra=sa.spend>0?sa.sales720/sa.spend:0, rb=sb.spend>0?sb.sales720/sb.spend:0; return rb-ra; }); const _ce=document.getElementById('cnt-mar-select'); if(_ce) _ce.textContent= codes.length>0?('('+codes.length+')'):''; }
     // 検索キーワードで絞り込み(商品ID・商品番号・商品名)
     if (q) {
@@ -13647,7 +13673,7 @@ function _updateStatusCounts() {
   set('ss-jun',        ssCount['06']);
   set('ss-sep',        ssCount['09']);
   set('ss-dec',        ssCount['12']);
-  set('mar-kouho',     marCount.kouho);
+  set('mar-kouho',     total);
   set('mar-jisshi',    marCount.jisshi);
   (function(){ var c=0; Object.keys(productCache).forEach(function(k){ var w=productCache[k]&&productCache[k].watchKws; if(w&&w.length) c+=w.length; }); set('mar-watch', c); })();
 }
