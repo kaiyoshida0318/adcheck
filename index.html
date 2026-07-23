@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1239</span>
+    <span class="build-date">v1.1240</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -667,10 +667,10 @@ header + * { margin-top: 4px; }
             <div class="ch r" id="ch-salesroas" onclick="sortBy('salesroas')" title="総売上÷（実績額＋CA実績）×100" style="cursor:pointer;background:#eef4fb">売上ROAS</div>
             <div class="ch r" id="ch-seosales" onclick="sortBy('seosales')" style="cursor:pointer;background:#eef4fb">SEO売上</div>
             <div class="ch r" id="ch-sales" onclick="sortBy('sales')" style="background:#eef4fb;border-right:2px solid #c9dff0">広告売上合計</div>
-            <div class="ch r" id="ch-spend" onclick="sortBy('spend')" style="cursor:pointer;background:#e3f4dd;border-right:1px solid #cde3c4">全広告実績</div>
-            <div class="ch r" id="ch-roas" onclick="sortBy('roas')" style="cursor:pointer;background:#e3f4dd;border-right:2px solid #b5d7aa">全広告ROAS</div>
-            <div class="ch r" id="ch-kwspend" onclick="sortBy('kwspend')" style="cursor:pointer;background:#d8eecf;border-right:1px solid #c3e0b8">KW実績</div>
-            <div class="ch r" id="ch-kwroas" onclick="sortBy('kwroas')" style="cursor:pointer;background:#d8eecf;border-right:2px solid #a9d29c">KW ROAS</div>
+            <div class="ch r" id="ch-spend" onclick="sortBy('spend')" style="cursor:pointer;background:#d8eecf;border-right:1px solid #c3e0b8">全広告実績</div>
+            <div class="ch r" id="ch-roas" onclick="sortBy('roas')" style="cursor:pointer;background:#d8eecf;border-right:2px solid #a9d29c">全広告ROAS</div>
+            <div class="ch r" id="ch-kwspend" onclick="sortBy('kwspend')" style="cursor:pointer;background:#e3f4dd;border-right:1px solid #cde3c4">KW実績</div>
+            <div class="ch r" id="ch-kwroas" onclick="sortBy('kwroas')" style="cursor:pointer;background:#e3f4dd;border-right:2px solid #b5d7aa">KW ROAS</div>
             <div class="ch r" id="ch-spend20" onclick="sortBy('spend20')" style="cursor:pointer;background:#eaf5e0;border-right:1px solid #d6e8c4">20円実績</div>
             <div class="ch r" id="ch-roas20" onclick="sortBy('roas20')" style="cursor:pointer;background:#eaf5e0;border-right:2px solid #c4dbaa">20円 ROAS</div>
             <div class="ch r" id="ch-contrib" onclick="sortBy('contrib')" style="cursor:pointer;background:#dcf0e6;border-right:1px solid #c4e5d3">CA実績</div>
@@ -14201,13 +14201,13 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       <div class="cell r mono" style="background:#eef4fb;border-right:2px solid #c9dff0">
         ${(() => { const _t=_ag.totSales,_r=_ag.rppSales,_caX=(typeof _caFor==='function')?_caFor(p.id,ym):null,_caS=_caX?_caX.sales:0,_seo=Math.max(0,_t-_r-_caS),_adv=(p.sales720||0)+_caS,_base=_seo+_adv; const _ap=_base>0?(100-Math.round(_seo/_base*100)):0; return _adv>0 ? `${fmtY(_adv)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_ap)};font-weight:700;line-height:1">${_ap}%</span>` : '—'; })()}
       </div>
-      <div class="cell r mono" style="background:#e3f4dd;border-right:1px solid #cde3c4">
+      <div class="cell r mono" style="background:#d8eecf;border-right:1px solid #c3e0b8">
         <span>${fmtY(p.spend)}</span>
       </div>
-      <div class="roas-cell" style="background:#e3f4dd;border-right:2px solid #b5d7aa">
+      <div class="roas-cell" style="background:#d8eecf;border-right:2px solid #a9d29c">
         <div class="roas-val ${p.avgRoas===0 ? 'rb' : rc(p.avgRoas)}">${p.avgRoas>0?fmt(p.avgRoas)+'%':'0%'}</div>
       </div>
-      <div class="cell r mono" style="font-size:11px;background:#d8eecf;border-right:1px solid #c3e0b8">
+      <div class="cell r mono" style="font-size:11px;background:#e3f4dd;border-right:1px solid #cde3c4">
         ${(() => {
           const pKwSpend = _ag.kwSpend;
           const p20 = Math.max(0, p.spend - pKwSpend);
@@ -14218,7 +14218,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
             : '—';
         })()}
       </div>
-      <div class="cell r" style="font-size:11px;font-weight:700;background:#d8eecf;border-right:2px solid #a9d29c">
+      <div class="cell r" style="font-size:11px;font-weight:700;background:#e3f4dd;border-right:2px solid #b5d7aa">
         ${(() => {
           const pKwSpend = _ag.kwSpend;
           const pKwSales = _ag.kwSales;
