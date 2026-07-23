@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1242</span>
+    <span class="build-date">v1.1243</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12105,7 +12105,7 @@ function renderMonthlySubTab(tab) {
     const qEl = document.getElementById('subTabSearchBox');
     const q = (qEl ? qEl.value : '').toLowerCase().trim();
     const allCodes = Object.keys(DB).filter(code => !productCache[code]?.retired);
-    let codes = isSelect ? allCodes.filter(c => { try{ return getStats(DB[c],ym).spend > 0; }catch(e){ return false; } }) : (isMarathon ? (marKey==='kouho' ? allCodes.slice() : allCodes.filter(code => (productCache[code]?.marathon || []).includes(marKey))) : allCodes.filter(code => (productCache[code]?.ss || []).includes(mon)));
+    let codes = isSelect ? allCodes.filter(c => { try{ return getStats(DB[c],ym).spend > 0; }catch(e){ return false; } }) : (isMarathon ? allCodes.filter(code => (productCache[code]?.marathon || []).includes(marKey)) : allCodes.filter(code => (productCache[code]?.ss || []).includes(mon)));
     if (isSelect) { codes.sort((a,b)=>{ const sa=getStats(DB[a],ym), sb=getStats(DB[b],ym); const ra=sa.spend>0?sa.sales720/sa.spend:0, rb=sb.spend>0?sb.sales720/sb.spend:0; return rb-ra; }); const _ce=document.getElementById('cnt-mar-select'); if(_ce) _ce.textContent= codes.length>0?('('+codes.length+')'):''; }
     // 検索キーワードで絞り込み(商品ID・商品番号・商品名)
     if (q) {
@@ -13673,7 +13673,7 @@ function _updateStatusCounts() {
   set('ss-jun',        ssCount['06']);
   set('ss-sep',        ssCount['09']);
   set('ss-dec',        ssCount['12']);
-  set('mar-kouho',     total);
+  set('mar-kouho',     marCount.kouho);
   set('mar-jisshi',    marCount.jisshi);
   (function(){ var c=0; Object.keys(productCache).forEach(function(k){ var w=productCache[k]&&productCache[k].watchKws; if(w&&w.length) c+=w.length; }); set('mar-watch', c); })();
 }
