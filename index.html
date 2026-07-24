@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1243</span>
+    <span class="build-date">v1.1244</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1821,6 +1821,7 @@ header + * { margin-top: 4px; }
           <option value="g2"   style="color:#0288D1;font-weight:600">健常-要注意◯</option>
           <option value="g3"   style="color:#4FC3F7;font-weight:600">健常-広告無し</option>
           <option value="new"  style="color:#2E7D32;font-weight:600">新商品</option>
+          <option value="newr" style="color:#2E7D32;font-weight:600">新商品-リニュ</option>
           <option value="mid"  style="color:#F9A825;font-weight:600">中立□</option>
           <option value="midb" style="color:#FFB300;font-weight:600">中立-20円出稿中□</option>
           <option value="mid2" style="color:#E65100;font-weight:600">中立-広告無し</option>
@@ -9848,9 +9849,9 @@ function _renewalSeoRowHtml(code) {
   const statusColor = STATUS_COLORS[statusVal] || '';
   const statusCell = `<div class="status-cell" onclick="event.stopPropagation()">
       <select onchange="applyStatusColor(this);_setRoasTrendStatus('${code}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">
-        ${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(v => {
-          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
-          const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};
+        ${['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(v => {
+          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
+          const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};
           return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;
         }).join('')}
       </select>
@@ -11164,9 +11165,9 @@ function renderRoasTrend() {
     const statusSel = `<div class="status-cell" onclick="event.stopPropagation()" style="position:relative;min-height:44px;padding:2px">
       <div class="status-disp" style="color:${statusColor||'var(--text2)'}">${_statusDispHtml(statusVal||'unset')}</div>
       <select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:11px;border:none;outline:none">
-        ${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(v => {
-          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
-          const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};
+        ${['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(v => {
+          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
+          const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};
           return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;
         }).join('')}
       </select>
@@ -11242,7 +11243,7 @@ function renderRunaway(){
     const _base=_mid5.length?_mid5.reduce((s,x)=>s+x,0)/_mid5.length:0, _hi=_mid5.length?Math.max(..._mid5):0;
     const dCells=dates.map((d,di)=>{ const v=dayVals[di]; if(v==null) return `<div class="cell r mono" style="background:#fff8e5;font-size:11px;color:var(--text3)">—</div>`; const over=(_base>0)?(v-_base):0; const col=(over>2000)?'#dc2626':((over>0)?'#ea580c':'var(--text)'); const pct=(over>0)?Math.round(over/_base*100):0; const overSub=(over>0)?`<div style="font-size:9px;font-weight:700;color:${col};margin-top:1px">+${pct}%</div>`:''; const _idd=itemDailyData[p.id]&&itemDailyData[p.id][d]; const _s20=_idd?Math.max(0,(_idd.sales||0)-(_idd.salesKw||0)):0; const _roas=(v>0)?Math.round(_s20/v*100):null; const roasSub=(_roas!=null)?`<div style="font-size:9px;color:var(--text3);margin-top:1px">ROAS ${_roas}%</div>`:''; return `<div class="cell r mono" style="background:#fff8e5;font-size:11px;font-weight:${over>0?700:400};color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2">¥${Math.round(v).toLocaleString()}${roasSub}${overSub}</div>`; }).join('');
     const statusVal=cached.status||'unset'; const statusColor=STATUS_COLORS[statusVal]||'';
-    const statusSel=`<div class="status-cell" onclick="event.stopPropagation()"><select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(v=>{const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;}).join('')}</select></div>`;
+    const statusSel=`<div class="status-cell" onclick="event.stopPropagation()"><select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">${['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(v=>{const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;}).join('')}</select></div>`;
     const ssCell=`<div class="status-cell" style="padding:3px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px" onclick="event.stopPropagation()">${_ssCellBtns(p.id)}</div>`;
     return `<div class="item-row"><div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:48px;background:var(--surface)">
       <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cached.itemNumber||'—'}</div>
@@ -11793,7 +11794,7 @@ function applyAllStatusUpdates() {
 // 【状態】サブタブのレンダリング
 const STATUS_COLORS = {
   unset:'', g1:'#1565C0', g1b:'#1E88E5', g2:'#0288D1', g3:'#4FC3F7',
-  new:'#2E7D32', mid:'#F9A825', midb:'#FFB300', mid2:'#E65100', mid2y:'#E65100', warn:'#C62828', warnbig:'#C62828', warnbigout:'#C62828', warnout:'#C62828', out:'#6D1111'
+  new:'#2E7D32', newr:'#2E7D32', mid:'#F9A825', midb:'#FFB300', mid2:'#E65100', mid2y:'#E65100', warn:'#C62828', warnbig:'#C62828', warnbigout:'#C62828', warnout:'#C62828', out:'#6D1111'
 };
 function _statusDispHtml(v){
   const lab = (typeof STATUS_LABELS!=='undefined' && STATUS_LABELS[v]) || '';
@@ -11821,6 +11822,7 @@ const STATUS_LABELS = {
   'g2':    '健常-要注意◯',
   'g3':    '健常-広告無し',
   'new':   '新商品',
+  'newr':  '新商品-リニュ',
   'mid':   '中立□',
   'midb':  '中立-20円出稿中□',
   'mid2':  '中立-広告無し',
@@ -13661,7 +13663,7 @@ function _updateStatusCounts() {
   set('monthly-g1b',   statusCount['g1b']  || 0);
   set('monthly-g2',    statusCount['g2']   || 0);
   set('monthly-g3',    statusCount['g3']   || 0);
-  set('monthly-new',   statusCount['new']  || 0);
+  set('monthly-new',   (statusCount['new']  || 0)+(statusCount['newr'] || 0));
   set('monthly-mid',   statusCount['mid']  || 0);
   set('monthly-midb',  statusCount['midb'] || 0);
   set('monthly-mid2',  (statusCount['mid2'] || 0)+(statusCount['mid2y'] || 0));
@@ -13791,7 +13793,7 @@ function getSorted(ym) {
     if (q && !p.id.toString().includes(q) && !(productCache[p.id]?.itemNumber||'').toLowerCase().includes(q) && !(productCache[p.id]?.manualName||productCache[p.id]?.name||'').toLowerCase().includes(q)) return false;
     // サブタブフィルタ
     if (_subTabFilter && _subTabFilter !== 'all') {
-      let _st = (productCache[p.id]?.status || 'unset'); if (_st === 'mid2y') _st = 'mid2'; if (_st === 'warnout') _st = 'warn'; if (_st === 'warnbigout') _st = 'warnbig';
+      let _st = (productCache[p.id]?.status || 'unset'); if (_st === 'mid2y') _st = 'mid2'; if (_st === 'warnout') _st = 'warn'; if (_st === 'warnbigout') _st = 'warnbig'; if (_st === 'newr') _st = 'new';
       if (_st !== _subTabFilter) return false;
     }
     return true;
@@ -13846,7 +13848,7 @@ function getSorted(ym) {
     return dir * (rdOf(a) - rdOf(b));
   }
   if (_sortKey === 'status') {
-    const _ord = ['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'];
+    const _ord = ['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'];
     const rk = p => { const _st = productCache[p.id]?.status || 'unset'; const _i = _ord.indexOf(_st); return _i<0?999:_i; };
     return dir * (rk(a) - rk(b));
   }
@@ -13941,10 +13943,10 @@ function _markeHeader(){
 }
 function _kubunSelectHtml(code){
   var cached=productCache[code]||{}; var sv=cached.status||'unset';
-  var labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
-  var colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};
+  var labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
+  var colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};
   var sc=colors[sv]||'';
-  var opts=['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(function(v){ return '<option value="'+v+'"'+(sv===v?' selected':'')+' '+(colors[v]?'style="color:'+colors[v]+';font-weight:600"':'')+'>'+labels[v]+'</option>'; }).join('');
+  var opts=['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(function(v){ return '<option value="'+v+'"'+(sv===v?' selected':'')+' '+(colors[v]?'style="color:'+colors[v]+';font-weight:600"':'')+'>'+labels[v]+'</option>'; }).join('');
   return '<div class="status-cell" onclick="event.stopPropagation()" style="width:100%"><select onchange="applyStatusColor(this);_setRoasTrendStatus(\''+code+'\',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:'+(sc||'var(--text)')+';font-weight:'+(sc?'600':'')+';width:100%;cursor:pointer">'+opts+'</select></div>';
 }
 function _markeRow(d, maxSpend){
@@ -14280,9 +14282,9 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
       <div class="status-cell" onclick="event.stopPropagation()" style="position:relative">
         <div class="status-disp" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1px;overflow:hidden;color:${STATUS_COLORS[productCache[p.id]?.status||'unset']||'var(--text2)'}">${_statusDispHtml(productCache[p.id]?.status||'unset')}</div>
         <select id="status-sel-${p.id}" onchange="applyStatusColor(this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:11px;border:none;outline:none">
-          ${['unset','g1','g1b','g2','g3','new','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(v => {
-            const labels = {unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
-            const colors = {unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};
+          ${['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','out'].map(v => {
+            const labels = {unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',out:'撤退済■'};
+            const colors = {unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',out:'#6D1111'};
             const cur = productCache[p.id]?.status || 'unset';
             const col = colors[v] ? `style="color:${colors[v]};font-weight:600"` : '';
             return `<option value="${v}"${cur===v?' selected':''} ${col}>${labels[v]}</option>`;
