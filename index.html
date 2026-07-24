@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1244</span>
+    <span class="build-date">v1.1245</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3640,17 +3640,21 @@ var kwRows = []; // { code, kw, date, spend, sales, orders, cl, roas, ctr, cpc }
 var salesRows = []; // Item_SalesList 日別総売上 { date, ym, itemCode, sales, orders, units }
 
 function _parseKwRows(text) {
-  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  // クォート対応のCSVパーサで分割（フィールド内カンマ・数値の桁区切りカンマで列がずれるのを防ぐ）
+  const rows = _cpaParseCsv(text);
   let hi = -1;
-  for (let i = 0; i < Math.min(10, lines.length); i++) {
-    if (lines[i].includes('キーワード') && lines[i].includes('日付')) { hi = i; break; }
-    if (lines[i].includes('コントロールカラム')) { hi = i; break; }
+  for (let i = 0; i < Math.min(10, rows.length); i++) {
+    const line = (rows[i] || []).join(',');
+    if (line.includes('キーワード') && line.includes('日付')) { hi = i; break; }
+    if (line.includes('コントロールカラム')) { hi = i; break; }
   }
   if (hi < 0) return;
-  const headers = lines[hi].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const headers = (rows[hi] || []).map(h => String(h).trim());
   const col = h => headers.indexOf(h);
-  for (let i = hi + 1; i < lines.length; i++) {
-    const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+  // 桁区切りカンマを除去して数値化（"2,474" → 2474、"-"/空 → 0）
+  const num = v => { if (v == null) return 0; v = String(v).replace(/,/g, '').trim(); if (v === '' || v === '-') return 0; const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+  for (let i = hi + 1; i < rows.length; i++) {
+    const vals = (rows[i] || []).map(v => String(v).trim());
     if (vals.length < 5) continue;
     const itemCode = vals[col('商品管理番号')];
     const kw       = vals[col('キーワード')];
@@ -3663,23 +3667,23 @@ function _parseKwRows(text) {
     // 同じ日付・商品・KWがあれば上書き（重複投入対策）
     const existingIdx = kwRows.findIndex(r => r.code === code);
     if (existingIdx >= 0) {
-      kwRows[existingIdx].spend  = parseFloat(vals[col('実績額(合計)')]) || 0;
-      kwRows[existingIdx].sales  = parseFloat(vals[col('売上金額(合計720時間)')]) || 0;
-      kwRows[existingIdx].orders = parseFloat(vals[col('売上件数(合計720時間)')]) || 0;
-      kwRows[existingIdx].cl     = parseFloat(vals[col('クリック数(合計)')]) || 0;
-      kwRows[existingIdx].ctr    = parseFloat(vals[col('CTR(%)')]) || 0;
-      kwRows[existingIdx].mcpc   = parseFloat(vals[col('目安CPC')]) || 0;
-      kwRows[existingIdx].cpcAct = parseFloat(vals[col('CPC実績(合計)')]) || 0;
+      kwRows[existingIdx].spend  = num(vals[col('実績額(合計)')]);
+      kwRows[existingIdx].sales  = num(vals[col('売上金額(合計720時間)')]);
+      kwRows[existingIdx].orders = num(vals[col('売上件数(合計720時間)')]);
+      kwRows[existingIdx].cl     = num(vals[col('クリック数(合計)')]);
+      kwRows[existingIdx].ctr    = num(vals[col('CTR(%)')]);
+      kwRows[existingIdx].mcpc   = num(vals[col('目安CPC')]);
+      kwRows[existingIdx].cpcAct = num(vals[col('CPC実績(合計)')]);
     } else {
       kwRows.push({
         code, date: dateStr, ym: `${dm[1]}${dm[2]}`, itemCode, kw,
-        spend:  parseFloat(vals[col('実績額(合計)')]) || 0,
-        sales:  parseFloat(vals[col('売上金額(合計720時間)')]) || 0,
-        orders: parseFloat(vals[col('売上件数(合計720時間)')]) || 0,
-        cl:     parseFloat(vals[col('クリック数(合計)')]) || 0,
-        ctr:    parseFloat(vals[col('CTR(%)')]) || 0,
-        mcpc:   parseFloat(vals[col('目安CPC')]) || 0,
-        cpcAct: parseFloat(vals[col('CPC実績(合計)')]) || 0,
+        spend:  num(vals[col('実績額(合計)')]),
+        sales:  num(vals[col('売上金額(合計720時間)')]),
+        orders: num(vals[col('売上件数(合計720時間)')]),
+        cl:     num(vals[col('クリック数(合計)')]),
+        ctr:    num(vals[col('CTR(%)')]),
+        mcpc:   num(vals[col('目安CPC')]),
+        cpcAct: num(vals[col('CPC実績(合計)')]),
       });
     }
   }
