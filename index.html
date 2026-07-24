@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1245</span>
+    <span class="build-date">v1.1246</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8978,8 +8978,19 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   const _kwVol={}; let _totVol=0; Object.keys(byKw).forEach(kw=>{ const v=_kwiPredVol(byKw[kw],_monthLast); _kwVol[kw]=v; _totVol+=v; });
   const _volRed={}; Object.keys(byKw).forEach(kw=>{ const dd=[...new Set(byKw[kw].filter(r=>r.ctr>0&&r.cl>0).map(r=>r.date))].filter(d=>d<=_monthLast).sort(); _volRed[kw]= dd.length ? (dd.length*2 < (_kwiDDiff(_monthLast,dd[0])+1)) : false; });
   const kws=Object.keys(byKw).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
+  // 目安は「登録済みKWスナップショット(=RMSの目安CPC)」を最優先。RPPレポート由来のmcpcは桁ずれ等で暴れることがあるため、最新月は登録値で上書きする
+  var _snapGuiMap={};
+  (function(){ try{
+    if(!(_currentKwSnap && _currentKwSnap.byCode)) return;
+    var _sn=_snapKwMap(_currentKwSnap.byCode[code]); if(!_sn) return;
+    var _gL=''; for(var _i=0;_i<kwRows.length;_i++){ if(kwRows[_i].date>_gL) _gL=kwRows[_i].date; }
+    var _dY=_monthLast?(_monthLast.slice(0,4)+_monthLast.slice(5,7)):''; var _gY=_gL?(_gL.slice(0,4)+_gL.slice(5,7)):'';
+    if(!_dY || _dY!==_gY) return; // 最新月のみ現在の登録値を適用
+    _snapGuiMap=_sn;
+  }catch(e){} })();
+  var _effGui=function(kw,fallback){ var v=_snapGuiMap[kw]; return (v!=null && v>0) ? v : fallback; };
   let hasFix=false, hasFixX=false, hasYellow=false, _redCount=0, _probSpend=0;
-  kws.forEach((kw)=>{ const dv=_kwiCarry(byKw[kw],_latest); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; hasFixX=true; _probSpend+=(_kwSpend[kw]||0); } else if(a===g){ _redCount++; hasFix=true; _probSpend+=(_kwSpend[kw]||0); } else if(st>=3){ _redCount++; _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasFix=true; } else if(g>=100){ _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasYellow=true; } } });
+  kws.forEach((kw)=>{ const dv=_kwiCarry(byKw[kw],_latest); dv.gui=_effGui(kw,dv.gui); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; hasFixX=true; _probSpend+=(_kwSpend[kw]||0); } else if(a===g){ _redCount++; hasFix=true; _probSpend+=(_kwSpend[kw]||0); } else if(st>=3){ _redCount++; _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasFix=true; } else if(g>=100){ _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasYellow=true; } } });
   let _pastKws=[], _pastSet={}, _pastAgg={}, _rowKws=kws.slice();
   if(daily){
     const _allRows=kwRows.filter(r=>r.itemCode===code);
@@ -9072,7 +9083,7 @@ function _buildKwTableBlock(code, daily, idx, pfx){
           +'<td style="'+_T+';background:#fff">'+_taiouMarkGlyph(_zk)+'</td>'
           +(function(){ var vals={kwvol:_zv,share:0,spend:0,sales:0,cvr:null,roas:null,mclick:0,recent3:0,gui:(_zme!=null?_zme:null),act:null}; var _ru=_taiouFor(_zk,vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
           +'</tr>'; return; }
-      const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_kwiCarry(byKw[kw],_latest); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_kwiRecent3(byKw[kw],_latest);
+      const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_kwiCarry(byKw[kw],_latest); dv.gui=_effGui(kw,dv.gui); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_kwiRecent3(byKw[kw],_latest);
       _h+='<tr>'
         +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
         +'<td style="'+_T+';background:#fff;font-size:11px;color:'+(_volRed[kw]?'#1e8449;font-weight:700':'#555')+'">'+(_volRed[kw]?('?_'+_n2(_kwVol[kw])+'_?'):_n2(_kwVol[kw]))+'</td>'
