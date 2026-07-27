@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1246</span>
+    <span class="build-date">v1.1247</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3233,7 +3233,7 @@ async function readFiles(files) {
       if (type === 'kw') {
         const buf = await f.arrayBuffer();
         const zip = await JSZip.loadAsync(buf);
-        let _kwInfo = null;
+        let _kwInfo = null; let _kwText = null;
         for (const [name, entry] of Object.entries(zip.files)) {
           if (name.toLowerCase().endsWith('.csv') && !entry.dir) {
             const csvBuf = await entry.async('arraybuffer');
@@ -3242,6 +3242,7 @@ async function readFiles(files) {
             // この日付のKWデータをリセット（再読み込み対応）
             const dateInfo = _extractDateInfo(text);
             if (!_kwInfo) _kwInfo = dateInfo;
+            if (_kwText == null) _kwText = text;
             if (dateInfo) {
               Object.keys(itemDailyData).forEach(code => {
                 if (itemDailyData[code][dateInfo.start]) {
@@ -3258,8 +3259,8 @@ async function readFiles(files) {
             _backfillKwCtr(text);
           }
         }
-        // kwはZIP内最初のCSVのdateInfo（上のループで取得済み）を使用
-        _addNichFile(f, null, _kwInfo);
+        // kwはZIP内最初のCSVのdateInfo/テキスト（上のループで取得済み）を保持
+        _addNichFile(f, _kwText, _kwInfo);
         _renderMonthlyBadges();
         hasMonthlyFile = true;
         continue;
@@ -4399,16 +4400,18 @@ function _extractDateInfo(text) {
 async function _classifyAllFiles() {
   const grouped = {};
   for (const f of _nichinichiFiles) {
-    let text = null;
-    try {
-      text = await _readNichText(f);
-    } catch(e) {
-      console.warn('[ADcheck] _classifyAllFiles: ファイル読込エラー', f.name, e.message);
-      continue;
+    // 取り込み時に保持したテキスト/日付を優先使用（ZIPの再解凍に依存しない）
+    let text = (f && f._nichText != null) ? f._nichText : null;
+    let info = (f && f._nichInfo) ? f._nichInfo : null;
+    if (text == null || !info) {
+      try {
+        if (text == null) text = await _readNichText(f);
+      } catch(e) {
+        console.warn('[ADcheck] _classifyAllFiles: ファイル読込エラー', f.name, e.message);
+      }
+      if (!info && text) info = _extractDateInfo(text);
     }
-    if (!text) continue;
-    const info = _extractDateInfo(text);
-    if (!info) continue;
+    if (!text || !info) { console.warn('[ADcheck] _classifyAllFiles: 日付/本文を取得できずスキップ', f && f.name); continue; }
     const key = info.start;
     if (!grouped[key]) grouped[key] = { rpp: null, kw: null, isPeriod: info.isPeriod, end: info.end };
     const type = _nichFileType(f.name);
@@ -13388,6 +13391,8 @@ function _addNichFile(f, text, info) {
       console.log(`[ADcheck] 再アップ: ${info.start} ${type} → 古いデータを削除`);
     }
   }
+  // 取り込み時に読んだテキスト/日付情報をファイルに保持し、整合チェック(_classifyAllFiles)での再解凍依存をなくす
+  try { f._nichText = (text != null ? text : null); f._nichInfo = (info || null); } catch(e){}
   _nichFileMeta.push({ start: info?.start || '', type, idx: _nichinichiFiles.length });
   _nichinichiFiles.push(f);
 }
