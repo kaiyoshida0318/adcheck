@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1249</span>
+    <span class="build-date">v1.1251</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -735,7 +735,7 @@ header + * { margin-top: 4px; }
           <div class="toolbar-right"><button onclick="openGlobalChangeLog()" title="変更記録を開く" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid #f97316;background:var(--surface2);color:#f97316;cursor:pointer;white-space:nowrap;font-weight:700">📝 変更記録</button></div>
         </div>
         <div id="runawayDaysCal" style="padding:0 4px"></div>
-        <div id="rundaysModeBar" style="display:flex;justify-content:flex-end;gap:4px;margin:0 4px 8px"><button id="rundaysPctBtn" onclick="_setRundaysPct()" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">比率(％)を表示</button><button id="rundaysOnlyBtn" onclick="_setRundaysMode(false)" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #dc2626;background:#dc2626;color:#fff;">暴走日のみ</button><button id="rundaysAllBtn" onclick="_setRundaysMode(true)" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">全表示</button></div>
+        <div id="rundaysModeBar" style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:0 4px 8px"><div style="display:inline-flex;gap:4px;border:1px solid #d7dbe0;border-radius:8px;padding:3px"><button id="rundaysPctOnBtn" onclick="_setRundaysPct(true)" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">比率(％)あり</button><button id="rundaysPctOffBtn" onclick="_setRundaysPct(false)" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #0891b2;background:#0891b2;color:#fff;">比率(％)なし</button></div><div style="display:inline-flex;gap:4px;border:1px solid #d7dbe0;border-radius:8px;padding:3px"><button id="rundaysOnlyBtn" onclick="_setRundaysMode(false)" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #dc2626;background:#dc2626;color:#fff;">暴走日のみ</button><button id="rundaysAllBtn" onclick="_setRundaysMode(true)" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">全表示</button></div></div>
         <div id="rundays-col-header"></div>
         <div id="rundays-table-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
       </div>
@@ -5828,17 +5828,15 @@ function _caRowVal(agg, r){
   return e||{spend:0,roasD:0};
 }
 let _rundaysPctMode=false;
-function _setRundaysPct(){
-  _rundaysPctMode=!_rundaysPctMode;
-  var b=document.getElementById('rundaysPctBtn');
-  if(b){
-    var on='font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #0891b2;background:#0891b2;color:#fff;';
-    var off='font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
-    b.textContent=_rundaysPctMode?'比率(％)を消す':'比率(％)を表示';
-    b.style.cssText=_rundaysPctMode?on:off;
-  }
-  renderRunawayDays();
+function _setRundaysPctUI(){
+  const on=document.getElementById('rundaysPctOnBtn'), off=document.getElementById('rundaysPctOffBtn');
+  const base='font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;';
+  const _off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
+  const _act='border:1px solid #0891b2;background:#0891b2;color:#fff;';
+  if(on)on.style.cssText=base+(_rundaysPctMode?_act:_off);
+  if(off)off.style.cssText=base+(!_rundaysPctMode?_act:_off);
 }
+function _setRundaysPct(b){ _rundaysPctMode=b; _setRundaysPctUI(); renderRunawayDays(); }
 function renderRunawayDays(){
   const w=document.getElementById('rundays-table-wrap');
   if(!dailyRows||dailyRows.length===0){ if(w) w.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; const c=document.getElementById('runawayDaysCal'); if(c)c.innerHTML=''; return; }
@@ -5848,6 +5846,7 @@ function renderRunawayDays(){
   let filtered=dailyRows.filter(r=>{ const d=(r.label||'').replace(/\//g,'-'); return d>=fromStr && d<=to; });
   if(!_rundaysAll){ filtered=filtered.filter(r=>{ const sp20=(r.spend||0)-(r.spendKw||0); if(!(sp20>0)) return false; const sa20=(r.sales||0)-(r.salesKw||0); return (sa20/sp20*100)<=150; }); }
   _setRundaysModeUI();
+  _setRundaysPctUI();
   _renderRunawayCalendar();
   _renderTable('rundays', filtered);
 }
