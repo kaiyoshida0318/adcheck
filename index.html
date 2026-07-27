@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1251</span>
+    <span class="build-date">v1.1252</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10700,12 +10700,21 @@ function renderRenewalGraph() {
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const textColor = isDark ? '#a0aec0' : '#718096';
 
-  let datasets, yCallback, tooltipLabel, chartLabels=displayLabels, yearMode=false, _fyYears=null;
+  let datasets, yCallback, tooltipLabel, chartLabels=displayLabels, yearMode=false, _fyYears=null, _chartKind='line';
   if (metric === 'all') {
-    const _ser=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas'||s.key==='roasAll');
-    datasets = _ser.map(se=>{ const raw=se.vals; const nz=raw.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} const norm=raw.map(v=>mid>0?Math.round(v/mid*50*10)/10:0); return {label:se.label,data:norm,_raw:raw,_fmt:se.fmt,borderColor:se.color,backgroundColor:se.color+'22',borderWidth:2.2,pointRadius:3,pointHoverRadius:5,tension:0.3,fill:false}; });
-    yCallback=v=>v+'%';
-    tooltipLabel=ctx=>{const ds=ctx.dataset;const rr=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(rr):rr;return ' '+ds.label+': '+rs+'\uff08'+ctx.raw+'%\uff09';};
+    // \u58f2\u4e0a\u90e8\u5206\uff1dSEO\u58f2\u4e0a\uff0b\u5e83\u544a\u58f2\u4e0a\u306e\u7a4d\u307f\u4e0a\u3052\u68d2(\u5de6\u8ef8\u00a5)\uff0f\u58f2\u4e0aROAS\uff1d\u6298\u308c\u7dda(\u53f3\u8ef8%)\u306e2\u8ef8
+    const _sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily');
+    const _ad=labels.map(l=>(dataMap[l]||{}).sales||0);
+    const _spend=labels.map(l=>(dataMap[l]||{}).spend||0);
+    const _sroas=_sa.tot.map((tv,i)=>_spend[i]>0?Math.round(_sa.tot[i]/_spend[i]*10000)/100:0);
+    const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); const pf=v=>v+'%';
+    datasets=[
+      {type:'bar',label:'SEO\u58f2\u4e0a',data:_sa.seo,_fmt:yf,backgroundColor:'#7c3aed',borderColor:'#7c3aed',yAxisID:'y',stack:'sales'},
+      {type:'bar',label:'\u5e83\u544a\u58f2\u4e0a',data:_ad,_fmt:yf,backgroundColor:'#f97316',borderColor:'#f97316',yAxisID:'y',stack:'sales'},
+      {type:'line',label:'\u58f2\u4e0aROAS',data:_sroas,_fmt:pf,borderColor:'#10b981',backgroundColor:'#10b98122',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,yAxisID:'y1'},
+    ];
+    _chartKind='all'; yCallback=yf;
+    tooltipLabel=ctx=>' '+ctx.dataset.label+': '+(ctx.dataset._fmt?ctx.dataset._fmt(ctx.raw):ctx.raw);
   } else if (metric==='roas'||metric==='cvr'||metric==='ctr') {
     const tri=_renewalTripleValues(metric,labels,dataMap);
     const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:'#fbbf24'},{key:'kw',label:'ROAS-KW',color:'#f59e0b'},{key:'p20',label:'ROAS20',color:'#38bdf8'}]:(metric==='ctr')?[{key:'all',label:'CTR\u5168\u4f53',color:'#34d399',hide:true},{key:'kw',label:'CTR-KW',color:'#f59e0b'},{key:'p20',label:'CTR20',color:'#38bdf8',hide:true}]:[{key:'all',label:'CVR\u5168\u4f53',color:'#a78bfa'},{key:'kw',label:'CVR(KW)',color:'#f59e0b'},{key:'p20',label:'CVR(20\u5186)',color:'#38bdf8'}];
@@ -10714,11 +10723,11 @@ function renderRenewalGraph() {
   } else if (metric==='spend'||metric==='orders') {
     const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa';
     const defs=[{key:'all',label:un+'\u5168\u4f53',color:base},{key:'kw',label:un+'-KW',color:'#f59e0b'},{key:'p20',label:un+'-20',color:'#38bdf8'}];
-    datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:uf,borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
+    datasets=defs.map(d=>({type:'bar',label:d.label,data:tri[d.key],_fmt:uf,backgroundColor:d.color,borderColor:d.color,yAxisID:'y'})); _chartKind='bar';
     yCallback=uf; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+uf(ctx.raw);
   } else if (metric === 'sales') {
     const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const yf=v=>'\u00a5'+Math.round(v).toLocaleString();
-    datasets=_ITEM_SALES_DEFS.map(d=>({label:d.label,data:sa[d.key],_fmt:yf,borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.5,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
+    datasets=_ITEM_SALES_DEFS.map(d=>({type:'bar',label:d.label,data:sa[d.key],_fmt:yf,backgroundColor:d.color,borderColor:d.color,yAxisID:'y'})); _chartKind='bar';
     yCallback=yf; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+yf(ctx.raw);
   } else if (metric === 'seoad') {
     const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const ad=labels.map(l=>(dataMap[l]||{}).sales||0); const pf=v=>v+'%';
@@ -10750,7 +10759,11 @@ function renderRenewalGraph() {
       tooltipLabel=ctx=>{const ds=ctx.dataset;const r=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(r):r;return ' '+ds.label+': '+rs;};
     }
   }
-  _renewalChartInstance = new Chart(canvas,{type:'line',data:{labels:chartLabels,datasets},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:!yearMode&&metric!=='all',position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:tooltipLabel}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:yCallback},beginAtZero:true}}}});
+  const _baseType=(!yearMode&&(_chartKind==='bar'||_chartKind==='all'))?'bar':'line';
+  const _isAll=(!yearMode&&_chartKind==='all');
+  const _scales={x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}},stacked:_isAll},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:yCallback},beginAtZero:true,stacked:_isAll,position:'left'}};
+  if(_isAll){ _scales.y1={position:'right',grid:{drawOnChartArea:false},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true}; }
+  _renewalChartInstance = new Chart(canvas,{type:_baseType,data:{labels:chartLabels,datasets},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:!yearMode&&metric!=='all',position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:tooltipLabel}}},scales:_scales}});
   if (!yearMode) _drawRenewalChangeLines(_renewalChartInstance, labels, code);
   else _drawRenewalYearChanges(_renewalChartInstance, code, _fyYears);
   _renderRenewalToggles(metric==='all'||_renewalAllYearMode);
