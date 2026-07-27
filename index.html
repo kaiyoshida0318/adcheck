@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1247</span>
+    <span class="build-date">v1.1248</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -11223,6 +11223,8 @@ function renderRoasTrend() {
   if(_hdr){ _hdr.style.background='var(--surface2)'; }
 }
 
+let _runawaySortDate='';
+function sortRunaway(d){ _runawaySortDate=(_runawaySortDate===d)?'':d; renderRunaway(); }
 function renderRunaway(){
   const wrap=document.getElementById('runaway-inner'); if(!wrap) return;
   const allDates=new Set();
@@ -11238,9 +11240,11 @@ function renderRunaway(){
   });
   const val20=(code,d)=>{ const idd=itemDailyData[code]; if(!idd||!idd[d]) return null; const v=(idd[d].spend||0)-(idd[d].spendKw||0); return v>0?v:0; };
   const sum7=p=>dates.reduce((s,d)=>{ const v=val20(p.id,d); return s+(v||0); },0);
-  products=products.filter(p=>sum7(p)>0).sort((a,b)=>sum7(b)-sum7(a));
+  products=products.filter(p=>sum7(p)>0);
+  if(_runawaySortDate && dates.includes(_runawaySortDate)){ products.sort((a,b)=>((val20(b.id,_runawaySortDate)||0)-(val20(a.id,_runawaySortDate)||0))||(sum7(b)-sum7(a))); }
+  else { products.sort((a,b)=>sum7(b)-sum7(a)); }
   const colW=`82px 76px 40px minmax(0,1fr) ${dates.map(()=>'90px').join(' ')} 100px 64px`;
-  const headerCells=dates.map(d=>`<div class="ch r" style="background:#fff8e5">${d.slice(5,7)}/${d.slice(8,10)}</div>`).join('');
+  const headerCells=dates.map(d=>{ const _on=(_runawaySortDate===d); return `<div class="ch r" style="background:${_on?'#ffe0b2':'#fff8e5'};cursor:pointer;user-select:none" onclick="sortRunaway('${d}')" title="この日の実績額が高い順に並べ替え（もう一度押すと解除）">${d.slice(5,7)}/${d.slice(8,10)} <span style="font-size:9px;color:${_on?'#dc2626':'var(--text3)'}">${_on?'▼':'⇅'}</span></div>`; }).join('');
   const header=`<div class="col-header" style="grid-template-columns:${colW} !important">
     <div class="ch">商品番号</div>
     <div class="ch">商品管理番号</div>
