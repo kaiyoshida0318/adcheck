@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1259</span>
+    <span class="build-date">v1.1260</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5338,7 +5338,7 @@ function _renderRunawayCalendar(){
   // 比率の色分け（表示中の全日を母集団に、上位10%=青／上位20%=緑／それ以外=黒）
   const _shares=[]; allD.forEach(function(ds){ var d=parseInt(ds.slice(8,10),10); if(_allDayMode || d<=_cutDay){ var ym=ds.slice(0,7); var den=_monDenom[ym]||0; var rr=byDate[ds]; var sp=(rr&&rr.spend)||0; if(den>0&&sp>0){ _shares.push(+(sp/den*100).toFixed(1)); } } });
   const _sharesSorted=_shares.slice().sort(function(a,b){return b-a;}); const _sn=_sharesSorted.length;
-  const _shareColor=function(v){ if(!(v>0)||!_sn) return '#1a1a1a'; var idx=_sharesSorted.indexOf(v); if(idx<0){ var bd=1e9; idx=0; for(var k=0;k<_sn;k++){ var dd=Math.abs(_sharesSorted[k]-v); if(dd<bd){bd=dd;idx=k;} } } if(idx<Math.ceil(_sn*0.10)) return '#1565C0'; if(idx<Math.ceil(_sn*0.20)) return '#2E7D32'; return '#1a1a1a'; };
+  const _shareColor=function(v){ if(!(v>0)||!_sn) return '#1a1a1a'; var idx=_sharesSorted.indexOf(v); if(idx<0){ var bd=1e9; idx=0; for(var k=0;k<_sn;k++){ var dd=Math.abs(_sharesSorted[k]-v); if(dd<bd){bd=dd;idx=k;} } } if(idx<Math.ceil(_sn*0.10)) return '#dc2626'; if(idx<Math.ceil(_sn*0.20)) return '#ea580c'; return '#1a1a1a'; };
   const wd=['日','月','火','水','木','金','土'];
   const cellFor=(ds)=>{
     const r=byDate[ds]; const dd=String(parseInt(ds.slice(8,10),10));
@@ -5372,7 +5372,7 @@ function _renderRunawayCalendar(){
       +`</div>`;
   };
   const monthCard=(ym)=>{ const y=ym[0], m=ym[1]; const offset=new Date(y,m-1,1).getDay(); const dim=new Date(y,m,0).getDate(); let cells=''; for(let i=0;i<offset;i++) cells+='<div></div>'; for(let d=1;d<=dim;d++){ cells+=cellFor(y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')); } return `<div style="border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--surface);flex:1 1 290px;min-width:290px"><div style="font-weight:700;font-size:15px;margin-bottom:8px">${y}/${String(m).padStart(2,'0')}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:2px">${wd.map((w,i)=>`<div style="text-align:center;font-size:11px;color:${i===0?'#dc2626':(i===6?'#2563eb':'var(--text3)')}">${w}</div>`).join('')}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${cells}</div></div>`; };
-  cal.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px;font-size:11px;color:var(--text2)"><span style="font-weight:700">直近4か月カレンダー（20円ROAS <100=赤 / 100-300=橙 / >300=緑 ／ 各セル: ROAS / 20=20円実績 / KW=KW実績 / 計=実績額 / 比率=計がその月に占める割合（<span style="color:#1565C0;font-weight:700">上位10%=青</span>/<span style="color:#2E7D32;font-weight:700">上位20%=緑</span>/他=黒）</span><span style="font-size:10px">計実績額: <span style="color:#ea580c;font-weight:700">7万超=橙</span> / <span style="color:#dc2626;font-weight:700">10万超=赤</span> ／ <span style="color:#7c3aed;font-weight:700">比率</span>'+(_allDayMode?'は各月の全日合計で算出（全日）':('は各月とも1日〜最新日('+latest.slice(5,7)+'/'+latest.slice(8,10)+')までで揃えて算出（当日まで）'))+'</span></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">'+months.map(monthCard).join('')+'</div>';
+  cal.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px;font-size:11px;color:var(--text2)"><span style="font-weight:700">直近4か月カレンダー（20円ROAS <100=赤 / 100-300=橙 / >300=緑 ／ 各セル: ROAS / 20=20円実績 / KW=KW実績 / 計=実績額 / 比率=計がその月に占める割合（<span style="color:#dc2626;font-weight:700">上位10%=赤</span>/<span style="color:#ea580c;font-weight:700">上位20%=オレンジ</span>/他=黒）</span><span style="font-size:10px">計実績額: <span style="color:#ea580c;font-weight:700">7万超=橙</span> / <span style="color:#dc2626;font-weight:700">10万超=赤</span> ／ <span style="color:#7c3aed;font-weight:700">比率</span>'+(_allDayMode?'は各月の全日合計で算出（全日）':('は各月とも1日〜最新日('+latest.slice(5,7)+'/'+latest.slice(8,10)+')までで揃えて算出（当日まで）'))+'</span></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">'+months.map(monthCard).join('')+'</div>';
 }
 let _rundaysAll=false;
 let _rundaysShareMode='cutday'; // 'cutday'=当日まで(各月1日〜当月最新日で揃える) / 'allday'=全日(各月の全日合計)
