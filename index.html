@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1253</span>
+    <span class="build-date">v1.1255</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5330,12 +5330,16 @@ function _renderRunawayCalendar(){
   const latest=allD[allD.length-1];
   let ly=+latest.slice(0,4), lm=+latest.slice(5,7);
   const months=[]; for(let i=3;i>=0;i--){ let m=lm-i, y=ly; while(m<=0){m+=12;y--;} months.push([y,m]); }
+  // 当月比：各日の「計(実績額)」がその月の合計に占める割合。前月と綺麗に比較できるよう、
+  // 分母は各月とも「1日〜当月(最新月)の最新日」までの実績額合計にそろえる。
+  const _cutDay=parseInt(latest.slice(8,10),10)||31;
+  const _monDenom={}; allD.forEach(function(ds){ var d=parseInt(ds.slice(8,10),10); if(d<=_cutDay){ var ym=ds.slice(0,7); _monDenom[ym]=(_monDenom[ym]||0)+((byDate[ds]&&byDate[ds].spend)||0); } });
   const wd=['日','月','火','水','木','金','土'];
   const cellFor=(ds)=>{
     const r=byDate[ds]; const dd=String(parseInt(ds.slice(8,10),10));
     const _cls=(typeof globalChangeLogs!=='undefined'?globalChangeLogs:[]).filter(function(x){return x&&x.date===ds&&x.note;});
     const clBar=_cls.length?('<div style="display:flex;gap:1px;margin-top:auto">'+_cls.map(function(x){return '<div title="'+String(x.note).replace(/["<>]/g,'')+'" style="flex:1;height:4px;border-radius:2px;background:'+(x.color||'#f97316')+'"></div>';}).join('')+'</div>'):'';
-    if(!r){ return `<div style="height:104px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);opacity:0.5;font-size:10px;color:var(--text3);padding:2px 4px;display:flex;flex-direction:column">${dd}${clBar}</div>`; }
+    if(!r){ return `<div style="height:122px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);opacity:0.5;font-size:10px;color:var(--text3);padding:2px 4px;display:flex;flex-direction:column">${dd}${clBar}</div>`; }
     const sp20=(r.spend||0)-(r.spendKw||0); const spKw=(r.spendKw||0); const spTot=(r.spend||0);
     const sa20=(r.sales||0)-(r.salesKw||0); const roas20=sp20>0?(sa20/sp20*100):null;
     let bg='var(--surface)', rc='var(--text3)', bd='var(--border)';
@@ -5344,7 +5348,10 @@ function _renderRunawayCalendar(){
     const _spc=(spTot>100000)?'#dc2626':((spTot>70000)?'#ea580c':'var(--text2)');
     const num=v=>Math.round(v).toLocaleString();
     const dv='<div style="border-top:1px dashed var(--border);margin:2px 0"></div>';
-    return `<div title="${ds}" style="height:104px;border:1px solid ${bd};border-radius:3px;background:${bg};padding:2px 4px;overflow:hidden;display:flex;flex-direction:column;font-size:8px;line-height:1.1">`
+    const _ym=ds.slice(0,7), _dnum=parseInt(ds.slice(8,10),10);
+    const _den=_monDenom[_ym]||0;
+    const _shareTxt=(_dnum<=_cutDay && _den>0)?((spTot/_den*100).toFixed(1)+'%'):'\u2014';
+    return `<div title="${ds}" style="height:122px;border:1px solid ${bd};border-radius:3px;background:${bg};padding:2px 4px;overflow:hidden;display:flex;flex-direction:column;font-size:8px;line-height:1.1">`
       +`<div style="color:var(--text3);font-size:8px">${dd}</div>`
       +`<div style="font-weight:700;color:${rc};font-size:11px">${r20txt}</div>`
       +`<div style="color:var(--text3);font-size:7px;margin-top:1px">20</div><div style="font-weight:600;font-size:9px">${num(sp20)}</div>`
@@ -5352,11 +5359,13 @@ function _renderRunawayCalendar(){
       +`<div style="color:var(--text3);font-size:7px">KW</div><div style="font-weight:600;font-size:9px;color:var(--text2)">${num(spKw)}</div>`
       +dv
       +`<div style="color:var(--text3);font-size:7px">\u8a08</div><div style="font-weight:700;font-size:9px;color:${_spc}">${num(spTot)}</div>`
+      +dv
+      +`<div style="color:var(--text3);font-size:7px">\u5f53\u6708\u6bd4</div><div style="font-weight:700;font-size:9px;color:#7c3aed">${_shareTxt}</div>`
       +clBar
       +`</div>`;
   };
   const monthCard=(ym)=>{ const y=ym[0], m=ym[1]; const offset=new Date(y,m-1,1).getDay(); const dim=new Date(y,m,0).getDate(); let cells=''; for(let i=0;i<offset;i++) cells+='<div></div>'; for(let d=1;d<=dim;d++){ cells+=cellFor(y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')); } return `<div style="border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--surface);flex:1 1 290px;min-width:290px"><div style="font-weight:700;font-size:15px;margin-bottom:8px">${y}/${String(m).padStart(2,'0')}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:2px">${wd.map((w,i)=>`<div style="text-align:center;font-size:11px;color:${i===0?'#dc2626':(i===6?'#2563eb':'var(--text3)')}">${w}</div>`).join('')}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${cells}</div></div>`; };
-  cal.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px;font-size:11px;color:var(--text2)"><span style="font-weight:700">直近4か月カレンダー（20円ROAS <100=赤 / 100-230=橙 / >230=緑 ／ 各セル: ROAS / 20=20円実績 / KW=KW実績 / 計=実績額）</span><span style="font-size:10px">計実績額: <span style="color:#ea580c;font-weight:700">7万超=橙</span> / <span style="color:#dc2626;font-weight:700">10万超=赤</span></span></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">'+months.map(monthCard).join('')+'</div>';
+  cal.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px;font-size:11px;color:var(--text2)"><span style="font-weight:700">直近4か月カレンダー（20円ROAS <100=赤 / 100-230=橙 / >230=緑 ／ 各セル: ROAS / 20=20円実績 / KW=KW実績 / 計=実績額 / 当月比=計がその月に占める割合）</span><span style="font-size:10px">計実績額: <span style="color:#ea580c;font-weight:700">7万超=橙</span> / <span style="color:#dc2626;font-weight:700">10万超=赤</span> ／ <span style="color:#7c3aed;font-weight:700">当月比</span>は各月とも1日〜最新日('+latest.slice(5,7)+'/'+latest.slice(8,10)+')までで揃えて算出</span></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">'+months.map(monthCard).join('')+'</div>';
 }
 let _rundaysAll=false;
 function _setRundaysModeUI(){ const o=document.getElementById('rundaysOnlyBtn'), a=document.getElementById('rundaysAllBtn'); const base='font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;'; const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);'; if(o)o.style.cssText=base+(!_rundaysAll?'border:1px solid #dc2626;background:#dc2626;color:#fff;':off); if(a)a.style.cssText=base+(_rundaysAll?'border:1px solid #2563eb;background:#2563eb;color:#fff;':off); }
