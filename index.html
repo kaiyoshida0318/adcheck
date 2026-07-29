@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1260</span>
+    <span class="build-date">v1.1261</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10764,7 +10764,9 @@ function renderRenewalGraph() {
     const _fs=(typeof _renewalFYStart!=='undefined'?_renewalFYStart:1); const _fyOf=ym=>{const y=+ym.slice(0,4),m=+ym.slice(5,7);return (m>=_fs)?y:y-1;}; const _fmiOf=ym=>{const m=+ym.slice(5,7);return (m-_fs+12)%12;};
     const _years=[...new Set(labels.map(_fyOf))].sort((x,z)=>x-z);
     const _MN=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']; const _fmLabels=Array.from({length:12},function(_x,k){return _MN[(_fs-1+k)%12];});
-    if (_years.length && !(typeof _renewalView2y!=='undefined' && _renewalView2y)){
+    // 棒グラフ指標（売上＆ROAS／両方-売上／広告-実績額／広告-個数）は月別も日別と同じ連続棒にする（FY年重ねにしない）
+    const _isBarMetric=(metric==='all'||metric==='sales'||metric==='spend'||metric==='orders');
+    if (_years.length && !(typeof _renewalView2y!=='undefined' && _renewalView2y) && !_isBarMetric){
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
       if (metric==='all'){ series=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas'||s.key==='roasAll'); normalize=true; }
