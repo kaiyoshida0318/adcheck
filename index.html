@@ -451,8 +451,9 @@ header + * { margin-top: 4px; }
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script>
   /* CSS zoom(html)使用時、Chart.jsのホバー座標がブラウザ差でずれる問題への恒久対策。
-     ネイティブイベントのclientXとcanvasの実表示矩形から比率で正規化し、
-     chartの論理座標へ変換し直す。zoom=100%でも無害(同値計算)。全チャート共通。 */
+     getBoundingClientRect()とclientXは常に同じ座標空間(ズーム適用後の表示px)なので、
+     矩形に対する比率でchartの論理座標へ変換し直す。この比率換算はズーム実装に依存せず常に正しい。
+     (offsetXは新しめのChromiumではCSS zoom下でズレるため使わない。) zoom=100%でも無害。全チャート共通。 */
   if (window.Chart) {
     Chart.register({
       id: 'zoomEventFix',
@@ -461,16 +462,19 @@ header + * { margin-top: 4px; }
         const ne = ev && ev.native;
         if (!ne) return;
         const canvas = chart.canvas;
-        // 最新ブラウザ: offsetX/Y はcanvasローカルのCSS pxで、CSS zoom下でもチャート論理座標と一致する。
-        // clientX換算はブラウザのzoom実装差で右側が圧縮される(当たらない)ことがあるため、offsetXを最優先。
-        if (typeof ne.offsetX === 'number' && typeof ne.offsetY === 'number' && ne.target === canvas) {
-          ev.x = ne.offsetX; ev.y = ne.offsetY; return;
+        // 比率換算を最優先(ズーム実装差に強い)。
+        if (typeof ne.clientX === 'number') {
+          const r = canvas.getBoundingClientRect();
+          if (r.width && r.height) {
+            ev.x = (ne.clientX - r.left) / r.width  * chart.width;
+            ev.y = (ne.clientY - r.top)  / r.height * chart.height;
+            return;
+          }
         }
-        if (typeof ne.clientX !== 'number') return;
-        const r = canvas.getBoundingClientRect();
-        if (!r.width || !r.height) return;
-        ev.x = (ne.clientX - r.left) / r.width  * chart.width;
-        ev.y = (ne.clientY - r.top)  / r.height * chart.height;
+        // clientXが無い合成イベント等はoffsetXを保険で使用。
+        if (typeof ne.offsetX === 'number' && typeof ne.offsetY === 'number' && ne.target === canvas) {
+          ev.x = ne.offsetX; ev.y = ne.offsetY;
+        }
       }
     });
   }
@@ -527,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1261</span>
+    <span class="build-date">v1.1262</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10729,9 +10733,9 @@ function renderRenewalGraph() {
     const _sroas=_sa.tot.map((tv,i)=>_spend[i]>0?Math.round(_sa.tot[i]/_spend[i]*10000)/100:0);
     const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); const pf=v=>v+'%';
     datasets=[
-      {type:'bar',label:'SEO\u58f2\u4e0a',data:_sa.seo,_fmt:yf,backgroundColor:'#7c3aed',borderColor:'#7c3aed',yAxisID:'y',stack:'sales'},
-      {type:'bar',label:'\u5e83\u544a\u58f2\u4e0a',data:_ad,_fmt:yf,backgroundColor:'#f97316',borderColor:'#f97316',yAxisID:'y',stack:'sales'},
-      {type:'line',label:'\u58f2\u4e0aROAS',data:_sroas,_fmt:pf,borderColor:'#10b981',backgroundColor:'#10b98122',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,yAxisID:'y1'},
+      {type:'bar',label:'SEO\u58f2\u4e0a',data:_sa.seo,_fmt:yf,backgroundColor:'#7c3aed',borderColor:'#7c3aed',yAxisID:'y',stack:'sales',order:1},
+      {type:'bar',label:'\u5e83\u544a\u58f2\u4e0a',data:_ad,_fmt:yf,backgroundColor:'#f97316',borderColor:'#f97316',yAxisID:'y',stack:'sales',order:1},
+      {type:'line',label:'\u58f2\u4e0aROAS',data:_sroas,_fmt:pf,borderColor:'#10b981',backgroundColor:'#10b98122',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,yAxisID:'y1',order:0},
     ];
     _chartKind='all'; yCallback=yf;
     tooltipLabel=ctx=>' '+ctx.dataset.label+': '+(ctx.dataset._fmt?ctx.dataset._fmt(ctx.raw):ctx.raw);
