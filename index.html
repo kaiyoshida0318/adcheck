@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1262</span>
+    <span class="build-date">v1.1263</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7133,6 +7133,8 @@ function renderTrend(){
     return {
       date:d.date,
       daySpend:d.spend,
+      daySpendKw:d.spendKw,
+      daySpend20:dSp20,
       dSroas : d.spend>0 ? tot/d.spend*100 : 0,
       dRoas  : d.spend>0 ? d.sales/d.spend*100 : 0,
       dRoas20: dSp20>0 ? dSa20/dSp20*100 : 0,
@@ -7160,26 +7162,28 @@ function renderTrend(){
   ]},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y.toFixed(1)+'%')}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true}}}});
   try{ requestAnimationFrame(function(){ requestAnimationFrame(function(){ try{ if(_trendChart) _trendChart.resize(); }catch(e){} }); }); }catch(e){}
   const fmt=v=>v>0?(Math.round(v*10)/10).toFixed(1)+'%':'<span style="color:var(--text3)">—</span>';
+  const fy=v=>v>0?fmtY(v):'<span style="color:var(--text3)">—</span>';
   const td='padding:6px 10px;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);';
   const th='padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap;';
   const tdD=td+'color:var(--text2);background:rgba(127,127,127,0.05);';
   const rev=rows.slice().reverse();
   let thead, body;
   if(_trendMode==='cum'){
-    const grp=(c,lbl)=>`<th colspan="2" style="${th}text-align:center;color:${c};border-left:1px solid var(--border)">${lbl}</th>`;
+    const grp=(c,lbl,cs)=>`<th colspan="${cs}" style="${th}text-align:center;color:${c};border-left:1px solid var(--border)">${lbl}</th>`;
     const sub=`<th style="${th}text-align:right;font-size:10px;color:var(--text3);border-left:1px solid var(--border)">累積</th><th style="${th}text-align:right;font-size:10px;color:var(--text3)">日別</th>`;
+    const subA=`<th style="${th}text-align:right;font-size:10px;color:var(--text3)">実績額</th>`;
     thead=`<tr style="position:sticky;top:0;background:var(--surface2)">
       <th rowspan="2" style="${th}text-align:left;vertical-align:bottom">日</th>
-      ${grp('#3b82f6','売上ROAS')}${grp('#10b981','ROAS')}${grp('#f59e0b','ROAS-KW')}${grp('#ef4444','ROAS-20')}
-    </tr><tr style="background:var(--surface2)">${sub}${sub}${sub}${sub}</tr>`;
+      ${grp('#3b82f6','売上ROAS',2)}${grp('#10b981','ROAS',3)}${grp('#f59e0b','ROAS-KW',3)}${grp('#ef4444','ROAS-20',3)}
+    </tr><tr style="background:var(--surface2)">${sub}${sub}${subA}${sub}${subA}${sub}${subA}</tr>`;
     body=rev.map((r,i)=>{
       const last=(i===0);
       return `<tr style="${last?'background:rgba(59,130,246,0.08);font-weight:700':''}">
         <td style="${td}text-align:left;white-space:nowrap">${r.date.slice(4,6)}/${r.date.slice(6,8)}</td>
         <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.sroas)}</td><td style="${tdD}text-align:right">${fmt(r.dSroas)}</td>
-        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roas)}</td><td style="${tdD}text-align:right">${fmt(r.dRoas)}</td>
-        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roasKw)}</td><td style="${tdD}text-align:right">${fmt(r.dRoasKw)}</td>
-        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roas20)}</td><td style="${tdD}text-align:right">${fmt(r.dRoas20)}</td>
+        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roas)}</td><td style="${tdD}text-align:right">${fmt(r.dRoas)}</td><td style="${td}text-align:right">${fy(r.daySpend)}</td>
+        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roasKw)}</td><td style="${tdD}text-align:right">${fmt(r.dRoasKw)}</td><td style="${td}text-align:right">${fy(r.daySpendKw)}</td>
+        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roas20)}</td><td style="${tdD}text-align:right">${fmt(r.dRoas20)}</td><td style="${td}text-align:right">${fy(r.daySpend20)}</td>
       </tr>`;
     }).join('');
   } else {
@@ -7187,17 +7191,20 @@ function renderTrend(){
       <th style="${th}text-align:left">日</th>
       <th style="${th}text-align:right;color:#3b82f6">売上ROAS</th>
       <th style="${th}text-align:right;color:#10b981">ROAS</th>
+      <th style="${th}text-align:right;font-size:10px;color:var(--text3)">実績額</th>
       <th style="${th}text-align:right;color:#f59e0b">ROAS-KW</th>
+      <th style="${th}text-align:right;font-size:10px;color:var(--text3)">実績額</th>
       <th style="${th}text-align:right;color:#ef4444">ROAS-20</th>
+      <th style="${th}text-align:right;font-size:10px;color:var(--text3)">実績額</th>
     </tr>`;
     body=rev.map((r,i)=>{
       const last=(i===0);
       return `<tr style="${last?'background:rgba(59,130,246,0.08);font-weight:700':''}">
         <td style="${td}text-align:left;white-space:nowrap">${r.date.slice(4,6)}/${r.date.slice(6,8)}</td>
         <td style="${td}text-align:right">${fmt(r.sroas)}</td>
-        <td style="${td}text-align:right">${fmt(r.roas)}</td>
-        <td style="${td}text-align:right">${fmt(r.roasKw)}</td>
-        <td style="${td}text-align:right">${fmt(r.roas20)}</td>
+        <td style="${td}text-align:right">${fmt(r.roas)}</td><td style="${td}text-align:right">${fy(r.daySpend)}</td>
+        <td style="${td}text-align:right">${fmt(r.roasKw)}</td><td style="${td}text-align:right">${fy(r.daySpendKw)}</td>
+        <td style="${td}text-align:right">${fmt(r.roas20)}</td><td style="${td}text-align:right">${fy(r.daySpend20)}</td>
       </tr>`;
     }).join('');
   }
