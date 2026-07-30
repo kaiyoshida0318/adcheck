@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1263</span>
+    <span class="build-date">v1.1264</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -977,7 +977,7 @@ header + * { margin-top: 4px; }
 
   <!-- 全-推移 -->
   <div class="tab-panel" id="tab-trend">
-    <div class="container" style="max-width:1200px">
+    <div class="container" style="max-width:1560px">
       <div class="table-card" style="padding:20px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
           <span style="font-size:12px;color:var(--text3)">対象月：</span>
@@ -7163,27 +7163,33 @@ function renderTrend(){
   try{ requestAnimationFrame(function(){ requestAnimationFrame(function(){ try{ if(_trendChart) _trendChart.resize(); }catch(e){} }); }); }catch(e){}
   const fmt=v=>v>0?(Math.round(v*10)/10).toFixed(1)+'%':'<span style="color:var(--text3)">—</span>';
   const fy=v=>v>0?fmtY(v):'<span style="color:var(--text3)">—</span>';
+  // その日の実績額が、その月合計の何%を占めるか（小数1桁）
+  const totSpend  =rows.reduce((a,r)=>a+(r.daySpend||0),0);
+  const totSpendKw=rows.reduce((a,r)=>a+(r.daySpendKw||0),0);
+  const totSpend20=rows.reduce((a,r)=>a+(r.daySpend20||0),0);
+  const shr=(v,tot)=>tot>0&&v>0?(Math.round(v/tot*1000)/10).toFixed(1)+'%':'<span style="color:var(--text3)">—</span>';
   const td='padding:6px 10px;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);';
   const th='padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap;';
   const tdD=td+'color:var(--text2);background:rgba(127,127,127,0.05);';
+  const tdP=td+'text-align:right;color:var(--text3);font-size:11px;';
   const rev=rows.slice().reverse();
   let thead, body;
   if(_trendMode==='cum'){
     const grp=(c,lbl,cs)=>`<th colspan="${cs}" style="${th}text-align:center;color:${c};border-left:1px solid var(--border)">${lbl}</th>`;
     const sub=`<th style="${th}text-align:right;font-size:10px;color:var(--text3);border-left:1px solid var(--border)">累積</th><th style="${th}text-align:right;font-size:10px;color:var(--text3)">日別</th>`;
-    const subA=`<th style="${th}text-align:right;font-size:10px;color:var(--text3)">実績額</th>`;
+    const subA=`<th style="${th}text-align:right;font-size:10px;color:var(--text3)">実績額</th><th style="${th}text-align:right;font-size:10px;color:var(--text3)">月内%</th>`;
     thead=`<tr style="position:sticky;top:0;background:var(--surface2)">
       <th rowspan="2" style="${th}text-align:left;vertical-align:bottom">日</th>
-      ${grp('#3b82f6','売上ROAS',2)}${grp('#10b981','ROAS',3)}${grp('#f59e0b','ROAS-KW',3)}${grp('#ef4444','ROAS-20',3)}
+      ${grp('#3b82f6','売上ROAS',2)}${grp('#10b981','ROAS',4)}${grp('#f59e0b','ROAS-KW',4)}${grp('#ef4444','ROAS-20',4)}
     </tr><tr style="background:var(--surface2)">${sub}${sub}${subA}${sub}${subA}${sub}${subA}</tr>`;
     body=rev.map((r,i)=>{
       const last=(i===0);
       return `<tr style="${last?'background:rgba(59,130,246,0.08);font-weight:700':''}">
         <td style="${td}text-align:left;white-space:nowrap">${r.date.slice(4,6)}/${r.date.slice(6,8)}</td>
         <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.sroas)}</td><td style="${tdD}text-align:right">${fmt(r.dSroas)}</td>
-        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roas)}</td><td style="${tdD}text-align:right">${fmt(r.dRoas)}</td><td style="${td}text-align:right">${fy(r.daySpend)}</td>
-        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roasKw)}</td><td style="${tdD}text-align:right">${fmt(r.dRoasKw)}</td><td style="${td}text-align:right">${fy(r.daySpendKw)}</td>
-        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roas20)}</td><td style="${tdD}text-align:right">${fmt(r.dRoas20)}</td><td style="${td}text-align:right">${fy(r.daySpend20)}</td>
+        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roas)}</td><td style="${tdD}text-align:right">${fmt(r.dRoas)}</td><td style="${td}text-align:right">${fy(r.daySpend)}</td><td style="${tdP}">${shr(r.daySpend,totSpend)}</td>
+        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roasKw)}</td><td style="${tdD}text-align:right">${fmt(r.dRoasKw)}</td><td style="${td}text-align:right">${fy(r.daySpendKw)}</td><td style="${tdP}">${shr(r.daySpendKw,totSpendKw)}</td>
+        <td style="${td}text-align:right;border-left:1px solid var(--border)">${fmt(r.roas20)}</td><td style="${tdD}text-align:right">${fmt(r.dRoas20)}</td><td style="${td}text-align:right">${fy(r.daySpend20)}</td><td style="${tdP}">${shr(r.daySpend20,totSpend20)}</td>
       </tr>`;
     }).join('');
   } else {
@@ -7192,19 +7198,22 @@ function renderTrend(){
       <th style="${th}text-align:right;color:#3b82f6">売上ROAS</th>
       <th style="${th}text-align:right;color:#10b981">ROAS</th>
       <th style="${th}text-align:right;font-size:10px;color:var(--text3)">実績額</th>
+      <th style="${th}text-align:right;font-size:10px;color:var(--text3)">月内%</th>
       <th style="${th}text-align:right;color:#f59e0b">ROAS-KW</th>
       <th style="${th}text-align:right;font-size:10px;color:var(--text3)">実績額</th>
+      <th style="${th}text-align:right;font-size:10px;color:var(--text3)">月内%</th>
       <th style="${th}text-align:right;color:#ef4444">ROAS-20</th>
       <th style="${th}text-align:right;font-size:10px;color:var(--text3)">実績額</th>
+      <th style="${th}text-align:right;font-size:10px;color:var(--text3)">月内%</th>
     </tr>`;
     body=rev.map((r,i)=>{
       const last=(i===0);
       return `<tr style="${last?'background:rgba(59,130,246,0.08);font-weight:700':''}">
         <td style="${td}text-align:left;white-space:nowrap">${r.date.slice(4,6)}/${r.date.slice(6,8)}</td>
         <td style="${td}text-align:right">${fmt(r.sroas)}</td>
-        <td style="${td}text-align:right">${fmt(r.roas)}</td><td style="${td}text-align:right">${fy(r.daySpend)}</td>
-        <td style="${td}text-align:right">${fmt(r.roasKw)}</td><td style="${td}text-align:right">${fy(r.daySpendKw)}</td>
-        <td style="${td}text-align:right">${fmt(r.roas20)}</td><td style="${td}text-align:right">${fy(r.daySpend20)}</td>
+        <td style="${td}text-align:right">${fmt(r.roas)}</td><td style="${td}text-align:right">${fy(r.daySpend)}</td><td style="${tdP}">${shr(r.daySpend,totSpend)}</td>
+        <td style="${td}text-align:right">${fmt(r.roasKw)}</td><td style="${td}text-align:right">${fy(r.daySpendKw)}</td><td style="${tdP}">${shr(r.daySpendKw,totSpendKw)}</td>
+        <td style="${td}text-align:right">${fmt(r.roas20)}</td><td style="${td}text-align:right">${fy(r.daySpend20)}</td><td style="${tdP}">${shr(r.daySpend20,totSpend20)}</td>
       </tr>`;
     }).join('');
   }
