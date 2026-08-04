@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1266</span>
+    <span class="build-date">v1.1269</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -736,7 +736,7 @@ header + * { margin-top: 4px; }
         <div class="table-toolbar" style="flex-wrap:wrap;gap:6px">
           <span id="rundays-run-status" style="font-size:11px;color:var(--text3)"></span>
           <span style="font-size:12px;font-weight:700;color:#dc2626">暴走日（20円ROAS 150以下 / 一覧=直近半年・カレンダー=直近5か月）</span>
-          <div class="toolbar-right"><div style="display:inline-flex;gap:4px;border:1px solid #d7dbe0;border-radius:8px;padding:3px;margin-right:8px;align-items:center"><span style="font-size:10px;color:var(--text3);padding:0 3px">比率</span><button id="rundaysShareCutBtn" onclick="_setRundaysShareMode('cutday')" style="font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #7c3aed;background:#7c3aed;color:#fff;">当日まで</button><button id="rundaysShareAllBtn" onclick="_setRundaysShareMode('allday')" style="font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">全日</button></div><button onclick="openGlobalChangeLog()" title="変更記録を開く" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid #f97316;background:var(--surface2);color:#f97316;cursor:pointer;white-space:nowrap;font-weight:700">📝 変更記録</button></div>
+          <div class="toolbar-right"><div style="display:inline-flex;gap:4px;border:1px solid #d7dbe0;border-radius:8px;padding:3px;margin-right:8px;align-items:center"><span style="font-size:10px;color:var(--text3);padding:0 3px">比率</span><button id="rundaysShareNoneBtn" onclick="_setRundaysShareMode('none')" style="font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">なし</button><button id="rundaysShareCutBtn" onclick="_setRundaysShareMode('cutday')" style="font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #7c3aed;background:#7c3aed;color:#fff;">当日まで</button><button id="rundaysShareAllBtn" onclick="_setRundaysShareMode('allday')" style="font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">全日</button></div><button onclick="openGlobalChangeLog()" title="変更記録を開く" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid #f97316;background:var(--surface2);color:#f97316;cursor:pointer;white-space:nowrap;font-weight:700">📝 変更記録</button></div>
         </div>
         <div id="runawayDaysCal" style="padding:0 4px"></div>
         <div id="rundaysModeBar" style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:0 4px 8px"><div style="display:inline-flex;gap:4px;border:1px solid #d7dbe0;border-radius:8px;padding:3px"><button id="rundaysPctOnBtn" onclick="_setRundaysPct(true)" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">比率(％)あり</button><button id="rundaysPctOffBtn" onclick="_setRundaysPct(false)" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #0891b2;background:#0891b2;color:#fff;">比率(％)なし</button></div><div style="display:inline-flex;gap:4px;border:1px solid #d7dbe0;border-radius:8px;padding:3px"><button id="rundaysOnlyBtn" onclick="_setRundaysMode(false)" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #dc2626;background:#dc2626;color:#fff;">暴走日のみ</button><button id="rundaysAllBtn" onclick="_setRundaysMode(true)" style="font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">全表示</button></div></div>
@@ -5337,6 +5337,7 @@ function _renderRunawayCalendar(){
   // 当月比：各日の「計(実績額)」がその月の合計に占める割合。前月と綺麗に比較できるよう、
   // 分母は各月とも「1日〜当月(最新月)の最新日」までの実績額合計にそろえる。
   const _cutDay=parseInt(latest.slice(8,10),10)||31;
+  const _noneMode=(typeof _rundaysShareMode!=='undefined' && _rundaysShareMode==='none');
   const _allDayMode=(typeof _rundaysShareMode!=='undefined' && _rundaysShareMode==='allday');
   const _monDenom={}; allD.forEach(function(ds){ var d=parseInt(ds.slice(8,10),10); if(_allDayMode || d<=_cutDay){ var ym=ds.slice(0,7); _monDenom[ym]=(_monDenom[ym]||0)+((byDate[ds]&&byDate[ds].spend)||0); } });
   // 比率の色分け（表示中の全日を母集団に、上位10%=青／上位20%=緑／それ以外=黒）
@@ -5370,18 +5371,17 @@ function _renderRunawayCalendar(){
       +`<div style="color:var(--text3);font-size:7px">KW</div><div style="font-weight:600;font-size:9px;color:var(--text2)">${num(spKw)}</div>`
       +dv
       +`<div style="color:var(--text3);font-size:7px">\u8a08</div><div style="font-weight:700;font-size:9px;color:${_spc}">${num(spTot)}</div>`
-      +dv
-      +`<div style="font-weight:700;font-size:10px;color:${_shareCol};white-space:nowrap;margin-top:1px;text-align:center">${_shareTxt}</div>`
+      +(_noneMode?'':(dv+`<div style="font-weight:700;font-size:10px;color:${_shareCol};white-space:nowrap;margin-top:1px;text-align:center">${_shareTxt}</div>`))
       +clBar
       +`</div>`;
   };
   const monthCard=(ym)=>{ const y=ym[0], m=ym[1]; const offset=new Date(y,m-1,1).getDay(); const dim=new Date(y,m,0).getDate(); let cells=''; for(let i=0;i<offset;i++) cells+='<div></div>'; for(let d=1;d<=dim;d++){ cells+=cellFor(y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')); } return `<div style="border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--surface);flex:1 1 290px;min-width:290px"><div style="font-weight:700;font-size:15px;margin-bottom:8px">${y}/${String(m).padStart(2,'0')}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:2px">${wd.map((w,i)=>`<div style="text-align:center;font-size:11px;color:${i===0?'#dc2626':(i===6?'#2563eb':'var(--text3)')}">${w}</div>`).join('')}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${cells}</div></div>`; };
-  cal.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px;font-size:11px;color:var(--text2)"><span style="font-weight:700">直近4か月カレンダー（20円ROAS <100=赤 / 100-300=橙 / >300=緑 ／ 各セル: ROAS / 20=20円実績 / KW=KW実績 / 計=実績額 / 比率=計がその月に占める割合（<span style="color:#dc2626;font-weight:700">上位10%=赤</span>/<span style="color:#ea580c;font-weight:700">上位20%=オレンジ</span>/他=黒）</span><span style="font-size:10px">計実績額: <span style="color:#ea580c;font-weight:700">7万超=橙</span> / <span style="color:#dc2626;font-weight:700">10万超=赤</span> ／ <span style="color:#7c3aed;font-weight:700">比率</span>'+(_allDayMode?'は各月の全日合計で算出（全日）':('は各月とも1日〜最新日('+latest.slice(5,7)+'/'+latest.slice(8,10)+')までで揃えて算出（当日まで）'))+'</span></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">'+months.map(monthCard).join('')+'</div>';
+  cal.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px;font-size:11px;color:var(--text2)"><span style="font-weight:700">直近4か月カレンダー（20円ROAS <100=赤 / 100-300=橙 / >300=緑 ／ 各セル: ROAS / 20=20円実績 / KW=KW実績 / 計=実績額 / 比率=計がその月に占める割合（<span style="color:#dc2626;font-weight:700">上位10%=赤</span>/<span style="color:#ea580c;font-weight:700">上位20%=オレンジ</span>/他=黒）</span><span style="font-size:10px">計実績額: <span style="color:#ea580c;font-weight:700">7万超=橙</span> / <span style="color:#dc2626;font-weight:700">10万超=赤</span> ／ <span style="color:#7c3aed;font-weight:700">比率</span>'+(_noneMode?'は非表示（なし）':(_allDayMode?'は各月の全日合計で算出（全日）':('は各月とも1日〜最新日('+latest.slice(5,7)+'/'+latest.slice(8,10)+')までで揃えて算出（当日まで）')))+'</span></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">'+months.map(monthCard).join('')+'</div>';
 }
 let _rundaysAll=false;
-let _rundaysShareMode='cutday'; // 'cutday'=当日まで(各月1日〜当月最新日で揃える) / 'allday'=全日(各月の全日合計)
-function _setRundaysShareUI(){ var c=document.getElementById('rundaysShareCutBtn'), a=document.getElementById('rundaysShareAllBtn'); var base='font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;'; var off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);'; var on='border:1px solid #7c3aed;background:#7c3aed;color:#fff;'; if(c)c.style.cssText=base+((_rundaysShareMode==='cutday')?on:off); if(a)a.style.cssText=base+((_rundaysShareMode==='allday')?on:off); }
-function _setRundaysShareMode(m){ _rundaysShareMode=(m==='allday')?'allday':'cutday'; _setRundaysShareUI(); _renderRunawayCalendar(); }
+let _rundaysShareMode='cutday'; // 'none'=なし(比率非表示) / 'cutday'=当日まで(各月1日〜当月最新日で揃える) / 'allday'=全日(各月の全日合計)
+function _setRundaysShareUI(){ var n=document.getElementById('rundaysShareNoneBtn'), c=document.getElementById('rundaysShareCutBtn'), a=document.getElementById('rundaysShareAllBtn'); var base='font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;'; var off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);'; var on='border:1px solid #7c3aed;background:#7c3aed;color:#fff;'; if(n)n.style.cssText=base+((_rundaysShareMode==='none')?on:off); if(c)c.style.cssText=base+((_rundaysShareMode==='cutday')?on:off); if(a)a.style.cssText=base+((_rundaysShareMode==='allday')?on:off); }
+function _setRundaysShareMode(m){ _rundaysShareMode=(m==='none')?'none':(m==='allday')?'allday':'cutday'; _setRundaysShareUI(); _renderRunawayCalendar(); }
 function _setRundaysModeUI(){ const o=document.getElementById('rundaysOnlyBtn'), a=document.getElementById('rundaysAllBtn'); const base='font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;'; const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);'; if(o)o.style.cssText=base+(!_rundaysAll?'border:1px solid #dc2626;background:#dc2626;color:#fff;':off); if(a)a.style.cssText=base+(_rundaysAll?'border:1px solid #2563eb;background:#2563eb;color:#fff;':off); }
 function _setRundaysMode(b){ _rundaysAll=b; _setRundaysModeUI(); renderRunawayDays(); }
 function _cpaKey(){ return 'adcheck_coupon_advance_'+((typeof _getCurrentShopId==='function'?_getCurrentShopId():null)||'yukaiya'); }
@@ -10883,7 +10883,9 @@ function _renderRenewalTable(labels, dataMap, code){
     const seoP=sa.tot.map((tv,i)=>tv>0?Math.round(sa.seo[i]/tv*1000)/10:0); const adP=sa.tot.map((tv,i)=>tv>0?Math.round(ad[i]/tv*1000)/10:0);
     cols=[{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo,dep:true},{label:'SEO\u58f2\u4e0a\u6bd4\u7387',color:'#7c3aed',fmt:pf,vals:seoP,dep:true},{label:'\u5e83\u544a\u58f2\u4e0a',color:'#10b981',fmt:yf,vals:ad,dep:true},{label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',color:'#10b981',fmt:pf,vals:adP,dep:true}];
   } else if (metric==='all'){
-    cols=_allTableCols(labels,dataMap,code).filter(se=>se.label==='総売上'||se.label==='売上ROAS'||se.label==='全広告ROAS').map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:!!se.roas,colBg:({a:'background:#eef4fb;',b:'background:#fdf0e8;',c:'background:#eff5ec;',d:'background:#fff8e5;'}[se.grp]||'')}));
+    const _ac=_allTableCols(labels,dataMap,code); const _pick=lbl=>_ac.find(se=>se.label===lbl);
+    const _want=[['売上ROAS','売上ROAS'],['総売上','総売上'],['SEO売上','SEO売上'],['広告売上','広告売上合計']];
+    cols=_want.map(function(w){ const se=_pick(w[1]); return se?{label:w[0],color:se.color,fmt:se.fmt,vals:se.vals,dep:!!se.roas,colBg:'background:#eef4fb;'}:null; }).filter(Boolean);
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
     cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
@@ -11153,6 +11155,8 @@ function renderRoasTrend() {
   const _roasQ = (document.getElementById('roasTrendSearch')?.value || '').toLowerCase();
   let products = Object.values(DB).filter(p => {
     if (productCache[p.id]?.retired) return false;
+    // 広告を出していない商品（直近4ヶ月の実績額がすべて0）は非表示
+    if (!last4.some(m => (getStats(p, m).spend || 0) > 0)) return false;
     if (!_roasQ) return true;
     const cached = productCache[p.id] || {};
     const name   = (cached.manualName || cached.name || '').toLowerCase();
