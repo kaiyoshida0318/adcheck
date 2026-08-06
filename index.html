@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1271</span>
+    <span class="build-date">v1.1272</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -5688,7 +5688,7 @@ function renderCpa(){
   });
   if(st) st.textContent=curYm+'：'+prods.length+'商品'+(_cpaBandFilter!=='all'?'（絞込中）':'')+' / 全'+couponAdvanceRows.length+'件';
   const yen=v=>'¥'+Math.round(v).toLocaleString();
-  const colW='82px 100px 40px minmax(0,1fr) 96px 96px 76px 96px 88px 80px 70px 48px';
+  const colW='82px 100px 40px minmax(0,1fr) 96px 96px 76px 96px 88px 80px 70px 48px 76px';
   const bd='border-right:1px solid var(--border)';
   const gA='background:rgba(191,0,0,0.04)', gB='background:rgba(37,99,235,0.05)', gCpa='background:rgba(8,145,178,0.10)', gC='background:rgba(5,150,105,0.04)';
   const rdCol=v=>{ if(v===null) return {bg:'',fg:'var(--text3)'}; if(v>=400) return {bg:'rgba(21,128,61,0.16)',fg:'#15803d'}; if(v>=200) return {bg:'rgba(37,99,235,0.12)',fg:'#1d4ed8'}; if(v>=100) return {bg:'rgba(234,88,12,0.16)',fg:'#c2410c'}; return {bg:'rgba(220,38,38,0.18)',fg:'#dc2626'}; };
@@ -5710,6 +5710,7 @@ function renderCpa(){
     +hc('入札単価','bid',true,gC)
     +hc('値引率','disc',true,gC)
     +hc('日数','days',true,'')
+    +'<div class="ch" style="text-align:center;font-size:10px">区分</div>'
     +'</div>';
   const cell=(v,bg,extra)=>'<div class="cell r mono" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+bd+';'+(bg?bg+';':'')+(extra||'')+'">'+v+'</div>';
   const idc='padding:6px 10px;font-size:10px;color:var(--text2);font-family:\'DM Mono\',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+bd;
@@ -5737,6 +5738,7 @@ function renderCpa(){
       +cell(yen(a.bid),gC)
       +cell(disc!==null?disc.toFixed(1)+'%':'—',gC)
       +cell(a.days)
+      +'<div style="padding:4px 6px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;color:'+((typeof STATUS_COLORS!=='undefined'&&STATUS_COLORS[c.status||'unset'])||'var(--text2)')+'">'+(typeof _statusDispHtml==='function'?_statusDispHtml(c.status||'unset'):'')+'</div>'
       +'</div></div>';
   }).join('');
   wrap.innerHTML=legend+header+rowsHtml;
