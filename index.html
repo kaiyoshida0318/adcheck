@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1269</span>
+    <span class="build-date">v1.1270</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -11502,6 +11502,8 @@ function _toggleRoasTrendSS(code, mon, btn) {
   if (!productCache[code]) productCache[code] = {};
   const ss = (productCache[code].ss || []).filter(m => m !== mon);
   productCache[code].ss = newActive ? [...ss, mon] : ss;
+  // SSをONにしたら候補も選択状態のままにする
+  if (newActive) _ensureKouhoSelected(code);
   console.log('[ADcheck] SS toggle:', code, mon, '→', newActive ? 'ON' : 'OFF', 'ss=', productCache[code].ss);
   // localStorage は即時保存(F5してもブラウザ側は保持。GitHub保存は反映ボタンで)
   saveProductCache();
@@ -11535,6 +11537,14 @@ function _ssCellBtns(code){
     return `<button id="mar-btn-${code}-${k}" data-code="${code}" data-mar="${k}" data-active="${active?'1':'0'}" onclick="_toggleMarathon('${code}','${k}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?o.col:'var(--border)'};background:${active?o.col:'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;width:100%;box-sizing:border-box;${k==='sage'?'grid-column:1/-1;':''}white-space:nowrap;text-align:center">${o.lbl}</button>`; };
   return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:100%;box-sizing:border-box">'+rb('kouho')+mb('03')+mb('06')+rb('jisshi')+mb('09')+mb('12')+'</div>';
 }
+// 実施/SS を選んでも「候補」ボタンは選択されたままにする（候補を付与＋ボタン見た目を同期）
+function _ensureKouhoSelected(code){
+  if(!productCache[code]) productCache[code]={};
+  const mar = productCache[code].marathon || [];
+  if(!mar.includes('kouho')){ productCache[code].marathon = [...mar, 'kouho']; }
+  const kb=document.getElementById('mar-btn-'+code+'-kouho');
+  if(kb){ const o=MARATHON_BTN.kouho; kb.setAttribute('data-active','1'); kb.style.background=o.col; kb.style.color='#fff'; kb.style.borderColor=o.col; }
+}
 function _toggleMarathon(code, key, btn){
   const active = btn.getAttribute('data-active')==='1';
   const newActive = !active;
@@ -11546,6 +11556,8 @@ function _toggleMarathon(code, key, btn){
   if(!productCache[code]) productCache[code]={};
   const mar = (productCache[code].marathon || []).filter(k=>k!==key);
   productCache[code].marathon = newActive ? [...mar, key] : mar;
+  // 実施をONにしたら候補も選択状態のままにする
+  if(newActive && key==='jisshi') _ensureKouhoSelected(code);
   saveProductCache();
   _ssDirty = true;
   _markApplyBtnDirty();
