@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1270</span>
+    <span class="build-date">v1.1271</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8322,6 +8322,8 @@ function renderKwIndiv(){
   _kwIndivCharts.forEach(c=>{try{c.destroy();}catch(e){}}); _kwIndivCharts=[];
   if(!_kwIndivCode){ if(wrap)wrap.innerHTML=''; if(hd)hd.innerHTML=''; if(empty){empty.style.display='block';empty.textContent='商品を検索してください。';} { const _tv=document.getElementById('kwIndivTableView'+_S); if(_tv)_tv.innerHTML=''; const _thd=document.getElementById('kwIndivTableHeader'+_S); if(_thd)_thd.innerHTML=''; const _te=document.getElementById('kwIndivTableEmpty'+_S); if(_te){_te.style.display='block';_te.textContent='商品を検索してください。';} } return; }
   const code=_kwIndivCode; const daily=_kwIndivPeriod==='daily';
+  // 注視ONのKWには右側に「注視」バッジを付ける
+  const _watchBadge=kw=>_isWatched(code,kw)?' <span style="display:inline-block;font-size:9px;font-weight:700;color:#fff;background:#dc2626;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle">注視</span>':'';
   let rows=kwRows.filter(r=>r.itemCode===code); let monthLabel='';
   if(daily){
     const sel=document.getElementById('kwIndivMonth'+_S); const ym=(sel&&sel.value)||(_kwIndivMonths(code)[0]||'');
@@ -8379,7 +8381,7 @@ function renderKwIndiv(){
         +'</tr></thead><tbody>';
       kws.forEach(kw=>{ const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_carry(byKw[kw],_latest); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_recent3(byKw[kw],_latest);
         _h+='<tr>'
-          +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
+          +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+_watchBadge(kw)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:'+(_volRed[kw]?'#1e8449;font-weight:700':'#555')+'">'+(_volRed[kw]?('?_'+_n2(_kwVol[kw])+'_?'):_n2(_kwVol[kw]))+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+sh+'%</td>'+(function(){ var rs=byKw[kw],sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){ sp+=(r.spend||0); sa+=(r.sales||0); od+=(r.orders||0); cl+=(r.cl||0); }); var cvr=cl>0?(od/cl*100).toFixed(2)+'%':'\u2014'; var roas=sp>0?(Math.round(sa/sp*100).toLocaleString()+'%'):'\u2014'; return '<td style="'+_T+';font-size:11px;background:#fff">'+(sp?Math.round(sp).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+(sa?Math.round(sa).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+cvr+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+roas+'</td>'; })()
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">'+_n2(_mcl)+'</td>'
@@ -8393,7 +8395,7 @@ function renderKwIndiv(){
       _zeroKws.forEach(function(kw){
         var _zv=_kwVol[kw]||0; var _zme=_zeroMecpc[kw]; var _zk=_zeroImpKind(_zme);
         _h+='<tr>'
-          +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
+          +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+_watchBadge(kw)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+_n2(_zv)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">0.00%</td>'
           +'<td style="'+_T+';font-size:11px;background:#fff">—</td>'
@@ -8447,7 +8449,7 @@ function renderKwIndiv(){
     });
     const _cp=document.getElementById('kwCalcPanel'+_S); if(_cp) _cp.innerHTML=_calcHtml;
   }
-  let html=_sumHtml; kws.forEach((kw,ki)=>{ const _sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_sh+'%</span></div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+_S+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+_S+ki+'"></canvas></div><div id="kwIndivT'+_S+ki+'"></div></div></div>'; });
+  let html=_sumHtml; kws.forEach((kw,ki)=>{ const _sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; html+='<div style="margin:2px 0 6px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+_watchBadge(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_sh+'%</span></div><div style="overflow-x:auto;margin-bottom:22px"><div id="kwIndivIn'+_S+ki+'"><div style="position:relative;height:200px"><canvas id="kwIndivC'+_S+ki+'"></canvas></div><div id="kwIndivT'+_S+ki+'"></div></div></div>'; });
   if(wrap) wrap.innerHTML=html;
   let _tvBody='';
   kws.forEach((kw,ki)=>{
@@ -8481,7 +8483,7 @@ function renderKwIndiv(){
       const _keep=labels.map((l,_i)=>_i).filter(_i=> !(mcpcArr[_i]==null&&cpcArr[_i]==null));
       const _kp=_keep.length?_keep:labels.map((l,_i)=>_i);
       let _thTV='<table style="'+_tbl+'">'+'<tr>'+_kp.map(_i=>_hd(_i)).join('')+'</tr>'+'<tr>'+_kp.map(_i=>_cell(_i)).join('')+'</tr></table>';
-      _tvBody+='<div style="margin:14px 0 5px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_shT+'%</span></div><div style="overflow-x:auto;margin-bottom:18px"><div style="min-width:'+(_kp.length*38)+'px">'+_thTV+'</div></div>';
+      _tvBody+='<div style="margin:14px 0 5px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+_watchBadge(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_shT+'%</span></div><div style="overflow-x:auto;margin-bottom:18px"><div style="min-width:'+(_kp.length*38)+'px">'+_thTV+'</div></div>';
     }
     const ctx=document.getElementById('kwIndivC'+_S+ki); if(!ctx||typeof Chart==='undefined') return;
     _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{type:'bar',label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea',order:0},{type:'bar',label:'入札単価（CPC実績）',data:cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}));
@@ -8844,7 +8846,7 @@ function _renderKwWatchMonthlyTable(){
     var chartCell='<td rowspan="'+nm+'" style="'+CC+';border-top:'+GRP+'"><div style="display:flex;flex-wrap:wrap;gap:10px;padding:2px;width:'+(charts.length>4?816:544)+'px">'+charts.map(function(cf){ if(cf[0]==='__break__') return '<div style="flex-basis:100%;height:0"></div>'; if(cf[0]==='__empty__') return '<div style="width:262px;height:136px"></div>'; return '<canvas id="'+_kwwmIdPfx+'_'+gi+'_'+cf[0]+'" width="262" height="136" style="border:1px solid var(--border);border-radius:6px;background:var(--surface)"></canvas>'; }).join('')+'</div></td>';
     var out='';
     mets.forEach(function(mt,mi){ var topB=(mi===0)?(';border-top:'+GRP):''; var c=COL[mt[1]]||['#f0f0f0','#fafafa']; out+='<tr>';
-      if(mi===0){ out+='<td rowspan="'+nm+'" style="'+KWC+';border-top:'+GRP+';border-left:'+GRP+'"><div style="display:flex;flex-direction:column;height:100%;min-height:250px;padding:8px 10px;box-sizing:border-box"><div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center"><span style="font-weight:'+(isTot?'800':'600')+';font-size:12px;line-height:1.3;word-break:break-word" title="'+_kwEsc(label)+'">'+_kwEsc(label)+'</span></div>'+(extras||'')+(showShare?sh:'')+'</div></td>'; }
+      if(mi===0){ out+='<td rowspan="'+nm+'" style="'+KWC+';border-top:'+GRP+';border-left:'+GRP+'"><div style="display:flex;flex-direction:column;height:100%;min-height:250px;padding:8px 10px;box-sizing:border-box"><div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center"><span style="font-weight:'+(isTot?'800':'600')+';font-size:12px;line-height:1.3;word-break:break-word" title="'+_kwEsc(label)+'">'+_kwEsc(label)+'</span>'+((!isTot&&typeof _isWatched==='function'&&_isWatched(code,label))?'<div style="margin-top:5px"><span style="display:inline-block;font-size:9px;font-weight:700;color:#fff;background:#dc2626;border-radius:4px;padding:1px 6px">注視</span></div>':'')+'</div>'+(extras||'')+(showShare?sh:'')+'</div></td>'; }
       var _bc=_ccm[mt[1]];
       out+='<td style="'+GC+topB+'">'+(_bc?'<span style="color:'+_bc+';font-size:13px">●</span>':'')+'</td>';
       out+='<td style="'+MC+topB+';background:'+c[0]+'">'+mt[0]+'</td>';
