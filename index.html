@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1275</span>
+    <span class="build-date">v1.1278</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1109,22 +1109,28 @@ header + * { margin-top: 4px; }
   </div>
   <div class="tab-panel" id="tab-kw-indiv-table">
     <div class="table-card">
-      <div class="table-toolbar" style="flex-wrap:wrap;gap:8px;align-items:center">
-        <div style="display:flex;gap:6px">
-          <button id="kwIndivModeFix" onclick="setKwIndivTableMode('fix')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #dc2626;background:#dc2626;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">修正あり</button>
-          <button id="kwIndivModeFixX" onclick="setKwIndivTableMode('fixx')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">修正あり（✕）</button>
-          <button id="kwIndivModeYellow" onclick="setKwIndivTableMode('yellow')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">黄色あり</button>
-          <button id="kwIndivModeIdle" onclick="setKwIndivTableMode('idle')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">放置中</button>
-          <button id="kwIndivModeBasic" onclick="setKwIndivTableMode('basic')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">全体</button><button id="kwIndivResetConf" onclick="_resetAllConfirmed()" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #f59e0b;background:var(--surface2);color:#d97706;cursor:pointer;white-space:nowrap;font-weight:700;margin-left:14px">確認前へ戻す</button>
+      <div class="table-toolbar" style="flex-direction:column;align-items:stretch;gap:7px">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%">
+          <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+            <button id="kwIndivModeFix" onclick="setKwIndivTableMode('fix')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #dc2626;background:#dc2626;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">修正あり</button>
+            <button id="kwIndivModeFixX" onclick="setKwIndivTableMode('fixx')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">修正あり（✕）</button>
+            <button id="kwIndivModeYellow" onclick="setKwIndivTableMode('yellow')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">黄色あり</button>
+            <button id="kwIndivModeIdle" onclick="setKwIndivTableMode('idle')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">放置中</button>
+            <button id="kwIndivModeBasic" onclick="setKwIndivTableMode('basic')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">全体</button>
+            <button id="kwIndivResetConf" onclick="_resetAllConfirmed()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #f59e0b;background:var(--surface2);color:#d97706;cursor:pointer;white-space:nowrap;font-weight:700;margin-left:8px">確認前へ戻す</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:14px;padding-left:14px;border-left:1px solid var(--border)">
+            <button onclick="_openDailyWorkPages()" title="当日の広告調整に使う 楽天市場/RMS/ADcheck の各ページを新しいタブで一括オープン" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid #2563eb;background:#2563eb;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">必要ページ一括オープン</button>
+            <button onclick="_toggleKwFixCond()" style="font-size:11px;padding:5px 11px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">修正あり～放置中の意味</button>
+            <button onclick="_toggleKwTableLegend()" style="font-size:11px;padding:5px 11px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">マークの意味</button>
+            <button onclick="_toggleTaiouEditor()" style="font-size:11px;padding:5px 11px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">対応の編集</button>
+          </div>
         </div>
-        <span id="kwIndivTableCount" style="font-size:13px;font-weight:700;color:var(--text2)"></span>
-        <input id="kwIndivTableSearch" type="text" placeholder="商品番号/管理番号/商品名で検索" oninput="setKwIndivTableSearch(this.value)" style="font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);width:200px">
-        <select id="kwIndivTableSort" onchange="setKwIndivTableSort(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="problem">問題発生金額順</option><option value="itemno">商品番号順</option><option value="code">商品管理番号順</option></select>
-        <div class="toolbar-right" style="display:flex;align-items:center;gap:8px">
-          <button onclick="_openDailyWorkPages()" title="当日の広告調整に使う 楽天市場/RMS/ADcheck の各ページを新しいタブで一括オープン" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #2563eb;background:#2563eb;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">必要ページ一括オープン</button>
-          <button onclick="_toggleKwFixCond()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">修正あり～放置中の意味</button>
-          <button onclick="_toggleKwTableLegend()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">マークの意味</button>
-          <button onclick="_toggleTaiouEditor()" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">対応の編集</button>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%">
+          <span id="kwIndivTableCount" style="font-size:13px;font-weight:700;color:var(--text2)"></span>
+          <input id="kwIndivTableSearch" type="text" placeholder="商品番号/管理番号/商品名で検索" oninput="setKwIndivTableSearch(this.value)" style="font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);width:220px">
+          <select id="kwIndivTableSort" onchange="setKwIndivTableSort(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="problem">問題発生金額順</option><option value="itemno">商品番号順</option><option value="code">商品管理番号順</option></select>
+          <div style="display:inline-flex;gap:4px;border:1px solid #d7dbe0;border-radius:8px;padding:3px;align-items:center"><span style="font-size:10px;color:var(--text3);padding:0 3px">期間</span><button id="kwTblPeriodDay" onclick="setKwTblPeriod('day')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">当日</button><button id="kwTblPeriodMonth" onclick="setKwTblPeriod('month')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">前月(満了)</button></div>
         </div>
       </div>
             <div id="kwIndivFixCond" style="display:none;position:fixed;top:296px;right:40px;min-width:430px;width:max-content;max-width:92vw;max-height:70vh;overflow:auto;z-index:300;margin:0;padding:14px 18px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font-size:12px;line-height:1.9;box-shadow:0 10px 34px rgba(0,0,0,.20)">
@@ -8492,6 +8498,9 @@ function renderKwIndiv(){
   });
 }
 var _kwIndivTableMode='fix';
+var _kwTblPeriodMode='day'; // 'day'=当日 / 'month'=前月(満了)
+function setKwTblPeriod(m){ _kwTblPeriodMode=(m==='month')?'month':'day'; _setKwTblPeriodUI(); if(typeof renderKwIndivTableAll==='function') renderKwIndivTableAll(); }
+function _setKwTblPeriodUI(){ var d=document.getElementById('kwTblPeriodDay'), m=document.getElementById('kwTblPeriodMonth'); var on='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700'; var off='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600'; if(d)d.style.cssText=(_kwTblPeriodMode==='day')?on:off; if(m)m.style.cssText=(_kwTblPeriodMode==='month')?on:off; }
 var _kwIndivTableSort='problem';
 function setKwIndivTableSort(v){ _kwIndivTableSort=v; renderKwIndivTableAll(); }
 var _kwIndivTableSearch='';
@@ -9037,7 +9046,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   if(!cfg.watchOnly){ try{ _applyKwColStyle(); }catch(e){} }
 }
 
-function _buildKwTableBlock(code, daily, idx, pfx){
+function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
   let rows=kwRows.filter(r=>r.itemCode===code); if(!rows.length) return null;
   let ym='';
   if(daily){ const months=[...new Set(rows.map(r=>r.ym))].filter(Boolean).sort(); ym=months[months.length-1]||''; rows=rows.filter(r=>r.ym===ym); }
@@ -9106,8 +9115,20 @@ function _buildKwTableBlock(code, daily, idx, pfx){
     let _prevYm6=''; if(_curYm6){ let _yy=+_curYm6.slice(0,4), _mm=+_curYm6.slice(4,6)-1; if(_mm<1){_mm=12;_yy--;} _prevYm6=''+_yy+String(_mm).padStart(2,'0'); }
     const _prevByKw={}; if(_prevYm6){ kwRows.forEach(r=>{ if(r.itemCode===code && r.ym===_prevYm6){ const k=r.kw||'(空)'; (_prevByKw[k]||(_prevByKw[k]=[])).push(r); } }); }
     const _prevCpcOf=function(kw){ const pv=_prevByKw[kw]; if(!pv) return null; let ps=0,pc=0; pv.forEach(r=>{ps+=(r.spend||0);pc+=(r.cl||0);}); return pc>0?(ps/pc):null; };
+    // === 前月(満了)モード: KWvol〜月クリック等の実績を前月ベースに置き換える（目安/入札/判定/対応は当日のまま） ===
+    let _pmLast='', _pmVol={}, _pmTotVol=0, _prev2ByKw={};
+    if(monthMode){
+      Object.keys(_prevByKw).forEach(k=>{ _prevByKw[k].forEach(r=>{ if(r.date>_pmLast)_pmLast=r.date; }); });
+      Object.keys(_prevByKw).forEach(k=>{ const v=_kwiPredVol(_prevByKw[k],_pmLast); _pmVol[k]=v; _pmTotVol+=v; });
+      let _prev2Ym6=''; if(_prevYm6){ let _y2=+_prevYm6.slice(0,4), _m2=+_prevYm6.slice(4,6)-1; if(_m2<1){_m2=12;_y2--;} _prev2Ym6=''+_y2+String(_m2).padStart(2,'0'); }
+      if(_prev2Ym6){ kwRows.forEach(r=>{ if(r.itemCode===code && r.ym===_prev2Ym6){ const k=r.kw||'(空)'; (_prev2ByKw[k]||(_prev2ByKw[k]=[])).push(r); } }); }
+    }
+    const _prev2CpcOf=function(kw){ const pv=_prev2ByKw[kw]; if(!pv) return null; let ps=0,pc=0; pv.forEach(r=>{ps+=(r.spend||0);pc+=(r.cl||0);}); return pc>0?(ps/pc):null; };
+    // 前月の1KW分の実績セット（monthMode時に実績系セルへ流す）
+    const _pm=function(kw){ const rs=_prevByKw[kw]||[]; let sp=0,sa=0,od=0,cl=0; rs.forEach(r=>{sp+=(r.spend||0);sa+=(r.sales||0);od+=(r.orders||0);cl+=(r.cl||0);}); const kwvol=_pmVol[kw]||0; return {kwvol:kwvol, share:_pmTotVol>0?(kwvol/_pmTotVol*100):0, sp:sp, sa:sa, od:od, cl:cl, r3:_kwiRecent3(rs,_pmLast), has:rs.length>0}; };
+    const _hdrLbl=monthMode?('前月'+(_prevYm6?('('+(+_prevYm6.slice(4,6))+'月)'):'')):_dl;
     let _h='<thead><tr>'
-      +'<th style="'+_H+';background:#eef2ff">'+_dl+'</th>'
+      +'<th style="'+_H+';background:#eef2ff">'+_hdrLbl+'</th>'
       +'<th style="'+_H+';background:#e6f4ea">KWvol</th>'
       +'<th style="'+_H+';background:#e6f4ea">KW割合</th>'+'<th style="'+_H+';background:#fcf2d8">実績額</th>'+'<th style="'+_H+';background:#fcf2d8">売上</th>'+'<th style="'+_H+';background:#fbe4ec">CVR</th>'+'<th style="'+_H+';background:#fbe4ec">ROAS</th>'
       +'<th style="'+_H+';background:#e4eefb">月クリック合計</th>'
@@ -9153,16 +9174,22 @@ function _buildKwTableBlock(code, daily, idx, pfx){
           +'<td style="'+_T+';background:#fff">'+_taiouMarkGlyph(_zk)+'</td>'
           +(function(){ var vals={kwvol:_zv,share:0,spend:0,sales:0,cvr:null,roas:null,mclick:0,recent3:0,gui:(_zme!=null?_zme:null),act:null}; var _ru=_taiouFor(_zk,vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
           +'</tr>'; return; }
-      const sh=_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'; const dv=_kwiCarry(byKw[kw],_latest); dv.gui=_effGui(kw,dv.gui); const _mcl=byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_kwiRecent3(byKw[kw],_latest);
+      const _mmv=monthMode?_pm(kw):null;
+      const sh=_mmv?_mmv.share.toFixed(2):(_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'); const dv=_kwiCarry(byKw[kw],_latest); dv.gui=_effGui(kw,dv.gui);
+      let _sp=0,_sa=0,_od=0,_cl=0; if(_mmv){ _sp=_mmv.sp;_sa=_mmv.sa;_od=_mmv.od;_cl=_mmv.cl; } else { byKw[kw].forEach(function(r){ _sp+=(r.spend||0);_sa+=(r.sales||0);_od+=(r.orders||0);_cl+=(r.cl||0); }); }
+      const _mcl=_mmv?_mmv.cl:byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_mmv?_mmv.r3:_kwiRecent3(byKw[kw],_latest);
+      const _kvDisp=_mmv?_mmv.kwvol:_kwVol[kw]; const _kvRed=_mmv?false:_volRed[kw];
+      const _cvrTxt=_cl>0?(_od/_cl*100).toFixed(2)+'%':'\u2014'; const _roasTxt=_sp>0?(Math.round(_sa/_sp*100).toLocaleString()+'%'):'\u2014';
       _h+='<tr>'
         +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
-        +'<td style="'+_T+';background:#fff;font-size:11px;color:'+(_volRed[kw]?'#1e8449;font-weight:700':'#555')+'">'+(_volRed[kw]?('?_'+_n2(_kwVol[kw])+'_?'):_n2(_kwVol[kw]))+'</td>'
-        +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+sh+'%</td>'+(function(){ var rs=byKw[kw],sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){ sp+=(r.spend||0); sa+=(r.sales||0); od+=(r.orders||0); cl+=(r.cl||0); }); var cvr=cl>0?(od/cl*100).toFixed(2)+'%':'\u2014'; var roas=sp>0?(Math.round(sa/sp*100).toLocaleString()+'%'):'\u2014'; return '<td style="'+_T+';font-size:11px;background:#fff">'+(sp?Math.round(sp).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+(sa?Math.round(sa).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+cvr+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+roas+'</td>'; })()
+        +'<td style="'+_T+';background:#fff;font-size:11px;color:'+(_kvRed?'#1e8449;font-weight:700':'#555')+'">'+(_kvRed?('?_'+_n2(_kvDisp)+'_?'):_n2(_kvDisp))+'</td>'
+        +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+sh+'%</td>'
+        +'<td style="'+_T+';font-size:11px;background:#fff">'+(_sp?Math.round(_sp).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+(_sa?Math.round(_sa).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+_cvrTxt+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+_roasTxt+'</td>'
         +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">'+_n2(_mcl)+'</td>'
         +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">'+_n2(_r3)+'</td>'
-        +(function(){ var pc=_prevCpcOf(kw); var bg=pc!=null?'#fbe7cf':'#fff'; return '<td style="'+_T+';font-size:11px;color:#333;background:'+bg+'">'+(pc!=null?Math.round(pc).toLocaleString():'\u2014')+'</td>'; })()+'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td>'
+        +(function(){ var pc=_mmv?_prev2CpcOf(kw):_prevCpcOf(kw); var bg=pc!=null?'#fbe7cf':'#fff'; return '<td style="'+_T+';font-size:11px;color:#333;background:'+bg+'">'+(pc!=null?Math.round(pc).toLocaleString():'\u2014')+'</td>'; })()+'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td>'
         +'<td style="'+_T+';background:#d9edca;font-size:11px">'+_n2(dv.act)+'</td>'
-        +'<td style="'+_T+';background:#fff">'+_kwiMkM(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest))+'</td>'+(function(){ var rs=byKw[kw],sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){sp+=(r.spend||0);sa+=(r.sales||0);od+=(r.orders||0);cl+=(r.cl||0);}); var vals={kwvol:_kwVol[kw],share:parseFloat(sh),spend:sp,sales:sa,cvr:cl>0?(od/cl*100):null,roas:sp>0?(sa/sp*100):null,mclick:_mcl,recent3:_r3,gui:dv.gui,act:dv.act}; var _ru=_taiouFor(_kwiMkKind(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest)),vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
+        +'<td style="'+_T+';background:#fff">'+_kwiMkM(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest))+'</td>'+(function(){ var vals={kwvol:_kvDisp,share:parseFloat(sh),spend:_sp,sales:_sa,cvr:_cl>0?(_od/_cl*100):null,roas:_sp>0?(_sa/_sp*100):null,mclick:_mcl,recent3:_r3,gui:dv.gui,act:dv.act}; var _ru=_taiouFor(_kwiMkKind(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest)),vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
         +'</tr>';
     });
     _h+='</tbody>';
@@ -9176,7 +9203,10 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   const _conf=!!(productCache[code]&&productCache[code].confirmed);
   const _confBtns='<div style="display:inline-flex;align-items:center;gap:6px;margin-left:28px"><button onclick="_setConfirmed(\''+code+'\',false,this)" style="'+(_conf?_CONF_OFF:_CONF_PRE)+'">確認前</button><button onclick="_setConfirmed(\''+code+'\',true,this)" style="'+(_conf?_CONF_DONE:_CONF_OFF)+'">確認済</button></div>';
   const _idleBtns='<div style="display:inline-flex;align-items:center;gap:5px;margin-left:8px"><span style="font-size:10px;color:var(--text3);margin-right:2px">状態:</span><button onclick="_setIdle(\''+code+'\',false,this)" style="'+(_idle?_IDLE_OFF:_IDLE_ON_N)+'">通常</button><button onclick="_setIdle(\''+code+'\',true,this)" style="'+(_idle?_IDLE_ON_I:_IDLE_OFF)+'">放置中</button></div>';
-  const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+(_img?'<img loading="lazy" src="'+_img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+'<span style="user-select:all;-webkit-user-select:all">'+_kwEsc(code)+'</span>'+(_itemNo?('\u3000<span style="color:#00897B;font-weight:700">'+_kwEsc(_itemNo)+'</span>'):'')+(_monthLast?('\u3000|\u3000'+_monthLast.slice(0,4)+'/'+_monthLast.slice(5,7)+'/'+_monthLast.slice(8,10)):'')+'\u3000|\u3000'+(daily?'日別':'月別')+'\u3000'+_idleBtns+_confBtns+'</div></div></div>';
+  let _hdMeta;
+  if(monthMode && _monthLast){ let _yy=+_monthLast.slice(0,4), _mm=+_monthLast.slice(5,7)-1; if(_mm<1){_mm=12;_yy--;} _hdMeta='\u3000|\u3000'+_yy+'/'+String(_mm).padStart(2,'0')+'\u3000|\u3000<span style="color:#c2410c;font-weight:700">前月(満了)</span>'; }
+  else { _hdMeta=(_monthLast?('\u3000|\u3000'+_monthLast.slice(0,4)+'/'+_monthLast.slice(5,7)+'/'+_monthLast.slice(8,10)):'')+'\u3000|\u3000'+(daily?'日別':'月別'); }
+  const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+(_img?'<img loading="lazy" src="'+_img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+'<span style="user-select:all;-webkit-user-select:all">'+_kwEsc(code)+'</span>'+(_itemNo?('\u3000<span style="color:#00897B;font-weight:700">'+_kwEsc(_itemNo)+'</span>'):'')+_hdMeta+'\u3000'+_idleBtns+_confBtns+'</div></div></div>';
   const _btn='<button onclick="_kwTblToggleCharts(\''+pfx+'\','+idx+',this)" style="font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #00897B;background:#fff;color:#00897B;cursor:pointer;font-weight:700;margin:2px 0 8px">グラフ・表を表示</button>';
   const _chc='<div id="kwTblCh'+pfx+'_'+idx+'" style="display:none;margin-bottom:10px"></div>';
   const _sscell='<div style="flex:0 0 220px;align-self:flex-start;border:1px solid #b9c0cc;border-radius:8px;background:#eef1f6;padding:8px 10px;box-sizing:border-box"><div style="font-size:10px;color:#445;font-weight:700;margin:0 0 5px;text-align:center">マラソン/SS</div>'+_ssCellBtns(code)+'</div>';
@@ -9184,12 +9214,12 @@ function _buildKwTableBlock(code, daily, idx, pfx){
   return { html:_head+_flex+_btn+_chc, hasFix:hasFix, hasFixX:hasFixX, hasYellow:hasYellow, redCount:_redCount, problemSpend:_probSpend };
 }
 function _setKwIndivTableModeUI(){
-  const on='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
-  const off='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600';
-  const onY='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #BF8F00;background:#BF8F00;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
-  const onI='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #6b7280;background:#6b7280;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
-  const onFix='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #dc2626;background:#dc2626;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
-  const onFixX='font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #b91c1c;background:#b91c1c;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
+  const on='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
+  const off='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600';
+  const onY='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #BF8F00;background:#BF8F00;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
+  const onI='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #6b7280;background:#6b7280;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
+  const onFix='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #dc2626;background:#dc2626;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
+  const onFixX='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #b91c1c;background:#b91c1c;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
   const b=document.getElementById('kwIndivModeBasic'), f=document.getElementById('kwIndivModeFix'), fx=document.getElementById('kwIndivModeFixX'), y=document.getElementById('kwIndivModeYellow'), id=document.getElementById('kwIndivModeIdle');
   if(b)b.style.cssText=_kwIndivTableMode==='basic'?on:off;
   if(f)f.style.cssText=_kwIndivTableMode==='fix'?onFix:off;
@@ -9236,7 +9266,7 @@ function _kwTblToggleCharts(pfx, idx, btn){
   } else { cont.style.display='none'; if(btn) btn.textContent='グラフ・表を表示'; }
 }
 function renderKwIndivTableAll(){
-  _setKwIndivPeriodUI(); _setKwIndivTableModeUI();
+  _setKwIndivPeriodUI(); _setKwIndivTableModeUI(); _setKwTblPeriodUI();
   const view=document.getElementById('kwIndivTableView'); const empty=document.getElementById('kwIndivTableEmpty'); const cntEl=document.getElementById('kwIndivTableCount'); const thd=document.getElementById('kwIndivTableHeader'); if(thd) thd.innerHTML='';
   const daily=true;
   let codes=[...new Set(kwRows.map(r=>r.itemCode).filter(Boolean))].filter(c=>!_isAdNone(c));
@@ -9251,7 +9281,7 @@ function renderKwIndivTableAll(){
   codes.sort((a,b)=>(spend[b]||0)-(spend[a]||0));
   (_kwTblCharts||[]).forEach(c=>{try{c.destroy();}catch(e){}}); _kwTblCharts=[]; _kwTblCodes['tbl']=[];
   let _items=[]; var _cnt={fix:0,fixx:0,yellow:0,idle:0,all:0};
-  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes['tbl'].length,'tbl'); if(!blk) return; const _idleP=!!(productCache[code]&&productCache[code].idle); _cnt.all++; if(_idleP){ _cnt.idle++; } else { if(blk.hasFix)_cnt.fix++; if(blk.hasFixX)_cnt.fixx++; if(blk.hasYellow)_cnt.yellow++; } if(_kwIndivTableMode==='fix'){ if(_idleP||!blk.hasFix) return; } else if(_kwIndivTableMode==='fixx'){ if(_idleP||!blk.hasFixX) return; } else if(_kwIndivTableMode==='yellow'){ if(_idleP||!blk.hasYellow) return; } else if(_kwIndivTableMode==='idle'){ if(!_idleP) return; } _kwTblCodes['tbl'].push(code); _items.push({code:code, html:blk.html, redCount:blk.redCount||0, problemSpend:blk.problemSpend||0}); });
+  codes.forEach(code=>{ const blk=_buildKwTableBlock(code,daily,_kwTblCodes['tbl'].length,'tbl',(_kwTblPeriodMode==='month')); if(!blk) return; const _idleP=!!(productCache[code]&&productCache[code].idle); _cnt.all++; if(_idleP){ _cnt.idle++; } else { if(blk.hasFix)_cnt.fix++; if(blk.hasFixX)_cnt.fixx++; if(blk.hasYellow)_cnt.yellow++; } if(_kwIndivTableMode==='fix'){ if(_idleP||!blk.hasFix) return; } else if(_kwIndivTableMode==='fixx'){ if(_idleP||!blk.hasFixX) return; } else if(_kwIndivTableMode==='yellow'){ if(_idleP||!blk.hasYellow) return; } else if(_kwIndivTableMode==='idle'){ if(!_idleP) return; } _kwTblCodes['tbl'].push(code); _items.push({code:code, html:blk.html, redCount:blk.redCount||0, problemSpend:blk.problemSpend||0}); });
   const _sort=_kwIndivTableSort||'problem';
   _items.sort(function(a,b){
     if(_sort==='itemno'){ var an=(productCache[a.code]&&productCache[a.code].itemNumber)||'', bn=(productCache[b.code]&&productCache[b.code].itemNumber)||''; if(an&&!bn)return -1; if(!an&&bn)return 1; return an.localeCompare(bn,'ja',{numeric:true})||((spend[b.code]||0)-(spend[a.code]||0)); }
