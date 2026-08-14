@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1187</span>
+    <span class="build-date">v1.1190</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1104,7 +1104,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="tab-panel" id="tab-kw-indiv-table">
     <div class="table-card">
-      <div class="table-toolbar" style="flex-wrap:wrap;gap:8px;align-items:center">
+      <div class="table-toolbar" id="kwIndivTableToolbar" style="flex-wrap:wrap;gap:8px;align-items:center;position:sticky;top:var(--kwidt-top,86px);z-index:120;background:var(--surface)">
         <div style="display:flex;gap:6px">
           <button id="kwIndivModeFix" onclick="setKwIndivTableMode('fix')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid #dc2626;background:#dc2626;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">修正あり</button>
           <button id="kwIndivModeFixX" onclick="setKwIndivTableMode('fixx')" style="font-size:11px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">修正あり（✕）</button>
@@ -1155,7 +1155,7 @@ header + * { margin-top: 4px; }
       </div>
       <div id="kwIndivTableHeader" style="display:none"></div>
       <div id="kwIndivTableEmpty" style="text-align:center;padding:50px;color:var(--text3);font-size:13px">読み込み中…</div>
-      <div id="kwIndivTableView" style="max-height:calc(100vh - 240px);overflow-y:auto;overflow-x:hidden"></div>
+      <div id="kwIndivTableView" style="overflow-x:hidden"></div>
     </div>
   </div>
   <div class="tab-panel" id="tab-kw-compare">
@@ -2585,6 +2585,9 @@ function _updateStickyTops() {
     document.documentElement.style.setProperty('--z-tab1-top', h + 'px');
     document.documentElement.style.setProperty('--z-tab2-top', (h + t1) + 'px');
     document.documentElement.style.setProperty('--z-tab3-top', (h + t1 + t2) + 'px');
+    // 商品-当日データのツールバー(検索欄・当日/満月切替)を、タブメニュー直下にsticky固定するためのtop値。
+    // タブメニューは折り返しで高さが変わるので、実測値(header+tab-bar)から毎回算出してズレを防ぐ。
+    document.documentElement.style.setProperty('--kwidt-top', (h + t1) + 'px');
   } catch(e) { console.warn('_updateStickyTops error:', e); }
 }
 
@@ -7781,7 +7784,7 @@ function renderKwIndiv(){
   const kws=Object.keys(byKw).sort((x,y)=>(_kwVol[y]-_kwVol[x])||(_kwSpend[y]-_kwSpend[x])||(x<y?-1:1));
   const _mkM=(act,gui,streak)=>{ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u25B3</span>'; if(gui>=100) return '<span style="color:#BF8F00;font-weight:900;font-size:16px;-webkit-text-stroke:0.7px #BF8F00">\u25EF</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; };
   const _yc2=v=>(v==null||v===0)?'\u2014':Number(v).toLocaleString();
-  const _dayVal=(rs,d)=>{ let mS=0,mN=0,sp=0,cl=0,cA=0,cN=0,has=false; rs.forEach(r=>{ if(r.date!==d) return; has=true; if(r.mcpc>0){mS+=r.mcpc;mN++;} sp+=(r.spend||0); cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){cA+=ca;cN++;} }); return {has:has, cl:cl, gui:mN?Math.round(mS/mN):0, act:cN?Math.round(cA/cN):(cl>0?Math.round(sp/cl):0)}; };
+  const _dayVal=(rs,d)=>{ let mS=0,mN=0,sp=0,cl=0,cA=0,cN=0,has=false; rs.forEach(r=>{ if(r.date!==d) return; has=true; if(r.mcpc>0){mS+=r.mcpc;mN++;} sp+=(r.spend||0); cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){cA+=ca;cN++;} }); let _act=cN?Math.round(cA/cN):(cl>0?Math.round(sp/cl):0); if(_act>0&&_act<40)_act=40; /* 入札は下限40円 */ return {has:has, cl:cl, gui:mN?Math.round(mS/mN):0, act:_act}; };
   const _carry=(rs,upto)=>{ const ds=[...new Set(rs.map(r=>r.date))].filter(d=>d&&d<=upto).sort(); let gui=null,act=null; ds.forEach(d=>{ const v=_dayVal(rs,d); if(v.gui>0) gui=v.gui; if(v.act>0) act=v.act; }); const last=_dayVal(rs,upto); return {has:last.has, cl:last.cl, gui:gui!=null?gui:last.gui, act:act!=null?act:last.act}; };
   const _noClickStreak=(rs,upto)=>{ let s=0,d=upto; for(let i=0;i<366 && d;i++){ const cl=rs.reduce((a,r)=>a+(r.date===d?(r.cl||0):0),0); if(cl>0) break; s++; d=_prevDay(d); } return s; };
   let _sumHtml='';
@@ -7860,11 +7863,11 @@ function renderKwIndiv(){
       rs.forEach(r=>{ const o=byDate[r.date]||(byDate[r.date]={mS:0,mN:0,spend:0,cl:0,cA:0,cN:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){o.cA+=ca;o.cN++;} });
       const _ym=(rs[0]&&rs[0].ym)||''; const _yy=_ym.slice(0,4), _mm=_ym.slice(4,6); const _dim=_ym?new Date(+_yy,+_mm,0).getDate():31;
       let _lastM=null,_lastA=null;
-      for(let _dd=1;_dd<=_dim;_dd++){ const _ds=_yy+'-'+_mm+'-'+String(_dd).padStart(2,'0'); const o=byDate[_ds]; labels.push(String(_dd)); if(_monthLast && _ds>_monthLast){ mcpcArr.push(null); cpcArr.push(null); clArr.push(0); continue; } if(o&&o.mN){ _lastM=Math.round(o.mS/o.mN); } mcpcArr.push(_lastM); const _aV=o?(o.cN?Math.round(o.cA/o.cN):(o.cl>0?Math.round(o.spend/o.cl):0)):0; if(_aV>0){ _lastA=_aV; } cpcArr.push(_aV>0?_aV:_lastA); clArr.push(o?(o.cl||0):0); }
+      for(let _dd=1;_dd<=_dim;_dd++){ const _ds=_yy+'-'+_mm+'-'+String(_dd).padStart(2,'0'); const o=byDate[_ds]; labels.push(String(_dd)); if(_monthLast && _ds>_monthLast){ mcpcArr.push(null); cpcArr.push(null); clArr.push(0); continue; } if(o&&o.mN){ _lastM=Math.round(o.mS/o.mN); } mcpcArr.push(_lastM); const _aV0=o?(o.cN?Math.round(o.cA/o.cN):(o.cl>0?Math.round(o.spend/o.cl):0)):0; const _aV=(_aV0>0&&_aV0<40)?40:_aV0; if(_aV>0){ _lastA=_aV; } cpcArr.push(_aV>0?_aV:_lastA); clArr.push(o?(o.cl||0):0); }
     } else {
       const byYm={};
       rs.forEach(r=>{ const o=byYm[r.ym]||(byYm[r.ym]={mS:0,mN:0,spend:0,cl:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); });
-      Object.keys(byYm).sort().forEach(ym=>{ const o=byYm[ym]; labels.push(ym.slice(0,4)+'/'+ym.slice(4,6)); mcpcArr.push(o.mN?Math.round(o.mS/o.mN):0); cpcArr.push(o.cl>0?Math.round(o.spend/o.cl):0); clArr.push(o.cl||0); });
+      Object.keys(byYm).sort().forEach(ym=>{ const o=byYm[ym]; labels.push(ym.slice(0,4)+'/'+ym.slice(4,6)); mcpcArr.push(o.mN?Math.round(o.mS/o.mN):0); var _mA=o.cl>0?Math.round(o.spend/o.cl):0; if(_mA>0&&_mA<40)_mA=40; cpcArr.push(_mA); clArr.push(o.cl||0); });
     }
     const _in=document.getElementById('kwIndivIn'+_S+ki); if(_in) _in.style.minWidth=(labels.length*40)+'px';
     const _tw=document.getElementById('kwIndivT'+_S+ki);
@@ -7918,7 +7921,7 @@ function _kwiDDiff(a,b){ return Math.round((new Date(a+'T12:00:00')-new Date(b+'
 function _kwiPredVol(rs,lastDate){ const impByDate={}; rs.forEach(r=>{ if(r.ctr>0&&r.cl>0){ impByDate[r.date]=(impByDate[r.date]||0)+r.cl*100/r.ctr; } }); const dataDays=Object.keys(impByDate).filter(d=>d<=lastDate).sort(); if(!dataDays.length) return 0; let sum=0,d=dataDays[0],guard=0; while(d<=lastDate && guard<400){ guard++; if(impByDate[d]!=null){ sum+=impByDate[d]; } else { let best=null,bd=Infinity; for(const dd of dataDays){ const dist=Math.abs(_kwiDDiff(dd,d)); if(dist<bd){bd=dist;best=dd;} } sum+=impByDate[best]; } d=_kwiNextDay(d); } return Math.round(sum); }
 function _kwiMkM(act,gui,streak){ if(act==null||gui==null||act<=0||gui<=0) return '\u00A0'; if(act===40&&gui===40) return '<span style="color:#1e8449;font-weight:900;font-size:14px">\u25CE</span>'; if(act>gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2716</span>'; if(act===gui) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u2713</span>'; if((streak||0)>=3) return '<span style="color:#c0392b;font-weight:900;font-size:14px">\u25B3</span>'; if(gui>=100) return '<span style="color:#BF8F00;font-weight:900;font-size:16px;-webkit-text-stroke:0.7px #BF8F00">\u25EF</span>'; const _d=gui-act; if(_d<=10) return '<span style="color:#1e8449;font-weight:700;font-size:11px">\u25EF</span>'; return '<span style="color:#1e8449;font-weight:800;font-size:13px">\u2713</span>'; }
 function _kwiMkIsRed(act,gui,streak){ if(act==null||gui==null||act<=0||gui<=0) return false; if(act===40&&gui===40) return false; if(act>gui) return true; if(act===gui) return true; if((streak||0)>=3) return true; return false; }
-function _kwiDayVal(rs,d){ let mS=0,mN=0,sp=0,cl=0,cA=0,cN=0,has=false; rs.forEach(r=>{ if(r.date!==d) return; has=true; if(r.mcpc>0){mS+=r.mcpc;mN++;} sp+=(r.spend||0); cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){cA+=ca;cN++;} }); return {has:has, cl:cl, gui:mN?Math.round(mS/mN):0, act:cN?Math.round(cA/cN):(cl>0?Math.round(sp/cl):0)}; }
+function _kwiDayVal(rs,d){ let mS=0,mN=0,sp=0,cl=0,cA=0,cN=0,has=false; rs.forEach(r=>{ if(r.date!==d) return; has=true; if(r.mcpc>0){mS+=r.mcpc;mN++;} sp+=(r.spend||0); cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){cA+=ca;cN++;} }); let _act=cN?Math.round(cA/cN):(cl>0?Math.round(sp/cl):0); if(_act>0&&_act<40)_act=40; /* 入札は楽天の下限40円。計算上40円未満になっても40円として扱う */ return {has:has, cl:cl, gui:mN?Math.round(mS/mN):0, act:_act}; }
 function _kwiCarry(rs,upto){ const ds=[...new Set(rs.map(r=>r.date))].filter(d=>d&&d<=upto).sort(); let gui=null,act=null; ds.forEach(d=>{ const v=_kwiDayVal(rs,d); if(v.gui>0) gui=v.gui; if(v.act>0) act=v.act; }); const last=_kwiDayVal(rs,upto); return {has:last.has, cl:last.cl, gui:gui!=null?gui:last.gui, act:act!=null?act:last.act}; }
 function _kwiNoClickStreak(rs,upto){ let s=0,d=upto; for(let i=0;i<366 && d;i++){ const cl=rs.reduce((a,r)=>a+(r.date===d?(r.cl||0):0),0); if(cl>0) break; s++; d=_kwiPrevDay(d); } return s; }
 function _kwiRecent3(rs,upto){ let s=0,d=upto; for(let i=0;i<3&&d;i++){ s+=rs.reduce((a,r)=>a+(r.date===d?(r.cl||0):0),0); d=_kwiPrevDay(d); } return s; }
@@ -8475,8 +8478,8 @@ function _kwiBuildCharts(code, daily, cont){
     const rs=byKw[kw]; let labels=[],mcpcArr=[],cpcArr=[],clArr=[];
     if(daily){ const byDate={}; rs.forEach(r=>{ const o=byDate[r.date]||(byDate[r.date]={mS:0,mN:0,spend:0,cl:0,cA:0,cN:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); const ca=(r.cpcAct!=null&&r.cpcAct>0)?r.cpcAct:0; if(ca>0){o.cA+=ca;o.cN++;} });
       const _ym=(rs[0]&&rs[0].ym)||''; const _yy=_ym.slice(0,4),_mm=_ym.slice(4,6); const _dim=_ym?new Date(+_yy,+_mm,0).getDate():31; let _lM=null,_lA=null;
-      for(let _dd=1;_dd<=_dim;_dd++){ const _ds=_yy+'-'+_mm+'-'+String(_dd).padStart(2,'0'); const o=byDate[_ds]; labels.push(String(_dd)); if(_monthLast && _ds>_monthLast){ mcpcArr.push(null); cpcArr.push(null); clArr.push(0); continue;} if(o&&o.mN){_lM=Math.round(o.mS/o.mN);} mcpcArr.push(_lM); const _aV=o?(o.cN?Math.round(o.cA/o.cN):(o.cl>0?Math.round(o.spend/o.cl):0)):0; if(_aV>0){_lA=_aV;} cpcArr.push(_aV>0?_aV:_lA); clArr.push(o?(o.cl||0):0); }
-    } else { const byYm={}; rs.forEach(r=>{ const o=byYm[r.ym]||(byYm[r.ym]={mS:0,mN:0,spend:0,cl:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); }); Object.keys(byYm).sort().forEach(y=>{ const o=byYm[y]; labels.push(y.slice(0,4)+'/'+y.slice(4,6)); mcpcArr.push(o.mN?Math.round(o.mS/o.mN):0); cpcArr.push(o.cl>0?Math.round(o.spend/o.cl):0); clArr.push(o.cl||0); }); }
+      for(let _dd=1;_dd<=_dim;_dd++){ const _ds=_yy+'-'+_mm+'-'+String(_dd).padStart(2,'0'); const o=byDate[_ds]; labels.push(String(_dd)); if(_monthLast && _ds>_monthLast){ mcpcArr.push(null); cpcArr.push(null); clArr.push(0); continue;} if(o&&o.mN){_lM=Math.round(o.mS/o.mN);} mcpcArr.push(_lM); const _aV0=o?(o.cN?Math.round(o.cA/o.cN):(o.cl>0?Math.round(o.spend/o.cl):0)):0; const _aV=(_aV0>0&&_aV0<40)?40:_aV0; if(_aV>0){_lA=_aV;} cpcArr.push(_aV>0?_aV:_lA); clArr.push(o?(o.cl||0):0); }
+    } else { const byYm={}; rs.forEach(r=>{ const o=byYm[r.ym]||(byYm[r.ym]={mS:0,mN:0,spend:0,cl:0}); if(r.mcpc>0){o.mS+=r.mcpc;o.mN++;} o.spend+=(r.spend||0); o.cl+=(r.cl||0); }); Object.keys(byYm).sort().forEach(y=>{ const o=byYm[y]; labels.push(y.slice(0,4)+'/'+y.slice(4,6)); mcpcArr.push(o.mN?Math.round(o.mS/o.mN):0); var _mA=o.cl>0?Math.round(o.spend/o.cl):0; if(_mA>0&&_mA<40)_mA=40; cpcArr.push(_mA); clArr.push(o.cl||0); }); }
     series.push({labels:labels,mcpcArr:mcpcArr,cpcArr:cpcArr});
     const _yc=v=>(v==null||v===0)?'\u2014':(Number(v).toLocaleString()+'円');
     const _bd='border:1px solid #d0d0d0;padding:3px 2px;white-space:nowrap;vertical-align:top';
@@ -9942,7 +9945,8 @@ function renderRenewalGraph() {
     // 選択中の月だけに絞る（数百日が出ないように）
     const selMonth = document.getElementById('renewalGraphDayMonth')?.value || '';
     const allD = _itemDateUniverse(code);
-    if (!selMonth) { labels = allD; }
+    let _winFrom='', _winTo='';
+    if (!selMonth) { labels = allD; _winFrom=allD.length?allD[0]:''; _winTo=allD.length?allD[allD.length-1]:''; }
     else {
       const y=+selMonth.slice(0,4), mo=+selMonth.slice(5,7);
       const endOfMonth = _igYmd(new Date(y, mo, 0));
@@ -9954,8 +9958,20 @@ function renderRenewalGraph() {
       else if (pr==='2month') from = _igYmd(new Date(y, mo-2, 1));
       else { const e=new Date(to+'T00:00:00'); e.setDate(e.getDate()-29); from=_igYmd(e); }
       labels = allD.filter(d => d>=from && d<=to);
+      _winFrom=from; _winTo=to;
     }
-    if (!labels.length && allD.length) { const _to2=allD[allD.length-1]; const _e2=new Date(_to2+'T00:00:00'); _e2.setDate(_e2.getDate()-29); const _from2=_igYmd(_e2); labels=allD.filter(d=>d>=_from2&&d<=_to2); }
+    if (!labels.length && allD.length) { const _to2=allD[allD.length-1]; const _e2=new Date(_to2+'T00:00:00'); _e2.setDate(_e2.getDate()-29); const _from2=_igYmd(_e2); labels=allD.filter(d=>d>=_from2&&d<=_to2); _winFrom=_from2; _winTo=_to2; }
+    // 変更記録の日付を日別ラベルに合流させる（データが無い日でも縦線・表の行が出るように）。
+    // 表示中の期間ウィンドウ内の変更記録日だけを追加。
+    try {
+      const _clDates=(productCache[code]?.changeLog||[]).map(l=>l.date).filter(Boolean);
+      if (_clDates.length) {
+        const _lo=_winFrom||(labels.length?labels[0]:''); const _hi=_winTo||(labels.length?labels[labels.length-1]:'');
+        const _set=new Set(labels);
+        _clDates.forEach(d=>{ if(!_set.has(d) && (!_lo||d>=_lo) && (!_hi||d<=_hi)){ _set.add(d); } });
+        labels=Array.from(_set).sort();
+      }
+    } catch(e){}
     labels.forEach(d => { dataMap[d] = byDate[d] || {spend:0,sales:0,orders:0,cl:0,imp:0,spendKw:0,salesKw:0,ordersKw:0,clKw:0,impKw:0}; });
   } else {
     const monthly = {};
@@ -11719,7 +11735,7 @@ function switchTab(tab) {
   if (tab === 'kw-basic') renderKwBasic();
   if (tab === 'kw-indiv') { _syncKwIndivMonths(); renderKwIndiv(); _kwIndivSavedFetch().then(_renderKwIndivSavedDropdown).catch(function(){}); }
   if (tab === 'kw-all') { renderKwAllData(); }
-  if (tab === 'kw-indiv-table') { renderKwIndivTableAll(); }
+  if (tab === 'kw-indiv-table') { try{ _updateStickyTops(); }catch(e){} renderKwIndivTableAll(); requestAnimationFrame(function(){ try{ _updateStickyTops(); }catch(e){} }); }
   if (tab === 'mar-watch') { renderKwWatch(); }
   if (tab === 'kw-watch-prod') { renderKwWatchProd(); }
   if (tab === 'kw-watch-monthly') { _kwwmSrcFn=null; _kwwmBodyId='kwWatchMonthlyBody'; _kwwmSelId='kwWatchMonthlySel'; _kwwmIdPfx='kwwm'; _kwWatchMonthlyCode='__ALL__'; renderKwWatchMonthly(); }
