@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1190</span>
+    <span class="build-date">v1.1191</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9983,6 +9983,8 @@ function renderRenewalGraph() {
       });
     });
     try{ const _sc=_getDailySales()[code]; if(_sc){ Object.keys(_sc).forEach(d=>{ const ym=d.slice(0,7); if(!monthly[ym]) monthly[ym]={ spend:0, sales:0, orders:0, cl:0, imp:0, spendKw:0, salesKw:0, ordersKw:0, clKw:0, impKw:0 }; }); } }catch(e){}
+    // 変更記録の月も月別ラベルに合流（データが無い月でも縦線・表の行が出るように）
+    try{ (productCache[code]?.changeLog||[]).forEach(l=>{ if(l&&l.date){ const ym=l.date.slice(0,7); if(!monthly[ym]) monthly[ym]={ spend:0, sales:0, orders:0, cl:0, imp:0, spendKw:0, salesKw:0, ordersKw:0, clKw:0, impKw:0 }; } }); }catch(e){}
     labels = Object.keys(monthly).sort();
     // 当月（まだ締まっていない月）は数値が不完全なので月別表示から除外
     const _now = new Date();
