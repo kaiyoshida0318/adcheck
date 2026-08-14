@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1191</span>
+    <span class="build-date">v1.1192</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -8869,14 +8869,20 @@ function _analyzeColwSave(o){try{localStorage.setItem('adcheck_analyze_colw',JSO
 function _analyzeGet2(){
   var g=productCache['__global__'];
   var o=(g&&g.analyzeLists)?g.analyzeLists:null;
-  if(!o){ try{ o=JSON.parse(localStorage.getItem('adcheck_analyze_lists')||'null'); }catch(e){} }
-  if(o&&Array.isArray(o.lists)&&o.lists.length) return o;
+  // localStorage側とproductCache側で内容がずれることがある（他PC同期と自分の保存が別ストアに入る等）。
+  // updatedAtが新しい方を採用し、保存直後のチェックが古いコピーで上書き表示されないようにする。
+  var ls=null; try{ ls=JSON.parse(localStorage.getItem('adcheck_analyze_lists')||'null'); }catch(e){}
+  var oOk=(o&&Array.isArray(o.lists)&&o.lists.length);
+  var lOk=(ls&&Array.isArray(ls.lists)&&ls.lists.length);
+  if(oOk&&lOk){ var to=+o.updatedAt||0, tl=+ls.updatedAt||0; return (tl>to)?ls:o; }
+  if(oOk) return o;
+  if(lOk) return ls;
   var old=_analyzeGet();
   return {lists:[{name:'メイン',rows:(old||[]).map(function(r){return {place:r.place||'',place2:r.place2||'',item:r.item||'',purpose:r.purpose||''};})}],active:0};
 }
 function _analyzeSave2(o){
   if(!o||!Array.isArray(o.lists)) return;
-  o.updatedAt=Date.now();
+  if(!o.updatedAt) o.updatedAt=Date.now();
   if(!productCache['__global__']) productCache['__global__']={};
   productCache['__global__'].analyzeLists=o;
   try{ localStorage.setItem('adcheck_analyze_lists', JSON.stringify(o)); }catch(e){}
@@ -8887,6 +8893,19 @@ function _analyzeSave2(o){
 }
 
 var _ANALYZE_SHARED_FILE='data/analyze_memo_shared.json';
+// 別バージョン間で done(チェック) を引き継ぐ。dst の行に、src の同名リスト・同一item行の done:true を移植する。
+function _analyzeMergeDone(dst, src){
+  if(!dst||!Array.isArray(dst.lists)||!src||!Array.isArray(src.lists)) return;
+  var byName={}; src.lists.forEach(function(l){ if(l&&l.name) byName[l.name]=l; });
+  var norm=function(s){ return String(s==null?'':s).replace(/\s+/g,' ').trim(); };
+  dst.lists.forEach(function(dl){
+    if(!dl||!Array.isArray(dl.rows)) return;
+    var sl=byName[dl.name]; if(!sl||!Array.isArray(sl.rows)) return;
+    // src側で done:true の item を集める（同一itemが複数ある場合は件数分だけ消費）
+    var doneItems={}; sl.rows.forEach(function(r){ if(r&&r.done){ var k=norm(r.item); doneItems[k]=(doneItems[k]||0)+1; } });
+    dl.rows.forEach(function(r){ if(!r) return; var k=norm(r.item); if(doneItems[k]>0){ r.done=true; doneItems[k]--; } });
+  });
+}
 async function _analyzeFetch(){
   try{
     var pat=localStorage.getItem('github_pat'); var obj=null;
@@ -8903,6 +8922,9 @@ async function _analyzeFetch(){
         return true;
       }
       var o={lists:obj.lists, active:obj.active||0, updatedAt:_sts};
+      // 共有ファイル側が新しく採用される場合でも、ローカルで付けたチェック(done)は
+      // できる限り引き継ぐ。リスト名＋確認項目(item)の一致で done を移植する。
+      try{ if(_lo&&Array.isArray(_lo.lists)) _analyzeMergeDone(o, _lo); }catch(e){}
       if(!productCache['__global__']) productCache['__global__']={};
       productCache['__global__'].analyzeLists=o;
       try{ localStorage.setItem('adcheck_analyze_lists', JSON.stringify(o)); }catch(e){}
@@ -8916,10 +8938,14 @@ async function _analyzePublish(){
   var pat=localStorage.getItem('github_pat'); if(!pat) return false;
   try{
     var o=_analyzeGet2();
+    // ローカルが持つ updatedAt をそのまま共有ファイルに載せる（Date.now()で上書きしない）。
+    // publishのたびに時刻を進めると、自分の保存したローカルが「古い」判定され、
+    // 次回読み込み時に共有ファイルで上書きされてチェックが消える不具合になるため。
+    var _uat=(o&&o.updatedAt)?o.updatedAt:Date.now();
     var headers={'Authorization':'token '+pat,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
     var url='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_ANALYZE_SHARED_FILE;
     var getRes=await fetch(url,{headers,cache:'no-store'}); var sha=getRes.ok?(await getRes.json()).sha:null;
-    var base64=btoa(unescape(encodeURIComponent(JSON.stringify({lists:o.lists,active:o.active||0,updatedAt:Date.now()}))));
+    var base64=btoa(unescape(encodeURIComponent(JSON.stringify({lists:o.lists,active:o.active||0,updatedAt:_uat}))));
     var body={message:'Update analyze memo',content:base64}; if(sha) body.sha=sha;
     var putRes=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)}); return putRes.ok;
   }catch(e){ return false; }
@@ -8980,7 +9006,7 @@ var _asTimer=null,_asY=0;function _pickRow(y){var trs=document.querySelectorAll(
  window._dLeave=function(tr){};
  window._dragEnd=function(){dragIdx=-1;_asStop();_clearDO();};
  window._drop=function(e,i){e.preventDefault();_asStop();_clearDO();var from=dragIdx;if(from<0){var d=parseInt(e.dataTransfer.getData('text/plain'),10);from=isNaN(d)?-1:d;}dragIdx=-1;if(from<0||from===i)return;collect();var mv=DATA.splice(from,1)[0];DATA.splice(i,0,mv);markDirty();render();};
- window._save=function(){collect();try{localStorage.setItem('adcheck_analyze_lists',snap());}catch(e){} try{if(op&&op._analyzeSave2)op._analyzeSave2({lists:LISTS,active:ACTIVE});}catch(e){} BASE=snap();dirty=false;var st=document.getElementById('status');if(st){st.textContent='保存しました';st.className='';}try{_toast('保存しました');var _b=document.querySelector('.bsave');if(_b){var _ot=_b.getAttribute('data-lbl')||_b.textContent;_b.setAttribute('data-lbl',_ot);_b.textContent=String.fromCharCode(0x2713)+' 保存しました';_b.style.background='#1f7a3a';setTimeout(function(){_b.textContent=_ot;_b.style.background='';},1400);}}catch(e){}setTimeout(setStatus,1300);};
+ window._save=function(){collect();var _uat=Date.now();try{localStorage.setItem('adcheck_analyze_lists',JSON.stringify({lists:LISTS,active:ACTIVE,updatedAt:_uat}));}catch(e){} try{if(op&&op._analyzeSave2)op._analyzeSave2({lists:LISTS,active:ACTIVE,updatedAt:_uat});}catch(e){} BASE=snap();dirty=false;var st=document.getElementById('status');if(st){st.textContent='保存しました';st.className='';}try{_toast('保存しました');var _b=document.querySelector('.bsave');if(_b){var _ot=_b.getAttribute('data-lbl')||_b.textContent;_b.setAttribute('data-lbl',_ot);_b.textContent=String.fromCharCode(0x2713)+' 保存しました';_b.style.background='#1f7a3a';setTimeout(function(){_b.textContent=_ot;_b.style.background='';},1400);}}catch(e){}setTimeout(setStatus,1300);};
  window._cancel=function(){collect();if(snap()!==BASE){if(!confirm('変更を破棄しますか？'))return;}try{var _o=JSON.parse(BASE);LISTS=_o.lists;ACTIVE=_o.active||0;if(ACTIVE>=LISTS.length)ACTIVE=0;DATA=LISTS[ACTIVE].rows;}catch(e){}dirty=false;render();setStatus();};
  window.addEventListener('beforeunload',function(e){collect();if(snap()!==BASE){e.preventDefault();e.returnValue='';return '';}});
  document.addEventListener('click',closeMenus);
