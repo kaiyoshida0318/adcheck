@@ -527,7 +527,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1193</span>
+    <span class="build-date">v1.1194</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -604,6 +604,7 @@ header + * { margin-top: 4px; }
   
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-mid" onclick="switchTab('monthly-mid')">中立□<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-mid"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-midb" onclick="switchTab('monthly-midb')">中立-20円出稿中□<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-midb"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-mid2y" onclick="switchTab('monthly-mid2y')">中立-広告無し-Yahoo<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-mid2y"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-mid2" onclick="switchTab('monthly-mid2')">中立-広告無し<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-mid2"></span></button>
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退予定▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warn"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-warnbig" onclick="switchTab('monthly-warnbig')">撤退予定-大サイズ▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warnbig"></span></button>
@@ -1218,6 +1219,7 @@ header + * { margin-top: 4px; }
   <div class="tab-panel" id="tab-monthly-new"></div>
   <div class="tab-panel" id="tab-monthly-mid"></div>
   <div class="tab-panel" id="tab-monthly-midb"></div>
+  <div class="tab-panel" id="tab-monthly-mid2y"></div>
   <div class="tab-panel" id="tab-monthly-mid2"></div>
   <div class="tab-panel" id="tab-monthly-warn"></div>
   <div class="tab-panel" id="tab-monthly-warnbig"></div>
@@ -8807,6 +8809,7 @@ var _ANALYZE_OPTS_STATIC=[
  {v:'健常-広告無し',b:'【状態】',r:'健常-広告無し',c:'#9333ea'},
  {v:'新商品',b:'【状態】',r:'新商品',c:'#9333ea'},
  {v:'中立□',b:'【状態】',r:'中立□',c:'#9333ea'},
+ {v:'中立-広告無し-Yahoo',b:'【状態】',r:'中立-広告無し-Yahoo',c:'#9333ea'},
  {v:'中立-広告無し',b:'【状態】',r:'中立-広告無し',c:'#9333ea'},
  {v:'撤退予定▲',b:'【状態】',r:'撤退予定▲',c:'#9333ea'},
  {v:'撤退済■',b:'【状態】',r:'撤退済■',c:'#9333ea'},
@@ -11215,6 +11218,7 @@ const SUB_TAB_STATUS = {
   'monthly-mid':  'mid',
   'monthly-midb': 'midb',
   'monthly-mid2': 'mid2',
+  'monthly-mid2y': 'mid2y',
   'monthly-warn': 'warn',
   'monthly-warnbig': 'warnbig',
   'monthly-out':  'out',
@@ -11738,7 +11742,7 @@ function switchTab(tab) {
   // 全ボタンのactive解除
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   // 2・3行目サブタブの場合は1行目のmonthlyも光らせる
-  const monthlySubTabs = ['monthly-all','monthly-g1','monthly-g1b','monthly-g2','monthly-g3','monthly-new','monthly-mid','monthly-midb','monthly-mid2','monthly-warn','monthly-out','monthly-unset','monthly-active'];
+  const monthlySubTabs = ['monthly-all','monthly-g1','monthly-g1b','monthly-g2','monthly-g3','monthly-new','monthly-mid','monthly-midb','monthly-mid2y','monthly-mid2','monthly-warn','monthly-out','monthly-unset','monthly-active'];
   if (monthlySubTabs.includes(tab)) {
     document.getElementById('tab-btn-monthly')?.classList.add('active');
   }
@@ -12808,7 +12812,8 @@ function _updateStatusCounts() {
   set('monthly-new',   statusCount['new']  || 0);
   set('monthly-mid',   statusCount['mid']  || 0);
   set('monthly-midb',  statusCount['midb'] || 0);
-  set('monthly-mid2',  (statusCount['mid2'] || 0)+(statusCount['mid2y'] || 0));
+  set('monthly-mid2y', statusCount['mid2y'] || 0);
+  set('monthly-mid2',  statusCount['mid2'] || 0);
   set('monthly-warn',  (statusCount['warn'] || 0)+(statusCount['warnout'] || 0));
   set('monthly-warnbig', (statusCount['warnbig'] || 0)+(statusCount['warnbigout'] || 0));
   set('monthly-out',   statusCount['out']  || 0);
@@ -12935,7 +12940,7 @@ function getSorted(ym) {
     if (q && !p.id.toString().includes(q) && !(productCache[p.id]?.itemNumber||'').toLowerCase().includes(q) && !(productCache[p.id]?.manualName||productCache[p.id]?.name||'').toLowerCase().includes(q)) return false;
     // サブタブフィルタ
     if (_subTabFilter && _subTabFilter !== 'all') {
-      let _st = (productCache[p.id]?.status || 'unset'); if (_st === 'mid2y') _st = 'mid2'; if (_st === 'warnout') _st = 'warn'; if (_st === 'warnbigout') _st = 'warnbig';
+      let _st = (productCache[p.id]?.status || 'unset'); if (_st === 'warnout') _st = 'warn'; if (_st === 'warnbigout') _st = 'warnbig';
       if (_st !== _subTabFilter) return false;
     }
     return true;
