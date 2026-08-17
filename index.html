@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1283</span>
+    <span class="build-date">v1.1284</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14363,7 +14363,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
     : `<div id="img-cell-${p.id}" class="prod-thumb" style="cursor:pointer" title="商品情報編集ページを開く" onclick="event.stopPropagation();openRenewalGraph('${p.id}')">画像</div>`;
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
-  const _genreCell = _marathonView ? `<div style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center">${cached?.genreId||'\u2014'}</div>` : '';
+  const _genreCell = _marathonView ? `<div onclick="event.stopPropagation()" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text">${cached?.genreId||'\u2014'}</div>` : '';
   const _caData = _marathonView ? null : ((typeof _caFor==='function')?_caFor(p.id,ym):null);
   const _caSpendCell = _marathonView ? '' : `<div class="cell r mono" style="font-size:11px;background:#dcf0e6;border-right:1px solid #c4e5d3">${_caData&&_caData.spend>0?fmtY(_caData.spend):'<span style="color:var(--text3)">—</span>'}</div>`;
   const _caRoasCell = _marathonView ? '' : (() => { const _rd=(_caData&&_caData.roasD!=null)?Math.round(_caData.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px;background:#dcf0e6;border-right:2px solid #a9dabf"><span style="color:${_rdc};font-weight:700">${_rd!=null?_rd+'%':'—'}</span></div>`; })();
