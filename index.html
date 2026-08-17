@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1281</span>
+    <span class="build-date">v1.1283</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12238,6 +12238,25 @@ function clearSSMonth(tab){
   alert(lbl+'の選択を '+codes.length+'件解除しました。\n\n反映（GitHub保存）するには「反映する」を押してください。');
 }
 
+// SSタブのスクロール枠がウィンドウ下端を超えて伸びると、一番下の行のボタンが
+// 画面外に隠れて押せなくなる。枠の高さをビューポート内に収まるよう動的調整する。
+function _fitSubTabScroller() {
+  try {
+    const tab = (typeof _currentTab !== 'undefined') ? _currentTab : '';
+    const panel = document.getElementById('tab-' + tab);
+    if (!panel) return;
+    const wrap = panel.querySelector('#subTabListWrap');
+    if (!wrap) return;
+    const top = wrap.getBoundingClientRect().top;
+    const h = Math.max(220, Math.floor(window.innerHeight - top - 16));
+    wrap.style.maxHeight = h + 'px';
+  } catch (e) {}
+}
+if (!window._subTabScrollerResizeBound) {
+  window._subTabScrollerResizeBound = true;
+  window.addEventListener('resize', () => { try { _fitSubTabScroller(); } catch(e){} });
+}
+
 function renderMonthlySubTab(tab) {
   const isStatus = tab in SUB_TAB_STATUS;
   const isSS     = tab in SS_TABS;
@@ -12323,7 +12342,7 @@ function renderMonthlySubTab(tab) {
           <div class="table-card">
             <div id="subTabToolbarWrap" style="position:sticky;top:0;z-index:30;background:var(--surface)">${_subTabToolbar(tab, ym)}</div>
             <div style="overflow-y:auto;max-height:75vh;overflow-x:auto" id="subTabListWrap">
-              <div id="subTabListInner">${headerHtml}${rows}</div>
+              <div id="subTabListInner" style="padding-bottom:28px">${headerHtml}${rows}</div>
             </div>
           </div>
         </div>
@@ -12347,6 +12366,8 @@ function renderMonthlySubTab(tab) {
         }
       }
     }
+    // スクロール枠の高さをビューポート内に収める(一番下の行が押せない問題の対策)
+    requestAnimationFrame(() => { try { _fitSubTabScroller(); } catch(e){} });
     // 注: ここでは _ssTabActive をリセットしない(SSタブ表示中なのでtrueのまま維持)
     // リセットすると、次に「💾 反映」ボタン押下時にSSフィルター再描画されず通常タブ再描画になる
   }
@@ -13332,7 +13353,8 @@ function closeImportGuide() {
 // ── Data Helpers ──
 function getAllDates() {
   const s = new Set();
-  Object.values(DB).forEach(p => Object.keys(p.days).forEach(d => s.add(d)));
+  // p.days が無い商品（RPP未取込のセール候補・新商品など）でも落ちないようにガード
+  Object.values(DB).forEach(p => { if (p && p.days) Object.keys(p.days).forEach(d => s.add(d)); });
   return [...s].sort();
 }
 function getMonths() {
@@ -14347,10 +14369,10 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const _caRoasCell = _marathonView ? '' : (() => { const _rd=(_caData&&_caData.roasD!=null)?Math.round(_caData.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px;background:#dcf0e6;border-right:2px solid #a9dabf"><span style="color:${_rdc};font-weight:700">${_rd!=null?_rd+'%':'—'}</span></div>`; })();
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}${_marathonView?' marathon':' with-status'}"${_ssTabActive?` onclick="_rowClick('${p.id}','${ym}')"`:''}>
-      <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${cached?.itemNumber||''}（ダブルクリックで選択）">
+      <div onclick="event.stopPropagation()" ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${cached?.itemNumber||''}（ダブルクリックで選択）">
         ${cached?.itemNumber || '—'}
       </div>
-      <div ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${p.id}（ダブルクリックで選択）">
+      <div onclick="event.stopPropagation()" ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${p.id}（ダブルクリックで選択）">
         ${p.id}
       </div>
       ${_genreCell}
@@ -14464,7 +14486,7 @@ function renderCalendar(p, ym) {
   const [y,m] = ym.split('-').map(Number);
   const daysInMonth = new Date(y,m,0).getDate();
   const firstDow = new Date(y,m-1,1).getDay();
-  const dayKeys = Object.keys(p.days).filter(d => d.startsWith(ym));
+  const dayKeys = Object.keys(p.days||{}).filter(d => d.startsWith(ym));
   const maxSpend = Math.max(...dayKeys.map(d => p.days[d].spend), 1);
   const latestDay = p.days[dayKeys.sort().pop()] || {};
   const avgCtr = dayKeys.length ? (dayKeys.reduce((s,d) => s+p.days[d].ctr, 0)/dayKeys.length).toFixed(2) : '—';
@@ -14676,8 +14698,8 @@ function collapseAll() { expandedSet.clear(); renderPage(); }
 function goPage(p) { /* ページネーション廃止 */ }
 
 function removeDate(d) {
-  Object.values(DB).forEach(p => delete p.days[d]);
-  Object.keys(DB).forEach(id => { if(!Object.keys(DB[id].days).length) delete DB[id]; });
+  Object.values(DB).forEach(p => { if(p&&p.days) delete p.days[d]; });
+  Object.keys(DB).forEach(id => { if(!Object.keys((DB[id]&&DB[id].days)||{}).length) delete DB[id]; });
   if (!getMonths().length) { clearAll(); return; }
   populateMonthSel(); renderAll();
 }
