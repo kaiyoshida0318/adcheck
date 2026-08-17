@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1284</span>
+    <span class="build-date">v1.1286</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -11547,20 +11547,8 @@ function _toggleRoasTrendSS(code, mon, btn) {
   _markApplyBtnDirty();
   try { _updateStatusCounts(); } catch(e) {}
   // 注: GitHub保存はしない (「💾 反映」ボタン押下時にまとめて保存)
-  // 【SS】タブを表示中なら、そのタブの月と一致するボタン操作の場合だけ一覧再描画
-  if (_ssTabActive && typeof _currentTab !== 'undefined' && _currentTab in SS_TABS) {
-    const currentSSMonth = SS_TABS[_currentTab];
-    if (mon === currentSSMonth) {
-      const panel = document.getElementById('tab-' + _currentTab);
-      const scrollEl = panel?.querySelector('#subTabListWrap');
-      const savedScroll = scrollEl?.scrollTop || 0;
-      renderMonthlySubTab(_currentTab);
-      requestAnimationFrame(() => {
-        const newScrollEl = document.getElementById('tab-' + _currentTab)?.querySelector('#subTabListWrap');
-        if (newScrollEl) newScrollEl.scrollTop = savedScroll;
-      });
-    }
-  }
+  // 注: SS月を解除しても、その場では一覧から消さない(ボタンの見た目だけ更新)。
+  // 「更新」または「反映」ボタンを押すまで、その商品は画面に残す。
 }
 
 // 反映ボタンに「未保存」表示を出す(視覚的フィードバック)
@@ -11598,13 +11586,8 @@ function _toggleMarathon(code, key, btn){
   try { _updateStatusCounts(); } catch(e) {}
   _ssDirty = true;
   _markApplyBtnDirty();
-  if (_ssTabActive && typeof _currentTab!=='undefined' && _currentTab in MARATHON_TABS && key===MARATHON_TABS[_currentTab]){
-    const panel = document.getElementById('tab-'+_currentTab);
-    const scrollEl = panel?.querySelector('#subTabListWrap');
-    const savedScroll = scrollEl?.scrollTop || 0;
-    renderMonthlySubTab(_currentTab);
-    requestAnimationFrame(()=>{ const ns=document.getElementById('tab-'+_currentTab)?.querySelector('#subTabListWrap'); if(ns) ns.scrollTop=savedScroll; });
-  }
+  // 注: 候補/実施を解除しても、その場では一覧から消さない(ボタンの見た目だけ更新)。
+  // 「更新」または「反映」ボタンを押すまで、その商品は画面に残す。
 }
 function _markApplyBtnDirty() { _showApplyButtons(); }
 // 状態/SS編集の未保存ボタン(キャンセル+反映)の表示制御
@@ -12278,7 +12261,7 @@ function renderMonthlySubTab(tab) {
     const ym = _getSubTabMonth();
     // 検索キーワードを取得
     const qEl = document.getElementById('subTabSearchBox');
-    const q = (qEl ? qEl.value : '').toLowerCase().trim();
+    const q = _normSearch(qEl ? qEl.value : '');
     const allCodes = Object.keys(DB).filter(code => !productCache[code]?.retired);
     let codes = isSelect ? allCodes.filter(c => { try{ return getStats(DB[c],ym).spend > 0; }catch(e){ return false; } }) : (isMarathon ? allCodes.filter(code => (productCache[code]?.marathon || []).includes(marKey)) : allCodes.filter(code => (productCache[code]?.ss || []).includes(mon)));
     if (isSelect) { codes.sort((a,b)=>{ const sa=getStats(DB[a],ym), sb=getStats(DB[b],ym); const ra=sa.spend>0?sa.sales720/sa.spend:0, rb=sb.spend>0?sb.sales720/sb.spend:0; return rb-ra; }); const _ce=document.getElementById('cnt-mar-select'); if(_ce) _ce.textContent= codes.length>0?('('+codes.length+')'):''; }
@@ -12288,10 +12271,7 @@ function renderMonthlySubTab(tab) {
     if (q) {
       codes = codes.filter(code => {
         const cached = productCache[code];
-        const id = code.toString().toLowerCase();
-        const itemNum = (cached?.itemNumber || '').toLowerCase();
-        const name = (cached?.manualName || cached?.name || '').toLowerCase();
-        return id.includes(q) || itemNum.includes(q) || name.includes(q);
+        return _searchMatch(q, [code, cached?.itemNumber, cached?.manualName || cached?.name]);
       });
     }
     const label = isSelect ? '広告出稿中' : (isMarathon ? MARATHON_LABELS[tab] : SS_LABELS[tab]);
@@ -13967,12 +13947,32 @@ function updateSortHeaders() {
   });
 }
 
+// 検索クエリの正規化：全角→半角、小文字化、前後空白除去
+// （型番を全角IMEで入力しても半角保存の商品番号にヒットするように）
+function _normSearch(s){
+  s = (s==null ? '' : String(s));
+  s = s.replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)); // 全角英数記号→半角
+  s = s.replace(/　/g, ' '); // 全角スペース→半角
+  return s.toLowerCase().trim();
+}
+// クエリqが、いずれかのフィールドに部分一致するか判定
+// （通常の部分一致に加え、ハイフン・スペース・アンダースコアを無視した緩い一致も許可）
+function _searchMatch(q, fields){
+  if (!q) return true;
+  const strip = x => x.replace(/[\s\-_]/g, '');
+  const qs = strip(q);
+  for (let i=0; i<fields.length; i++){
+    const nf = _normSearch(fields[i]);
+    if (nf && (nf.includes(q) || (qs && strip(nf).includes(qs)))) return true;
+  }
+  return false;
+}
 function getSorted(ym) {
   const qEl = _subTabFilter ? document.getElementById('subTabSearchBox') : document.getElementById('searchBox');
-  const q = (qEl ? qEl.value : '').toLowerCase();
+  const q = _normSearch(qEl ? qEl.value : '');
   let products = getProducts().filter(p => {
     if (productCache[p.id]?.retired) return false;
-    if (q && !p.id.toString().includes(q) && !(productCache[p.id]?.itemNumber||'').toLowerCase().includes(q) && !(productCache[p.id]?.manualName||productCache[p.id]?.name||'').toLowerCase().includes(q)) return false;
+    if (q && !_searchMatch(q, [p.id, productCache[p.id]?.itemNumber, productCache[p.id]?.manualName || productCache[p.id]?.name])) return false;
     // サブタブフィルタ
     if (_subTabFilter && _subTabFilter !== 'all') {
       let _st = (productCache[p.id]?.status || 'unset'); if (_st === 'mid2y') _st = 'mid2'; if (_st === 'warnout') _st = 'warn'; if (_st === 'warnbigout') _st = 'warnbig'; if (_st === 'newr') _st = 'new';
@@ -14313,15 +14313,14 @@ function _dedupeSubTabHeader(){
 }
 
 function _renderMultiMonthView() {
-  const q = document.getElementById('searchBox').value.toLowerCase();
+  const q = _normSearch(document.getElementById('searchBox').value);
   const yms = _selectedMonths.slice().sort();
   if (yms.length === 0) {
     document.getElementById('itemList').innerHTML = '<div class="empty">月を選択してください</div>';
     return;
   }
   const products = getProducts().filter(p =>
-    !q || p.id.toString().includes(q) ||
-    (productCache[p.id]?.manualName||productCache[p.id]?.name||'').toLowerCase().includes(q)
+    _searchMatch(q, [p.id, productCache[p.id]?.itemNumber, productCache[p.id]?.manualName||productCache[p.id]?.name])
   );
   // 月ごとにgetStatsして各商品×月の行を生成
   let html = '';
