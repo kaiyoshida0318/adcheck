@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1279</span>
+    <span class="build-date">v1.1280</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -11545,6 +11545,7 @@ function _toggleRoasTrendSS(code, mon, btn) {
   _ssDirty = true;
   // 反映ボタンに「未保存」表示(SSタブ・状態タブで反映ボタンが見えてる時)
   _markApplyBtnDirty();
+  try { _updateStatusCounts(); } catch(e) {}
   // 注: GitHub保存はしない (「💾 反映」ボタン押下時にまとめて保存)
   // 【SS】タブを表示中なら、そのタブの月と一致するボタン操作の場合だけ一覧再描画
   if (_ssTabActive && typeof _currentTab !== 'undefined' && _currentTab in SS_TABS) {
@@ -11594,6 +11595,7 @@ function _toggleMarathon(code, key, btn){
   // 実施をONにしたら候補も選択状態のままにする
   if(newActive && key==='jisshi') _ensureKouhoSelected(code);
   saveProductCache();
+  try { _updateStatusCounts(); } catch(e) {}
   _ssDirty = true;
   _markApplyBtnDirty();
   if (_ssTabActive && typeof _currentTab!=='undefined' && _currentTab in MARATHON_TABS && key===MARATHON_TABS[_currentTab]){
@@ -12231,6 +12233,7 @@ function clearSSMonth(tab){
   });
   saveProductCache();
   _ssDirty=true; _markApplyBtnDirty();
+  try { _updateStatusCounts(); } catch(e) {}
   if(_ssTabActive && typeof _currentTab!=='undefined' && _currentTab in SS_TABS){ renderMonthlySubTab(_currentTab); }
   alert(lbl+'の選択を '+codes.length+'件解除しました。\n\n反映（GitHub保存）するには「反映する」を押してください。');
 }
@@ -12260,6 +12263,8 @@ function renderMonthlySubTab(tab) {
     const allCodes = Object.keys(DB).filter(code => !productCache[code]?.retired);
     let codes = isSelect ? allCodes.filter(c => { try{ return getStats(DB[c],ym).spend > 0; }catch(e){ return false; } }) : (isMarathon ? allCodes.filter(code => (productCache[code]?.marathon || []).includes(marKey)) : allCodes.filter(code => (productCache[code]?.ss || []).includes(mon)));
     if (isSelect) { codes.sort((a,b)=>{ const sa=getStats(DB[a],ym), sb=getStats(DB[b],ym); const ra=sa.spend>0?sa.sales720/sa.spend:0, rb=sb.spend>0?sb.sales720/sb.spend:0; return rb-ra; }); const _ce=document.getElementById('cnt-mar-select'); if(_ce) _ce.textContent= codes.length>0?('('+codes.length+')'):''; }
+    // タブのカウントバッジを実リスト件数に同期（(1)なのに開くと0件…の不一致を防ぐ）
+    if (isSS || isMarathon) { const _cb=document.getElementById('cnt-'+tab); if(_cb) _cb.textContent = codes.length>0?('('+codes.length+')'):''; }
     // 検索キーワードで絞り込み(商品ID・商品番号・商品名)
     if (q) {
       codes = codes.filter(code => {
@@ -13794,14 +13799,13 @@ function _updateStatusCounts() {
     statusCount[s] = (statusCount[s] || 0) + 1;
   });
 
-  // SSカウント
+  // SS・マラソンのカウントは、サブタブのリストと同じ絞り込み（DBキー＋非引退）で数える
+  // → タブの(1)表示とリスト件数が食い違わないようにする
   const ssCount = { '03':0, '06':0, '09':0, '12':0 };
-  products.forEach(p => {
-    (productCache[p.id]?.ss || []).forEach(m => { if (ssCount[m] !== undefined) ssCount[m]++; });
-  });
   const marCount = { kouho:0, jisshi:0, cpc:0, tanka:0 };
-  products.forEach(p => {
-    (productCache[p.id]?.marathon || []).forEach(k => { if (marCount[k] !== undefined) marCount[k]++; });
+  Object.keys(DB).filter(code => !productCache[code]?.retired).forEach(code => {
+    (productCache[code]?.ss || []).forEach(m => { if (ssCount[m] !== undefined) ssCount[m]++; });
+    (productCache[code]?.marathon || []).forEach(k => { if (marCount[k] !== undefined) marCount[k]++; });
   });
 
   const set = (id, n) => {
