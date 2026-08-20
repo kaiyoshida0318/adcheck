@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1286</span>
+    <span class="build-date">v1.1287</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9048,6 +9048,8 @@ function _renderKwTable(cfg){ cfg=cfg||{};
 }
 
 function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
+  // 注視分-KW一覧でチェックしたKWには「注視」バッジを付ける
+  const _wchBadge=(kw)=>(typeof _isWatched==='function'&&_isWatched(code,kw))?' <span style="display:inline-block;font-size:9px;font-weight:700;color:#fff;background:#dc2626;border-radius:3px;padding:0 4px;margin-left:4px;vertical-align:middle">注視</span>':'';
   let rows=kwRows.filter(r=>r.itemCode===code); if(!rows.length) return null;
   let ym='';
   if(daily){ const months=[...new Set(rows.map(r=>r.ym))].filter(Boolean).sort(); ym=months[months.length-1]||''; rows=rows.filter(r=>r.ym===ym); }
@@ -9140,7 +9142,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
       +'</tr></thead><tbody>';
     _rowKws.forEach(kw=>{ if(_pastSet[kw]){ var _bx='□'; var _Tg=_T+';background:#fafafa'; var _ag=_pastAgg[kw]||{}; var _ul=function(t){ return (t==null||t==='')?('<span style="color:#bbb">'+_bx+'</span>'):('<span style="text-decoration:underline;color:#555">'+t+'</span>'); };
       _h+='<tr>'
-        +'<td style="'+_Tg+';font-weight:700;text-align:left;font-size:12px;color:#888">'+_kwEsc(kw)+'</td>'
+        +'<td style="'+_Tg+';font-weight:700;text-align:left;font-size:12px;color:#888">'+_kwEsc(kw)+_wchBadge(kw)+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#666">'+_n2(_kwVol[kw])+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px">'+_ul(_ag.sp?Math.round(_ag.sp).toLocaleString():null)+'</td>'
@@ -9160,7 +9162,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
         var _zme=(typeof _zeroMecpc!=='undefined')?_zeroMecpc[kw]:null; // 目安CPC(登録済みKWスナップショット)
         var _zk=_zeroImpKind(_zme); // 'zeroImpBlack'(46+) / 'zeroImpRed'(45-)
         _h+='<tr>'
-          +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
+          +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+_wchBadge(kw)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+_n2(_zv)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">0.00%</td>'
           +'<td style="'+_T+';font-size:11px;background:#fff">—</td>'
@@ -9182,7 +9184,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
       const _kvDisp=_mmv?_mmv.kwvol:_kwVol[kw]; const _kvRed=_mmv?false:_volRed[kw];
       const _cvrTxt=_cl>0?(_od/_cl*100).toFixed(2)+'%':'\u2014'; const _roasTxt=_sp>0?(Math.round(_sa/_sp*100).toLocaleString()+'%'):'\u2014';
       _h+='<tr>'
-        +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+'</td>'
+        +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+_wchBadge(kw)+'</td>'
         +'<td style="'+_T+';background:#fff;font-size:11px;color:'+(_kvRed?'#1e8449;font-weight:700':'#555')+'">'+(_kvRed?('?_'+_n2(_kvDisp)+'_?'):_n2(_kvDisp))+'</td>'
         +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+sh+'%</td>'
         +'<td style="'+_T+';font-size:11px;background:#fff">'+(_sp?Math.round(_sp).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+(_sa?Math.round(_sa).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+_cvrTxt+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+_roasTxt+'</td>'
