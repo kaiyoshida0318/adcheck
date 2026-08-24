@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1290</span>
+    <span class="build-date">v1.1291</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10748,20 +10748,24 @@ function renderRenewalGraph() {
     // 選択中の月だけに絞る（数百日が出ないように）
     const selMonth = document.getElementById('renewalGraphDayMonth')?.value || '';
     const allD = _itemDateUniverse(code);
-    if (!selMonth) { labels = allD; }
-    else {
+    // 表示期間の from / to を決める
+    let _from='', _to='';
+    if (!selMonth) {
+      if (allD.length) { _from = allD[0]; _to = allD[allD.length-1]; }
+    } else {
       const y=+selMonth.slice(0,4), mo=+selMonth.slice(5,7);
       const endOfMonth = _igYmd(new Date(y, mo, 0));
       const lastData = allD.length?allD[allD.length-1]:endOfMonth;
-      const to = (endOfMonth < lastData) ? endOfMonth : lastData;
-      let from;
+      _to = (endOfMonth < lastData) ? endOfMonth : lastData;
       const pr = _renewalDayPreset || '60';
-      if (pr==='thismonth') from = selMonth+'-01';
-      else if (pr==='2month') from = _igYmd(new Date(y, mo-2, 1));
-      else { const e=new Date(to+'T00:00:00'); e.setDate(e.getDate()-29); from=_igYmd(e); }
-      labels = allD.filter(d => d>=from && d<=to);
+      if (pr==='thismonth') _from = selMonth+'-01';
+      else if (pr==='2month') _from = _igYmd(new Date(y, mo-2, 1));
+      else { const e=new Date(_to+'T00:00:00'); e.setDate(e.getDate()-29); _from=_igYmd(e); }
     }
-    if (!labels.length && allD.length) { const _to2=allD[allD.length-1]; const _e2=new Date(_to2+'T00:00:00'); _e2.setDate(_e2.getDate()-29); const _from2=_igYmd(_e2); labels=allD.filter(d=>d>=_from2&&d<=_to2); }
+    // 表示期間内のカレンダー日をすべて並べる（データが無い日は0で埋めて連続表示）
+    // → リニューアル実施日など、実績が無い日でも軸に載り、変更記録マーカーが表示される
+    labels = (_from && _to && _from<=_to) ? _enumCalDays(_from, _to) : [];
+    if (!labels.length && allD.length) { const _to2=allD[allD.length-1]; const _e2=new Date(_to2+'T00:00:00'); _e2.setDate(_e2.getDate()-29); const _from2=_igYmd(_e2); labels=_enumCalDays(_from2,_to2); }
     labels.forEach(d => { dataMap[d] = byDate[d] || {spend:0,sales:0,orders:0,cl:0,imp:0,spendKw:0,salesKw:0,ordersKw:0,clKw:0,impKw:0}; });
   } else {
     const monthly = {};
@@ -13402,6 +13406,15 @@ function _getDailySales() {
   return c;
 }
 // 商品×日付の総売上情報を取得
+// from〜to(YYYY-MM-DD)のカレンダー日をすべて列挙（連続日付軸用）
+function _enumCalDays(from, to){
+  var out=[]; if(!from||!to) return out;
+  var d=new Date(from+'T00:00:00'), end=new Date(to+'T00:00:00');
+  if(isNaN(d)||isNaN(end)||d>end) return out;
+  var guard=0;
+  while(d<=end && guard<4000){ out.push(_igYmd(d)); d.setDate(d.getDate()+1); guard++; }
+  return out;
+}
 function _itemDateUniverse(code){
   var set=Object.create(null);
   var a=itemDailyData[code]; if(a){ for(var k in a) set[k]=1; }
