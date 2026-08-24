@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1288</span>
+    <span class="build-date">v1.1290</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2144,7 +2144,8 @@ function _editClRender(logs) {
         <option value="" ${!log.type?'selected':''}>種別なし</option>
         <option value="lp" ${log.type==='lp'?'selected':''} style="color:#1a73e8">LP</option>
         <option value="thumb" ${log.type==='thumb'?'selected':''} style="color:#c99700">サムネ</option>
-        <option value="both" ${log.type==='both'?'selected':''} style="color:#9333ea">両方</option>
+        <option value="both" ${log.type==='both'?'selected':''} style="color:#9333ea">LP＆サムネ</option>
+        <option value="title" ${log.type==='title'?'selected':''} style="color:#0d9488">タイトル</option>
       </select>
       <input type="text" value="${log.note||''}" data-idx="${i}" data-field="note"
         placeholder="内容を入力..."
@@ -6620,10 +6621,10 @@ function _renderItemRichTable(labels, dataMap, code){
   if(!daily && _itemTblYoy){ wrap.innerHTML=_richYoyTableHTML(labels,cols); return; }
   const totSalesArr=_renewalMetricValues('totsales',labels,dataMap,code);
   const order=labels.map((_,i)=>i).reverse();
-  const chip=l=>{ const c=l.type==='lp'?'#1a73e8':l.type==='thumb'?'#f4b400':l.type==='both'?'#9333ea':'#f97316'; const tl=l.type==='lp'?'LP\u5909\u66f4':l.type==='thumb'?'\u30b5\u30e0\u30cd\u5909\u66f4':l.type==='both'?'LP\u30fb\u30b5\u30e0\u30cd\u5909\u66f4':'\u5909\u66f4'; const nt=(l.note||'').trim()||tl; return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">'+l.date+' '+nt+'</span>'; };
+  const chip=l=>{ const c=l.type==='lp'?'#1a73e8':l.type==='thumb'?'#f4b400':l.type==='title'?'#0d9488':l.type==='both'?'#9333ea':'#f97316'; const tl=l.type==='lp'?'LP\u5909\u66f4':l.type==='thumb'?'\u30b5\u30e0\u30cd\u5909\u66f4':l.type==='title'?'\u30bf\u30a4\u30c8\u30eb\u5909\u66f4':l.type==='both'?'LP\uff06\u30b5\u30e0\u30cd\u5909\u66f4':'\u5909\u66f4'; const nt=(l.note||'').trim()||tl; return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">'+l.date+' '+nt+'</span>'; };
   const _dateLbl=daily?'日付':'月'; const _igO=_igColGet(); const _igS=function(label){ var o=_igO[label]||{}; var a=o.a||'right'; var w=o.w; return 'text-align:'+a+';'+(w>0?('width:'+w+'px;min-width:'+w+'px;max-width:'+w+'px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'):''); }; const _dateSt=(function(){ var o=_igO[_dateLbl]||{}; var a=o.a||'left'; var w=o.w; return 'text-align:'+a+';'+(w>0?('width:'+w+'px;min-width:'+w+'px;max-width:'+w+'px;white-space:nowrap;'):''); })(); _igLastCols=[{label:_dateLbl,defAlign:'left'}].concat(cols.map(function(c){return {label:c.label,defAlign:'right'};}));
   const head='<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)"><th style="padding:7px 10px;'+_dateSt+'border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">'+(daily?'\u65e5\u4ed8':'\u6708')+'</th>'+cols.map(c=>'<th style="padding:7px 10px;'+_igS(c.label)+'border-bottom:2px solid var(--border);font-weight:700;color:'+c.color+';'+(c.colBg||'')+'white-space:nowrap">'+c.label+'</th>').join('')+'<th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">\u5909\u66f4\u8a18\u9332</th></tr></thead>';
-  const rows=order.map(i=>{ const key=labels[i]; const dispKey=daily?key.slice(5).replace('-','/'):key.slice(0,4)+'/'+key.slice(5,7); const hasLog=!!logByKey[key]; const _fc=hasLog?((logByKey[key][0]||{}).type==='lp'?'#1a73e8':(logByKey[key][0]||{}).type==='thumb'?'#f4b400':(logByKey[key][0]||{}).type==='both'?'#9333ea':'#f97316'):'#f97316'; const fr=hasLog?('border-top:3px dashed '+_fc+';border-bottom:2px dashed '+_fc+';'):''; const noSales=(totSalesArr[i]||0)===0; const cells=cols.map(c=>{ const v=c.vals[i]; const show=(c.dep&&noSales)?'<span style="color:var(--text3)">\u2014</span>':c.fmt(v); return '<td style="padding:6px 10px;'+_igS(c.label)+'font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+(c.colBg||'')+fr+'">'+show+'</td>'; }).join(''); const logCell=hasLog?'<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);'+fr+'border-right:2px dashed '+_fc+';">'+logByKey[key].map(chip).join('')+'</td>':'<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>'; const ks=hasLog?'font-weight:700;color:var(--text)':'color:var(--text)'; return '<tr><td style="padding:6px 10px;'+_dateSt+'font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+ks+';'+fr+(hasLog?'border-left:2px dashed '+_fc+';':'')+'">'+dispKey+'</td>'+cells+logCell+'</tr>'; }).join('');
+  const rows=order.map(i=>{ const key=labels[i]; const dispKey=daily?key.slice(5).replace('-','/'):key.slice(0,4)+'/'+key.slice(5,7); const hasLog=!!logByKey[key]; const _fc=hasLog?((logByKey[key][0]||{}).type==='lp'?'#1a73e8':(logByKey[key][0]||{}).type==='thumb'?'#f4b400':(logByKey[key][0]||{}).type==='title'?'#0d9488':(logByKey[key][0]||{}).type==='both'?'#9333ea':'#f97316'):'#f97316'; const fr=hasLog?('border-top:3px dashed '+_fc+';border-bottom:2px dashed '+_fc+';'):''; const noSales=(totSalesArr[i]||0)===0; const cells=cols.map(c=>{ const v=c.vals[i]; const show=(c.dep&&noSales)?'<span style="color:var(--text3)">\u2014</span>':c.fmt(v); return '<td style="padding:6px 10px;'+_igS(c.label)+'font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+(c.colBg||'')+fr+'">'+show+'</td>'; }).join(''); const logCell=hasLog?'<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);'+fr+'border-right:2px dashed '+_fc+';">'+logByKey[key].map(chip).join('')+'</td>':'<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>'; const ks=hasLog?'font-weight:700;color:var(--text)':'color:var(--text)'; return '<tr><td style="padding:6px 10px;'+_dateSt+'font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+ks+';'+fr+(hasLog?'border-left:2px dashed '+_fc+';':'')+'">'+dispKey+'</td>'+cells+logCell+'</tr>'; }).join('');
   wrap.innerHTML='<table style="border-collapse:collapse;width:100%;font-size:12px">'+head+'<tbody>'+rows+'</tbody></table>';
 }
 
@@ -8028,11 +8029,19 @@ function _renewalRowHtml(code, mode) {
   }
   const hasLp = logs.some(l => l.type === 'lp' || l.type === 'both');
   const hasThumb = logs.some(l => l.type === 'thumb' || l.type === 'both');
+  const hasTitle = logs.some(l => l.type === 'title');
   let actBg, actColor, actBorder, actShadow = 'none';
-  if (hasLp && hasThumb) { actBg = 'linear-gradient(90deg,#1a73e8 50%,#f4b400 50%)'; actColor = '#fff'; actBorder = 'none'; actShadow = '0 0 2px rgba(0,0,0,.45)'; }
-  else if (hasLp) { actBg = '#1a73e8'; actColor = '#fff'; actBorder = 'none'; }
-  else if (hasThumb) { actBg = '#f4b400'; actColor = '#111'; actBorder = 'none'; }
-  else { actBg = 'var(--surface2)'; actColor = logCount>0?'var(--green)':'var(--accent)'; actBorder = '1px solid ' + (logCount>0?'var(--green)':'var(--accent)'); }
+  const _presCols = [];
+  if (hasLp) _presCols.push('#1a73e8');
+  if (hasThumb) _presCols.push('#f4b400');
+  if (hasTitle) _presCols.push('#0d9488');
+  if (_presCols.length >= 2) {
+    const _n = _presCols.length, _seg = 100 / _n;
+    const _stops = _presCols.map((c,i)=>`${c} ${Math.round(i*_seg)}% ${Math.round((i+1)*_seg)}%`).join(',');
+    actBg = `linear-gradient(90deg,${_stops})`; actColor = '#fff'; actBorder = 'none'; actShadow = '0 0 2px rgba(0,0,0,.45)';
+  } else if (_presCols.length === 1) {
+    actBg = _presCols[0]; actColor = (_presCols[0] === '#f4b400') ? '#111' : '#fff'; actBorder = 'none';
+  } else { actBg = 'var(--surface2)'; actColor = logCount>0?'var(--green)':'var(--accent)'; actBorder = '1px solid ' + (logCount>0?'var(--green)':'var(--accent)'); }
   let _latestMMDD='';
   { const _ds = logs.map(l=>l.date).filter(Boolean).sort(); if(_ds.length){ const _d=_ds[_ds.length-1]; _latestMMDD=_d.slice(2,4)+'/'+_d.slice(5,7)+'/'+_d.slice(8,10); } }
   const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" title="変更記録を開く" style="font-size:12px;font-weight:600;padding:4px 12px;border-radius:5px;border:${actBorder};background:${actBg};color:${actColor};cursor:pointer;white-space:nowrap;text-shadow:${actShadow}">${_latestMMDD || '記録'}</button></div>`;
@@ -8725,7 +8734,7 @@ function _kwwmRenderAll(body){
     var groupLabel=(view==='all')?'商品全体':'KW全体';
     var _tSa=0,_tSeo=0,_tSp=0,_tKwSp=0;
     if(view==='all'){ months.forEach(function(m){ var aa=(typeof getItemMonthAgg==='function')?getItemMonthAgg(pc,m.slice(0,4)+'-'+m.slice(4,6)):null; if(!aa) return; _tSa+=(aa.totSales||0); _tSeo+=Math.max(0,(aa.totSales||0)-(aa.rppSales||0)); _tSp+=(aa.spend||0); _tKwSp+=(aa.kwSpend||0); }); }
-    var _rnwLogs=((productCache[pc]&&productCache[pc].changeLog)||[]).filter(function(l){return l.date;}).slice().sort(function(a,b){return a.date<b.date?-1:(a.date>b.date?1:0);}); var _rnwLast=_rnwLogs.length?_rnwLogs[_rnwLogs.length-1]:null; var _rnwD=_rnwLast?_rnwLast.date:''; var _rnwT=_rnwLast?_rnwLast.type:''; var _rnwC=(_rnwT==='lp')?['#e8f0fe','#1a73e8']:((_rnwT==='thumb')?['#fff3e0','#e8710a']:((_rnwT==='both')?['#f3ecfb','#8e44ad']:['#f0fdf4','#16a34a'])); var _rnwL=(_rnwT==='lp')?'LP':((_rnwT==='thumb')?'サムネ':((_rnwT==='both')?'両方':'操作')); var _rnwBtn=_rnwD?'<button onclick="openChangeLog(\''+pc+'\')" style="margin-left:10px;font-size:11px;font-weight:700;padding:4px 12px;border:1px solid '+_rnwC[1]+';border-radius:6px;background:'+_rnwC[0]+';color:'+_rnwC[1]+';cursor:pointer;white-space:nowrap">'+_rnwL+' '+_rnwD.slice(2,4)+'/'+_rnwD.slice(5,7)+'/'+_rnwD.slice(8,10)+'</button>':''; var _rnwBtnC=_rnwD?'<button onclick="openChangeLog(\''+pc+'\')" style="margin-top:6px;font-size:11px;font-weight:700;padding:4px 12px;border:1px solid '+_rnwC[1]+';border-radius:6px;background:'+_rnwC[0]+';color:'+_rnwC[1]+';cursor:pointer;white-space:nowrap">'+_rnwL+' '+_rnwD.slice(2,4)+'/'+_rnwD.slice(5,7)+'/'+_rnwD.slice(8,10)+'</button>':''; var _kwInner='<div style="font-weight:800;font-size:12px;margin-bottom:4px">'+groupLabel+'</div>';
+    var _rnwLogs=((productCache[pc]&&productCache[pc].changeLog)||[]).filter(function(l){return l.date;}).slice().sort(function(a,b){return a.date<b.date?-1:(a.date>b.date?1:0);}); var _rnwLast=_rnwLogs.length?_rnwLogs[_rnwLogs.length-1]:null; var _rnwD=_rnwLast?_rnwLast.date:''; var _rnwT=_rnwLast?_rnwLast.type:''; var _rnwC=(_rnwT==='lp')?['#e8f0fe','#1a73e8']:((_rnwT==='thumb')?['#fff3e0','#e8710a']:((_rnwT==='title')?['#e6f5f3','#0d9488']:((_rnwT==='both')?['#f3ecfb','#8e44ad']:['#f0fdf4','#16a34a']))); var _rnwL=(_rnwT==='lp')?'LP':((_rnwT==='thumb')?'サムネ':((_rnwT==='title')?'タイトル':((_rnwT==='both')?'LP＆サムネ':'操作'))); var _rnwBtn=_rnwD?'<button onclick="openChangeLog(\''+pc+'\')" style="margin-left:10px;font-size:11px;font-weight:700;padding:4px 12px;border:1px solid '+_rnwC[1]+';border-radius:6px;background:'+_rnwC[0]+';color:'+_rnwC[1]+';cursor:pointer;white-space:nowrap">'+_rnwL+' '+_rnwD.slice(2,4)+'/'+_rnwD.slice(5,7)+'/'+_rnwD.slice(8,10)+'</button>':''; var _rnwBtnC=_rnwD?'<button onclick="openChangeLog(\''+pc+'\')" style="margin-top:6px;font-size:11px;font-weight:700;padding:4px 12px;border:1px solid '+_rnwC[1]+';border-radius:6px;background:'+_rnwC[0]+';color:'+_rnwC[1]+';cursor:pointer;white-space:nowrap">'+_rnwL+' '+_rnwD.slice(2,4)+'/'+_rnwD.slice(5,7)+'/'+_rnwD.slice(8,10)+'</button>':''; var _kwInner='<div style="font-weight:800;font-size:12px;margin-bottom:4px">'+groupLabel+'</div>';
     if(view==='all'){ var _seoP=_tSa>0?Math.round(_tSeo/_tSa*100):null,_adP=_tSa>0?Math.round((_tSa-_tSeo)/_tSa*100):null,_kwP=_tSp>0?Math.round(_tKwSp/_tSp*100):null,_y20P=_tSp>0?Math.round((_tSp-_tKwSp)/_tSp*100):null; _kwInner+=_kwwm2col('SEO/広告比率','SEO',_seoP,'広告',_adP,'#15803d','#eafaf0')+_kwwm2col('KW/20円比率','KW',_kwP,'20円',_y20P,'#1d4ed8','#eef4ff')+(_rnwBtnC||''); }
     var _kwCell='<td rowspan="'+NM+'" style="'+KWC+'"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 10px;text-align:center">'+_kwInner+'</div></td>';
     var img=(productCache[pc]&&(productCache[pc].manualImg||productCache[pc].img))||null;
@@ -8771,7 +8780,7 @@ function _renderKwWatchMonthlyTable(){
   var kws=Object.keys(byKw).sort(function(a,b){ return byKw[b].totCl-byKw[a].totCl; });
   if(!kws.length){ body.innerHTML='<div style="padding:30px;color:var(--text3);text-align:center;font-size:13px">\u76f4\u8fd14\u30f6\u6708\u306eKW\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093\u3002</div>'; return; }
   var img=(productCache[code]&&(productCache[code].manualImg||productCache[code].img))||null;
-  var _rnwLogs=((productCache[code]&&productCache[code].changeLog)||[]).filter(function(l){return l.date;}).slice().sort(function(a,b){return a.date<b.date?-1:(a.date>b.date?1:0);}); var _rnwLast=_rnwLogs.length?_rnwLogs[_rnwLogs.length-1]:null; var _rnwD=_rnwLast?_rnwLast.date:''; var _rnwT=_rnwLast?_rnwLast.type:''; var _rnwC=(_rnwT==='lp')?['#e8f0fe','#1a73e8']:((_rnwT==='thumb')?['#fff3e0','#e8710a']:((_rnwT==='both')?['#f3ecfb','#8e44ad']:['#f0fdf4','#16a34a'])); var _rnwL=(_rnwT==='lp')?'LP':((_rnwT==='thumb')?'サムネ':((_rnwT==='both')?'両方':'操作')); var _rnwDt=_rnwD?(_rnwL+' '+_rnwD.slice(2,4)+'/'+_rnwD.slice(5,7)+'/'+_rnwD.slice(8,10)):''; var _rnwBtn=_rnwD?'<button onclick="openChangeLog(\''+code+'\')" style="margin-left:10px;font-size:11px;font-weight:700;padding:4px 12px;border:1px solid '+_rnwC[1]+';border-radius:6px;background:'+_rnwC[0]+';color:'+_rnwC[1]+';cursor:pointer;white-space:nowrap">'+_rnwDt+'</button>':''; var _rnwBtnC=_rnwD?'<div style="text-align:center;margin-top:6px"><button onclick="openChangeLog(\''+code+'\')" style="font-size:11px;font-weight:700;padding:4px 12px;border:1px solid '+_rnwC[1]+';border-radius:6px;background:'+_rnwC[0]+';color:'+_rnwC[1]+';cursor:pointer;white-space:nowrap">'+_rnwDt+'</button></div>':''; var head='<div style="display:flex;align-items:center;gap:10px;padding:4px 2px 14px">'+(img?'<img loading="lazy" src="'+img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:15px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:monospace">'+_kwEsc(code)+'</div></div>'+_rnwBtn+'</div>';
+  var _rnwLogs=((productCache[code]&&productCache[code].changeLog)||[]).filter(function(l){return l.date;}).slice().sort(function(a,b){return a.date<b.date?-1:(a.date>b.date?1:0);}); var _rnwLast=_rnwLogs.length?_rnwLogs[_rnwLogs.length-1]:null; var _rnwD=_rnwLast?_rnwLast.date:''; var _rnwT=_rnwLast?_rnwLast.type:''; var _rnwC=(_rnwT==='lp')?['#e8f0fe','#1a73e8']:((_rnwT==='thumb')?['#fff3e0','#e8710a']:((_rnwT==='title')?['#e6f5f3','#0d9488']:((_rnwT==='both')?['#f3ecfb','#8e44ad']:['#f0fdf4','#16a34a']))); var _rnwL=(_rnwT==='lp')?'LP':((_rnwT==='thumb')?'サムネ':((_rnwT==='title')?'タイトル':((_rnwT==='both')?'LP＆サムネ':'操作'))); var _rnwDt=_rnwD?(_rnwL+' '+_rnwD.slice(2,4)+'/'+_rnwD.slice(5,7)+'/'+_rnwD.slice(8,10)):''; var _rnwBtn=_rnwD?'<button onclick="openChangeLog(\''+code+'\')" style="margin-left:10px;font-size:11px;font-weight:700;padding:4px 12px;border:1px solid '+_rnwC[1]+';border-radius:6px;background:'+_rnwC[0]+';color:'+_rnwC[1]+';cursor:pointer;white-space:nowrap">'+_rnwDt+'</button>':''; var _rnwBtnC=_rnwD?'<div style="text-align:center;margin-top:6px"><button onclick="openChangeLog(\''+code+'\')" style="font-size:11px;font-weight:700;padding:4px 12px;border:1px solid '+_rnwC[1]+';border-radius:6px;background:'+_rnwC[0]+';color:'+_rnwC[1]+';cursor:pointer;white-space:nowrap">'+_rnwDt+'</button></div>':''; var head='<div style="display:flex;align-items:center;gap:10px;padding:4px 2px 14px">'+(img?'<img loading="lazy" src="'+img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:15px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:monospace">'+_kwEsc(code)+'</div></div>'+_rnwBtn+'</div>';
   var BD='1px solid var(--border)';
   var GRP='2.5px solid var(--text3)';
   var TH='border:'+BD+';padding:6px 12px;font-size:12px;font-weight:700;text-align:center;background:var(--surface2);white-space:nowrap;color:var(--text)';
@@ -9956,11 +9965,19 @@ function _renewalSeoRowHtml(code) {
   const metricCells = mcell(tot,'') + mcell(seo,'') + mcell(rpp,'') + mcell(mt.spendAll,'') + cell(ratioSeo, band(ratioSeo)) + cell(ratioAd, band(ratioAd)) + cell(mt.ctrAll,'',rk('ctrAll',mt.ctrAll)) + cell(mt.cvrAll,'',rk('cvrAll',mt.cvrAll)) + cell(mt.roasAll,'',rk('roasAll',mt.roasAll));
   const hasLp = logs.some(l => l.type === 'lp' || l.type === 'both');
   const hasThumb = logs.some(l => l.type === 'thumb' || l.type === 'both');
+  const hasTitle = logs.some(l => l.type === 'title');
   let actBg, actColor, actBorder, actShadow = 'none';
-  if (hasLp && hasThumb) { actBg = 'linear-gradient(90deg,#1a73e8 50%,#f4b400 50%)'; actColor = '#fff'; actBorder = 'none'; actShadow = '0 0 2px rgba(0,0,0,.45)'; }
-  else if (hasLp) { actBg = '#1a73e8'; actColor = '#fff'; actBorder = 'none'; }
-  else if (hasThumb) { actBg = '#f4b400'; actColor = '#111'; actBorder = 'none'; }
-  else { actBg = 'var(--surface2)'; actColor = logCount>0?'var(--green)':'var(--accent)'; actBorder = '1px solid ' + (logCount>0?'var(--green)':'var(--accent)'); }
+  const _presCols = [];
+  if (hasLp) _presCols.push('#1a73e8');
+  if (hasThumb) _presCols.push('#f4b400');
+  if (hasTitle) _presCols.push('#0d9488');
+  if (_presCols.length >= 2) {
+    const _n = _presCols.length, _seg = 100 / _n;
+    const _stops = _presCols.map((c,i)=>`${c} ${Math.round(i*_seg)}% ${Math.round((i+1)*_seg)}%`).join(',');
+    actBg = `linear-gradient(90deg,${_stops})`; actColor = '#fff'; actBorder = 'none'; actShadow = '0 0 2px rgba(0,0,0,.45)';
+  } else if (_presCols.length === 1) {
+    actBg = _presCols[0]; actColor = (_presCols[0] === '#f4b400') ? '#111' : '#fff'; actBorder = 'none';
+  } else { actBg = 'var(--surface2)'; actColor = logCount>0?'var(--green)':'var(--accent)'; actBorder = '1px solid ' + (logCount>0?'var(--green)':'var(--accent)'); }
   const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" style="font-size:11px;padding:4px 12px;border-radius:5px;border:${actBorder};background:${actBg};color:${actColor};cursor:pointer;font-weight:600;white-space:nowrap;text-shadow:${actShadow}">\u8a18\u9332${logCount>0?' ('+logCount+')':''}</button></div>`;
   const colW = '90px 76px 40px minmax(0,1.2fr) 90px 90px 90px 90px 76px 76px 70px 70px 76px 100px 110px';
   const statusVal = cached.status || 'unset';
@@ -10042,7 +10059,7 @@ function _renewalMatchQuery(code, q) {
   return code.toLowerCase().includes(q) || (c.itemNumber||'').toLowerCase().includes(q) || (c.manualName||c.name||'').toLowerCase().includes(q);
 }
 function _hasChangeLogType(code, type) {
-  return (productCache[code]?.changeLog || []).some(l => l && (l.type === type || l.type === 'both'));
+  return (productCache[code]?.changeLog || []).some(l => l && (l.type === type || ((type === 'lp' || type === 'thumb') && l.type === 'both')));
 }
 function _renewalRecentSort(a, b) {
   const la = (productCache[a]?.changeLog||[]).map(l=>l.date).filter(Boolean).sort().pop() || '';
@@ -10052,14 +10069,18 @@ function _renewalRecentSort(a, b) {
 function _renewalFilterEmpty(codes) {
   return codes.filter(code => {
     const m = _renewalTodoMetrics(code, _renewalTodoMonth);
-    const empty = (!m.spendAll && m.ctrAll===null && m.ctrKw===null && m.ctr20===null && m.cvrAll===null && m.cvrKw===null && m.cvr20===null);
+    const metricEmpty = (!m.spendAll && m.ctrAll===null && m.ctrKw===null && m.ctr20===null && m.cvrAll===null && m.cvrKw===null && m.cvr20===null);
+    // 区分が「広告無し」(健常-広告無し/中立-広告無し/中立-広告無し-Yahoo)の商品は、
+    // 過去に出稿履歴があっても「広告未出稿分」として扱う
+    const empty = _isAdNone(code) || metricEmpty;
     if(_renewalTodoMode==='all') return true; return _renewalTodoMode==='noad' ? empty : !empty;
   });
 }
 function _renewalTypeChip(t) {
   if (t === 'lp') return ' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#e8f0fe;color:#1a73e8">LP変更</span>';
   if (t === 'thumb') return ' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#fff3e0;color:#e8710a">サムネ変更</span>';
-  if (t === 'both') return ' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#f3ecfb;color:#8e44ad">両方変更</span>';
+  if (t === 'title') return ' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#e6f5f3;color:#0d9488">タイトル変更</span>';
+  if (t === 'both') return ' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#f3ecfb;color:#8e44ad">LP＆サムネ変更</span>';
   return '';
 }
 let _renewalSort = { key: '', dir: 'asc' };
@@ -10931,10 +10952,10 @@ function _renderRenewalTable(labels, dataMap, code){
   if(!daily && _renTblYoy){ wrap.innerHTML=_richYoyTableHTML(labels,cols); return; }
   const totSalesArr=_renewalMetricValues('totsales',labels,dataMap,code);
   const order=labels.map((_,i)=>i).reverse();
-  const chip=l=>{ const c=l.type==='lp'?'#1a73e8':l.type==='thumb'?'#f4b400':l.type==='both'?'#9333ea':'#f97316'; const tl=l.type==='lp'?'LP\u5909\u66f4':l.type==='thumb'?'\u30b5\u30e0\u30cd\u5909\u66f4':l.type==='both'?'LP\u30fb\u30b5\u30e0\u30cd\u5909\u66f4':'\u5909\u66f4'; const nt=(l.note||'').trim()||tl; return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">'+l.date+' '+nt+'</span>'; };
+  const chip=l=>{ const c=l.type==='lp'?'#1a73e8':l.type==='thumb'?'#f4b400':l.type==='title'?'#0d9488':l.type==='both'?'#9333ea':'#f97316'; const tl=l.type==='lp'?'LP\u5909\u66f4':l.type==='thumb'?'\u30b5\u30e0\u30cd\u5909\u66f4':l.type==='title'?'\u30bf\u30a4\u30c8\u30eb\u5909\u66f4':l.type==='both'?'LP\uff06\u30b5\u30e0\u30cd\u5909\u66f4':'\u5909\u66f4'; const nt=(l.note||'').trim()||tl; return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">'+l.date+' '+nt+'</span>'; };
   const _dateLbl=daily?'日付':'月'; const _igO=_igColGet(); const _igS=function(label){ var o=_igO[label]||{}; var a=o.a||'right'; var w=o.w; return 'text-align:'+a+';'+(w>0?('width:'+w+'px;min-width:'+w+'px;max-width:'+w+'px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'):''); }; const _dateSt=(function(){ var o=_igO[_dateLbl]||{}; var a=o.a||'left'; var w=o.w; return 'text-align:'+a+';'+(w>0?('width:'+w+'px;min-width:'+w+'px;max-width:'+w+'px;white-space:nowrap;'):''); })(); _igLastCols=[{label:_dateLbl,defAlign:'left'}].concat(cols.map(function(c){return {label:c.label,defAlign:'right'};}));
   const head='<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)"><th style="padding:7px 10px;'+_dateSt+'border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">'+(daily?'\u65e5\u4ed8':'\u6708')+'</th>'+cols.map(c=>'<th style="padding:7px 10px;'+_igS(c.label)+'border-bottom:2px solid var(--border);font-weight:700;color:'+c.color+';'+(c.colBg||'')+'white-space:nowrap">'+c.label+'</th>').join('')+'<th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">\u5909\u66f4\u8a18\u9332</th></tr></thead>';
-  const rows=order.map(i=>{ const key=labels[i]; const dispKey=daily?key.slice(5).replace('-','/'):key.slice(0,4)+'/'+key.slice(5,7); const hasLog=!!logByKey[key]; const _fc=hasLog?((logByKey[key][0]||{}).type==='lp'?'#1a73e8':(logByKey[key][0]||{}).type==='thumb'?'#f4b400':(logByKey[key][0]||{}).type==='both'?'#9333ea':'#f97316'):'#f97316'; const fr=hasLog?('border-top:3px dashed '+_fc+';border-bottom:2px dashed '+_fc+';'):''; const noSales=(totSalesArr[i]||0)===0; const cells=cols.map(c=>{ const v=c.vals[i]; const show=(c.dep&&noSales)?'<span style="color:var(--text3)">\u2014</span>':c.fmt(v); return '<td style="padding:6px 10px;'+_igS(c.label)+'font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+(c.colBg||'')+fr+'">'+show+'</td>'; }).join(''); const logCell=hasLog?'<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);'+fr+'border-right:2px dashed '+_fc+';">'+logByKey[key].map(chip).join('')+'</td>':'<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>'; const ks=hasLog?'font-weight:700;color:var(--text)':'color:var(--text)'; return '<tr><td style="padding:6px 10px;'+_dateSt+'font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+ks+';'+fr+(hasLog?'border-left:2px dashed '+_fc+';':'')+'">'+dispKey+'</td>'+cells+logCell+'</tr>'; }).join('');
+  const rows=order.map(i=>{ const key=labels[i]; const dispKey=daily?key.slice(5).replace('-','/'):key.slice(0,4)+'/'+key.slice(5,7); const hasLog=!!logByKey[key]; const _fc=hasLog?((logByKey[key][0]||{}).type==='lp'?'#1a73e8':(logByKey[key][0]||{}).type==='thumb'?'#f4b400':(logByKey[key][0]||{}).type==='title'?'#0d9488':(logByKey[key][0]||{}).type==='both'?'#9333ea':'#f97316'):'#f97316'; const fr=hasLog?('border-top:3px dashed '+_fc+';border-bottom:2px dashed '+_fc+';'):''; const noSales=(totSalesArr[i]||0)===0; const cells=cols.map(c=>{ const v=c.vals[i]; const show=(c.dep&&noSales)?'<span style="color:var(--text3)">\u2014</span>':c.fmt(v); return '<td style="padding:6px 10px;'+_igS(c.label)+'font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+(c.colBg||'')+fr+'">'+show+'</td>'; }).join(''); const logCell=hasLog?'<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);'+fr+'border-right:2px dashed '+_fc+';">'+logByKey[key].map(chip).join('')+'</td>':'<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>'; const ks=hasLog?'font-weight:700;color:var(--text)':'color:var(--text)'; return '<tr><td style="padding:6px 10px;'+_dateSt+'font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+ks+';'+fr+(hasLog?'border-left:2px dashed '+_fc+';':'')+'">'+dispKey+'</td>'+cells+logCell+'</tr>'; }).join('');
   wrap.innerHTML='<table style="border-collapse:collapse;width:100%;font-size:12px">'+head+'<tbody>'+rows+'</tbody></table>';
 }
 
@@ -10975,13 +10996,13 @@ function _renderRenewalYearChangeOverlay(chart) {
     const frac = (day - 0.5) / dim;
     const x = xAxis.getPixelForValue(mi) + (frac - 0.5) * pxU;
     if (x == null || isNaN(x)) return;
-    const tcol = log.type === 'lp' ? '#1a73e8' : log.type === 'thumb' ? '#f4b400' : log.type === 'both' ? '#9333ea' : '#f97316';
+    const tcol = log.type === 'lp' ? '#1a73e8' : log.type === 'thumb' ? '#f4b400' : log.type === 'title' ? '#0d9488' : log.type === 'both' ? '#9333ea' : '#f97316';
     ctx.save();
     ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom);
     ctx.strokeStyle = tcol; ctx.lineWidth = 1.8;
     ctx.setLineDash(dash.length ? dash : []); ctx.globalAlpha = 0.75; ctx.stroke();
     ctx.setLineDash([]); ctx.globalAlpha = 1;
-    const tlabel = log.type === 'lp' ? 'LP変更' : log.type === 'thumb' ? 'サムネ変更' : log.type === 'both' ? 'LP・サムネ変更' : '変更';
+    const tlabel = log.type === 'lp' ? 'LP変更' : log.type === 'thumb' ? 'サムネ変更' : log.type === 'title' ? 'タイトル変更' : log.type === 'both' ? 'LP＆サムネ変更' : '変更';
     const noteRaw = (log.note || '').trim();
     const body = noteRaw ? (noteRaw.length > 10 ? noteRaw.slice(0,10) + '…' : noteRaw) : tlabel;
     const txt = (''+yy).slice(2) + '/' + mo + '/' + day + ' ' + body;
@@ -11035,10 +11056,10 @@ function _renderRenewalChangeOverlay(chart) {
     if (idx < 0) return;
     const x = xAxis.getPixelForValue(idx);
     const top = yScale.top, bottom = yScale.bottom;
-    const tlabel = log.type === 'lp' ? 'LP変更' : log.type === 'thumb' ? 'サムネ変更' : log.type === 'both' ? 'LP・サムネ変更' : '変更';
+    const tlabel = log.type === 'lp' ? 'LP変更' : log.type === 'thumb' ? 'サムネ変更' : log.type === 'title' ? 'タイトル変更' : log.type === 'both' ? 'LP＆サムネ変更' : '変更';
     const noteRaw = (log.note || '').trim();
     const note = noteRaw || tlabel;
-    const tcol = log.type === 'lp' ? '#1a73e8' : log.type === 'thumb' ? '#f4b400' : log.type === 'both' ? '#9333ea' : '#f97316';
+    const tcol = log.type === 'lp' ? '#1a73e8' : log.type === 'thumb' ? '#f4b400' : log.type === 'title' ? '#0d9488' : log.type === 'both' ? '#9333ea' : '#f97316';
 
     ctx.save();
     // 縦線
@@ -13645,7 +13666,7 @@ function _renderClRows(logs) {
       <input type="date" value="${log.date||''}" data-idx="${i}" data-field="date"
         onchange="_clUpdateRow(this)"
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex-shrink:0">
-      <div style="display:flex;gap:3px;flex-shrink:0">${[['lp','LP','#1a73e8'],['thumb','サムネ','#f4b400'],['both','両方','#9333ea']].map(([v,lb,c])=>{const on=(log.type||'')===v;const dk=(c==='#f4b400');return `<button type="button" onclick="_clSetType(${i},'${v}')" style="padding:5px 9px;border-radius:5px;font-size:11px;font-weight:${on?'700':'600'};cursor:pointer;border:1.5px solid ${c};background:${on?c:c+'22'};color:${on?(dk?'#111':'#fff'):c};transition:all .12s">${lb}</button>`;}).join('')}</div>
+      <div style="display:flex;gap:3px;flex-shrink:0">${[['lp','LP','#1a73e8'],['thumb','サムネ','#f4b400'],['both','LP＆サムネ','#9333ea'],['title','タイトル','#0d9488']].map(([v,lb,c])=>{const on=(log.type||'')===v;const dk=(c==='#f4b400');return `<button type="button" onclick="_clSetType(${i},'${v}')" style="padding:5px 9px;border-radius:5px;font-size:11px;font-weight:${on?'700':'600'};cursor:pointer;border:1.5px solid ${c};background:${on?c:c+'22'};color:${on?(dk?'#111':'#fff'):c};transition:all .12s">${lb}</button>`;}).join('')}</div>
       <input type="text" value="${log.note||''}" data-idx="${i}" data-field="note"
         onchange="_clUpdateRow(this)" placeholder="内容を入力..."
         style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);color:var(--text);flex:1">
@@ -13676,8 +13697,8 @@ function _clSetType(i, val){
 }
 function _clRecolorType(el) {
   const t = el.value;
-  el.style.background = t === 'lp' ? '#1a73e8' : t === 'thumb' ? '#f4b400' : t === 'both' ? 'linear-gradient(90deg,#1a73e8 50%,#f4b400 50%)' : 'var(--surface)';
-  el.style.color = (t === 'lp' || t === 'both') ? '#fff' : t === 'thumb' ? '#111' : 'var(--text)';
+  el.style.background = t === 'lp' ? '#1a73e8' : t === 'thumb' ? '#f4b400' : t === 'title' ? '#0d9488' : t === 'both' ? 'linear-gradient(90deg,#1a73e8 50%,#f4b400 50%)' : 'var(--surface)';
+  el.style.color = (t === 'lp' || t === 'both' || t === 'title') ? '#fff' : t === 'thumb' ? '#111' : 'var(--text)';
   el.style.fontWeight = t ? '700' : '400';
 }
 
