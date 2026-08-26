@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1291</span>
+    <span class="build-date">v1.1292</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1867,7 +1867,7 @@ header + * { margin-top: 4px; }
 
     <div id="editModalStatus" class="modal-status"></div>
     <div class="modal-actions">
-      <button class="modal-btn" onclick="closeEditModal()">キャンセル</button>
+      <button class="modal-btn" onclick="closeEditModal()">閉じる</button>
       <button class="modal-btn" onclick="fetchImgFromUrl()">画像を取得</button>
       <button class="modal-btn save" onclick="saveEditItem()">保存</button>
     </div>
@@ -2070,6 +2070,18 @@ async function fetchImgFromUrl() {
   }
 }
 
+// 保存状況をわかりやすく中央下に表示（保存中… → 保存完了）
+function _saveToast(state){
+  try{
+    var t=document.getElementById('globalSaveToast');
+    if(!t){ t=document.createElement('div'); t.id='globalSaveToast'; document.body.appendChild(t); }
+    var base='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:9px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:100000;transition:opacity .2s;';
+    clearTimeout(t._tm);
+    if(state==='saving'){ t.style.cssText=base+'background:#1565C0;color:#fff;opacity:1'; t.textContent='💾 保存中…'; }
+    else if(state==='done'){ t.style.cssText=base+'background:#16a34a;color:#fff;opacity:1'; t.textContent='✅ 保存完了'; t._tm=setTimeout(function(){ t.style.opacity='0'; },1600); }
+    else if(state==='error'){ t.style.cssText=base+'background:#dc2626;color:#fff;opacity:1'; t.textContent='⚠️ 保存に失敗しました'; t._tm=setTimeout(function(){ t.style.opacity='0'; },3500); }
+  }catch(e){}
+}
 function saveEditItem() {
   if (!_editItemId) return;
   const nameVal = document.getElementById('editNameInput').value.trim();
@@ -2117,15 +2129,18 @@ function saveEditItem() {
   renderPage();    // 画面を即更新
   renderAll();     // 商品基本データも更新
   _updateStatusCounts(); // タブカウント更新
-  document.getElementById('editModalStatus').textContent = '保存中...';
+  document.getElementById('editModalStatus').textContent = '保存中…';
   document.getElementById('editModalStatus').className = 'modal-status ok';
+  _saveToast('saving');
 
   saveProductCacheToGitHub().then(() => {
-    document.getElementById('editModalStatus').textContent = '保存しました ✅';
+    document.getElementById('editModalStatus').textContent = '保存完了 ✅';
+    _saveToast('done');
     setTimeout(closeEditModal, 800);
   }).catch(err => {
     document.getElementById('editModalStatus').textContent = `❌ 保存失敗: ${err.message}`;
     document.getElementById('editModalStatus').className = 'modal-status err';
+    _saveToast('error');
     setTimeout(closeEditModal, 2000);
   });
 }
@@ -13733,7 +13748,8 @@ function saveChangeLog() {
   if (!productCache[_clCurrentCode]) productCache[_clCurrentCode] = {};
   productCache[_clCurrentCode].changeLog = _clDraft.filter(l => l.date || l.note || l.type);
   saveProductCache();
-  saveToGitHub();
+  _saveToast('saving');
+  Promise.resolve(saveToGitHub()).then(()=>_saveToast('done')).catch(()=>_saveToast('error'));
   closeChangeLog();
   renderTable();
   if (typeof _updateRenewalCounts === 'function') _updateRenewalCounts();
