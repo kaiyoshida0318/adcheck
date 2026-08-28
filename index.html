@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1292</span>
+    <span class="build-date">v1.1293</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4869,6 +4869,7 @@ function _renderTable(mode, rows) {
     // 総売上・SEO売上（事前計算済み _getTotSales を使用）
     const _totSales = _getTotSales(r);
     const _seoSales = Math.max(0, _totSales - (r.sales||0));
+    const _ymKey = _rowClKey(r); // 'YYYY-MM'（SEO売上トップ10の展開に使用）
     // 暴走日テーブル：比率(％)表示（SEO売上⇔広告売上、実績額-KW⇔実績額-20 が各合計100。商品-売上データと同じ体裁）
     const _rdPct = (mode === 'rundays' && _rundaysPctMode);
     let _rdR = null;
@@ -4917,9 +4918,9 @@ function _renderTable(mode, rows) {
     const _hlBot = _hasLog ? ('border-bottom:2px dashed '+_clColor+';') : '';
     const _hlL = _hasLog ? ('border-left:2px dashed '+_clColor+';') : '';
     const _hlR = _hasLog ? ('border-right:2px dashed '+_clColor+';') : '';
-    html += `<tr style="${_pct?'':'border-bottom:1px solid var(--border);'}${r._grpTop ? 'border-top:3px solid var(--text2);' : ''}">
+    html += `<tr class="mrow-main" data-ym="${_ymKey}" style="${_pct?'':'border-bottom:1px solid var(--border);'}${r._grpTop ? 'border-top:3px solid var(--text2);' : ''}">
       <td ${_pct?'rowspan="2" ':''}${_hasLog?`title="${_clTitle}" `:''}style="padding:7px 6px;${_igS(dateLabel,'left')}font-weight:600;white-space:nowrap;font-size:11px;${_pct?'vertical-align:middle;':''}${_hlTop}${_hlBot}${_hlL}">${r.label}${_hasLog?('<div style="margin-top:3px;text-align:right">'+_clBadges+'</div>'):''}</td>
-      ${cells.map((c,i) => { const _rr=(_rdR&&_rdR[i]!=null)?_rdR[i]:null; const _rpos=_rr!=null?'position:relative;padding-bottom:13px;':''; const _rspan=_rr!=null?`<span style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_rr)};font-weight:700;line-height:1">${_rr}%</span>`:''; return `<td style="padding:7px 6px;${_igS(HEADS[i],'right')}font-family:'DM Mono',monospace;white-space:nowrap;background:${BG[i]};${_rpos}${_hlTop}${_pct?'':_hlBot}${i===cells.length-1?_hlR:''}">${c}${_rspan}</td>`; }).join('')}
+      ${cells.map((c,i) => { const _rr=(_rdR&&_rdR[i]!=null)?_rdR[i]:null; const _rpos=_rr!=null?'position:relative;padding-bottom:13px;':''; const _rspan=_rr!=null?`<span style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_rr)};font-weight:700;line-height:1">${_rr}%</span>`:''; let _cc=c; if(_isMonthly && HEADS[i]==='SEO売上◎' && _seoSales>0){ _cc=`<span onclick="event.stopPropagation();_toggleMonthlySeoTop('${_ymKey}',this)" style="cursor:pointer;border-bottom:1px dotted currentColor" title="この月のSEO売上トップ10商品を表示/非表示">${c} <span style="font-size:8px;color:var(--text3)">▾</span></span>`; } return `<td style="padding:7px 6px;${_igS(HEADS[i],'right')}font-family:'DM Mono',monospace;white-space:nowrap;background:${BG[i]};${_rpos}${_hlTop}${_pct?'':_hlBot}${i===cells.length-1?_hlR:''}">${_cc}${_rspan}</td>`; }).join('')}
     </tr>`;
     if (_pct) {
       const _spd=(r.spendKw||0)+(r.spend20||0);
@@ -4929,7 +4930,7 @@ function _renderTable(mode, rows) {
       const _p20=_spd>0?Math.round((r.spend20||0)/_spd*1000)/10:null;
       const _pmap={1:_seoP,2:_salP,10:_kwP,11:_p20};
       const _rc=v=>v==null?'var(--text3)':(v<30?'#1d4ed8':v<40?'#3b82f6':v<50?'#60a5fa':v<60?'#fb7185':v<70?'#ef4444':'#b91c1c');
-      html += `<tr style="border-bottom:1px solid var(--border)">${BG.map((_x,i)=>`<td style="padding:1px 6px 5px;${_igS(HEADS[i],'right')}font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:${_rc(_pmap[i])};white-space:nowrap;background:${BG[i]};${_hlBot}${i===BG.length-1?_hlR:''}">${_pmap[i]==null?'':_pmap[i]+'%'}</td>`).join('')}</tr>`;
+      html += `<tr class="mrow-pct" style="border-bottom:1px solid var(--border)">${BG.map((_x,i)=>`<td style="padding:1px 6px 5px;${_igS(HEADS[i],'right')}font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:${_rc(_pmap[i])};white-space:nowrap;background:${BG[i]};${_hlBot}${i===BG.length-1?_hlR:''}">${_pmap[i]==null?'':_pmap[i]+'%'}</td>`).join('')}</tr>`;
     }
   }
   html += '</tbody></table>';
@@ -4940,6 +4941,61 @@ function _renderTable(mode, rows) {
   if (runStatus) runStatus.textContent = `${rows.length}件`;
 }
 
+// 全-月別データ：その月のSEO売上トップ10商品を計算
+function _monthlySeoTop10(ym){
+  try{
+    const agg = getMonthAgg(ym) || {};
+    const arr = Object.keys(agg).map(code=>{
+      const a = agg[code] || {};
+      let caS = 0;
+      try{ const c=(typeof _caFor==='function')?_caFor(code,ym):null; caS = c ? (c.sales||0) : 0; }catch(e){}
+      const seo = Math.max(0, (a.totSales||0) - (a.rppSales||0) - caS);
+      return { code, seo };
+    }).filter(x=>x.seo>0).sort((a,b)=>b.seo-a.seo).slice(0,10);
+    return arr;
+  }catch(e){ return []; }
+}
+// 全-月別データ：SEO売上セルのクリックで、その月と次の月の間にトップ10商品を差し込む/畳む
+function _toggleMonthlySeoTop(ym, el){
+  try{
+    let anchor = el.closest('tr');
+    if(!anchor) return;
+    // 比率表記モードの2段目(mrow-pct)があればその後ろに差し込む
+    if(anchor.nextElementSibling && anchor.nextElementSibling.classList.contains('mrow-pct')) anchor = anchor.nextElementSibling;
+    const nxt = anchor.nextElementSibling;
+    // 同じ月の展開が既にあれば畳む（トグル）
+    if(nxt && nxt.classList.contains('seo-top-row') && nxt.getAttribute('data-ym')===ym){ nxt.remove(); return; }
+    // 別の月が開いていたら閉じる（同時に開くのは1つ）
+    const tbl = anchor.closest('table');
+    if(tbl) tbl.querySelectorAll('tr.seo-top-row').forEach(r=>r.remove());
+    const colCount = (tbl && tbl.querySelector('thead tr')) ? tbl.querySelector('thead tr').children.length : 19;
+    const top = _monthlySeoTop10(ym);
+    const yy=ym.slice(0,4), mm=ym.slice(5,7);
+    let inner;
+    if(!top.length){ inner = '<div style="padding:10px 12px;color:var(--text3);font-size:12px">この月はSEO売上のある商品がありません</div>'; }
+    else {
+      const items = top.map((x,i)=>{
+        const pc = productCache[x.code] || {};
+        const name = pc.manualName || pc.name || x.code;
+        const itemNo = pc.itemNumber ? (' <span style="color:#00897B;font-weight:700">'+_kwEsc(pc.itemNumber)+'</span>') : '';
+        const nm = name.length>26 ? name.slice(0,26)+'…' : name;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px">`
+          + `<span style="flex:0 0 20px;text-align:center;font-weight:800;font-size:11px;color:${i<3?'#1565C0':'var(--text3)'}">${i+1}</span>`
+          + `<span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_kwEsc(name)}">${_kwEsc(nm)}${itemNo}</span>`
+          + `<span style="flex:0 0 auto;font-family:'DM Mono',monospace;font-weight:700;font-size:12px;color:#1565C0">${fmtY(x.seo)}</span>`
+          + `</div>`;
+      }).join('');
+      inner = `<div style="padding:10px 12px">`
+        + `<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:7px">◎ ${yy}/${mm} SEO売上トップ10商品</div>`
+        + `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px">${items}</div>`
+        + `</div>`;
+    }
+    const tr = document.createElement('tr');
+    tr.className = 'seo-top-row'; tr.setAttribute('data-ym', ym);
+    tr.innerHTML = `<td colspan="${colCount}" style="background:#eef4fb;border-bottom:1px solid var(--border)">${inner}</td>`;
+    anchor.after(tr);
+  }catch(e){ console.warn('[ADcheck] _toggleMonthlySeoTop error', e); }
+}
 // 後方互換（古い呼び出しに対応）
 let _monthlyTableMode = 'normal';
 let _monthlyLastRows = null;
