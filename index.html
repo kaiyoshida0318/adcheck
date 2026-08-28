@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1296</span>
+    <span class="build-date">v1.1297</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -4961,11 +4961,31 @@ function _monthlySeoTop10(ym){
 }
 // SEO売上トップ10サムネの画像読み込み失敗時プレースホルダー
 function _seoImgErr(el){ try{ el.outerHTML='<div style="width:66px;height:66px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)">画像</div>'; }catch(e){} }
+// 1商品・1か月のSEO売上（他所と同じ定義）
+function _seoOfCodeMonth(code, ym){
+  try{
+    const a = getItemMonthAgg(code, ym) || {};
+    let caS=0; try{ const c=(typeof _caFor==='function')?_caFor(code,ym):null; caS=c?(c.sales||0):0; }catch(e){}
+    return Math.max(0, (a.totSales||0)-(a.rppSales||0)-caS);
+  }catch(e){ return 0; }
+}
+// 前月比でSEO売上の色とタグを決める（+20%↑濃緑 / +10%↑緑 / -10%↓橙 / -20%↓赤 / 中間グレー / 前月0=新）
+function _seoChgStyle(cur, prev){
+  if(!(prev>0)) return (cur>0) ? {col:'#1565C0', tag:'新'} : {col:'#475569', tag:''};
+  const pct=(cur-prev)/prev*100, r=Math.round(pct);
+  if(pct>=20) return {col:'#15803d', tag:'▲'+r+'%'};
+  if(pct>=10) return {col:'#16a34a', tag:'▲'+r+'%'};
+  if(pct<=-20) return {col:'#b91c1c', tag:'▼'+Math.abs(r)+'%'};
+  if(pct<=-10) return {col:'#ea580c', tag:'▼'+Math.abs(r)+'%'};
+  return {col:'#475569', tag:(r>=0?'+':'')+r+'%'};
+}
 // 全-月別データ：その月のSEO売上トップ10の中身(td)を組み立てる（共通）
 // サムネを左から順に並べ、各サムネの下にSEO売上を表示
 function _monthlySeoCellHtml(ym, colCount){
   const top = _monthlySeoTop10(ym);
   const yy=ym.slice(0,4), mm=ym.slice(5,7);
+  // 前月キー
+  let _py=+yy, _pm=+mm-1; if(_pm<1){_pm=12;_py--;} const prevYm=_py+'-'+String(_pm).padStart(2,'0');
   let inner;
   if(!top.length){ inner = '<div style="padding:10px 12px;color:var(--text3);font-size:12px">この月はSEO売上のある商品がありません</div>'; }
   else {
@@ -4976,14 +4996,19 @@ function _monthlySeoCellHtml(ym, colCount){
       const imgEl = img
         ? `<img loading="lazy" src="${_kwEsc(img)}" onerror="_seoImgErr(this)" style="width:66px;height:66px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block">`
         : `<div style="width:66px;height:66px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)">画像</div>`;
+      // 前月比の色・タグ
+      const prevSeo = _seoOfCodeMonth(x.code, prevYm);
+      const _cs = _seoChgStyle(x.seo, prevSeo);
+      const tagHtml = _cs.tag ? `<div style="font-size:9px;font-weight:700;color:${_cs.col};line-height:1;margin-top:1px">${_cs.tag}</div>` : '';
       return `<div title="${_kwEsc(name)}" onclick="openRenewalGraph('${x.code}')" style="cursor:pointer;width:66px;flex:0 0 auto;text-align:center;position:relative">`
         + `<div style="position:absolute;top:-6px;left:-6px;min-width:18px;height:18px;padding:0 3px;box-sizing:border-box;border-radius:9px;background:${i<3?'#1565C0':'#94a3b8'};color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:1;box-shadow:0 1px 2px rgba(0,0,0,.25)">${i+1}</div>`
         + imgEl
-        + `<div style="font-family:'DM Mono',monospace;font-weight:700;font-size:11px;color:#1565C0;margin-top:4px;line-height:1.15">${fmtY(x.seo)}</div>`
+        + `<div style="font-family:'DM Mono',monospace;font-weight:700;font-size:11px;color:${_cs.col};margin-top:4px;line-height:1.15">${fmtY(x.seo)}</div>`
+        + tagHtml
         + `</div>`;
     }).join('');
     inner = `<div style="padding:10px 12px">`
-      + `<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:9px">◎ ${yy}/${mm} SEO売上トップ15商品</div>`
+      + `<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:9px">◎ ${yy}/${mm} SEO売上トップ15商品　<span style="font-weight:400;color:var(--text3)">（数字の色＝前月比：<span style="color:#15803d">■</span>+20%↑ <span style="color:#16a34a">■</span>+10%↑ <span style="color:#ea580c">■</span>-10%↓ <span style="color:#b91c1c">■</span>-20%↓）</span></div>`
       + `<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start">${items}</div>`
       + `</div>`;
   }
