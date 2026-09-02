@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1299</span>
+    <span class="build-date">v1.1300</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -752,7 +752,7 @@ header + * { margin-top: 4px; }
         <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
           <input type="text" id="runawaySearch" placeholder="商品管理番号・商品番号・商品名で検索..." oninput="renderRunaway()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
           <span style="margin-left:12px;font-size:11px;color:var(--text3)">直近10日の20円実績額（商品全体の実績額 − KW実績額）　※ 中央値５個を基準に上振れを赤表示</span>
-          <div class="toolbar-right"></div>
+          <div class="toolbar-right"><button onclick="exportRunawayCSV()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #16a34a;background:#16a34a;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">CSV出力</button></div>
         </div>
         <div id="runaway-inner"><div class="tab-coming-soon"><div class="icon">🚨</div><div style="font-size:13px;color:var(--text3)">データを読み込んでください</div></div></div>
         </div>
@@ -11526,6 +11526,31 @@ function renderRunaway(){
   wrap.innerHTML=header+`<div>${rows}</div>`;
   const _list=document.getElementById('runaway-list'); const _tb=_list&&_list.querySelector('.table-toolbar'); const _hdr=wrap.querySelector('.col-header');
   if(_hdr){ _hdr.style.position='sticky'; _hdr.style.zIndex='20'; _hdr.style.top=(_tb?_tb.offsetHeight:0)+'px'; _hdr.style.background='var(--surface2)'; }
+}
+// 直近10日：CSV出力（商品番号・商品管理番号・商品名＋直近10日の20円実績額）
+function exportRunawayCSV(){
+  const allDates=new Set();
+  Object.keys(itemDailyData||{}).forEach(code=>{ Object.keys(itemDailyData[code]||{}).forEach(d=>allDates.add(d)); });
+  const dates=[...allDates].sort().slice(-10);
+  if(dates.length===0){ alert('日次データがありません'); return; }
+  const q=(document.getElementById('runawaySearch')?.value||'').toLowerCase();
+  const val20=(code,d)=>{ const idd=itemDailyData[code]; if(!idd||!idd[d]) return null; const v=(idd[d].spend||0)-(idd[d].spendKw||0); return v>0?v:0; };
+  const sum7=p=>dates.reduce((s,d)=>{ const v=val20(p.id,d); return s+(v||0); },0);
+  let products=Object.values(DB).filter(p=>{
+    if(productCache[p.id]?.retired) return false;
+    if(q){ const c=productCache[p.id]||{}; const name=(c.manualName||c.name||'').toLowerCase(); const itemNum=(c.itemNumber||'').toLowerCase(); if(!(String(p.id).toLowerCase().includes(q)||name.includes(q)||itemNum.includes(q))) return false; }
+    return true;
+  }).filter(p=>sum7(p)>0);
+  if(_runawaySortDate && dates.includes(_runawaySortDate)){ products.sort((a,b)=>((val20(b.id,_runawaySortDate)||0)-(val20(a.id,_runawaySortDate)||0))||(sum7(b)-sum7(a))); }
+  else { products.sort((a,b)=>sum7(b)-sum7(a)); }
+  if(!products.length){ alert('出力対象の商品がありません'); return; }
+  const head=['商品番号','商品管理番号','商品'].concat(dates.map(d=>d.slice(5,7)+'/'+d.slice(8,10)));
+  const lines=[head];
+  products.forEach(p=>{ const c=productCache[p.id]||{}; const name=c.manualName||c.name||p.id; const row=[c.itemNumber||'', p.id, name]; dates.forEach(d=>{ const v=val20(p.id,d); row.push(v==null?'':Math.round(v)); }); lines.push(row); });
+  const csv='﻿'+lines.map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const dt=new Date(); const ds=dt.getFullYear()+String(dt.getMonth()+1).padStart(2,'0')+String(dt.getDate()).padStart(2,'0');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='直近10日_20円実績_'+ds+'.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(a.href),1500);
 }
 
 function _setRoasTrendStatus(code, val) {
