@@ -337,7 +337,8 @@ header + * { margin-top: 4px; }
 /* ズーム時に sticky の top がCSS指定値ピッタリ計算されないため、JSから --z-tab*-top をズーム倍率補正で注入する */
 .tab-bar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 8px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 2px; position: sticky; top: var(--z-tab1-top, 52px); z-index: 199; min-height: 34px; box-sizing: border-box; }
 .tab-btn { font-size: 12px; font-weight: 500; padding: 6px 6px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
-.tab-sub-row-3 .tab-btn { padding: 6px 6px; font-size: 11.5px; }
+.tab-sub-row-3 .tab-btn { padding: 6px 3px; font-size: 11.5px; }
+.tab-sub-row-3 .tab-tail { display: inline-flex; align-items: flex-end; flex: 0 0 auto; }
 .tab-sub-row-3 .tab-sep { color:#9333ea; font-size:12px; font-weight:700; align-self:center; padding:0 1px; user-select:none; }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
@@ -531,7 +532,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1309</span>
+    <span class="build-date">v1.1312</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -614,8 +615,7 @@ header + * { margin-top: 4px; }
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退予定▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warn"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-warnbig" onclick="switchTab('monthly-warnbig')">撤退予定-大サイズ▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warnbig"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退済■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-out"></span></button>
-  <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-unset"></span></button>
-  <button id="topHideBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 9px;position:absolute;right:16px;top:50%;transform:translateY(-50%);border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;z-index:5">上部を隠す</button>
+  <span class="tab-tail"><span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-unset"></span></button><button id="topHideBtn" onclick="toggleTopChrome()" style="font-size:10px;padding:2px 6px;margin:0 0 5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;line-height:1.3;flex:0 0 auto">上部を隠す</button></span>
 </nav>
 </div>
 <div id="topChromeBar" style="display:none;justify-content:flex-end;padding:2px 16px;border-bottom:1px solid var(--border);background:var(--surface)"><button id="topShowBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 11px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap">上部を表示</button></div>
