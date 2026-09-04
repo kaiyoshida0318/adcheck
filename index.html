@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1315</span>
+    <span class="build-date">v1.1316</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12733,8 +12733,8 @@ function renderYoy(){
     +'<div style="width:70px;text-align:right;padding-right:8px">広告費</div>'
     +'<div style="width:80px;text-align:right;padding-right:8px">SEO売上</div>'
     +'<div style="width:64px;text-align:right;padding-right:10px">売上ROAS</div></div>';
-  // \u4e0a\u6607(\u9752\u30fb\u7dd1)\u306e\u3068\u304d\u3001\u91d1\u984d\u306e\u300c\u771f\u4e0b\u30fb\u4e2d\u592e\u63c3\u3048\u300d\u3067\u524d\u5e74\u6bd4\uff05\uff08120\uff05=2\u5272\u5897\uff09\u3092\u5c0f\u3055\u304f\u8868\u793a
-  const _cellUp=(numHtml,cat,cur,prev)=> ((cat==='blue'||cat==='green')&&prev>0)
+  // \u9752\u30fb\u7dd1\u30fb\u9ec4\u30fb\u8d64\u3044\u305a\u308c\u3082\u3001\u91d1\u984d\u306e\u300c\u771f\u4e0b\u30fb\u4e2d\u592e\u63c3\u3048\u300d\u3067\u524d\u5e74\u6bd4\uff05\uff08120\uff05=2\u5272\u5897 / 80\uff05=2\u5272\u6e1b\uff09\u3092\u5c0f\u3055\u304f\u8868\u793a
+  const _cellUp=(numHtml,cat,cur,prev)=> (cat&&prev>0)
     ? '<div style="display:inline-block;text-align:center">'+numHtml+'<div style="font-size:9px;line-height:1.05;margin-top:1px;color:'+_YOYCOL[cat]+';font-weight:700">'+Math.round(cur/prev*100)+'\uff05</div></div>'
     : numHtml;
   const tableHtml=(ord,k)=>{
