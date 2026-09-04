@@ -337,8 +337,7 @@ header + * { margin-top: 4px; }
 /* ズーム時に sticky の top がCSS指定値ピッタリ計算されないため、JSから --z-tab*-top をズーム倍率補正で注入する */
 .tab-bar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 8px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 2px; position: sticky; top: var(--z-tab1-top, 52px); z-index: 199; min-height: 34px; box-sizing: border-box; }
 .tab-btn { font-size: 12px; font-weight: 500; padding: 6px 6px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
-.tab-sub-row-3 .tab-btn { padding: 6px 3px; font-size: 11.5px; }
-/* 「上部を隠す」は margin-left:auto で行の右端（画面右端）に寄せる */
+.tab-sub-row-3 .tab-btn { padding: 6px 6px; font-size: 11.5px; }
 .tab-sub-row-3 .tab-sep { color:#9333ea; font-size:12px; font-weight:700; align-self:center; padding:0 1px; user-select:none; }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
@@ -532,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1316</span>
+    <span class="build-date">v1.1313</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -616,7 +615,7 @@ header + * { margin-top: 4px; }
   <button class="tab-btn" id="tab-btn-monthly-warnbig" onclick="switchTab('monthly-warnbig')">撤退予定-大サイズ▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warnbig"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退済■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-out"></span></button>
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-unset"></span></button>
-  <button id="topHideBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 11px;margin:0 8px 4px auto;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;flex:0 0 auto">上部を隠す</button>
+  <button id="topHideBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 9px;margin-left:14px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap">上部を隠す</button>
 </nav>
 </div>
 <div id="topChromeBar" style="display:none;justify-content:flex-end;padding:2px 16px;border-bottom:1px solid var(--border);background:var(--surface)"><button id="topShowBtn" onclick="toggleTopChrome()" style="font-size:11px;padding:3px 11px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap">上部を表示</button></div>
@@ -12629,12 +12628,29 @@ function _setYoyLineUI(){
   if(up) up.style.cssText='margin-left:12px;'+base+(_yoyHideUp?off:'border:1px solid #16a34a;background:#16a34a;color:#fff;');
   if(dn) dn.style.cssText=base+(_yoyHideDown?off:'border:1px solid #dc2626;background:#dc2626;color:#fff;');
 }
-function _yoyMonthStats(code, ym){
+function _yoyMonthStats(code, ym, maxDay){
+  maxDay = maxDay||31;
   let spend=0, s720=0, hasDB=false;
   const db=(typeof DB!=='undefined' && DB[code] && DB[code].days)?DB[code].days:null;
-  if(db){ for(const d in db){ if(d.indexOf(ym)===0){ spend+=db[d].spend||0; s720+=db[d].sales720||0; hasDB=true; } } }
-  if(!hasDB && itemDailyData[code]){ const idd=itemDailyData[code]; for(const d in idd){ if(d.indexOf(ym)===0){ spend+=idd[d].spend||0; } } }
+  if(db){ for(const d in db){ if(d.indexOf(ym)===0 && (parseInt(d.slice(8,10),10)||99)<=maxDay){ spend+=db[d].spend||0; s720+=db[d].sales720||0; hasDB=true; } } }
+  if(!hasDB && itemDailyData[code]){ const idd=itemDailyData[code]; for(const d in idd){ if(d.indexOf(ym)===0 && (parseInt(d.slice(8,10),10)||99)<=maxDay){ spend+=idd[d].spend||0; } } }
   return { spend, sales720:s720 };
+}
+// getMonthAgg の「日数を maxDay 日までに限定」した版（途中比較用・キャッシュしない）
+function _monthAggUpToDay(ym, maxDay){
+  maxDay = maxDay||31;
+  const agg={};
+  const ymCompact=ym.replace('-','');
+  const ensure=code=>(agg[code]||(agg[code]={ totSales:0, totOrders:0, totUnits:0, rppSales:0, kwSpend:0, kwSales:0, spend:0, clicks:0, sales720:0 }));
+  for(const code in DB){
+    const days=DB[code].days; if(!days) continue;
+    let spend=0,clicks=0,sales720=0,touched=false;
+    for(const d in days){ if(d.indexOf(ym)===0 && (parseInt(d.slice(8,10),10)||99)<=maxDay){ const x=days[d]; spend+=x.spend||0; clicks+=x.clicks||0; sales720+=x.sales720||0; touched=true; } }
+    if(touched){ const a=ensure(code); a.spend=spend; a.clicks=clicks; a.sales720=sales720; }
+  }
+  for(let i=0;i<salesRows.length;i++){ const r=salesRows[i]; if(r.ym===ymCompact && r.date && (parseInt(String(r.date).slice(8,10),10)||99)<=maxDay){ const a=ensure(r.itemCode); a.totSales+=(r.sales||0); a.totOrders+=(r.orders||0); a.totUnits+=(r.units||0); } }
+  for(const code in itemDailyData){ const byDate=itemDailyData[code]; let rppSales=0,kwSpend=0,kwSales=0,touched=false; for(const d in byDate){ if(d.startsWith(ym) && (parseInt(d.slice(8,10),10)||99)<=maxDay){ const v=byDate[d]; rppSales+=(v.sales||0); kwSpend+=(v.spendKw||0); kwSales+=(v.salesKw||0); touched=true; } } if(touched){ const a=ensure(code); a.rppSales=rppSales; a.kwSpend=kwSpend; a.kwSales=kwSales; } }
+  return agg;
 }
 function renderYoy(){
   _setYoyModeUI();
@@ -12647,25 +12663,56 @@ function renderYoy(){
   const completed=yms.filter(m=>m<curYm);
   const sel=document.getElementById('yoySel');
   if(!yms.length){ if(sel) sel.innerHTML=''; area.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">データがありません</div>'; return; }
-  let periods;
+  const ymDash=m=>m.slice(0,4)+'-'+m.slice(4,6);
+  let periods; let isPartial=false; let cutoffDay=31; let _partialRefYm='';
   if(_yoyMode==='pick'){
-    let A=(_yoyPickA && yms.includes(_yoyPickA))?_yoyPickA:(yms[yms.length-2]||yms[0]);
-    let B=(_yoyPickB && yms.includes(_yoyPickB))?_yoyPickB:(yms[yms.length-1]);
-    const _opt=(m,cm)=>'<option value="'+m+'"'+(m===cm?' selected':'')+'>'+m.slice(0,4)+'/'+m.slice(4,6)+'</option>';
+    // A/B とも '202609'(途中) / '202609#full'(フル) を許容
+    let _pa=_yoyPickA||'', _pb=_yoyPickB||'', _aFull=false, _bFull=false;
+    if(_pa.slice(-5)==='#full'){ _aFull=true; _pa=_pa.slice(0,-5); }
+    if(_pb.slice(-5)==='#full'){ _bFull=true; _pb=_pb.slice(0,-5); }
+    let A=(_pa && yms.includes(_pa))?_pa:(yms[yms.length-2]||yms[0]);
+    let B=(_pb && yms.includes(_pb))?_pb:(yms[yms.length-1]);
+    const aPartial=(A>=curYm)&&!_aFull, bPartial=(B>=curYm)&&!_bFull;
+    isPartial=aPartial||bPartial;
+    if(isPartial){ _partialRefYm=aPartial?A:B; const _dw=_daysWithData(ymDash(_partialRefYm)); if(_dw.length){ cutoffDay=parseInt(_dw[_dw.length-1].slice(8,10),10)||31; } }
+    const _opt=(m,cm,full)=>{
+      const lbl=m.slice(0,4)+'/'+m.slice(4,6);
+      if(m>=curYm){
+        return '<option value="'+m+'"'+((m===cm && !full)?' selected':'')+'>'+lbl+'(途中)</option>'
+             + '<option value="'+m+'#full"'+((m===cm && full)?' selected':'')+'>'+lbl+'(フル)</option>';
+      }
+      return '<option value="'+m+'"'+((m===cm)?' selected':'')+'>'+lbl+'</option>';
+    };
     const selA=document.getElementById('yoySelA'), selB=document.getElementById('yoySelB');
-    if(selA) selA.innerHTML=[...yms].reverse().map(m=>_opt(m,A)).join('');
-    if(selB) selB.innerHTML=[...yms].reverse().map(m=>_opt(m,B)).join('');
+    if(selA) selA.innerHTML=[...yms].reverse().map(m=>_opt(m,A,_aFull)).join('');
+    if(selB) selB.innerHTML=[...yms].reverse().map(m=>_opt(m,B,_bFull)).join('');
     periods=[A,B];
   } else {
-    const later=(_yoyMonth && yms.includes(_yoyMonth))?_yoyMonth:yms[yms.length-1];
-    if(sel){ sel.innerHTML=[...yms].reverse().map(m=>'<option value="'+m+'"'+(m===later?' selected':'')+'>'+m.slice(0,4)+'/'+m.slice(4,6)+(m>=curYm?'(途中)':'')+'</option>').join(''); }
+    // _yoyMonth は '202609'(途中) または '202609#full'(フル) の形式
+    let _selFull=false, _selM=_yoyMonth||'';
+    if(_selM.slice(-5)==='#full'){ _selFull=true; _selM=_selM.slice(0,-5); }
+    const later=(_selM && yms.includes(_selM))?_selM:yms[yms.length-1];
+    isPartial=(later>=curYm)&&!_selFull;   // 途中月かつ(途中)選択時のみ日数を揃える
+    if(isPartial){ _partialRefYm=later; const _dw=_daysWithData(ymDash(later)); if(_dw.length){ cutoffDay=parseInt(_dw[_dw.length-1].slice(8,10),10)||31; } }
+    if(sel){
+      let _h='';
+      [...yms].reverse().forEach(m=>{
+        const lbl=m.slice(0,4)+'/'+m.slice(4,6);
+        if(m>=curYm){
+          _h+='<option value="'+m+'"'+((m===later && isPartial)?' selected':'')+'>'+lbl+'(途中)</option>';
+          _h+='<option value="'+m+'#full"'+((m===later && !isPartial && _selFull)?' selected':'')+'>'+lbl+'(フル)</option>';
+        } else {
+          _h+='<option value="'+m+'"'+((m===later && !isPartial)?' selected':'')+'>'+lbl+'</option>';
+        }
+      });
+      sel.innerHTML=_h;
+    }
     if(_yoyMode==='yoy'){ periods=[_ymAdd(later,-12), later]; }
     else if(_yoyMode==='yoy3'){ periods=[_ymAdd(later,-24), _ymAdd(later,-12), later]; }
     else { periods=[_ymAdd(later,-2), _ymAdd(later,-1), later]; }
   }
   const lastK=periods.length-1;
-  const ymDash=m=>m.slice(0,4)+'-'+m.slice(4,6);
-  const maps=periods.map(pm=>{ const dash=ymDash(pm); const agg=getMonthAgg(dash)||{}; const mp={}; Object.keys(agg).forEach(code=>{ const a=agg[code]; let sp=a.spend||0, s7=a.sales720||0; if(sp===0 && s7===0){ const st=_yoyMonthStats(code, dash); sp=st.spend; s7=st.sales720; } mp[code]={ s:a.totSales||0, sp:sp, seo:Math.max(0,(a.totSales||0)-(a.rppSales||0)), pf:Math.round(s7*0.45-sp) }; }); return mp; });
+  const maps=periods.map(pm=>{ const dash=ymDash(pm); const agg=(isPartial?_monthAggUpToDay(dash,cutoffDay):(getMonthAgg(dash)||{})); const mp={}; Object.keys(agg).forEach(code=>{ const a=agg[code]; let sp=a.spend||0, s7=a.sales720||0; if(sp===0 && s7===0){ const st=_yoyMonthStats(code, dash, isPartial?cutoffDay:31); sp=st.spend; s7=st.sales720; } mp[code]={ s:a.totSales||0, sp:sp, seo:Math.max(0,(a.totSales||0)-(a.rppSales||0)), pf:Math.round(s7*0.45-sp) }; }); return mp; });
   const allCodes=new Set(); maps.forEach(mp=>Object.keys(mp).forEach(c=>allCodes.add(c)));
   let prods=[...allCodes].map(code=>{ const pc=productCache[code]||{}; const v=maps.map(mp=>mp[code]||{s:0,sp:0,seo:0,pf:0}); return { code, name:(pc.manualName||pc.name||code), img:(pc.manualImg||pc.img||''), v }; })
     .filter(p=> p.v[lastK].s>1000);
@@ -12728,8 +12775,9 @@ function renderYoy(){
   const note=_yoyMode==='pick'?['','']:(_yoyMode==='yoy'?['去年同月','今年同月']:(_yoyMode==='yoy3'?['2年前','1年前','選択月']:['2ヶ月前','前月','選択月']));
   const lblStyle='text-align:center;font-weight:700;font-size:12px;height:'+labelH+'px;line-height:'+labelH+'px;color:var(--text2);background:var(--surface)';
   const minW=TW*periods.length+gapW*(periods.length-1);
+  const dayTag=isPartial?('・'+cutoffDay+'日まで'):'';
   const headBlock=k=>'<div style="width:'+TW+'px;flex-shrink:0;border:1px solid var(--border);border-radius:6px 6px 0 0;overflow:hidden">'
-    +'<div style="'+lblStyle+'">'+periods[k].slice(0,4)+'/'+periods[k].slice(4,6)+(note[k]?'（'+note[k]+'）':'')+'</div>'+colH+'</div>';
+    +'<div style="'+lblStyle+'">'+periods[k].slice(0,4)+'/'+periods[k].slice(4,6)+(note[k]?'（'+note[k]+dayTag+'）':(isPartial?'（'+cutoffDay+'日まで）':''))+'</div>'+colH+'</div>';
   const rowsBlock=k=>'<div style="width:'+TW+'px;flex-shrink:0;border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;overflow:hidden">'+tableHtml(orders[k],k)+'</div>';
   const gapSpacer='<div style="width:'+gapW+'px;flex-shrink:0"></div>';
   const svgCol=(kL,kR)=>'<div style="width:'+gapW+'px;flex-shrink:0">'+svgBetween(kL,kR)+'</div>';
@@ -12737,7 +12785,9 @@ function renderYoy(){
   for(let k=0;k<periods.length;k++){ if(k>0){ _hd+=gapSpacer; _bd+=svgCol(k-1,k); } _hd+=headBlock(k); _bd+=rowsBlock(k); }
   const head='<div style="display:flex;align-items:flex-end;position:sticky;top:0;z-index:10;background:var(--surface);min-width:'+minW+'px">'+_hd+'</div>';
   const body='<div style="display:flex;align-items:flex-start;min-width:'+minW+'px">'+_bd+'</div>';
-  area.innerHTML='<div style="position:relative">'+head+body+'</div>';
+  const _lm=_partialRefYm||periods[lastK];
+  const partialBanner=isPartial?('<div style="padding:7px 12px;margin-bottom:10px;background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;font-size:12px;font-weight:700;color:#92400e">📅 各月とも「'+cutoffDay+'日まで」の途中集計で比較中（例：'+_lm.slice(0,4)+'/'+_lm.slice(4,6)+'/'+cutoffDay+' 時点／比較先も同じ '+cutoffDay+' 日まで）。ドロップダウンで「(フル)」を選ぶと月末までの成績になります。</div>'):'';
+  area.innerHTML=partialBanner+'<div style="position:relative">'+head+body+'</div>';
 }
 function toggleTopChrome(){
   const t=document.getElementById('topChrome'); const bar=document.getElementById('topChromeBar'); if(!t) return;
