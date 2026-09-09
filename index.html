@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1316</span>
+    <span class="build-date">v1.1317</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12495,6 +12495,13 @@ function renderMonthlySubTab(tab) {
         return _searchMatch(q, [code, cached?.itemNumber, cached?.manualName || cached?.name]);
       });
     }
+    // ヘッダークリックのソートを、このタブの商品「だけ」に適用（getSortedと同じ並びに揃える）
+    if (!(isSelect && _sortKey === 'spend')) {
+      try {
+        const _order = new Map(getSorted(ym).map((p, i) => [p.id, i]));
+        codes.sort((a, b) => ((_order.has(a) ? _order.get(a) : 1e9) - (_order.has(b) ? _order.get(b) : 1e9)));
+      } catch(e) {}
+    }
     const label = isSelect ? '広告出稿中' : (isMarathon ? MARATHON_LABELS[tab] : SS_LABELS[tab]);
     if (codes.length === 0) {
       // 検索でヒット0と「SSなし」を分けて表示(toolbar維持)
@@ -12531,6 +12538,12 @@ function renderMonthlySubTab(tab) {
       if (lastEmpty !== -1) {
         h = h.slice(0, lastEmpty)
           + h.slice(lastEmpty);
+      }
+      // 現在のソート列にソート矢印(↑↓)を付ける
+      if (_sortKey) {
+        h = h.replace(/ sort-(asc|desc)/g, '');
+        const _re = new RegExp('(class="ch[^"]*)("\\s+id="ch-' + _sortKey + '")');
+        h = h.replace(_re, '$1 sort-' + _sortDir + '$2');
       }
       headerHtml = h;
     }
@@ -14223,7 +14236,12 @@ function sortBy(key) {
     _sortKey = key;
     _sortDir = 'desc';
   }
-  renderPage();
+  // SS/マラソン/出稿中サブタブは専用レンダラで（そのタブの商品だけを並べ替える）
+  if (_ssTabActive && typeof _currentTab !== 'undefined' && ((_currentTab in SS_TABS) || (_currentTab in MARATHON_TABS) || _currentTab === 'mar-select')) {
+    renderMonthlySubTab(_currentTab);
+  } else {
+    renderPage();
+  }
 }
 
 function updateSortHeaders() {
@@ -14264,6 +14282,12 @@ function getSorted(ym) {
     if (_subTabFilter && _subTabFilter !== 'all') {
       let _st = (productCache[p.id]?.status || 'unset'); if (_st === 'warnout') _st = 'warn'; if (_st === 'warnbigout') _st = 'warnbig'; if (_st === 'newr') _st = 'new'; /* mid2y は専用タブで分離（mid2へは束ねない） */
       if (_st !== _subTabFilter) return false;
+    }
+    // SS / マラソン / 広告出稿中 サブタブは、その条件の商品だけに限定（ソート時に他商品が混入しないように）
+    if (_ssTabActive && typeof _currentTab !== 'undefined') {
+      if (_currentTab in SS_TABS) { const _mon = SS_TABS[_currentTab]; if (!((productCache[p.id]?.ss) || []).includes(_mon)) return false; }
+      else if (_currentTab in MARATHON_TABS) { const _mk = MARATHON_TABS[_currentTab]; if (!((productCache[p.id]?.marathon) || []).includes(_mk)) return false; }
+      else if (_currentTab === 'mar-select') { try { if (!(getStats(p, ym).spend > 0)) return false; } catch(e){ return false; } }
     }
     return true;
   });
