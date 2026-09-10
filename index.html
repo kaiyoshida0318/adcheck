@@ -3776,6 +3776,7 @@ let _stockDaily = [];            // 日別の在庫切れ状況 [{date:'YYYY-MM-
 let _stockProgress = '';         // スキャン中の進捗テキスト
 let _stockLastError = '';        // 直近の失敗内容（モーダル表示用）
 let _stockLog = [];              // 在庫チェックの動作ログ（モーダルでコピー用）
+let _stockInfo = {};             // 在庫切れ商品の楽天側情報 {code:{n:商品名, i:画像URL}}。ADcheck未登録の商品も名前を出すため（v1.1346）
 function _stockLogPush(msg){
   try{
     const t=new Date();
@@ -3805,7 +3806,7 @@ async function _stockFetch(){
       if(r.ok) obj = JSON.parse(await r.text());
     }catch(e){}
     if(!obj){ const rr = await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+file+'?t='+Date.now(), { cache:'no-store' }); if(rr.ok) obj = JSON.parse(await rr.text()); }
-    if(obj && Array.isArray(obj.soldOut)){ _stockSoldOut = obj.soldOut.slice(); _stockCheckedAt = obj.checkedAt || ''; _stockDaily = Array.isArray(obj.daily) ? obj.daily.slice() : []; renderStockAlert(); return true; }
+    if(obj && Array.isArray(obj.soldOut)){ _stockSoldOut = obj.soldOut.slice(); _stockCheckedAt = obj.checkedAt || ''; _stockDaily = Array.isArray(obj.daily) ? obj.daily.slice() : []; _stockInfo = (obj.info && typeof obj.info==='object') ? obj.info : {}; renderStockAlert(); return true; }
   }catch(e){}
   return false;
 }
@@ -3818,13 +3819,24 @@ async function _stockPublish(){
     const url = 'https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+file;
     const getRes = await fetch(url, { headers, cache:'no-store' });
     const sha = getRes.ok ? (await getRes.json()).sha : null;
-    const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ soldOut:_stockSoldOut, checkedAt:_stockCheckedAt, daily:_stockDaily }))));
+    const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ soldOut:_stockSoldOut, checkedAt:_stockCheckedAt, daily:_stockDaily, info:_stockInfo }))));
     const body = { message:'Update stock status', content:base64 }; if(sha) body.sha = sha;
     const putRes = await fetch(url, { method:'PUT', headers, body:JSON.stringify(body) });
     return putRes.ok;
   }catch(e){ return false; }
 }
 function _stockDismiss(){ _stockAlertDismissed = true; renderStockAlert(); }
+// 在庫切れ商品の区分を1か所で決める（ボタン件数・一覧・日別テーブルで必ず一致させるため）。v1.1346
+//  active  = 商品マスタにあり引退していない＝要対応
+//  retired = 商品マスタで引退済＝参考
+//  unknown = 商品マスタに無い（ADcheckで管理していない商品）＝参考。
+//            以前は productCache[c]?.retired が undefined になる関係でこれが「現役」に混ざり、
+//            一覧が「現役の在庫切れなし」なのに日別テーブルが「現役10件」になっていた。
+function _stockKind(c){
+  const pc = productCache[c];
+  if(!pc) return 'unknown';
+  return pc.retired ? 'retired' : 'active';
+}
 // 今日すでに在庫チェック済みか（済みなら開いただけでは再スキャンしない）
 function _stockCheckedToday(){
   if(!_stockCheckedAt) return false;
@@ -3837,7 +3849,8 @@ function _stockCheckedToday(){
 function renderStockAlert(){
   const b = document.getElementById('stockCheckBtn'); if(!b) return;
   if(_stockScanRunning) return;   // チェック中の表示は runStockScan 側が管理する
-  const codes = (_stockSoldOut||[]).filter(c => DB[c] && !productCache[c]?.retired);
+  // モーダル一覧・日別テーブルと同じ数え方（_stockKind）にする。要対応＝現役のみ。v1.1346
+  const codes = (_stockSoldOut||[]).filter(c => _stockKind(c)==='active');
   let md = '';
   if(_stockCheckedAt){ try{ const d=new Date(_stockCheckedAt); md = String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); }catch(e){} }
   const set = (bg,fg,bd,txt,tip) => { b.style.background=bg; b.style.color=fg; b.style.borderColor=bd; b.textContent=txt; b.title=tip; };
@@ -3927,19 +3940,24 @@ function renderStockModal(){
   // 現在の在庫切れ一覧（現役＝アラート／引退＝情報）
   const body = document.getElementById('stockModalBody');
   if(body){
-    const soldAll = (_stockSoldOut||[]).filter(c => DB[c]);
-    const active  = soldAll.filter(c => !productCache[c]?.retired);
-    const retired = soldAll.filter(c =>  productCache[c]?.retired);
+    // ★v1.1346★ 以前は DB[c] のある商品しか出しておらず、広告データが無い商品（＝DBに無い）が
+    //   件数には入るのに一覧に出ない状態だった。DB絞り込みを廃止し、在庫切れは全部出す。
+    const soldAll = (_stockSoldOut||[]).slice();
+    const active  = soldAll.filter(c => _stockKind(c)==='active');
+    const retired = soldAll.filter(c => _stockKind(c)==='retired');
+    const unknown = soldAll.filter(c => _stockKind(c)==='unknown');
     const itemRow = (c, bg) => {
       const pc = productCache[c] || {};
-      const nm = pc.manualName || pc.name || c;
+      const ri = _stockInfo[c] || {};
+      const nm = pc.manualName || pc.name || ri.n || c;   // ADcheck未登録なら楽天から取った商品名
       const num = pc.itemNumber ? esc(pc.itemNumber) : '';
-      const img = pc.manualImg || pc.img || '';
+      const img = pc.manualImg || pc.img || ri.i || '';
+      const tag = DB[c] ? '' : '<span style="font-size:9px;font-weight:700;color:#8a6100;background:#fff6d8;border:1px solid #e6c200;border-radius:3px;padding:0 4px;margin-left:5px;white-space:nowrap">広告データ無し</span>';
       const rk = `https://item.rakuten.co.jp/${encodeURIComponent(sc)}/${encodeURIComponent(c)}/`;
       const im = img ? `<img src="${esc(img)}" style="width:38px;height:38px;object-fit:contain;border-radius:5px;border:1px solid var(--border);flex:0 0 auto">` : '<div style="width:38px;height:38px;background:var(--surface2);border-radius:5px;flex:0 0 auto"></div>';
       return `<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;background:${bg}">`
         + im
-        + `<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nm)}</div><div style="font-size:10px;color:var(--text3)">${num? '商品番号 '+num+' / ':''}${esc(c)}</div></div>`
+        + `<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nm)}</div><div style="font-size:10px;color:var(--text3)">${num? '商品番号 '+num+' / ':''}${esc(c)}${tag}</div></div>`
         + `<button onclick="closeStockModal();openEditModal('${c}')" style="font-size:11px;padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">編集</button>`
         + `<a href="${rk}" target="_blank" rel="noopener" style="font-size:11px;padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:#1565c0;text-decoration:none;white-space:nowrap">楽天↗</a>`
         + `</div>`;
@@ -3953,12 +3971,16 @@ function renderStockModal(){
     } else {
       const barBg = active.length>0 ? '#b71c1c' : '#6b7280';
       h += `<div style="padding:9px 12px;border-radius:8px;background:${barBg};color:#fff;font-weight:800;font-size:14px;margin-bottom:10px">`
-        + `在庫切れ 合計 ${soldAll.length} 件　<span style="font-weight:700;font-size:12px">（現役 ${active.length} / 引退済 ${retired.length}）</span></div>`;
+        + `在庫切れ 合計 ${soldAll.length} 件　<span style="font-weight:700;font-size:12px">（現役 ${active.length} / 引退済 ${retired.length} / 未登録 ${unknown.length}）</span></div>`;
       if(active.length>0){
         h += '<div style="font-size:12px;font-weight:800;color:#b71c1c;margin:2px 0 6px">🚨 現役商品の在庫切れ（要対応）</div>';
         h += active.map(c => itemRow(c, '#fff5f5')).join('');
       } else {
-        h += '<div style="padding:8px 10px;background:#f0fdf4;border-radius:6px;font-size:12px;color:#16a34a;font-weight:700;margin-bottom:8px">✅ 現役商品の在庫切れはありません（下記は引退済のみ）</div>';
+        h += '<div style="padding:8px 10px;background:#f0fdf4;border-radius:6px;font-size:12px;color:#16a34a;font-weight:700;margin-bottom:8px">✅ 現役商品の在庫切れはありません（下記は参考）</div>';
+      }
+      if(unknown.length>0){
+        h += '<div style="font-size:11px;font-weight:700;color:var(--text3);margin:10px 0 6px">❓ ADcheck未登録の商品の在庫切れ（参考・商品マスタに無いので要対応には数えていません）</div>';
+        h += unknown.map(c => itemRow(c, 'var(--surface2)')).join('');
       }
       if(retired.length>0){
         h += '<div style="font-size:11px;font-weight:700;color:var(--text3);margin:10px 0 6px">🗂 引退済商品の在庫切れ（参考）</div>';
@@ -3975,19 +3997,24 @@ function renderStockModal(){
     else {
       hist.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px;border-top:1px solid var(--border);padding-top:10px">🗓 日別の在庫切れ状況</div>'
         + '<div style="display:flex;font-size:10px;color:var(--text3);font-weight:700;padding:2px 4px;border-bottom:1px solid var(--border)">'
-        +   '<span style="flex:1.3">日付</span><span style="flex:1;text-align:right">チェック</span><span style="flex:1;text-align:right">現役 在庫切れ</span><span style="flex:1;text-align:right">引退 在庫切れ</span><span style="flex:0.9;text-align:right">合計</span></div>'
+        +   '<span style="flex:1.3">日付</span><span style="flex:1;text-align:right">チェック</span><span style="flex:1.1;text-align:right">現役 在庫切れ</span><span style="flex:1;text-align:right">未登録</span><span style="flex:1;text-align:right">引退</span><span style="flex:0.9;text-align:right">合計</span></div>'
         + '<div style="font-size:11px">'
         + rows.map(r => {
             const a = (r.active!=null)?r.active:(r.count!=null?r.count:0);
             const ret = (r.retired!=null)?r.retired:0;
             const t = (r.total!=null)?r.total:(a+ret);
-            const chk = (r.checked!=null)?(r.checked+'件'):'—';
+            // v1.1345以前の記録は「ADcheck未登録の商品」を現役に混ぜて数えており内訳を分けられない。
+            // その行は未登録を「—」、現役に ≈ を付けて概算だと分かるようにする（次回スキャンで正しい値に上書きされる）
+            const oldRow = (r.unknown==null);
+            const unk = oldRow ? '—' : (r.unknown + ' 件');
+            const chk = (r.checked!=null)?(r.checked+'件'):'—' ;
             const aCol = a>0 ? '#b71c1c' : '#16a34a';
             const tCol = a>0 ? '#b71c1c' : (t>0 ? '#6b7280' : '#16a34a');
             return `<div style="display:flex;align-items:center;padding:4px 4px;border-bottom:1px dotted var(--border)">`
               + `<span style="flex:1.3;color:var(--text3)">${esc(r.date||_stockFmtDT(r.at))}</span>`
               + `<span style="flex:1;text-align:right;color:var(--text2)">${chk}</span>`
-              + `<span style="flex:1;text-align:right;font-weight:700;color:${aCol}">${a} 件</span>`
+              + `<span style="flex:1.1;text-align:right;font-weight:700;color:${aCol}">${oldRow?'≈':''}${a} 件</span>`
+              + `<span style="flex:1;text-align:right;color:var(--text3)">${unk}</span>`
               + `<span style="flex:1;text-align:right;color:var(--text2)">${ret} 件</span>`
               + `<span style="flex:0.9;text-align:right;font-weight:700;color:${tCol}">${t} 件</span>`
               + `</div>`;
@@ -4039,6 +4066,7 @@ async function runStockScan(userTriggered, isAuto){
   const headers = { 'Origin':'https://kaiyoshida0318.github.io' };
   const SAFE_INTERVAL = 1200;
   const availMap = {};   // code -> availability(0/1)
+  const infoMap  = {};   // code -> {n:商品名, i:画像URL}（ADcheck未登録の商品も名前を出すため）
   let ok = false, apiErr = '';
   const diag = [];   // 各エンドポイントの結果（診断用）
   const epName = ep => (ep.label || (ep.mode==='fetch' ? 'openapi' : '公開API(JSONP)'));
@@ -4047,6 +4075,7 @@ async function runStockScan(userTriggered, isAuto){
   //   例: ヨガバンド は 管理番号 10001289 だが、別商品(ゴムシート)の商品番号が 10001289 のため、
   //       itemCode で突き合わせると在庫のあるヨガバンドが「在庫切れ」と誤判定される（実測: 誤判定 14件→1件）。
   //   itemUrl（https://item.rakuten.co.jp/{shop}/{管理番号}/）から管理番号を取り出すのが正解。
+  const _stockInfoOf = it => ({ n:String((it&&it.itemName)||'').slice(0,120), i:(it&&it.mediumImageUrls&&it.mediumImageUrls[0]&&(it.mediumImageUrls[0].imageUrl||it.mediumImageUrls[0]))||'' });
   const codeOf = it => {
     const m = String((it && it.itemUrl) || '').match(/item\.rakuten\.co\.jp\/[^/]+\/([^/?#]+)/);
     if(m && m[1]) return m[1];
@@ -4084,9 +4113,9 @@ async function runStockScan(userTriggered, isAuto){
       while(hasMore){
         // sort=+updateTimestamp を付けないとページ間で並びが変わり重複＆取りこぼしが出る（実測：無しだと236件中198件しか取れない）
         // itemUrl も取得する（管理番号の突き合わせに必須。codeOf 参照）
-        const data = await _apiGet(ep, `shopCode=${encodeURIComponent(shopCode)}&availability=0&hits=30&page=${page}&sort=${encodeURIComponent('+updateTimestamp')}&elements=itemCode,itemUrl,availability`);
+        const data = await _apiGet(ep, `shopCode=${encodeURIComponent(shopCode)}&availability=0&hits=30&page=${page}&sort=${encodeURIComponent('+updateTimestamp')}&elements=itemCode,itemUrl,itemName,mediumImageUrls,availability`);
         if(data && (data.error || data.error_description)){ epErr = data.error_description || data.error; break; }
-        (data.Items||[]).forEach(({Item:item}) => { if(!item) return; const code=codeOf(item); if(code) availMap[code]=readAvail(item); });
+        (data.Items||[]).forEach(({Item:item}) => { if(!item) return; const code=codeOf(item); if(!code) return; availMap[code]=readAvail(item); infoMap[code]=_stockInfoOf(item); });
         const tp = data.pageCount || null;
         hasMore = ((data.Items||[]).length===30) && !(tp && page>=tp);
         page++;
@@ -4121,11 +4150,11 @@ async function runStockScan(userTriggered, isAuto){
       for(let attempt = 0; attempt < 3 && !got; attempt++){
         try{
           // availability=0 が無いと「在庫あり商品のみ」になり、在庫切れ商品が {} で返って永遠に検出できない（v1.1344で修正）
-          const data = await _apiGet(mp, `itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&availability=0&hits=1&elements=itemCode,itemUrl,availability`);
+          const data = await _apiGet(mp, `itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&availability=0&hits=1&elements=itemCode,itemUrl,itemName,mediumImageUrls,availability`);
           if(data && (data.error || data.error_description)){ lastErr = data.error_description || data.error; await new Promise(r=>setTimeout(r,1500)); continue; }
           const it = data && data.Items && data.Items[0] && data.Items[0].Item;
           // itemUrlの管理番号が探しているコードと違うなら「別商品がヒットした」＝採用しない
-          if(it && codeOf(it) === code) availMap[code] = readAvail(it); else notFound++;
+          if(it && codeOf(it) === code){ availMap[code] = readAvail(it); infoMap[code] = _stockInfoOf(it); } else notFound++;
           got = true; anyOk = true; consecFail = 0;
         }catch(e){ lastErr = '通信エラー'; await new Promise(r=>setTimeout(r,1500)); }
       }
@@ -4134,6 +4163,7 @@ async function runStockScan(userTriggered, isAuto){
       // 途中経過をこまめに保存（30件ごと）。途中で閉じてもここまでの結果が残る。checkedAtは最後まで更新しない=次回は続きを再チェック
       if(anyOk && done % 30 === 0){
         _stockSoldOut = Object.keys(availMap).filter(c => availMap[c] === 0); // 引退済も含む・チェック済み全て
+        _stockInfo = {}; _stockSoldOut.forEach(c => { if(infoMap[c]) _stockInfo[c] = infoMap[c]; });
         try{ renderStockAlert(); renderStockModal(); }catch(e){}
         try{ await _stockPublish(); }catch(e){}
       }
@@ -4150,17 +4180,19 @@ async function runStockScan(userTriggered, isAuto){
     // availability=0（在庫切れ）を引退済も含めて全部抽出（チェック済み全コードから）
     const soldAll = Object.keys(availMap).filter(c => availMap[c] === 0);
     _stockSoldOut = soldAll;
+    _stockInfo = {}; soldAll.forEach(c => { if(infoMap[c]) _stockInfo[c] = infoMap[c]; }); // 在庫切れ分だけ保持（ファイルを太らせない）
     _stockCheckedAt = new Date().toISOString();
     _stockLastError = '';
-    const activeN  = soldAll.filter(c => !productCache[c]?.retired).length;
-    const retiredN = soldAll.filter(c => productCache[c]?.retired).length;
+    const activeN  = soldAll.filter(c => _stockKind(c)==='active').length;
+    const retiredN = soldAll.filter(c => _stockKind(c)==='retired').length;
+    const unknownN = soldAll.filter(c => _stockKind(c)==='unknown').length;
     const checkedN = Object.keys(availMap).length; // 実際にチェックできた商品数
     // 日別に記録（同じ日は最新で上書き、直近14日分を保持）
     const _d = new Date(); const _ds = _d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
     _stockDaily = (_stockDaily||[]).filter(x => x.date !== _ds);
-    _stockDaily.unshift({ date:_ds, checked:checkedN, active:activeN, retired:retiredN, total:soldAll.length, at:_stockCheckedAt });
+    _stockDaily.unshift({ date:_ds, checked:checkedN, active:activeN, retired:retiredN, unknown:unknownN, total:soldAll.length, at:_stockCheckedAt });
     _stockDaily = _stockDaily.slice(0,14);
-    _stockLogPush('✅ 完了: チェック '+checkedN+' 件 → 在庫切れ 合計 '+soldAll.length+' 件（現役 '+activeN+' / 引退 '+retiredN+'）');
+    _stockLogPush('✅ 完了: チェック '+checkedN+' 件 → 在庫切れ 合計 '+soldAll.length+' 件（現役 '+activeN+' / 引退 '+retiredN+' / 未登録 '+unknownN+'）');
     try{ await _stockPublish(); }catch(e){}
   } else {
     _stockLastError = apiErr || 'チェックに失敗しました';
