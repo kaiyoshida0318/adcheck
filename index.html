@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1337</span>
+    <span class="build-date">v1.1338</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1726,7 +1726,14 @@ header + * { margin-top: 4px; }
       <div id="stockOneResult" style="font-size:11px;margin-top:7px;color:var(--text2);line-height:1.6"></div>
     </div>
     <div id="stockModalHistory" style="margin-top:12px"></div>
-    <div class="modal-actions" style="margin-top:14px">
+    <div id="stockLogWrap" style="display:none;margin-top:12px">
+      <textarea id="stockLogArea" readonly style="width:100%;height:130px;font-size:10px;font-family:monospace;white-space:pre;overflow:auto;border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
+    </div>
+    <div class="modal-actions" style="margin-top:14px;justify-content:space-between;align-items:center;gap:8px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <button onclick="const w=document.getElementById('stockLogWrap'); w.style.display=(w.style.display==='none')?'block':'none'; if(w.style.display!=='none'){const a=document.getElementById('stockLogArea'); if(a) a.value=(_stockLog||[]).join('\n');}" style="font-size:11px;padding:5px 11px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">📋 ログ</button>
+        <button id="stockLogCopyBtn" onclick="_stockCopyLog()" style="font-size:11px;padding:5px 11px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;white-space:nowrap">コピー</button>
+      </div>
       <button class="modal-btn" onclick="closeStockModal()">閉じる</button>
     </div>
   </div>
@@ -3766,6 +3773,23 @@ let _stockAlertDismissed = false; // 今回だけ閉じる
 let _stockDaily = [];            // 日別の在庫切れ状況 [{date:'YYYY-MM-DD', active, retired, total, at}]
 let _stockProgress = '';         // スキャン中の進捗テキスト
 let _stockLastError = '';        // 直近の失敗内容（モーダル表示用）
+let _stockLog = [];              // 在庫チェックの動作ログ（モーダルでコピー用）
+function _stockLogPush(msg){
+  try{
+    const t=new Date();
+    const ts=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0');
+    _stockLog.push('['+ts+'] '+msg);
+    if(_stockLog.length>400) _stockLog = _stockLog.slice(-400);
+    const el=document.getElementById('stockLogArea'); if(el){ el.value=_stockLog.join('\n'); el.scrollTop=el.scrollHeight; }
+  }catch(e){}
+}
+function _stockCopyLog(){
+  const el=document.getElementById('stockLogArea'); if(!el) return;
+  el.value = (_stockLog||[]).join('\n');
+  try{ el.select(); document.execCommand('copy'); }catch(e){}
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(el.value); }catch(e){}
+  const b=document.getElementById('stockLogCopyBtn'); if(b){ const o=b.textContent; b.textContent='✅ コピーしました'; setTimeout(()=>{ b.textContent=o; }, 1300); }
+}
 function _stockGhFile(){ return `${_shopDataDir()}/stock_status.json`; }
 // GitHubから前回結果を取得（起動時の即表示用）
 async function _stockFetch(){
@@ -3868,6 +3892,7 @@ async function _stockCheckOne(){
         return;
       }
       const av = (it.availability===0 || it.availability==='0') ? 0 : 1;
+      _stockLogPush('単体確認 '+code+': availability='+av+'（'+(av===0?'在庫切れ':'販売可能')+'） '+(it.itemName||''));
       out.innerHTML = head
         + '商品名: '+esc(it.itemName||'(不明)')+'<br>'
         + 'availability: <b style="color:'+(av===0?'#b71c1c':'#16a34a')+'">'+av+(av===0?' ＝在庫切れ/販売不可':' ＝販売可能')+'</b>'
@@ -3876,6 +3901,7 @@ async function _stockCheckOne(){
       return;
     }catch(e){ lastErr = '通信/CORSエラー'; await new Promise(r=>setTimeout(r,1500)); }
   }
+  _stockLogPush('単体確認 '+code+': 失敗 '+(lastErr||'不明')+'（5回試行）');
   out.innerHTML = head + '<span style="color:#c62828">楽天APIエラー：'+esc(lastErr||'不明')+'（5回試行しても失敗）</span>';
 }
 function _stockFmtDT(iso){ try{ const d=new Date(iso); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }catch(e){ return ''; } }
@@ -3965,6 +3991,9 @@ function renderStockModal(){
   // 再チェックボタンの状態
   const rb = document.getElementById('stockModalRecheck');
   if(rb){ rb.disabled = _stockScanRunning; rb.textContent = _stockScanRunning ? '🔄 チェック中…' : '🔄 再チェック'; }
+  // ログ表示中なら最新化
+  const la = document.getElementById('stockLogArea');
+  if(la && document.getElementById('stockLogWrap')?.style.display !== 'none'){ la.value = (_stockLog||[]).join('\n'); }
 }
 // JSONP取得（CORS不可の一般公開APIをブラウザから呼ぶため）。callbackを付けて<script>で読み込む。
 function _stockJsonp(url){
@@ -3992,6 +4021,7 @@ async function runStockScan(userTriggered, isAuto){
   if(!appId || !shopCode){ if(userTriggered) alert('楽天アプリID・店舗コードを設定してください（設定画面）。'); return; }
   if(userTriggered) _stockAlertDismissed = false;
   _stockScanRunning = true; _stockLastError = ''; _stockProgress = '在庫を確認中…';
+  _stockLogPush('=== 在庫チェック開始（手動='+(!!userTriggered)+' / 自動='+(!!isAuto)+'） 店舗='+shopCode+' キー='+(accessKey?'あり':'なし')+' ===');
   renderStockAlert(); try{ renderStockModal(); }catch(e){}
   const btn = document.getElementById('stockRecheckBtn'); if(btn){ btn.disabled=true; btn.textContent='チェック中…'; }
   const hbtn = document.getElementById('stockCheckBtn'); if(hbtn){ hbtn.disabled=true; hbtn.textContent='🚨 チェック中…'; }
@@ -4035,6 +4065,7 @@ async function runStockScan(userTriggered, isAuto){
       }
     }catch(e){ epErr = (ep.mode==='jsonp'?'公開API取得失敗(CORS/JSONP非対応/appId不正など)':'通信エラー'); }
     diag.push(epName(ep) + '一括: ' + (epErr || 'OK'));
+    _stockLogPush(epName(ep) + ' 一括(shopCode): ' + (epErr || 'OK'));
     try{ console.warn('[ADcheck][stock] '+epName(ep)+' bulk: '+(epErr||'OK')); }catch(_){}
     if(!epErr) ok = true; else if(!apiErr) apiErr = epErr;
   }
@@ -4047,6 +4078,7 @@ async function runStockScan(userTriggered, isAuto){
     const _all = [...new Set(Object.keys(DB).concat(Object.keys(productCache).filter(c => c && c !== '__global__')))];
     const codes = _all.filter(c => !productCache[c]?.retired).concat(_all.filter(c => productCache[c]?.retired));
     const mp = ENDPOINTS.find(e => e.mode === 'fetch') || ENDPOINTS[0]; // Marketplace(itemCodeは動く実績)
+    _stockLogPush('個別チェック開始（itemCode）: 対象 '+codes.length+' 件');
     let done = 0, consecFail = 0, anyOk = false, lastErr = '';
     for(const code of codes){
       if(availMap[code] !== undefined){ done++; continue; }
@@ -4073,6 +4105,7 @@ async function runStockScan(userTriggered, isAuto){
     }
     if(anyOk) ok = true; else if(lastErr && !apiErr) apiErr = lastErr;
     diag.push('Marketplace個別(リトライ): ' + (anyOk ? ('成功 '+Object.keys(availMap).length+'件') : (lastErr||'全滅')));
+    _stockLogPush('個別チェック結果: '+(anyOk ? ('取得 '+Object.keys(availMap).length+' 件（失敗があれば直近: '+(lastErr||'なし')+'）') : ('全滅 '+(lastErr||''))) + (consecFail>=15?' ／ 15件連続失敗で中断':''));
     try{ console.warn('[ADcheck][stock] itemCode retry result: '+(anyOk?('ok '+Object.keys(availMap).length):('fail '+lastErr))); }catch(_){}
   }
 
@@ -4090,9 +4123,11 @@ async function runStockScan(userTriggered, isAuto){
     _stockDaily = (_stockDaily||[]).filter(x => x.date !== _ds);
     _stockDaily.unshift({ date:_ds, checked:checkedN, active:activeN, retired:retiredN, total:soldAll.length, at:_stockCheckedAt });
     _stockDaily = _stockDaily.slice(0,14);
+    _stockLogPush('✅ 完了: チェック '+checkedN+' 件 → 在庫切れ 合計 '+soldAll.length+' 件（現役 '+activeN+' / 引退 '+retiredN+'）');
     try{ await _stockPublish(); }catch(e){}
   } else {
     _stockLastError = apiErr || 'チェックに失敗しました';
+    _stockLogPush('❌ 失敗: '+_stockLastError+'（診断: '+(diag.join(' / ')||'なし')+'）');
   }
   _stockScanRunning = false; _stockProgress = '';
   if(btn){ btn.disabled=false; btn.textContent='再チェック'; }
