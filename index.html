@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1318</span>
+    <span class="build-date">v1.1319</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -622,6 +622,22 @@ header + * { margin-top: 4px; }
 
 <!-- Main Screen -->
 <div id="mainScreen">
+
+  <!-- 在庫切れアラート（起動時・引退済以外の在庫切れを大きく表示） -->
+  <div id="stockAlertBar" style="display:none;position:sticky;top:0;z-index:400;margin:0 0 4px;padding:14px 18px;background:#b71c1c;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.25)">
+    <div style="display:flex;align-items:flex-start;gap:12px;max-width:1400px;margin:0 auto">
+      <div style="font-size:30px;line-height:1;flex-shrink:0">🚨</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:17px;font-weight:800;margin-bottom:2px" id="stockAlertTitle">在庫切れの商品があります</div>
+        <div id="stockAlertList" style="font-size:12px;line-height:1.7;margin-top:4px"></div>
+        <div id="stockAlertMeta" style="font-size:10px;color:#ffd9d9;margin-top:6px"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:flex-end">
+        <button onclick="_stockDismiss()" title="今回だけ閉じる" style="font-size:18px;line-height:1;background:transparent;border:none;color:#fff;cursor:pointer;padding:0 2px">×</button>
+        <button onclick="runStockScan(true)" id="stockRecheckBtn" style="font-size:11px;padding:4px 10px;border-radius:5px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.12);color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">再チェック</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── 商品別タブ ── -->
   <div class="tab-panel active" id="tab-products">
@@ -3690,6 +3706,127 @@ async function fetchAllProductInfo() {
   saveProductCache(); // フェッチ完了後にlocalStorageへ保存
   console.log('[ADcheck] fetchAllProductInfo 完了. productCache=', Object.keys(productCache).length);
   _fetchInProgress = false;
+}
+
+// ===== 在庫切れアラート =====
+// 楽天Ichiba Item Search を shopCode 一括(30件/ページ・availability=0で在庫切れも含む)で走査し、
+// 引退済以外で availability=0（購入不可＝在庫切れ）の商品を検出して上部に大きく表示する。
+let _stockSoldOut = [];          // 在庫切れの商品コード配列
+let _stockCheckedAt = '';        // 最終チェック日時(ISO)
+let _stockScanRunning = false;
+let _stockAlertDismissed = false; // 今回だけ閉じる
+function _stockGhFile(){ return `${_shopDataDir()}/stock_status.json`; }
+// GitHubから前回結果を取得（起動時の即表示用）
+async function _stockFetch(){
+  try{
+    const pat = localStorage.getItem('github_pat');
+    const file = _stockGhFile();
+    let obj = null;
+    try{
+      const h = { 'Accept':'application/vnd.github.v3.raw' }; if(pat) h['Authorization']='token '+pat;
+      const r = await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+file+'?t='+Date.now(), { headers:h, cache:'no-store' });
+      if(r.ok) obj = JSON.parse(await r.text());
+    }catch(e){}
+    if(!obj){ const rr = await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+file+'?t='+Date.now(), { cache:'no-store' }); if(rr.ok) obj = JSON.parse(await rr.text()); }
+    if(obj && Array.isArray(obj.soldOut)){ _stockSoldOut = obj.soldOut.slice(); _stockCheckedAt = obj.checkedAt || ''; renderStockAlert(); return true; }
+  }catch(e){}
+  return false;
+}
+// 結果をGitHubに保存（メインデータとは別ファイルなので軽量・競合しにくい）
+async function _stockPublish(){
+  const pat = localStorage.getItem('github_pat'); if(!pat) return false;
+  try{
+    const file = _stockGhFile();
+    const headers = { 'Authorization':'token '+pat, 'Accept':'application/vnd.github.v3+json', 'Content-Type':'application/json' };
+    const url = 'https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+file;
+    const getRes = await fetch(url, { headers, cache:'no-store' });
+    const sha = getRes.ok ? (await getRes.json()).sha : null;
+    const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ soldOut:_stockSoldOut, checkedAt:_stockCheckedAt }))));
+    const body = { message:'Update stock status', content:base64 }; if(sha) body.sha = sha;
+    const putRes = await fetch(url, { method:'PUT', headers, body:JSON.stringify(body) });
+    return putRes.ok;
+  }catch(e){ return false; }
+}
+function _stockDismiss(){ _stockAlertDismissed = true; const b=document.getElementById('stockAlertBar'); if(b) b.style.display='none'; }
+// バナー描画（引退済・存在しない商品は除外して表示）
+function renderStockAlert(){
+  const bar = document.getElementById('stockAlertBar'); if(!bar) return;
+  const codes = (_stockSoldOut||[]).filter(c => DB[c] && !productCache[c]?.retired);
+  if(_stockAlertDismissed || codes.length === 0){ bar.style.display='none'; return; }
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const sc = localStorage.getItem('rakuten_shop_code') || 'yukaiya';
+  const title = document.getElementById('stockAlertTitle');
+  if(title) title.textContent = `🚨 在庫切れの商品が ${codes.length} 件あります（要確認）`;
+  const listEl = document.getElementById('stockAlertList');
+  if(listEl){
+    listEl.innerHTML = codes.map(c => {
+      const pc = productCache[c] || {};
+      const nm = pc.manualName || pc.name || c;
+      const num = pc.itemNumber ? `（${esc(pc.itemNumber)}）` : '';
+      const rk = `https://item.rakuten.co.jp/${encodeURIComponent(sc)}/${encodeURIComponent(c)}/`;
+      return `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.14);border-radius:5px;padding:2px 8px;margin:2px 6px 2px 0">`
+        + `<span onclick="openEditModal('${c}')" title="商品情報を編集" style="cursor:pointer;font-weight:700;text-decoration:underline">${esc(nm)}</span>`
+        + `<span style="opacity:.85">${num}</span>`
+        + `<a href="${rk}" target="_blank" rel="noopener" title="楽天ページを開く" style="color:#fff;text-decoration:none;opacity:.9">↗</a>`
+        + `</span>`;
+    }).join('');
+  }
+  const meta = document.getElementById('stockAlertMeta');
+  if(meta){
+    let when = '';
+    if(_stockCheckedAt){ try{ const d=new Date(_stockCheckedAt); when = `最終チェック: ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }catch(e){} }
+    meta.textContent = (_stockScanRunning ? '最新の在庫を確認中…　' : '') + when;
+  }
+  bar.style.display = 'block';
+}
+// 在庫スキャン本体（shopCode一括・availability=0で在庫切れも取得）
+async function runStockScan(userTriggered){
+  if(_stockScanRunning) return;
+  const appId = localStorage.getItem('rakuten_app_id');
+  const accessKey = localStorage.getItem('rakuten_access_key');
+  const shopCode = localStorage.getItem('rakuten_shop_code');
+  if(!appId || !accessKey || !shopCode){ if(userTriggered) alert('楽天アプリID・アクセスキー・店舗コードを設定してください（設定画面）。'); return; }
+  if(userTriggered) _stockAlertDismissed = false;
+  _stockScanRunning = true; renderStockAlert();
+  const btn = document.getElementById('stockRecheckBtn'); if(btn){ btn.disabled=true; btn.textContent='チェック中…'; }
+  const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
+  const headers = { 'Origin':'https://kaiyoshida0318.github.io' };
+  const SAFE_INTERVAL = 1200;
+  const availMap = {}; // code -> availability(0/1)
+  let page = 1, hasMore = true, rateLimitHits = 0, ok = false;
+  try{
+    while(hasMore){
+      // availability=0 で在庫なし商品も含めて取得。各Itemの availability を読む
+      const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&shopCode=${encodeURIComponent(shopCode)}&availability=0&hits=30&page=${page}&format=json&elements=itemCode,availability`;
+      const res = await fetch(url, { headers });
+      if(res.status === 429){ rateLimitHits++; if(rateLimitHits>=3) break; await new Promise(r=>setTimeout(r,5000)); continue; }
+      if(!res.ok) break;
+      const data = await res.json();
+      const items = data.Items || [];
+      if(items.length === 0){ ok = true; break; }
+      items.forEach(({Item:item}) => { if(!item||!item.itemCode) return; const code=item.itemCode.split(':')[1]; if(code) availMap[code] = (item.availability===0||item.availability==='0')?0:1; });
+      hasMore = items.length === 30;
+      const totalPages = data.pageCount || null;
+      if(totalPages && page >= totalPages){ hasMore = false; ok = true; }
+      page++;
+      if(hasMore) await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
+      if(!hasMore) ok = true;
+    }
+  }catch(e){ console.warn('[ADcheck] stock scan err:', e); }
+  if(ok){
+    // 引退済以外で availability=0（在庫切れ）の商品を抽出
+    const soldOut = Object.keys(DB).filter(c => !productCache[c]?.retired && availMap[c] === 0);
+    _stockSoldOut = soldOut;
+    _stockCheckedAt = new Date().toISOString();
+    try{ await _stockPublish(); }catch(e){}
+  }
+  _stockScanRunning = false;
+  if(btn){ btn.disabled=false; btn.textContent='再チェック'; }
+  renderStockAlert();
+  if(userTriggered && ok){
+    const n = (_stockSoldOut||[]).filter(c=>DB[c]&&!productCache[c]?.retired).length;
+    if(n===0) alert('在庫切れの商品はありませんでした。');
+  }
 }
 
 // ── 月別データ ──
@@ -15448,6 +15585,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   try{ await _cpaFetch(); }catch(e){}
   try{ await _miColFetch(); }catch(e){}
   try{ await _itTrendFetch(); }catch(e){}
+  // 在庫切れアラート：前回結果を即表示 → 裏で全商品を再チェックして更新
+  try{ await _stockFetch(); }catch(e){}
+  try{ setTimeout(function(){ try{ runStockScan(false); }catch(e){} }, 1500); }catch(e){}
   if (loaded) {
     // 日付範囲フィルタを強制的に最新日までに設定（ブラウザの値復元で古い日付が残るのを防ぐ）
     try {
