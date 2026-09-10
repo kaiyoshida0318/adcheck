@@ -36,6 +36,29 @@ body { font-family: 'Noto Sans JP', sans-serif; font-size: 13px; background: var
   50% { box-shadow: 0 0 0 6px rgba(249,115,22,0.25), 0 2px 6px rgba(249,115,22,0.5); }
 }
 
+/* ── 在庫切れ警告帯（現役商品の在庫切れが出たときだけ表示） v1.1352 ── */
+#stockAlertBar {
+  position: sticky; top: 52px; z-index: 199;
+  margin: 0 0 6px; padding: 11px 18px; color: #fff;
+  background: linear-gradient(90deg,#a30f0f 0%,#d32f2f 50%,#a30f0f 100%);
+  background-size: 200% 100%;
+  box-shadow: 0 3px 14px rgba(183,28,28,.45);
+  animation: stockBarSweep 3s linear infinite, stockBarIn .35s ease-out;
+}
+@keyframes stockBarSweep { 0% { background-position: 0% 0; } 100% { background-position: -200% 0; } }
+@keyframes stockBarIn { from { transform: translateY(-10px); opacity: 0; } to { transform: none; opacity: 1; } }
+.stock-siren { animation: stockSiren 1.1s ease-in-out infinite; }
+@keyframes stockSiren { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.22); opacity: .65; } }
+/* ヘッダーの在庫チェックボタン：在庫切れありのとき点滅させる */
+#stockCheckBtn.stock-alarm { animation: stockBtnAlarm 1.3s ease-in-out infinite; }
+@keyframes stockBtnAlarm {
+  0%,100% { box-shadow: 0 0 0 0 rgba(183,28,28,.55); }
+  50%     { box-shadow: 0 0 0 6px rgba(183,28,28,0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #stockAlertBar, .stock-siren, #stockCheckBtn.stock-alarm { animation: none; }
+}
+
 /* ── Header ── */
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 24px; min-height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 8px; row-gap: 6px; }
 .header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -532,7 +555,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1349</span>
+    <span class="build-date">v1.1352</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -623,7 +646,17 @@ header + * { margin-top: 4px; }
 <!-- Main Screen -->
 <div id="mainScreen">
 
-  <!-- 在庫切れの表示は上部の「在庫チェック」ボタンの色だけで行う（帯は廃止 v1.1345） -->
+  <!-- 現役商品の在庫切れが出たときだけ出る警告帯。モーダルを開かなくても一覧画面で気づけるように（v1.1352）
+       ※誤検知が多かった v1.1344 以前とは違い、いまは要対応（現役）のみ・0件なら一切出ない -->
+  <div id="stockAlertBar" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;max-width:1400px;margin:0 auto">
+      <div style="font-size:22px;line-height:1;flex-shrink:0" class="stock-siren">🚨</div>
+      <div style="flex-shrink:0;font-size:14px;font-weight:800;letter-spacing:.02em" id="stockAlertTitle"></div>
+      <div id="stockAlertList" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:5px;align-items:center"></div>
+      <button onclick="openStockModal()" style="flex-shrink:0;font-size:11px;font-weight:800;padding:5px 12px;border-radius:5px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.18);color:#fff;cursor:pointer;white-space:nowrap">詳細を見る</button>
+      <button onclick="_stockDismiss()" title="今回だけ閉じる（再読み込みでまた表示されます）" style="flex-shrink:0;font-size:17px;line-height:1;background:transparent;border:none;color:rgba(255,255,255,.85);cursor:pointer;padding:0 2px">×</button>
+    </div>
+  </div>
 
   <!-- ── 商品別タブ ── -->
   <div class="tab-panel active" id="tab-products">
@@ -3885,6 +3918,7 @@ function renderStockAlert(){
   let md = '';
   if(_stockCheckedAt){ try{ const d=new Date(_stockCheckedAt); md = String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); }catch(e){} }
   const set = (bg,fg,bd,txt,tip) => { b.style.background=bg; b.style.color=fg; b.style.borderColor=bd; b.textContent=txt; b.title=tip; };
+  b.classList.toggle('stock-alarm', codes.length > 0);
   if(codes.length > 0){
     set('#b71c1c','#fff','#b71c1c', `🚨 在庫切れ ${codes.length}`,
         `在庫切れ（現役）${codes.length}件${md?'／'+md+'チェック':''}。クリックで一覧`);
@@ -3894,6 +3928,31 @@ function renderStockAlert(){
     set('#fff','#1b7a3e','#1b7a3e', `✅ 在庫チェック ${md}`, `${md} チェック済み・在庫切れなし。クリックで再チェック`);
   } else {
     set('#fff','#b71c1c','#b71c1c', '🚨 在庫チェック', '楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示');
+  }
+  // ── 一覧画面の警告帯。現役の在庫切れがあるときだけ出す（0件なら完全に非表示） ──
+  const bar = document.getElementById('stockAlertBar');
+  if(bar){
+    if(codes.length === 0 || _stockAlertDismissed){ bar.style.display = 'none'; }
+    else {
+      const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const sc = localStorage.getItem('rakuten_shop_code') || 'yukaiya';
+      const ttl = document.getElementById('stockAlertTitle');
+      if(ttl) ttl.textContent = `在庫切れ ${codes.length}件`;
+      const list = document.getElementById('stockAlertList');
+      if(list){
+        list.innerHTML = codes.slice(0,8).map(c => {
+          const pc = productCache[c] || {}, ri = _stockInfo[c] || {};
+          const nm = pc.manualName || pc.name || ri.n || c;
+          const rk = ri.u || `https://item.rakuten.co.jp/${encodeURIComponent(sc)}/${encodeURIComponent(c)}/`;
+          return `<span style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:5px;padding:2px 8px;max-width:280px">`
+            + `<span onclick="openEditModal('${c}')" title="商品情報を編集" style="cursor:pointer;font-weight:800;font-size:12px;text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nm)}</span>`
+            + `<span style="font-size:10px;opacity:.85;font-family:'DM Mono',monospace">${esc(c)}</span>`
+            + `<a href="${rk}" target="_blank" rel="noopener" title="楽天ページを開く" style="color:#fff;text-decoration:none;opacity:.9">↗</a>`
+            + `</span>`;
+        }).join('') + (codes.length>8 ? `<span style="font-size:11px;opacity:.9">ほか ${codes.length-8} 件</span>` : '');
+      }
+      bar.style.display = 'block';
+    }
   }
 }
 // ===== 在庫切れチェック モーダル =====
