@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1347</span>
+    <span class="build-date">v1.1348</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3807,7 +3807,7 @@ async function _stockFetch(){
       if(r.ok) obj = JSON.parse(await r.text());
     }catch(e){}
     if(!obj){ const rr = await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+file+'?t='+Date.now(), { cache:'no-store' }); if(rr.ok) obj = JSON.parse(await rr.text()); }
-    if(obj && Array.isArray(obj.soldOut)){ _stockSoldOut = obj.soldOut.slice(); _stockCheckedAt = obj.checkedAt || ''; _stockDaily = Array.isArray(obj.daily) ? obj.daily.slice() : []; _stockInfo = (obj.info && typeof obj.info==='object') ? obj.info : {}; _stockUnchecked = Array.isArray(obj.unchecked) ? obj.unchecked.slice() : []; renderStockAlert(); return true; }
+    if(obj && Array.isArray(obj.soldOut)){ _stockSoldOut = obj.soldOut.slice(); _stockCheckedAt = obj.checkedAt || ''; _stockDaily = Array.isArray(obj.daily) ? obj.daily.slice() : []; _stockInfo = (obj.info && typeof obj.info==='object') ? obj.info : {}; _stockUnchecked = Array.isArray(obj.unchecked) ? obj.unchecked.slice() : []; _stockRepairDaily(); renderStockAlert(); return true; }
   }catch(e){}
   return false;
 }
@@ -3837,6 +3837,22 @@ function _stockKind(c){
   const pc = productCache[c];
   if(!pc) return 'unknown';
   return pc.retired ? 'retired' : 'active';
+}
+// 日別テーブルの「最新チェックの行」を、いま読み込んでいる結果から数え直す。v1.1347
+//  _stockDaily は保存時点の集計値なので、古いバージョンが書いた行（未登録を現役に混ぜていた等）が
+//  そのまま残り、一覧の表示とズレる。soldOut と同じスナップショットである最新行だけは常に数え直す。
+function _stockRepairDaily(){
+  if(!_stockCheckedAt || !Array.isArray(_stockDaily) || !_stockDaily.length) return;
+  let ds = '';
+  try{ const d=new Date(_stockCheckedAt); ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }catch(e){ return; }
+  const row = _stockDaily.find(x => x && x.date === ds); if(!row) return;
+  const so = _stockSoldOut||[];
+  row.active  = so.filter(c => _stockKind(c)==='active').length;
+  row.retired = so.filter(c => _stockKind(c)==='retired').length;
+  row.unknown = so.filter(c => _stockKind(c)==='unknown').length;
+  row.total   = so.length;
+  row.at      = row.at || _stockCheckedAt;
+  if(row.unchecked == null && Array.isArray(_stockUnchecked)) row.unchecked = _stockUnchecked.length;
 }
 // 今日すでに在庫チェック済みか（済みなら開いただけでは再スキャンしない）
 function _stockCheckedToday(){
@@ -3954,11 +3970,13 @@ function renderStockModal(){
       const num = pc.itemNumber ? esc(pc.itemNumber) : '';
       const img = pc.manualImg || pc.img || ri.i || '';
       const tag = DB[c] ? '' : '<span style="font-size:9px;font-weight:700;color:#8a6100;background:#fff6d8;border:1px solid #e6c200;border-radius:3px;padding:0 4px;margin-left:5px;white-space:nowrap">広告データ無し</span>';
-      const rk = `https://item.rakuten.co.jp/${encodeURIComponent(sc)}/${encodeURIComponent(c)}/`;
-      const im = img ? `<img src="${esc(img)}" style="width:38px;height:38px;object-fit:contain;border-radius:5px;border:1px solid var(--border);flex:0 0 auto">` : '<div style="width:38px;height:38px;background:var(--surface2);border-radius:5px;flex:0 0 auto"></div>';
+      const rk = ri.u || `https://item.rakuten.co.jp/${encodeURIComponent(sc)}/${encodeURIComponent(c)}/`;
+      // マスタ名と楽天名が別なら楽天名も出す（ADcheck未登録の商品はそもそも楽天名が主名称になる）
+      const sub = (ri.n && ri.n !== nm) ? `<div style="font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">楽天: ${esc(ri.n)}</div>` : '';
+      const im = img ? `<img src="${esc(img)}" loading="lazy" style="width:38px;height:38px;object-fit:contain;border-radius:5px;border:1px solid var(--border);flex:0 0 auto;background:#fff">` : '<div style="width:38px;height:38px;background:var(--surface2);border-radius:5px;flex:0 0 auto"></div>';
       return `<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;background:${bg}">`
         + im
-        + `<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nm)}</div><div style="font-size:10px;color:var(--text3)">${num? '商品番号 '+num+' / ':''}${esc(c)}${tag}</div></div>`
+        + `<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nm)}</div><div style="font-size:10px;color:var(--text3)">${num? '商品番号 '+num+' / ':''}${esc(c)}${tag}</div>${sub}</div>`
         + `<button onclick="closeStockModal();openEditModal('${c}')" style="font-size:11px;padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">編集</button>`
         + `<a href="${rk}" target="_blank" rel="noopener" style="font-size:11px;padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:#1565c0;text-decoration:none;white-space:nowrap">楽天↗</a>`
         + `</div>`;
@@ -4028,7 +4046,7 @@ function renderStockModal(){
     else {
       hist.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px;border-top:1px solid var(--border);padding-top:10px">🗓 日別の在庫切れ状況</div>'
         + '<div style="display:flex;font-size:10px;color:var(--text3);font-weight:700;padding:2px 4px;border-bottom:1px solid var(--border)">'
-        +   '<span style="flex:1.3">日付</span><span style="flex:1;text-align:right">チェック</span><span style="flex:1.1;text-align:right">現役 在庫切れ</span><span style="flex:1;text-align:right">未登録</span><span style="flex:1;text-align:right">引退</span><span style="flex:0.9;text-align:right">合計</span></div>'
+        +   '<span style="flex:1.1">日付</span><span style="flex:0.8;text-align:right">取得時間</span><span style="flex:0.9;text-align:right">チェック</span><span style="flex:1.1;text-align:right">現役 在庫切れ</span><span style="flex:0.9;text-align:right">未登録</span><span style="flex:0.8;text-align:right">引退</span><span style="flex:0.9;text-align:right">未確認</span><span style="flex:0.8;text-align:right">合計</span></div>'
         + '<div style="font-size:11px">'
         + rows.map(r => {
             const a = (r.active!=null)?r.active:(r.count!=null?r.count:0);
@@ -4038,16 +4056,22 @@ function renderStockModal(){
             // その行は未登録を「—」、現役に ≈ を付けて概算だと分かるようにする（次回スキャンで正しい値に上書きされる）
             const oldRow = (r.unknown==null);
             const unk = oldRow ? '—' : (r.unknown + ' 件');
+            const unchk = (r.unchecked!=null) ? (r.unchecked + ' 件') : '—';
             const chk = (r.checked!=null)?(r.checked+'件'):'—' ;
+            // 取得時間（at が無い古い行は「—」）
+            let hm = '—';
+            if(r.at){ try{ const d=new Date(r.at); hm = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }catch(e){} }
             const aCol = a>0 ? '#b71c1c' : '#16a34a';
             const tCol = a>0 ? '#b71c1c' : (t>0 ? '#6b7280' : '#16a34a');
             return `<div style="display:flex;align-items:center;padding:4px 4px;border-bottom:1px dotted var(--border)">`
-              + `<span style="flex:1.3;color:var(--text3)">${esc(r.date||_stockFmtDT(r.at))}</span>`
-              + `<span style="flex:1;text-align:right;color:var(--text2)">${chk}</span>`
+              + `<span style="flex:1.1;color:var(--text3)">${esc(r.date||_stockFmtDT(r.at))}</span>`
+              + `<span style="flex:0.8;text-align:right;color:var(--text3);font-family:'DM Mono',monospace">${hm}</span>`
+              + `<span style="flex:0.9;text-align:right;color:var(--text2)">${chk}</span>`
               + `<span style="flex:1.1;text-align:right;font-weight:700;color:${aCol}">${oldRow?'≈':''}${a} 件</span>`
-              + `<span style="flex:1;text-align:right;color:var(--text3)">${unk}</span>`
-              + `<span style="flex:1;text-align:right;color:var(--text2)">${ret} 件</span>`
-              + `<span style="flex:0.9;text-align:right;font-weight:700;color:${tCol}">${t} 件</span>`
+              + `<span style="flex:0.9;text-align:right;color:var(--text3)">${unk}</span>`
+              + `<span style="flex:0.8;text-align:right;color:var(--text2)">${ret} 件</span>`
+              + `<span style="flex:0.9;text-align:right;color:var(--text3)">${unchk}</span>`
+              + `<span style="flex:0.8;text-align:right;font-weight:700;color:${tCol}">${t} 件</span>`
               + `</div>`;
           }).join('')
         + '</div>';
@@ -4106,7 +4130,11 @@ async function runStockScan(userTriggered, isAuto){
   //   例: ヨガバンド は 管理番号 10001289 だが、別商品(ゴムシート)の商品番号が 10001289 のため、
   //       itemCode で突き合わせると在庫のあるヨガバンドが「在庫切れ」と誤判定される（実測: 誤判定 14件→1件）。
   //   itemUrl（https://item.rakuten.co.jp/{shop}/{管理番号}/）から管理番号を取り出すのが正解。
-  const _stockInfoOf = it => ({ n:String((it&&it.itemName)||'').slice(0,120), i:(it&&it.mediumImageUrls&&it.mediumImageUrls[0]&&(it.mediumImageUrls[0].imageUrl||it.mediumImageUrls[0]))||'' });
+  const _stockInfoOf = it => ({
+    n: String((it&&it.itemName)||'').slice(0,120),
+    i: (it&&it.mediumImageUrls&&it.mediumImageUrls[0]&&(it.mediumImageUrls[0].imageUrl||it.mediumImageUrls[0]))||'',
+    u: String((it&&it.itemUrl)||'').split('?')[0]
+  });
   const codeOf = it => {
     const m = String((it && it.itemUrl) || '').match(/item\.rakuten\.co\.jp\/[^/]+\/([^/?#]+)/);
     if(m && m[1]) return m[1];
@@ -4225,7 +4253,7 @@ async function runStockScan(userTriggered, isAuto){
     // 日別に記録（同じ日は最新で上書き、直近14日分を保持）
     const _d = new Date(); const _ds = _d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
     _stockDaily = (_stockDaily||[]).filter(x => x.date !== _ds);
-    _stockDaily.unshift({ date:_ds, checked:checkedN, active:activeN, retired:retiredN, unknown:unknownN, total:soldAll.length, at:_stockCheckedAt });
+    _stockDaily.unshift({ date:_ds, checked:checkedN, active:activeN, retired:retiredN, unknown:unknownN, unchecked:_stockUnchecked.length, total:soldAll.length, at:_stockCheckedAt });
     _stockDaily = _stockDaily.slice(0,14);
     _stockLogPush('✅ 完了: チェック '+checkedN+' 件 → 在庫切れ 合計 '+soldAll.length+' 件（現役 '+activeN+' / 引退 '+retiredN+' / 未登録 '+unknownN+'）／確認できず '+_stockUnchecked.length+' 件');
     try{ await _stockPublish(); }catch(e){}
