@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="runStockScan(true)" title="楽天APIで在庫切れ商品（引退済以外）をチェックして上部に表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1329</span>
+    <span class="build-date">v1.1330</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1696,7 +1696,8 @@ header + * { margin-top: 4px; }
 <div class="modal-overlay" id="settingsMenuModal" onclick="if(event.target===this)closeSettingsMenu()">
   <div class="modal" style="max-width:340px">
     <h3>⚙ 設定</h3>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
+    <div id="settingsMenuApiStatus" style="margin-top:10px;font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;text-align:center"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
       <button class="header-btn" onclick="closeSettingsMenu();openSettings()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">⚙ 基礎情報入力</button>
       <button class="header-btn" onclick="closeSettingsMenu();openBulkNameModal()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">📋 商品情報一括更新</button>
       <button class="header-btn" onclick="closeSettingsMenu();openDbgLog()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">📋 ログ（不具合報告用）</button>
@@ -14249,7 +14250,20 @@ function saveChangeLog() {
   if (typeof _renderCurrentRenewal === 'function') _renderCurrentRenewal();
 }
 
-function openSettingsMenu(){ const m=document.getElementById("settingsMenuModal"); if(m) m.classList.add("open"); }
+function openSettingsMenu(){
+  const m=document.getElementById("settingsMenuModal"); if(!m) return;
+  // API設定状況を表示（開いた時点で反映）
+  try{
+    const el=document.getElementById('settingsMenuApiStatus');
+    if(el){
+      const id=localStorage.getItem('rakuten_app_id')||'', ak=localStorage.getItem('rakuten_access_key')||'', sc=localStorage.getItem('rakuten_shop_code')||'';
+      if(id && ak && sc){ el.textContent='✅ アプリID設定済み'; el.style.background='#f0fdf4'; el.style.color='#16a34a'; }
+      else if(id || ak || sc){ el.textContent='△ 一部のみ設定（基礎情報入力を確認）'; el.style.background='#fff7ed'; el.style.color='#c2410c'; }
+      else { el.textContent='⚠ アプリID未設定（基礎情報入力から設定）'; el.style.background='#fef2f2'; el.style.color='#dc2626'; }
+    }
+  }catch(e){}
+  m.classList.add("open");
+}
 function closeSettingsMenu(){ const m=document.getElementById("settingsMenuModal"); if(m) m.classList.remove("open"); }
 function toggleSummaryBar(innerId, btnId) {
   const inner = document.getElementById(innerId);
