@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="runStockScan(true)" title="楽天APIで在庫切れ商品（引退済以外）をチェックして上部に表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1326</span>
+    <span class="build-date">v1.1327</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3835,6 +3835,8 @@ async function runStockScan(userTriggered){
   const SAFE_INTERVAL = 1200;
   const availMap = {};   // code -> availability(0/1)
   let ok = false, apiErr = '';
+  const diag = [];   // 各エンドポイントの結果（診断用）
+  const epName = ep => (ep.mode==='fetch' ? '①Marketplace(要ｷｰ)' : '②公開API(JSONP)');
   const readAvail = it => (it && (it.availability===0 || it.availability==='0')) ? 0 : 1;
   // 試すエンドポイント：① Marketplace(要accessKey・CORS可なのでfetch) ② 一般公開(appIdのみ・CORS不可なのでJSONP)
   const ENDPOINTS = [
@@ -3865,7 +3867,9 @@ async function runStockScan(userTriggered){
         page++;
         if(hasMore) await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
       }
-    }catch(e){ epErr = (ep.mode==='jsonp'?'公開API取得失敗':'通信エラー'); }
+    }catch(e){ epErr = (ep.mode==='jsonp'?'公開API取得失敗(CORS/JSONP非対応/appId不正など)':'通信エラー'); }
+    diag.push(epName(ep) + '一括: ' + (epErr || 'OK'));
+    try{ console.warn('[ADcheck][stock] '+epName(ep)+' bulk: '+(epErr||'OK')); }catch(_){}
     if(!epErr) ok = true; else if(!apiErr) apiErr = epErr;
   }
 
@@ -3876,11 +3880,15 @@ async function runStockScan(userTriggered){
     let chosen = null;
     for(const ep of ENDPOINTS){
       const c0 = codes[0]; if(!c0) break;
+      let tErr='';
       try{
         const data = await _apiGet(ep, `itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(c0)}&hits=1&elements=itemCode,availability`);
-        if(data && !(data.error || data.error_description)){ chosen = ep; const it=data.Items&&data.Items[0]&&data.Items[0].Item; if(it) availMap[c0]=readAvail(it); break; }
-        if(data && (data.error || data.error_description)) apiErr = data.error_description || data.error;
-      }catch(e){ apiErr = apiErr || (ep.mode==='jsonp'?'公開API取得失敗':'通信エラー'); }
+        if(data && !(data.error || data.error_description)){ chosen = ep; const it=data.Items&&data.Items[0]&&data.Items[0].Item; if(it) availMap[c0]=readAvail(it); }
+        else if(data && (data.error || data.error_description)){ tErr = data.error_description || data.error; apiErr = tErr; }
+      }catch(e){ tErr = (ep.mode==='jsonp'?'公開API取得失敗':'通信エラー'); apiErr = apiErr || tErr; }
+      diag.push(epName(ep) + '個別: ' + (chosen===ep ? 'OK' : (tErr||'応答なし')));
+      try{ console.warn('[ADcheck][stock] '+epName(ep)+' item: '+(chosen===ep?'OK':(tErr||'応答なし'))); }catch(_){}
+      if(chosen) break;
       await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
     }
     if(chosen){
@@ -3912,16 +3920,13 @@ async function runStockScan(userTriggered){
   renderStockAlert();
   if(userTriggered){
     if(!ok){
-      let msg = '在庫チェックに失敗しました。\n';
-      if(apiErr) msg += '楽天APIエラー：' + apiErr + '\n\n';
+      let msg = '在庫チェックに失敗しました。\n\n【診断】\n' + (diag.length ? diag.join('\n') : '(記録なし)') + '\n\n';
       if(/Configuration not found/i.test(apiErr||'')){
-        msg += 'これは楽天API側の認証・登録の問題です（コードの不具合ではありません）。\n'
-          + '・アクセスキーが最新か（楽天Developersのアプリ一覧→アクセスキーの目のアイコンで再コピー）\n'
-          + '・アプリIDと同じアプリのアクセスキーか\n'
-          + '・そのアプリにRMS(楽天市場)APIの利用権限があるか\n'
-          + 'をご確認ください。設定画面の「接続テスト」でも切り分けできます。';
+        msg += '①Marketplaceは「API Configuration not found」＝アクセスキー/アプリ登録の問題です。\n'
+          + '②公開APIもダメな場合はアプリID自体が無効な可能性があります。\n'
+          + '設定→ログ（コピー）を送ってもらえれば詳しく調べられます。';
       } else {
-        msg += 'アプリID・アクセスキー・店舗コードの設定をご確認ください。';
+        msg += '設定→ログ（コピー）の内容を送ってください。詳しく調べます。';
       }
       alert(msg);
     } else {
