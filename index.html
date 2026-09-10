@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1338</span>
+    <span class="build-date">v1.1339</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1764,6 +1764,11 @@ header + * { margin-top: 4px; }
         <input type="password" class="modal-input" id="githubPatInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
         <div class="modal-hint">入力すると全PCでデータを共有できます。GitHubのSettings → Developer settings → Personal access tokens で発行（repo権限）。</div>
       </div>
+      <div class="modal-field" style="margin:0">
+        <label class="modal-label">楽天ウェブサービス アプリID（在庫チェック用・任意）</label>
+        <input type="text" class="modal-input" id="wsAppIdInput" placeholder="例：1012345678901234567（数字20桁）">
+        <div class="modal-hint"><strong style="color:#b71c1c">在庫チェックが「API Configuration not found」で失敗する場合</strong>、<a href="https://webservice.rakuten.co.jp/app/list" target="_blank" rel="noopener" style="color:#1565c0">楽天ウェブサービス（無料）</a>でアプリ登録して発行される<strong>アプリID</strong>をここに入れてください（accessKey不要）。上のRMSキーとは別物です。</div>
+      </div>
     </div>
     <div id="modalStatus" class="modal-status"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;margin-top:12px;align-items:start">
@@ -2784,6 +2789,7 @@ function loadSettings() {
   document.getElementById('accessKeyInput').value = ak;
   document.getElementById('shopCodeInput').value = sc;
   document.getElementById('githubPatInput').value = pat;
+  const ws = document.getElementById('wsAppIdInput'); if(ws) ws.value = localStorage.getItem('rakuten_ws_app_id') || '';
   updateApiStatus(id, ak);
 }
 function saveSettings() {
@@ -2791,10 +2797,12 @@ function saveSettings() {
   const ak = document.getElementById('accessKeyInput').value.trim();
   const sc = document.getElementById('shopCodeInput').value.trim();
   const pat = document.getElementById('githubPatInput').value.trim();
+  const wsId = (document.getElementById('wsAppIdInput')?.value || '').trim();
   localStorage.setItem('rakuten_app_id', id);
   localStorage.setItem('rakuten_access_key', ak);
   localStorage.setItem('rakuten_shop_code', sc);
   localStorage.setItem('github_pat', pat);
+  localStorage.setItem('rakuten_ws_app_id', wsId);
   // 現在ショップの設定もshops配列に反映
   const shops = _getShops();
   const curId = _getCurrentShopId();
@@ -3872,19 +3880,24 @@ async function _stockCheckOne(){
   const code = (inp.value||'').trim();
   if(!code){ out.textContent = '商品管理番号を入力してください。'; return; }
   const appId = localStorage.getItem('rakuten_app_id'), accessKey = localStorage.getItem('rakuten_access_key'), shopCode = localStorage.getItem('rakuten_shop_code');
-  if(!appId || !shopCode){ out.innerHTML = '<span style="color:#c62828">アプリID・店舗コードを設定してください。</span>'; return; }
-  const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
+  const wsId = (localStorage.getItem('rakuten_ws_app_id')||'').trim();
+  if((!appId && !wsId) || !shopCode){ out.innerHTML = '<span style="color:#c62828">アプリID・店舗コードを設定してください。</span>'; return; }
   const inDB = (typeof DB!=='undefined' && DB[code]) ? 'あり' : 'なし';
   const inPC = (productCache && productCache[code]) ? ('あり'+(productCache[code].retired?'(引退済)':'')) : 'なし';
   const head = `<div style="color:var(--text3);font-size:10px">ADcheck内: DB=${inDB} / 商品マスタ=${inPC}</div>`;
-  const url = `${BASE}?applicationId=${encodeURIComponent(appId)}${accessKey?('&accessKey='+encodeURIComponent(accessKey)):''}&itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&format=json`;
-  // 「API Configuration not found」は間欠的なので最大5回リトライ
+  const qs = `itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&format=json`;
+  // 専用の楽天ウェブサービスIDがあれば公開API(JSONP)を使う、無ければMarketplace(fetch)。「Configuration not found」は間欠的なので最大5回リトライ
+  const usePub = !!wsId;
+  const url = usePub
+    ? `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601?applicationId=${encodeURIComponent(wsId)}&${qs}`
+    : `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601?applicationId=${encodeURIComponent(appId)}${accessKey?('&accessKey='+encodeURIComponent(accessKey)):''}&${qs}`;
   let lastErr = '';
   for(let attempt=1; attempt<=5; attempt++){
-    out.innerHTML = head + '確認中… ('+attempt+'/5)';
+    out.innerHTML = head + '確認中… ('+attempt+'/5・'+(usePub?'公開API':'Marketplace')+')';
     try{
-      const res = await fetch(url, { headers:{ 'Origin':'https://kaiyoshida0318.github.io' } });
-      const data = await res.json().catch(()=>null);
+      let data;
+      if(usePub){ data = await _stockJsonp(url); }
+      else { const res = await fetch(url, { headers:{ 'Origin':'https://kaiyoshida0318.github.io' } }); data = await res.json().catch(()=>null); }
       if(data && (data.error || data.error_description)){ lastErr = data.error_description || data.error; await new Promise(r=>setTimeout(r,1500)); continue; }
       const it = data && data.Items && data.Items[0] && data.Items[0].Item;
       if(!it){
@@ -4034,14 +4047,17 @@ async function runStockScan(userTriggered, isAuto){
   const diag = [];   // 各エンドポイントの結果（診断用）
   const epName = ep => (ep.mode==='fetch' ? '①Marketplace(要ｷｰ)' : '②公開API(JSONP)');
   const readAvail = it => (it && (it.availability===0 || it.availability==='0')) ? 0 : 1;
+  // 楽天ウェブサービス用アプリID（在庫チェック専用・任意）。あれば公開APIはこれを使う。
+  const wsAppId = (localStorage.getItem('rakuten_ws_app_id') || '').trim() || appId;
   // 試すエンドポイント：① Marketplace(要accessKey・CORS可なのでfetch) ② 一般公開(appIdのみ・CORS不可なのでJSONP)
-  const ENDPOINTS = [
-    { base:'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601', keyQ: accessKey ? ('&accessKey='+encodeURIComponent(accessKey)) : '', mode:'fetch' },
-    { base:'https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601',     keyQ: '', mode:'jsonp' },
-  ];
+  // 公開APIは wsAppId(楽天ウェブサービスのID) を優先。専用IDが設定されていれば公開APIを先に試す。
+  const _hasWs = !!(localStorage.getItem('rakuten_ws_app_id') || '').trim();
+  const _ep_mp  = { base:'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601', keyQ: accessKey ? ('&accessKey='+encodeURIComponent(accessKey)) : '', mode:'fetch', appId: appId };
+  const _ep_pub = { base:'https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601',     keyQ: '', mode:'jsonp', appId: wsAppId };
+  const ENDPOINTS = _hasWs ? [ _ep_pub, _ep_mp ] : [ _ep_mp, _ep_pub ];
   // 1回のAPI取得（fetch or JSONP）。data（error含む）を返す。通信失敗は例外。
   async function _apiGet(ep, qs){
-    const url = `${ep.base}?applicationId=${encodeURIComponent(appId)}${ep.keyQ}&${qs}&format=json`;
+    const url = `${ep.base}?applicationId=${encodeURIComponent(ep.appId||appId)}${ep.keyQ}&${qs}&format=json`;
     if(ep.mode === 'jsonp') return await _stockJsonp(url);
     const res = await fetch(url, { headers });
     const data = await res.json().catch(()=>null);
@@ -4077,8 +4093,9 @@ async function runStockScan(userTriggered, isAuto){
     // 引退済も含めて全商品をチェック（在庫切れ総数を出すため）。DBに無くてもproductCacheにある商品も対象にする。
     const _all = [...new Set(Object.keys(DB).concat(Object.keys(productCache).filter(c => c && c !== '__global__')))];
     const codes = _all.filter(c => !productCache[c]?.retired).concat(_all.filter(c => productCache[c]?.retired));
-    const mp = ENDPOINTS.find(e => e.mode === 'fetch') || ENDPOINTS[0]; // Marketplace(itemCodeは動く実績)
-    _stockLogPush('個別チェック開始（itemCode）: 対象 '+codes.length+' 件');
+    // 専用の楽天ウェブサービスIDがあれば公開API(JSONP)、無ければMarketplace(itemCode)を使う
+    const mp = _hasWs ? (ENDPOINTS.find(e => e.mode === 'jsonp') || ENDPOINTS[0]) : (ENDPOINTS.find(e => e.mode === 'fetch') || ENDPOINTS[0]);
+    _stockLogPush('個別チェック開始（'+(mp.mode==='jsonp'?'公開API':'Marketplace')+'）: 対象 '+codes.length+' 件');
     let done = 0, consecFail = 0, anyOk = false, lastErr = '';
     for(const code of codes){
       if(availMap[code] !== undefined){ done++; continue; }
