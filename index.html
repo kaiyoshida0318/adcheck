@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1334</span>
+    <span class="build-date">v1.1335</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1716,7 +1716,15 @@ header + * { margin-top: 4px; }
       <button id="stockModalRecheck" onclick="runStockScan(true)" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:700">🔄 再チェック</button>
     </div>
     <div id="stockModalStatus" style="font-size:12px;color:var(--text3);margin:6px 0 10px"></div>
-    <div id="stockModalBody" style="max-height:44vh;overflow-y:auto"></div>
+    <div id="stockModalBody" style="max-height:40vh;overflow-y:auto"></div>
+    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px">🔎 商品コードで単体確認（楽天APIが何を返すか確認）</div>
+      <div style="display:flex;gap:6px">
+        <input id="stockOneInput" placeholder="例: 10001268" onkeydown="if(event.key==='Enter')_stockCheckOne()" style="flex:1;min-width:0;font-size:12px;padding:6px 9px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">
+        <button onclick="_stockCheckOne()" style="font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid #1565c0;background:#1565c0;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">確認</button>
+      </div>
+      <div id="stockOneResult" style="font-size:11px;margin-top:7px;color:var(--text2);line-height:1.6"></div>
+    </div>
     <div id="stockModalHistory" style="margin-top:12px"></div>
     <div class="modal-actions" style="margin-top:14px">
       <button class="modal-btn" onclick="closeStockModal()">閉じる</button>
@@ -3832,6 +3840,39 @@ function openStockModal(){
   if(!_stockScanRunning){ try{ runStockScan(true); }catch(e){} }
 }
 function closeStockModal(){ const m = document.getElementById('stockModal'); if(m) m.classList.remove('open'); }
+// 商品コードを1つだけ楽天APIで確認（診断用）。「在庫0なのに検出されない」原因の切り分けに使う。
+async function _stockCheckOne(){
+  const inp = document.getElementById('stockOneInput'); const out = document.getElementById('stockOneResult');
+  if(!inp || !out) return;
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const code = (inp.value||'').trim();
+  if(!code){ out.textContent = '商品管理番号を入力してください。'; return; }
+  const appId = localStorage.getItem('rakuten_app_id'), accessKey = localStorage.getItem('rakuten_access_key'), shopCode = localStorage.getItem('rakuten_shop_code');
+  if(!appId || !shopCode){ out.innerHTML = '<span style="color:#c62828">アプリID・店舗コードを設定してください。</span>'; return; }
+  out.textContent = '確認中…';
+  const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
+  const inDB = (typeof DB!=='undefined' && DB[code]) ? 'あり' : 'なし';
+  const inPC = (productCache && productCache[code]) ? ('あり'+(productCache[code].retired?'(引退済)':'')) : 'なし';
+  try{
+    // itemCode検索（フル項目）。availabilityと在庫関連を確認
+    const url = `${BASE}?applicationId=${encodeURIComponent(appId)}${accessKey?('&accessKey='+encodeURIComponent(accessKey)):''}&itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&format=json`;
+    const res = await fetch(url, { headers:{ 'Origin':'https://kaiyoshida0318.github.io' } });
+    const data = await res.json().catch(()=>null);
+    if(data && (data.error || data.error_description)){ out.innerHTML = '<span style="color:#c62828">楽天APIエラー：'+esc(data.error_description||data.error)+'</span>'; return; }
+    const it = data && data.Items && data.Items[0] && data.Items[0].Item;
+    let head = `<div style="color:var(--text3);font-size:10px">ADcheck内: DB=${inDB} / 商品マスタ=${inPC}</div>`;
+    if(!it){
+      out.innerHTML = head + '<span style="color:#e65100;font-weight:700">⚠ 楽天の検索でヒットしませんでした。</span><br>掲載終了、または商品管理番号（店舗コード:番号）が楽天のitemCodeと一致していない可能性があります。';
+      return;
+    }
+    const av = (it.availability===0 || it.availability==='0') ? 0 : 1;
+    out.innerHTML = head
+      + '商品名: '+esc(it.itemName||'(不明)')+'<br>'
+      + 'availability: <b style="color:'+(av===0?'#b71c1c':'#16a34a')+'">'+av+(av===0?' ＝在庫切れ/販売不可':' ＝販売可能')+'</b>'
+      + (it.itemPrice!=null?'<br>価格: ¥'+it.itemPrice:'')
+      + (av===1 ? '<br><span style="color:#e65100">※ RMSで在庫0でも、別SKUに在庫がある/在庫連動オフ/取り寄せ設定などの場合、楽天のavailabilityは1（販売可能）を返します。その場合この在庫チェックでは検出できません。</span>' : '');
+  }catch(e){ out.innerHTML = '<span style="color:#c62828">通信/CORSエラー。時間をおいて再試行してください。</span>'; }
+}
 function _stockFmtDT(iso){ try{ const d=new Date(iso); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }catch(e){ return ''; } }
 function renderStockModal(){
   const m = document.getElementById('stockModal'); if(!m || !m.classList.contains('open')) return;
@@ -3987,8 +4028,8 @@ async function runStockScan(userTriggered, isAuto){
   //     「API Configuration not found」等は間欠的に起きるので、各商品を最大3回リトライして乗り越える。
   //     全件は時間がかかる(商品数×1.2秒)ため、手動ボタン or 起動時自動(未チェックの日)のとき実行。 ──
   if(!ok && (userTriggered || isAuto)){
-    // 引退済も含めて全商品をチェック（在庫切れ総数を出すため）。現役を先に並べて、現役の在庫切れを早く検出する。
-    const _all = Object.keys(DB);
+    // 引退済も含めて全商品をチェック（在庫切れ総数を出すため）。DBに無くてもproductCacheにある商品も対象にする。
+    const _all = [...new Set(Object.keys(DB).concat(Object.keys(productCache).filter(c => c && c !== '__global__')))];
     const codes = _all.filter(c => !productCache[c]?.retired).concat(_all.filter(c => productCache[c]?.retired));
     const mp = ENDPOINTS.find(e => e.mode === 'fetch') || ENDPOINTS[0]; // Marketplace(itemCodeは動く実績)
     let done = 0, consecFail = 0, anyOk = false, lastErr = '';
@@ -4009,7 +4050,7 @@ async function runStockScan(userTriggered, isAuto){
       done++;
       // 途中経過をこまめに保存（30件ごと）。途中で閉じてもここまでの結果が残る。checkedAtは最後まで更新しない=次回は続きを再チェック
       if(anyOk && done % 30 === 0){
-        _stockSoldOut = Object.keys(DB).filter(c => availMap[c] === 0); // 引退済も含む
+        _stockSoldOut = Object.keys(availMap).filter(c => availMap[c] === 0); // 引退済も含む・チェック済み全て
         try{ renderStockAlert(); renderStockModal(); }catch(e){}
         try{ await _stockPublish(); }catch(e){}
       }
@@ -4021,8 +4062,8 @@ async function runStockScan(userTriggered, isAuto){
   }
 
   if(ok){
-    // availability=0（在庫切れ）を引退済も含めて全部抽出
-    const soldAll = Object.keys(DB).filter(c => availMap[c] === 0);
+    // availability=0（在庫切れ）を引退済も含めて全部抽出（チェック済み全コードから）
+    const soldAll = Object.keys(availMap).filter(c => availMap[c] === 0);
     _stockSoldOut = soldAll;
     _stockCheckedAt = new Date().toISOString();
     _stockLastError = '';
