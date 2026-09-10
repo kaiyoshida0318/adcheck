@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="runStockScan(true)" title="楽天APIで在庫切れ商品（引退済以外）をチェックして上部に表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1323</span>
+    <span class="build-date">v1.1324</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1709,50 +1709,55 @@ header + * { margin-top: 4px; }
 </div>
 
 <div class="modal-overlay" id="settingsModal">
-  <div class="modal">
+  <div class="modal" style="max-width:900px">
     <h3>⚙ 設定</h3>
-    <p>楽天アプリID・アクセスキーを入力すると商品画像が自動取得されます。GitHub PATを入力するとデータがGitHubに保存され、どのPCからも同じデータが閲覧できます。</p>
-    <div class="modal-field">
-      <label class="modal-label">アプリケーションID（Application ID）</label>
-      <input type="text" class="modal-input" id="appIdInput" placeholder="例：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
-      <div class="modal-hint">楽天Developers のアプリ一覧 →「アプリケーションID」欄の値です。</div>
-    </div>
-    <div class="modal-field">
-      <label class="modal-label">アクセスキー（Access Key）</label>
-      <input type="text" class="modal-input" id="accessKeyInput" placeholder="例：pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-      <div class="modal-hint">アプリ一覧の「アクセスキー」欄の目のアイコンをクリックすると表示されます。</div>
-    </div>
-    <div class="modal-field">
-      <label class="modal-label">店舗コード（shopCode）</label>
-      <input type="text" class="modal-input" id="shopCodeInput" placeholder="例：yukaiya">
-      <div class="modal-hint">楽天市場の店舗URLに含まれる英数字のコードです。<br>例：item.rakuten.co.jp/<strong>yukaiya</strong>/xxxxxxxx/</div>
-    </div>
-    <div class="modal-field">
-      <label class="modal-label">GitHub PAT（データ共有用・任意）</label>
-      <input type="password" class="modal-input" id="githubPatInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-      <div class="modal-hint">入力すると全PCでデータを共有できます。GitHubのSettings → Developer settings → Personal access tokens で発行（repo権限）。</div>
+    <p style="margin-bottom:14px">楽天アプリID・アクセスキーを入力すると商品画像が自動取得されます。GitHub PATを入力するとデータがGitHubに保存され、どのPCからも同じデータが閲覧できます。</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 20px">
+      <div class="modal-field" style="margin:0">
+        <label class="modal-label">アプリケーションID（Application ID）</label>
+        <input type="text" class="modal-input" id="appIdInput" placeholder="例：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+        <div class="modal-hint">楽天Developers のアプリ一覧 →「アプリケーションID」欄の値です。</div>
+      </div>
+      <div class="modal-field" style="margin:0">
+        <label class="modal-label">アクセスキー（Access Key）</label>
+        <input type="text" class="modal-input" id="accessKeyInput" placeholder="例：pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+        <div class="modal-hint">アプリ一覧の「アクセスキー」欄の目のアイコンをクリックすると表示されます。</div>
+      </div>
+      <div class="modal-field" style="margin:0">
+        <label class="modal-label">店舗コード（shopCode）</label>
+        <input type="text" class="modal-input" id="shopCodeInput" placeholder="例：yukaiya">
+        <div class="modal-hint">楽天市場の店舗URLに含まれる英数字のコードです。<br>例：item.rakuten.co.jp/<strong>yukaiya</strong>/xxxxxxxx/</div>
+      </div>
+      <div class="modal-field" style="margin:0">
+        <label class="modal-label">GitHub PAT（データ共有用・任意）</label>
+        <input type="password" class="modal-input" id="githubPatInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        <div class="modal-hint">入力すると全PCでデータを共有できます。GitHubのSettings → Developer settings → Personal access tokens で発行（repo権限）。</div>
+      </div>
     </div>
     <div id="modalStatus" class="modal-status"></div>
-    <div style="margin-top:14px;padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text2)">
-      <strong>💡 商品画像の自動取得について</strong><br>
-      v1.430より、起動時の自動画像取得は無効化されました(楽天APIレート制限で既存データが失われるリスクがあったため)。<br>
-      新商品の画像/名前を取得したい場合は下のボタンを押してください。1.2秒間隔で1件ずつ処理するので時間がかかります。
-      <div style="margin-top:8px">
-        <button onclick="manualFetchAllProductInfo()" style="font-size:11px;padding:6px 14px;border:1px solid var(--accent);border-radius:5px;background:var(--surface);color:var(--accent);cursor:pointer;font-weight:600">🖼 画像・商品名を取得(手動)</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;margin-top:12px;align-items:start">
+      <div style="padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text2)">
+        <strong>💡 商品画像の自動取得について</strong><br>
+        v1.430より、起動時の自動画像取得は無効化されました(楽天APIレート制限で既存データが失われるリスクがあったため)。<br>
+        新商品の画像/名前を取得したい場合は下のボタンを押してください。1.2秒間隔で1件ずつ処理するので時間がかかります。
+        <div style="margin-top:8px">
+          <button onclick="manualFetchAllProductInfo()" style="font-size:11px;padding:6px 14px;border:1px solid var(--accent);border-radius:5px;background:var(--surface);color:var(--accent);cursor:pointer;font-weight:600">🖼 画像・商品名を取得(手動)</button>
+        </div>
       </div>
-    </div>
-    <div class="modal-field">
-      <label class="modal-label">ログ（不具合報告用）</label>
-      <textarea id="dbgLogArea" readonly style="width:100%;height:170px;font-size:10px;font-family:monospace;white-space:pre;overflow:auto;border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
-      <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="modal-btn" onclick="_dbgRefresh()">🔄 更新</button>
-        <button class="modal-btn save" onclick="_dbgCopy()">📋 コピー</button>
-        <button class="modal-btn" onclick="_dbgClear()">クリア</button>
+      <div class="modal-field" style="margin:0">
+        <label class="modal-label">ログ（不具合報告用）</label>
+        <textarea id="dbgLogArea" readonly style="width:100%;height:120px;font-size:10px;font-family:monospace;white-space:pre;overflow:auto;border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
+        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="modal-btn" onclick="_dbgRefresh()">🔄 更新</button>
+          <button class="modal-btn save" onclick="_dbgCopy()">📋 コピー</button>
+          <button class="modal-btn" onclick="_dbgClear()">クリア</button>
+        </div>
+        <div class="modal-hint">保存・読み込み・エラーの記録です。「📋 コピー」で全文コピーできます。</div>
       </div>
-      <div class="modal-hint">保存・読み込み・エラーの記録です。「📋 コピー」で全文コピーできます。不具合時はこれを貼り付けてください。</div>
     </div>
     <div class="modal-actions">
-      <button class="modal-btn" onclick="closeSettings()">キャンセル</button>
+      <button class="modal-btn" onclick="closeSettings();openSettingsMenu()">← 戻る</button>
+      <button class="modal-btn" onclick="closeSettings()">閉じる</button>
       <button class="modal-btn" onclick="testApi()">接続テスト</button>
       <button class="modal-btn save" onclick="saveSettings()">保存</button>
     </div>
