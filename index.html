@@ -531,7 +531,7 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1317</span>
+    <span class="build-date">v1.1318</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1853,7 +1853,10 @@ header + * { margin-top: 4px; }
     </div>
     <div class="modal-field">
       <label class="modal-label">画像URL または 楽天商品ページURL</label>
-      <input type="text" class="modal-input" id="editImgInput" placeholder="https://item.rakuten.co.jp/yukaiya/10001288/ または画像URL直接">
+      <div style="display:flex;gap:6px;align-items:stretch">
+        <input type="text" class="modal-input" id="editImgInput" placeholder="https://item.rakuten.co.jp/yukaiya/10001288/ または画像URL直接" style="flex:1;min-width:0">
+        <button class="modal-btn" onclick="fetchImgFromUrl()" style="flex:0 0 auto;white-space:nowrap;margin:0">画像を取得</button>
+      </div>
       <div class="modal-hint">楽天商品ページのURLを入れると画像を自動取得します。空欄にするとAPI取得に戻ります。</div>
     </div>
     <div id="editImgPreview" style="margin:8px 0;min-height:44px"></div>
@@ -1870,7 +1873,6 @@ header + * { margin-top: 4px; }
     <div id="editModalStatus" class="modal-status"></div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="closeEditModal()">閉じる</button>
-      <button class="modal-btn" onclick="fetchImgFromUrl()">画像を取得</button>
       <button class="modal-btn save" onclick="saveEditItem()">保存</button>
     </div>
   </div>
