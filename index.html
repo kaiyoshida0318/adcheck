@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1335</span>
+    <span class="build-date">v1.1336</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3849,29 +3849,34 @@ async function _stockCheckOne(){
   if(!code){ out.textContent = '商品管理番号を入力してください。'; return; }
   const appId = localStorage.getItem('rakuten_app_id'), accessKey = localStorage.getItem('rakuten_access_key'), shopCode = localStorage.getItem('rakuten_shop_code');
   if(!appId || !shopCode){ out.innerHTML = '<span style="color:#c62828">アプリID・店舗コードを設定してください。</span>'; return; }
-  out.textContent = '確認中…';
   const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
   const inDB = (typeof DB!=='undefined' && DB[code]) ? 'あり' : 'なし';
   const inPC = (productCache && productCache[code]) ? ('あり'+(productCache[code].retired?'(引退済)':'')) : 'なし';
-  try{
-    // itemCode検索（フル項目）。availabilityと在庫関連を確認
-    const url = `${BASE}?applicationId=${encodeURIComponent(appId)}${accessKey?('&accessKey='+encodeURIComponent(accessKey)):''}&itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&format=json`;
-    const res = await fetch(url, { headers:{ 'Origin':'https://kaiyoshida0318.github.io' } });
-    const data = await res.json().catch(()=>null);
-    if(data && (data.error || data.error_description)){ out.innerHTML = '<span style="color:#c62828">楽天APIエラー：'+esc(data.error_description||data.error)+'</span>'; return; }
-    const it = data && data.Items && data.Items[0] && data.Items[0].Item;
-    let head = `<div style="color:var(--text3);font-size:10px">ADcheck内: DB=${inDB} / 商品マスタ=${inPC}</div>`;
-    if(!it){
-      out.innerHTML = head + '<span style="color:#e65100;font-weight:700">⚠ 楽天の検索でヒットしませんでした。</span><br>掲載終了、または商品管理番号（店舗コード:番号）が楽天のitemCodeと一致していない可能性があります。';
+  const head = `<div style="color:var(--text3);font-size:10px">ADcheck内: DB=${inDB} / 商品マスタ=${inPC}</div>`;
+  const url = `${BASE}?applicationId=${encodeURIComponent(appId)}${accessKey?('&accessKey='+encodeURIComponent(accessKey)):''}&itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&format=json`;
+  // 「API Configuration not found」は間欠的なので最大5回リトライ
+  let lastErr = '';
+  for(let attempt=1; attempt<=5; attempt++){
+    out.innerHTML = head + '確認中… ('+attempt+'/5)';
+    try{
+      const res = await fetch(url, { headers:{ 'Origin':'https://kaiyoshida0318.github.io' } });
+      const data = await res.json().catch(()=>null);
+      if(data && (data.error || data.error_description)){ lastErr = data.error_description || data.error; await new Promise(r=>setTimeout(r,1500)); continue; }
+      const it = data && data.Items && data.Items[0] && data.Items[0].Item;
+      if(!it){
+        out.innerHTML = head + '<span style="color:#e65100;font-weight:700">⚠ 楽天の検索でヒットしませんでした。</span><br>掲載終了、または商品管理番号（店舗コード:番号）が楽天のitemCodeと一致していない可能性があります。';
+        return;
+      }
+      const av = (it.availability===0 || it.availability==='0') ? 0 : 1;
+      out.innerHTML = head
+        + '商品名: '+esc(it.itemName||'(不明)')+'<br>'
+        + 'availability: <b style="color:'+(av===0?'#b71c1c':'#16a34a')+'">'+av+(av===0?' ＝在庫切れ/販売不可':' ＝販売可能')+'</b>'
+        + (it.itemPrice!=null?'<br>価格: ¥'+it.itemPrice:'')
+        + (av===1 ? '<br><span style="color:#e65100">※ RMSで在庫0でも、別SKUに在庫がある/在庫連動オフ/取り寄せ設定などの場合、楽天のavailabilityは1（販売可能）を返します。その場合この在庫チェックでは検出できません。</span>' : '');
       return;
-    }
-    const av = (it.availability===0 || it.availability==='0') ? 0 : 1;
-    out.innerHTML = head
-      + '商品名: '+esc(it.itemName||'(不明)')+'<br>'
-      + 'availability: <b style="color:'+(av===0?'#b71c1c':'#16a34a')+'">'+av+(av===0?' ＝在庫切れ/販売不可':' ＝販売可能')+'</b>'
-      + (it.itemPrice!=null?'<br>価格: ¥'+it.itemPrice:'')
-      + (av===1 ? '<br><span style="color:#e65100">※ RMSで在庫0でも、別SKUに在庫がある/在庫連動オフ/取り寄せ設定などの場合、楽天のavailabilityは1（販売可能）を返します。その場合この在庫チェックでは検出できません。</span>' : '');
-  }catch(e){ out.innerHTML = '<span style="color:#c62828">通信/CORSエラー。時間をおいて再試行してください。</span>'; }
+    }catch(e){ lastErr = '通信/CORSエラー'; await new Promise(r=>setTimeout(r,1500)); }
+  }
+  out.innerHTML = head + '<span style="color:#c62828">楽天APIエラー：'+esc(lastErr||'不明')+'（5回試行しても失敗）</span>';
 }
 function _stockFmtDT(iso){ try{ const d=new Date(iso); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }catch(e){ return ''; } }
 function renderStockModal(){
