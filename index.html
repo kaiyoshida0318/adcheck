@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1345</span>
+    <span class="build-date">v1.1346</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3825,6 +3825,13 @@ async function _stockPublish(){
   }catch(e){ return false; }
 }
 function _stockDismiss(){ _stockAlertDismissed = true; renderStockAlert(); }
+// 今日すでに在庫チェック済みか（済みなら開いただけでは再スキャンしない）
+function _stockCheckedToday(){
+  if(!_stockCheckedAt) return false;
+  try{ const d=new Date(_stockCheckedAt), n=new Date();
+    return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth() && d.getDate()===n.getDate();
+  }catch(e){ return false; }
+}
 // 在庫状態はヘッダーの「在庫チェック」ボタンの色だけで表す（帯は v1.1345 で廃止）
 //   在庫切れあり → 赤ベタ塗り ／ 問題なし → 緑枠に「在庫チェック MMDD」 ／ 未チェック → 既定 ／ 失敗 → 黄枠
 function renderStockAlert(){
@@ -3851,8 +3858,9 @@ function openStockModal(){
   _stockAlertDismissed = false;
   m.classList.add('open');
   renderStockModal();
-  // 押した時点で最新化のためスキャンを開始（実行中なら二重起動しない）
-  if(!_stockScanRunning){ try{ runStockScan(true); }catch(e){} }
+  // 今日すでにチェック済みなら開いただけでは再スキャンしない（保存済みの結果をそのまま表示）。
+  // 更新したいときはモーダルの「🔄 再チェック」を押す。 v1.1346
+  if(!_stockScanRunning && !_stockCheckedToday()){ try{ runStockScan(true); }catch(e){} }
 }
 function closeStockModal(){ const m = document.getElementById('stockModal'); if(m) m.classList.remove('open'); }
 // 商品コードを1つだけ楽天APIで確認（診断用）。「在庫0なのに検出されない」原因の切り分けに使う。
@@ -4014,6 +4022,8 @@ function _stockJsonp(url){
 // さらに shopCode一括(速い) → itemCode個別(確実) の順でフォールバック。
 async function runStockScan(userTriggered, isAuto){
   if(_stockScanRunning) return;
+  // 手動でも自動でもない呼び出しはスキャンしない（＝勝手に「確認中…」にならない）。v1.1346
+  if(!userTriggered && !isAuto){ renderStockAlert(); return; }
   const appId = localStorage.getItem('rakuten_app_id');
   const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
@@ -15960,9 +15970,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   try{ await _stockFetch(); }catch(e){}
   try{ setTimeout(function(){
     try{
-      var checkedToday = false;
-      if(_stockCheckedAt){ var d=new Date(_stockCheckedAt), n=new Date(); checkedToday = (d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth() && d.getDate()===n.getDate()); }
-      runStockScan(false, !checkedToday); // 今日まだ未チェックなら自動実行
+      // 今日すでにチェック済みなら何もしない（保存済みの結果を表示するだけ）。v1.1346
+      // ※以前は checkedToday でも runStockScan を呼んでおり、開くたびに全件スキャンが走っていた
+      if(_stockCheckedToday()){ renderStockAlert(); return; }
+      runStockScan(false, true); // 今日まだ未チェックのときだけ自動実行
     }catch(e){}
   }, 1500); }catch(e){}
   if (loaded) {
