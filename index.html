@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="runStockScan(true)" title="楽天APIで在庫切れ商品（引退済以外）をチェックして上部に表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1327</span>
+    <span class="build-date">v1.1328</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3873,39 +3873,33 @@ async function runStockScan(userTriggered){
     if(!epErr) ok = true; else if(!apiErr) apiErr = epErr;
   }
 
-  // ── 方式B: itemCodeで1件ずつ（確実だが遅い）。一括が全滅した場合のみ ──
-  if(!ok){
+  // ── 方式B: Marketplaceの itemCode で1件ずつ（画像取得と同じ・実績あり）。
+  //     「API Configuration not found」等は間欠的に起きるので、各商品を最大3回リトライして乗り越える。
+  //     全件は時間がかかる(商品数×1.2秒)ため、手動ボタン(userTriggered)のときだけ実行。起動時は前回結果のまま。 ──
+  if(!ok && userTriggered){
     const codes = Object.keys(DB).filter(c => !productCache[c]?.retired);
-    // まず1件テストして、使えるエンドポイントを選ぶ
-    let chosen = null;
-    for(const ep of ENDPOINTS){
-      const c0 = codes[0]; if(!c0) break;
-      let tErr='';
-      try{
-        const data = await _apiGet(ep, `itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(c0)}&hits=1&elements=itemCode,availability`);
-        if(data && !(data.error || data.error_description)){ chosen = ep; const it=data.Items&&data.Items[0]&&data.Items[0].Item; if(it) availMap[c0]=readAvail(it); }
-        else if(data && (data.error || data.error_description)){ tErr = data.error_description || data.error; apiErr = tErr; }
-      }catch(e){ tErr = (ep.mode==='jsonp'?'公開API取得失敗':'通信エラー'); apiErr = apiErr || tErr; }
-      diag.push(epName(ep) + '個別: ' + (chosen===ep ? 'OK' : (tErr||'応答なし')));
-      try{ console.warn('[ADcheck][stock] '+epName(ep)+' item: '+(chosen===ep?'OK':(tErr||'応答なし'))); }catch(_){}
-      if(chosen) break;
+    const mp = ENDPOINTS.find(e => e.mode === 'fetch') || ENDPOINTS[0]; // Marketplace(itemCodeは動く実績)
+    let done = 0, consecFail = 0, anyOk = false, lastErr = '';
+    for(const code of codes){
+      if(availMap[code] !== undefined){ done++; continue; }
+      setHbtn(`🚨 チェック中 ${done+1}/${codes.length}`);
+      let got = false;
+      for(let attempt = 0; attempt < 3 && !got; attempt++){
+        try{
+          const data = await _apiGet(mp, `itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&elements=itemCode,availability`);
+          if(data && (data.error || data.error_description)){ lastErr = data.error_description || data.error; await new Promise(r=>setTimeout(r,1500)); continue; }
+          const it = data && data.Items && data.Items[0] && data.Items[0].Item;
+          if(it) availMap[code] = readAvail(it);
+          got = true; anyOk = true; consecFail = 0;
+        }catch(e){ lastErr = '通信エラー'; await new Promise(r=>setTimeout(r,1500)); }
+      }
+      if(!got){ consecFail++; if(consecFail >= 15){ apiErr = lastErr || apiErr; break; } } // 15件連続失敗ならAPI不調とみなし中断
+      done++;
       await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
     }
-    if(chosen){
-      let done = 1;
-      for(const code of codes){
-        if(availMap[code] !== undefined){ done++; continue; }
-        setHbtn(`🚨 チェック中 ${done}/${codes.length}`);
-        try{
-          const data = await _apiGet(chosen, `itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&elements=itemCode,availability`);
-          if(data && (data.error || data.error_description)){ apiErr = data.error_description || data.error; break; }
-          const it=data && data.Items && data.Items[0] && data.Items[0].Item; if(it) availMap[code]=readAvail(it);
-        }catch(e){}
-        done++;
-        await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
-      }
-      ok = true;
-    }
+    if(anyOk) ok = true; else if(lastErr && !apiErr) apiErr = lastErr;
+    diag.push('Marketplace個別(リトライ): ' + (anyOk ? ('成功 '+Object.keys(availMap).length+'件') : (lastErr||'全滅')));
+    try{ console.warn('[ADcheck][stock] itemCode retry result: '+(anyOk?('ok '+Object.keys(availMap).length):('fail '+lastErr))); }catch(_){}
   }
 
   if(ok){
