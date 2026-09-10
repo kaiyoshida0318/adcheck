@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1340</span>
+    <span class="build-date">v1.1341</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3895,18 +3895,19 @@ async function _stockCheckOne(){
   const inPC = (productCache && productCache[code]) ? ('あり'+(productCache[code].retired?'(引退済)':'')) : 'なし';
   const head = `<div style="color:var(--text3);font-size:10px">ADcheck内: DB=${inDB} / 商品マスタ=${inPC}</div>`;
   const qs = `itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&format=json`;
-  // 楽天WS(appId+accessKey)があればそれをopenapiで使う。無ければRMSキー。「Configuration not found」は間欠的なので最大5回リトライ
+  // 楽天WS(appId+accessKey)があれば公開API(JSONP)にappId+accessKeyを送る。無ければRMSキーでopenapi。最大5回リトライ
   const useWs = !!(wsId && wsKey);
-  const label = useWs ? '楽天WS' : 'RMS';
-  const uAppId = useWs ? wsId : appId;
-  const uKey = useWs ? wsKey : accessKey;
-  const url = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601?applicationId=${encodeURIComponent(uAppId)}${uKey?('&accessKey='+encodeURIComponent(uKey)):''}&${qs}`;
+  const label = useWs ? '公開API+WSキー' : 'RMS(openapi)';
+  const url = useWs
+    ? `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601?applicationId=${encodeURIComponent(wsId)}&accessKey=${encodeURIComponent(wsKey)}&${qs}`
+    : `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601?applicationId=${encodeURIComponent(appId)}${accessKey?('&accessKey='+encodeURIComponent(accessKey)):''}&${qs}`;
   let lastErr = '';
   for(let attempt=1; attempt<=5; attempt++){
     out.innerHTML = head + '確認中… ('+attempt+'/5・'+label+')';
     try{
-      const res = await fetch(url, { headers:{ 'Origin':'https://kaiyoshida0318.github.io' } });
-      const data = await res.json().catch(()=>null);
+      let data;
+      if(useWs){ data = await _stockJsonp(url); }
+      else { const res = await fetch(url, { headers:{ 'Origin':'https://kaiyoshida0318.github.io' } }); data = await res.json().catch(()=>null); }
       if(data && (data.error || data.error_description)){ lastErr = data.error_description || data.error; await new Promise(r=>setTimeout(r,1500)); continue; }
       const it = data && data.Items && data.Items[0] && data.Items[0].Item;
       if(!it){
@@ -4062,11 +4063,12 @@ async function runStockScan(userTriggered, isAuto){
   const _hasWs  = !!(wsAppId && wsKey);
   const OPENAPI = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
   const PUBAPI  = 'https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601';
-  // ① 楽天WS(openapi・appId+accessKey・fetch)＝新アプリ推奨  ② RMS(openapi・fetch)  ③ 公開API(JSONP)
-  const _ep_ws  = { base:OPENAPI, keyQ:'&accessKey='+encodeURIComponent(wsKey), mode:'fetch', appId:wsAppId, label:'楽天WS(openapi)' };
-  const _ep_mp  = { base:OPENAPI, keyQ: accessKey ? ('&accessKey='+encodeURIComponent(accessKey)) : '', mode:'fetch', appId: appId, label:'RMS(openapi)' };
-  const _ep_pub = { base:PUBAPI,  keyQ:'', mode:'jsonp', appId: (wsAppId||appId), label:'公開API(JSONP)' };
-  const ENDPOINTS = _hasWs ? [ _ep_ws, _ep_mp, _ep_pub ] : [ _ep_mp, _ep_pub ];
+  // ① 公開API+WSキー(JSONP・appId+accessKey)＝新アプリの本命  ② 楽天WS(openapi)  ③ RMS(openapi)  ④ 公開API(appIdのみ)
+  const _ep_pubws = { base:PUBAPI,  keyQ:'&accessKey='+encodeURIComponent(wsKey), mode:'jsonp', appId:wsAppId, label:'公開API+WSキー(JSONP)' };
+  const _ep_ws    = { base:OPENAPI, keyQ:'&accessKey='+encodeURIComponent(wsKey), mode:'fetch', appId:wsAppId, label:'楽天WS(openapi)' };
+  const _ep_mp    = { base:OPENAPI, keyQ: accessKey ? ('&accessKey='+encodeURIComponent(accessKey)) : '', mode:'fetch', appId: appId, label:'RMS(openapi)' };
+  const _ep_pub   = { base:PUBAPI,  keyQ:'', mode:'jsonp', appId: (wsAppId||appId), label:'公開API(JSONP)' };
+  const ENDPOINTS = _hasWs ? [ _ep_pubws, _ep_ws, _ep_mp, _ep_pub ] : [ _ep_mp, _ep_pub ];
   // 1回のAPI取得（fetch or JSONP）。data（error含む）を返す。通信失敗は例外。
   async function _apiGet(ep, qs){
     const url = `${ep.base}?applicationId=${encodeURIComponent(ep.appId||appId)}${ep.keyQ}&${qs}&format=json`;
