@@ -531,8 +531,8 @@ header + * { margin-top: 4px; }
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
-    <button id="stockCheckBtn" onclick="runStockScan(true)" title="楽天APIで在庫切れ商品（引退済以外）をチェックして上部に表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1332</span>
+    <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
+    <span class="build-date">v1.1333</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -624,7 +624,7 @@ header + * { margin-top: 4px; }
 <div id="mainScreen">
 
   <!-- 在庫切れアラート（起動時・引退済以外の在庫切れを大きく表示） -->
-  <div id="stockAlertBar" style="display:none;position:sticky;top:0;z-index:400;margin:0 0 4px;padding:14px 18px;background:#b71c1c;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.25)">
+  <div id="stockAlertBar" style="display:none;position:sticky;top:0;z-index:199;margin:0 0 4px;padding:14px 18px;background:#b71c1c;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.25)">
     <div style="display:flex;align-items:flex-start;gap:12px;max-width:1400px;margin:0 auto">
       <div style="font-size:30px;line-height:1;flex-shrink:0">🚨</div>
       <div style="flex:1;min-width:0">
@@ -1704,6 +1704,22 @@ header + * { margin-top: 4px; }
     </div>
     <div style="margin-top:20px;text-align:right">
       <button class="header-btn" onclick="closeSettingsMenu()" style="font-size:13px">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 在庫切れチェック モーダル -->
+<div class="modal-overlay" id="stockModal" onclick="if(event.target===this)closeStockModal()">
+  <div class="modal" style="max-width:640px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
+      <h3 style="margin:0">🚨 在庫切れチェック</h3>
+      <button id="stockModalRecheck" onclick="runStockScan(true)" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:700">🔄 再チェック</button>
+    </div>
+    <div id="stockModalStatus" style="font-size:12px;color:var(--text3);margin:6px 0 10px"></div>
+    <div id="stockModalBody" style="max-height:44vh;overflow-y:auto"></div>
+    <div id="stockModalHistory" style="margin-top:12px"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="modal-btn" onclick="closeStockModal()">閉じる</button>
     </div>
   </div>
 </div>
@@ -3739,6 +3755,9 @@ let _stockSoldOut = [];          // 在庫切れの商品コード配列
 let _stockCheckedAt = '';        // 最終チェック日時(ISO)
 let _stockScanRunning = false;
 let _stockAlertDismissed = false; // 今回だけ閉じる
+let _stockHistory = [];          // 直近のチェック履歴 [{at, count}]
+let _stockProgress = '';         // スキャン中の進捗テキスト
+let _stockLastError = '';        // 直近の失敗内容（モーダル表示用）
 function _stockGhFile(){ return `${_shopDataDir()}/stock_status.json`; }
 // GitHubから前回結果を取得（起動時の即表示用）
 async function _stockFetch(){
@@ -3752,7 +3771,7 @@ async function _stockFetch(){
       if(r.ok) obj = JSON.parse(await r.text());
     }catch(e){}
     if(!obj){ const rr = await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+file+'?t='+Date.now(), { cache:'no-store' }); if(rr.ok) obj = JSON.parse(await rr.text()); }
-    if(obj && Array.isArray(obj.soldOut)){ _stockSoldOut = obj.soldOut.slice(); _stockCheckedAt = obj.checkedAt || ''; renderStockAlert(); return true; }
+    if(obj && Array.isArray(obj.soldOut)){ _stockSoldOut = obj.soldOut.slice(); _stockCheckedAt = obj.checkedAt || ''; _stockHistory = Array.isArray(obj.history) ? obj.history.slice() : []; renderStockAlert(); return true; }
   }catch(e){}
   return false;
 }
@@ -3765,7 +3784,7 @@ async function _stockPublish(){
     const url = 'https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+file;
     const getRes = await fetch(url, { headers, cache:'no-store' });
     const sha = getRes.ok ? (await getRes.json()).sha : null;
-    const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ soldOut:_stockSoldOut, checkedAt:_stockCheckedAt }))));
+    const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ soldOut:_stockSoldOut, checkedAt:_stockCheckedAt, history:_stockHistory }))));
     const body = { message:'Update stock status', content:base64 }; if(sha) body.sha = sha;
     const putRes = await fetch(url, { method:'PUT', headers, body:JSON.stringify(body) });
     return putRes.ok;
@@ -3803,6 +3822,72 @@ function renderStockAlert(){
   }
   bar.style.display = 'block';
 }
+// ===== 在庫切れチェック モーダル =====
+function openStockModal(){
+  const m = document.getElementById('stockModal'); if(!m) return;
+  _stockAlertDismissed = false;
+  m.classList.add('open');
+  renderStockModal();
+  // 押した時点で最新化のためスキャンを開始（実行中なら二重起動しない）
+  if(!_stockScanRunning){ try{ runStockScan(true); }catch(e){} }
+}
+function closeStockModal(){ const m = document.getElementById('stockModal'); if(m) m.classList.remove('open'); }
+function _stockFmtDT(iso){ try{ const d=new Date(iso); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }catch(e){ return ''; } }
+function renderStockModal(){
+  const m = document.getElementById('stockModal'); if(!m || !m.classList.contains('open')) return;
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const sc = localStorage.getItem('rakuten_shop_code') || 'yukaiya';
+  // ステータス行
+  const st = document.getElementById('stockModalStatus');
+  if(st){
+    if(_stockScanRunning){ st.innerHTML = '<span style="color:#1565c0;font-weight:700">🔄 '+esc(_stockProgress||'在庫を確認中…')+'</span>（このタブを開いたままお待ちください）'; }
+    else if(_stockLastError){ st.innerHTML = '<span style="color:#c62828;font-weight:700">⚠ 前回チェックでエラー：'+esc(_stockLastError)+'</span>'; }
+    else if(_stockCheckedAt){ st.textContent = '最終チェック: ' + _stockFmtDT(_stockCheckedAt); }
+    else { st.textContent = 'まだチェックしていません。「🔄 再チェック」で実行します。'; }
+  }
+  // 現在の在庫切れ一覧
+  const body = document.getElementById('stockModalBody');
+  if(body){
+    const codes = (_stockSoldOut||[]).filter(c => DB[c] && !productCache[c]?.retired);
+    if(codes.length === 0){
+      body.innerHTML = _stockScanRunning
+        ? '<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">確認中です…</div>'
+        : '<div style="padding:16px;text-align:center;color:#16a34a;font-size:14px;font-weight:700">✅ 在庫切れの商品はありません</div>';
+    } else {
+      let h = '<div style="font-size:13px;font-weight:800;color:#b71c1c;margin-bottom:8px">🚨 現在 在庫切れ '+codes.length+' 件</div>';
+      h += codes.map(c => {
+        const pc = productCache[c] || {};
+        const nm = pc.manualName || pc.name || c;
+        const num = pc.itemNumber ? esc(pc.itemNumber) : '';
+        const img = pc.manualImg || pc.img || '';
+        const rk = `https://item.rakuten.co.jp/${encodeURIComponent(sc)}/${encodeURIComponent(c)}/`;
+        const im = img ? `<img src="${esc(img)}" style="width:38px;height:38px;object-fit:contain;border-radius:5px;border:1px solid var(--border);flex:0 0 auto">` : '<div style="width:38px;height:38px;background:var(--surface2);border-radius:5px;flex:0 0 auto"></div>';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;background:#fff5f5">`
+          + im
+          + `<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nm)}</div><div style="font-size:10px;color:var(--text3)">${num? '商品番号 '+num+' / ':''}${esc(c)}</div></div>`
+          + `<button onclick="closeStockModal();openEditModal('${c}')" style="font-size:11px;padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">編集</button>`
+          + `<a href="${rk}" target="_blank" rel="noopener" style="font-size:11px;padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:#1565c0;text-decoration:none;white-space:nowrap">楽天↗</a>`
+          + `</div>`;
+      }).join('');
+      body.innerHTML = h;
+    }
+  }
+  // 直近のチェック履歴
+  const hist = document.getElementById('stockModalHistory');
+  if(hist){
+    const rows = (_stockHistory||[]).slice(0,8);
+    if(!rows.length){ hist.innerHTML = ''; }
+    else {
+      hist.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px;border-top:1px solid var(--border);padding-top:10px">🗓 直近のチェック履歴</div>'
+        + '<div style="font-size:11px">'
+        + rows.map(r => `<div style="display:flex;justify-content:space-between;padding:3px 4px;border-bottom:1px dotted var(--border)"><span style="color:var(--text3)">${esc(_stockFmtDT(r.at))}</span><span style="font-weight:700;color:${(r.count>0)?'#b71c1c':'#16a34a'}">${(r.count>0)?('在庫切れ '+r.count+' 件'):'在庫切れなし'}</span></div>`).join('')
+        + '</div>';
+    }
+  }
+  // 再チェックボタンの状態
+  const rb = document.getElementById('stockModalRecheck');
+  if(rb){ rb.disabled = _stockScanRunning; rb.textContent = _stockScanRunning ? '🔄 チェック中…' : '🔄 再チェック'; }
+}
 // JSONP取得（CORS不可の一般公開APIをブラウザから呼ぶため）。callbackを付けて<script>で読み込む。
 function _stockJsonp(url){
   return new Promise((resolve, reject) => {
@@ -3828,10 +3913,12 @@ async function runStockScan(userTriggered, isAuto){
   const shopCode = localStorage.getItem('rakuten_shop_code');
   if(!appId || !shopCode){ if(userTriggered) alert('楽天アプリID・店舗コードを設定してください（設定画面）。'); return; }
   if(userTriggered) _stockAlertDismissed = false;
-  _stockScanRunning = true; renderStockAlert();
+  _stockScanRunning = true; _stockLastError = ''; _stockProgress = '在庫を確認中…';
+  renderStockAlert(); try{ renderStockModal(); }catch(e){}
   const btn = document.getElementById('stockRecheckBtn'); if(btn){ btn.disabled=true; btn.textContent='チェック中…'; }
   const hbtn = document.getElementById('stockCheckBtn'); if(hbtn){ hbtn.disabled=true; hbtn.textContent='🚨 チェック中…'; }
-  const setHbtn = t => { if(hbtn) hbtn.textContent = t; };
+  // 進捗表示：ヘッダーボタン＋モーダルのステータス両方を更新
+  const setHbtn = t => { if(hbtn) hbtn.textContent = t; _stockProgress = String(t).replace('🚨 ',''); const ms=document.getElementById('stockModalStatus'); if(ms && document.getElementById('stockModal')?.classList.contains('open')){ try{ renderStockModal(); }catch(e){} } };
   const headers = { 'Origin':'https://kaiyoshida0318.github.io' };
   const SAFE_INTERVAL = 1200;
   const availMap = {};   // code -> availability(0/1)
@@ -3913,13 +4000,21 @@ async function runStockScan(userTriggered, isAuto){
     // 引退済以外で availability=0（在庫切れ）の商品を抽出
     _stockSoldOut = Object.keys(DB).filter(c => !productCache[c]?.retired && availMap[c] === 0);
     _stockCheckedAt = new Date().toISOString();
+    _stockLastError = '';
+    // 履歴に追加（直近10件保持）
+    _stockHistory = ([{ at:_stockCheckedAt, count:_stockSoldOut.length }].concat(_stockHistory||[])).slice(0,10);
     try{ await _stockPublish(); }catch(e){}
+  } else {
+    _stockLastError = apiErr || 'チェックに失敗しました';
   }
-  _stockScanRunning = false;
+  _stockScanRunning = false; _stockProgress = '';
   if(btn){ btn.disabled=false; btn.textContent='再チェック'; }
   if(hbtn){ hbtn.disabled=false; hbtn.textContent='🚨 在庫チェック'; }
   renderStockAlert();
-  if(userTriggered){
+  const modalOpen = !!document.getElementById('stockModal')?.classList.contains('open');
+  try{ renderStockModal(); }catch(e){}
+  // モーダルが開いていれば結果はモーダルに出るのでalertは出さない
+  if(userTriggered && !modalOpen){
     if(!ok){
       let msg = '在庫チェックに失敗しました。\n\n【診断】\n' + (diag.length ? diag.join('\n') : '(記録なし)') + '\n\n';
       if(/Configuration not found/i.test(apiErr||'')){
