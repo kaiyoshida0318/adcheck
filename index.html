@@ -530,8 +530,9 @@ header + * { margin-top: 4px; }
     </div>
   </div>
   <div class="header-right">
-    <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px">分析</button>
-    <span class="build-date">v1.1319</span>
+    <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
+    <button id="stockCheckBtn" onclick="runStockScan(true)" title="楽天APIで在庫切れ商品（引退済以外）をチェックして上部に表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
+    <span class="build-date">v1.1320</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3789,6 +3790,7 @@ async function runStockScan(userTriggered){
   if(userTriggered) _stockAlertDismissed = false;
   _stockScanRunning = true; renderStockAlert();
   const btn = document.getElementById('stockRecheckBtn'); if(btn){ btn.disabled=true; btn.textContent='チェック中…'; }
+  const hbtn = document.getElementById('stockCheckBtn'); if(hbtn){ hbtn.disabled=true; hbtn.textContent='🚨 チェック中…'; }
   const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
   const headers = { 'Origin':'https://kaiyoshida0318.github.io' };
   const SAFE_INTERVAL = 1200;
@@ -3822,10 +3824,14 @@ async function runStockScan(userTriggered){
   }
   _stockScanRunning = false;
   if(btn){ btn.disabled=false; btn.textContent='再チェック'; }
+  if(hbtn){ hbtn.disabled=false; hbtn.textContent='🚨 在庫チェック'; }
   renderStockAlert();
-  if(userTriggered && ok){
-    const n = (_stockSoldOut||[]).filter(c=>DB[c]&&!productCache[c]?.retired).length;
-    if(n===0) alert('在庫切れの商品はありませんでした。');
+  if(userTriggered){
+    if(!ok){ alert('在庫チェックに失敗しました。通信状況・楽天APIの設定（アプリID／アクセスキー／店舗コード）を確認してください。'); }
+    else {
+      const n = (_stockSoldOut||[]).filter(c=>DB[c]&&!productCache[c]?.retired).length;
+      if(n===0) alert('在庫切れの商品はありませんでした。');
+    }
   }
 }
 
