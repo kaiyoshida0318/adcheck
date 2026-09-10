@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1346</span>
+    <span class="build-date">v1.1347</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3777,6 +3777,7 @@ let _stockProgress = '';         // スキャン中の進捗テキスト
 let _stockLastError = '';        // 直近の失敗内容（モーダル表示用）
 let _stockLog = [];              // 在庫チェックの動作ログ（モーダルでコピー用）
 let _stockInfo = {};             // 在庫切れ商品の楽天側情報 {code:{n:商品名, i:画像URL}}。ADcheck未登録の商品も名前を出すため（v1.1346）
+let _stockUnchecked = [];        // 在庫を確認できなかった商品コード（楽天の検索結果に出てこない＝削除済/非表示の可能性）v1.1347
 function _stockLogPush(msg){
   try{
     const t=new Date();
@@ -3806,7 +3807,7 @@ async function _stockFetch(){
       if(r.ok) obj = JSON.parse(await r.text());
     }catch(e){}
     if(!obj){ const rr = await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+file+'?t='+Date.now(), { cache:'no-store' }); if(rr.ok) obj = JSON.parse(await rr.text()); }
-    if(obj && Array.isArray(obj.soldOut)){ _stockSoldOut = obj.soldOut.slice(); _stockCheckedAt = obj.checkedAt || ''; _stockDaily = Array.isArray(obj.daily) ? obj.daily.slice() : []; _stockInfo = (obj.info && typeof obj.info==='object') ? obj.info : {}; renderStockAlert(); return true; }
+    if(obj && Array.isArray(obj.soldOut)){ _stockSoldOut = obj.soldOut.slice(); _stockCheckedAt = obj.checkedAt || ''; _stockDaily = Array.isArray(obj.daily) ? obj.daily.slice() : []; _stockInfo = (obj.info && typeof obj.info==='object') ? obj.info : {}; _stockUnchecked = Array.isArray(obj.unchecked) ? obj.unchecked.slice() : []; renderStockAlert(); return true; }
   }catch(e){}
   return false;
 }
@@ -3819,7 +3820,7 @@ async function _stockPublish(){
     const url = 'https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+file;
     const getRes = await fetch(url, { headers, cache:'no-store' });
     const sha = getRes.ok ? (await getRes.json()).sha : null;
-    const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ soldOut:_stockSoldOut, checkedAt:_stockCheckedAt, daily:_stockDaily, info:_stockInfo }))));
+    const base64 = btoa(unescape(encodeURIComponent(JSON.stringify({ soldOut:_stockSoldOut, checkedAt:_stockCheckedAt, daily:_stockDaily, info:_stockInfo, unchecked:_stockUnchecked }))));
     const body = { message:'Update stock status', content:base64 }; if(sha) body.sha = sha;
     const putRes = await fetch(url, { method:'PUT', headers, body:JSON.stringify(body) });
     return putRes.ok;
@@ -3986,6 +3987,36 @@ function renderStockModal(){
         h += '<div style="font-size:11px;font-weight:700;color:var(--text3);margin:10px 0 6px">🗂 引退済商品の在庫切れ（参考）</div>';
         h += retired.map(c => itemRow(c, 'var(--surface2)')).join('');
       }
+    }
+    // ── 在庫を確認できなかった商品（楽天の検索結果に出てこない）v1.1347 ──
+    const unchk = (_stockUnchecked||[]);
+    if(unchk.length > 0){
+      const act = unchk.filter(c => _stockKind(c)!=='retired');
+      const ret = unchk.filter(c => _stockKind(c)==='retired');
+      h += `<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:10px">`
+        + `<div style="font-size:11px;font-weight:700;color:#8a6100;margin-bottom:2px">🔍 在庫を確認できなかった商品 ${unchk.length} 件</div>`
+        + `<div style="font-size:10px;color:var(--text3);line-height:1.6;margin-bottom:6px">`
+        + `楽天の検索結果に出てこないため在庫を判定できていません（削除済み・非表示・販売終了の可能性）。`
+        + `<b>在庫切れにも在庫ありにも数えていません。</b>`
+        + `</div>`;
+      const chip = (c) => {
+        const pc = productCache[c] || {};
+        const nm = pc.manualName || pc.name || '';
+        const rk = `https://item.rakuten.co.jp/${encodeURIComponent(sc)}/${encodeURIComponent(c)}/`;
+        const isRet = _stockKind(c)==='retired';
+        return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;border:1px solid var(--border);border-radius:5px;padding:2px 7px;margin:0 5px 5px 0;background:${isRet?'var(--surface2)':'#fffbf0'}">`
+          + `<span style="font-family:'DM Mono',monospace;color:var(--text2)">${esc(c)}</span>`
+          + (nm ? `<span style="color:var(--text3);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nm)}</span>` : '')
+          + (isRet ? `<span style="font-size:9px;color:var(--text3)">引退済</span>` : '')
+          + `<a href="${rk}" target="_blank" rel="noopener" title="楽天ページを開く" style="color:#1565c0;text-decoration:none">↗</a>`
+          + `</span>`;
+      };
+      if(act.length>0){ h += `<div style="margin-bottom:4px">${act.map(chip).join('')}</div>`; }
+      if(ret.length>0){
+        h += `<div style="font-size:10px;color:var(--text3);margin:6px 0 3px">引退済（${ret.length}件）</div>`
+          + `<div>${ret.map(chip).join('')}</div>`;
+      }
+      h += `</div>`;
     }
     body.innerHTML = h;
   }
@@ -4181,6 +4212,10 @@ async function runStockScan(userTriggered, isAuto){
     const soldAll = Object.keys(availMap).filter(c => availMap[c] === 0);
     _stockSoldOut = soldAll;
     _stockInfo = {}; soldAll.forEach(c => { if(infoMap[c]) _stockInfo[c] = infoMap[c]; }); // 在庫切れ分だけ保持（ファイルを太らせない）
+    // ADcheckが持っているのに一括結果に出てこなかった商品＝在庫を判定できていない。
+    // 「在庫あり」とも「在庫切れ」とも数えていないので、モーダルに一覧で出して気づけるようにする（v1.1347）
+    _stockUnchecked = [...new Set(Object.keys(DB).concat(Object.keys(productCache).filter(c => c && c !== '__global__')))]
+      .filter(c => availMap[c] === undefined);
     _stockCheckedAt = new Date().toISOString();
     _stockLastError = '';
     const activeN  = soldAll.filter(c => _stockKind(c)==='active').length;
@@ -4192,7 +4227,7 @@ async function runStockScan(userTriggered, isAuto){
     _stockDaily = (_stockDaily||[]).filter(x => x.date !== _ds);
     _stockDaily.unshift({ date:_ds, checked:checkedN, active:activeN, retired:retiredN, unknown:unknownN, total:soldAll.length, at:_stockCheckedAt });
     _stockDaily = _stockDaily.slice(0,14);
-    _stockLogPush('✅ 完了: チェック '+checkedN+' 件 → 在庫切れ 合計 '+soldAll.length+' 件（現役 '+activeN+' / 引退 '+retiredN+' / 未登録 '+unknownN+'）');
+    _stockLogPush('✅ 完了: チェック '+checkedN+' 件 → 在庫切れ 合計 '+soldAll.length+' 件（現役 '+activeN+' / 引退 '+retiredN+' / 未登録 '+unknownN+'）／確認できず '+_stockUnchecked.length+' 件');
     try{ await _stockPublish(); }catch(e){}
   } else {
     _stockLastError = apiErr || 'チェックに失敗しました';
