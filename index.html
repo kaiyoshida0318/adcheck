@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="runStockScan(true)" title="楽天APIで在庫切れ商品（引退済以外）をチェックして上部に表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1325</span>
+    <span class="build-date">v1.1326</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3802,6 +3802,20 @@ function renderStockAlert(){
   }
   bar.style.display = 'block';
 }
+// JSONP取得（CORS不可の一般公開APIをブラウザから呼ぶため）。callbackを付けて<script>で読み込む。
+function _stockJsonp(url){
+  return new Promise((resolve, reject) => {
+    const cb = '_rkcb_' + Math.random().toString(36).slice(2);
+    const s = document.createElement('script');
+    let done = false;
+    const cleanup = () => { try{ delete window[cb]; }catch(e){ window[cb] = undefined; } if(s.parentNode) s.parentNode.removeChild(s); };
+    window[cb] = (data) => { done = true; try{ resolve(data); } finally { cleanup(); } };
+    s.onerror = () => { if(!done){ cleanup(); reject(new Error('jsonp error')); } };
+    s.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb;
+    document.head.appendChild(s);
+    setTimeout(() => { if(!done){ cleanup(); reject(new Error('jsonp timeout')); } }, 15000);
+  });
+}
 // 在庫スキャン本体。2系統のAPIを自動で使い分ける：
 //  ① Marketplace API(openapi.rakuten.co.jp/ichibams・要accessKey)
 //  ② 一般公開 Ichiba API(app.rakuten.co.jp・appIdのみ) … ①が「API Configuration not found」等で弾かれた場合の代替
@@ -3821,32 +3835,37 @@ async function runStockScan(userTriggered){
   const SAFE_INTERVAL = 1200;
   const availMap = {};   // code -> availability(0/1)
   let ok = false, apiErr = '';
-  // 試すエンドポイント（Marketplace→一般公開）。keyQ は accessKey 付与部分（無ければ空）
-  const ENDPOINTS = [
-    { base:'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601', keyQ: accessKey ? ('&accessKey='+encodeURIComponent(accessKey)) : '' },
-    { base:'https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601',     keyQ: '' },
-  ];
   const readAvail = it => (it && (it.availability===0 || it.availability==='0')) ? 0 : 1;
+  // 試すエンドポイント：① Marketplace(要accessKey・CORS可なのでfetch) ② 一般公開(appIdのみ・CORS不可なのでJSONP)
+  const ENDPOINTS = [
+    { base:'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601', keyQ: accessKey ? ('&accessKey='+encodeURIComponent(accessKey)) : '', mode:'fetch' },
+    { base:'https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601',     keyQ: '', mode:'jsonp' },
+  ];
+  // 1回のAPI取得（fetch or JSONP）。data（error含む）を返す。通信失敗は例外。
+  async function _apiGet(ep, qs){
+    const url = `${ep.base}?applicationId=${encodeURIComponent(appId)}${ep.keyQ}&${qs}&format=json`;
+    if(ep.mode === 'jsonp') return await _stockJsonp(url);
+    const res = await fetch(url, { headers });
+    const data = await res.json().catch(()=>null);
+    if(!data) throw new Error('HTTP '+res.status);
+    return data;
+  }
 
   // ── 方式A: shopCode一括。各エンドポイントを順に試し、成功したら採用 ──
   for(const ep of ENDPOINTS){
     if(ok) break;
-    let page=1, hasMore=true, rl=0, epErr='';
+    let page=1, hasMore=true, epErr='';
     try{
       while(hasMore){
-        const url = `${ep.base}?applicationId=${encodeURIComponent(appId)}${ep.keyQ}&shopCode=${encodeURIComponent(shopCode)}&availability=0&hits=30&page=${page}&format=json&elements=itemCode,availability`;
-        const res = await fetch(url, { headers });
-        if(res.status === 429){ rl++; if(rl>=3){ epErr='レート制限'; break; } await new Promise(r=>setTimeout(r,5000)); continue; }
-        const data = await res.json().catch(()=>null);
+        const data = await _apiGet(ep, `shopCode=${encodeURIComponent(shopCode)}&availability=0&hits=30&page=${page}&elements=itemCode,availability`);
         if(data && (data.error || data.error_description)){ epErr = data.error_description || data.error; break; }
-        if(!res.ok || !data){ epErr = 'HTTP '+(res?res.status:'?'); break; }
         (data.Items||[]).forEach(({Item:item}) => { if(!item||!item.itemCode) return; const code=item.itemCode.split(':')[1]; if(code) availMap[code]=readAvail(item); });
         const tp = data.pageCount || null;
         hasMore = ((data.Items||[]).length===30) && !(tp && page>=tp);
         page++;
         if(hasMore) await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
       }
-    }catch(e){ epErr = '通信エラー'; }
+    }catch(e){ epErr = (ep.mode==='jsonp'?'公開API取得失敗':'通信エラー'); }
     if(!epErr) ok = true; else if(!apiErr) apiErr = epErr;
   }
 
@@ -3858,27 +3877,21 @@ async function runStockScan(userTriggered){
     for(const ep of ENDPOINTS){
       const c0 = codes[0]; if(!c0) break;
       try{
-        const url = `${ep.base}?applicationId=${encodeURIComponent(appId)}${ep.keyQ}&itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(c0)}&hits=1&format=json&elements=itemCode,availability`;
-        const res = await fetch(url, { headers });
-        const data = await res.json().catch(()=>null);
-        if(res.ok && data && !(data.error || data.error_description)){ chosen = ep; const it=data.Items&&data.Items[0]&&data.Items[0].Item; if(it) availMap[c0]=readAvail(it); break; }
+        const data = await _apiGet(ep, `itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(c0)}&hits=1&elements=itemCode,availability`);
+        if(data && !(data.error || data.error_description)){ chosen = ep; const it=data.Items&&data.Items[0]&&data.Items[0].Item; if(it) availMap[c0]=readAvail(it); break; }
         if(data && (data.error || data.error_description)) apiErr = data.error_description || data.error;
-      }catch(e){ apiErr = apiErr || '通信エラー'; }
+      }catch(e){ apiErr = apiErr || (ep.mode==='jsonp'?'公開API取得失敗':'通信エラー'); }
       await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
     }
     if(chosen){
-      let done = 1, rl = 0;
+      let done = 1;
       for(const code of codes){
         if(availMap[code] !== undefined){ done++; continue; }
-        if(rl >= 3) break;
         setHbtn(`🚨 チェック中 ${done}/${codes.length}`);
         try{
-          const url = `${chosen.base}?applicationId=${encodeURIComponent(appId)}${chosen.keyQ}&itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&format=json&elements=itemCode,availability`;
-          const res = await fetch(url, { headers });
-          if(res.status === 429){ rl++; await new Promise(r=>setTimeout(r,5000)); continue; }
-          const data = await res.json().catch(()=>null);
+          const data = await _apiGet(chosen, `itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&elements=itemCode,availability`);
           if(data && (data.error || data.error_description)){ apiErr = data.error_description || data.error; break; }
-          if(res.ok && data){ const it=data.Items&&data.Items[0]&&data.Items[0].Item; if(it) availMap[code]=readAvail(it); }
+          const it=data && data.Items && data.Items[0] && data.Items[0].Item; if(it) availMap[code]=readAvail(it);
         }catch(e){}
         done++;
         await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
