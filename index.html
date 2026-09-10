@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="runStockScan(true)" title="楽天APIで在庫切れ商品（引退済以外）をチェックして上部に表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1328</span>
+    <span class="build-date">v1.1329</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3820,7 +3820,7 @@ function _stockJsonp(url){
 //  ① Marketplace API(openapi.rakuten.co.jp/ichibams・要accessKey)
 //  ② 一般公開 Ichiba API(app.rakuten.co.jp・appIdのみ) … ①が「API Configuration not found」等で弾かれた場合の代替
 // さらに shopCode一括(速い) → itemCode個別(確実) の順でフォールバック。
-async function runStockScan(userTriggered){
+async function runStockScan(userTriggered, isAuto){
   if(_stockScanRunning) return;
   const appId = localStorage.getItem('rakuten_app_id');
   const accessKey = localStorage.getItem('rakuten_access_key');
@@ -3875,8 +3875,8 @@ async function runStockScan(userTriggered){
 
   // ── 方式B: Marketplaceの itemCode で1件ずつ（画像取得と同じ・実績あり）。
   //     「API Configuration not found」等は間欠的に起きるので、各商品を最大3回リトライして乗り越える。
-  //     全件は時間がかかる(商品数×1.2秒)ため、手動ボタン(userTriggered)のときだけ実行。起動時は前回結果のまま。 ──
-  if(!ok && userTriggered){
+  //     全件は時間がかかる(商品数×1.2秒)ため、手動ボタン or 起動時自動(未チェックの日)のとき実行。 ──
+  if(!ok && (userTriggered || isAuto)){
     const codes = Object.keys(DB).filter(c => !productCache[c]?.retired);
     const mp = ENDPOINTS.find(e => e.mode === 'fetch') || ENDPOINTS[0]; // Marketplace(itemCodeは動く実績)
     let done = 0, consecFail = 0, anyOk = false, lastErr = '';
@@ -3895,6 +3895,12 @@ async function runStockScan(userTriggered){
       }
       if(!got){ consecFail++; if(consecFail >= 15){ apiErr = lastErr || apiErr; break; } } // 15件連続失敗ならAPI不調とみなし中断
       done++;
+      // 途中経過をこまめに保存（30件ごと）。途中で閉じてもここまでの結果が残る。checkedAtは最後まで更新しない=次回は続きを再チェック
+      if(anyOk && done % 30 === 0){
+        _stockSoldOut = Object.keys(DB).filter(c => !productCache[c]?.retired && availMap[c] === 0);
+        try{ renderStockAlert(); }catch(e){}
+        try{ await _stockPublish(); }catch(e){}
+      }
       await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
     }
     if(anyOk) ok = true; else if(lastErr && !apiErr) apiErr = lastErr;
@@ -15686,9 +15692,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   try{ await _cpaFetch(); }catch(e){}
   try{ await _miColFetch(); }catch(e){}
   try{ await _itTrendFetch(); }catch(e){}
-  // 在庫切れアラート：前回結果を即表示 → 裏で全商品を再チェックして更新
+  // 在庫切れアラート：前回結果を即表示 → 今日まだ未チェックなら自動で全商品チェック（このタブを開いている間に実行）
   try{ await _stockFetch(); }catch(e){}
-  try{ setTimeout(function(){ try{ runStockScan(false); }catch(e){} }, 1500); }catch(e){}
+  try{ setTimeout(function(){
+    try{
+      var checkedToday = false;
+      if(_stockCheckedAt){ var d=new Date(_stockCheckedAt), n=new Date(); checkedToday = (d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth() && d.getDate()===n.getDate()); }
+      runStockScan(false, !checkedToday); // 今日まだ未チェックなら自動実行
+    }catch(e){}
+  }, 1500); }catch(e){}
   if (loaded) {
     // 日付範囲フィルタを強制的に最新日までに設定（ブラウザの値復元で古い日付が残るのを防ぐ）
     try {
