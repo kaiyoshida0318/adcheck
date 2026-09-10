@@ -532,7 +532,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="runStockScan(true)" title="楽天APIで在庫切れ商品（引退済以外）をチェックして上部に表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1324</span>
+    <span class="build-date">v1.1325</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -3802,69 +3802,89 @@ function renderStockAlert(){
   }
   bar.style.display = 'block';
 }
-// 在庫スキャン本体（shopCode一括・availability=0で在庫切れも取得）
+// 在庫スキャン本体。2系統のAPIを自動で使い分ける：
+//  ① Marketplace API(openapi.rakuten.co.jp/ichibams・要accessKey)
+//  ② 一般公開 Ichiba API(app.rakuten.co.jp・appIdのみ) … ①が「API Configuration not found」等で弾かれた場合の代替
+// さらに shopCode一括(速い) → itemCode個別(確実) の順でフォールバック。
 async function runStockScan(userTriggered){
   if(_stockScanRunning) return;
   const appId = localStorage.getItem('rakuten_app_id');
   const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
-  if(!appId || !accessKey || !shopCode){ if(userTriggered) alert('楽天アプリID・アクセスキー・店舗コードを設定してください（設定画面）。'); return; }
+  if(!appId || !shopCode){ if(userTriggered) alert('楽天アプリID・店舗コードを設定してください（設定画面）。'); return; }
   if(userTriggered) _stockAlertDismissed = false;
   _stockScanRunning = true; renderStockAlert();
   const btn = document.getElementById('stockRecheckBtn'); if(btn){ btn.disabled=true; btn.textContent='チェック中…'; }
   const hbtn = document.getElementById('stockCheckBtn'); if(hbtn){ hbtn.disabled=true; hbtn.textContent='🚨 チェック中…'; }
-  const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601';
+  const setHbtn = t => { if(hbtn) hbtn.textContent = t; };
   const headers = { 'Origin':'https://kaiyoshida0318.github.io' };
   const SAFE_INTERVAL = 1200;
   const availMap = {};   // code -> availability(0/1)
   let ok = false, apiErr = '';
-  const setHbtn = t => { if(hbtn) hbtn.textContent = t; };
+  // 試すエンドポイント（Marketplace→一般公開）。keyQ は accessKey 付与部分（無ければ空）
+  const ENDPOINTS = [
+    { base:'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601', keyQ: accessKey ? ('&accessKey='+encodeURIComponent(accessKey)) : '' },
+    { base:'https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601',     keyQ: '' },
+  ];
+  const readAvail = it => (it && (it.availability===0 || it.availability==='0')) ? 0 : 1;
 
-  // ── 方式A: shopCode一括(30件/ページ・高速)。エラー時は方式Bへ ──
-  let bulkFailed = false;
-  try{
-    let page = 1, hasMore = true, rateLimitHits = 0, gotAny = false;
-    while(hasMore){
-      const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&shopCode=${encodeURIComponent(shopCode)}&availability=0&hits=30&page=${page}&format=json&elements=itemCode,availability`;
-      const res = await fetch(url, { headers });
-      if(res.status === 429){ rateLimitHits++; if(rateLimitHits>=3){ bulkFailed=true; break; } await new Promise(r=>setTimeout(r,5000)); continue; }
-      const data = await res.json().catch(()=>null);
-      if(data && (data.error || data.error_description)){ apiErr = data.error_description || data.error; bulkFailed = true; break; }
-      if(!res.ok || !data){ bulkFailed = true; break; }
-      const items = data.Items || [];
-      items.forEach(({Item:item}) => { if(!item||!item.itemCode) return; const code=item.itemCode.split(':')[1]; if(code){ availMap[code] = (item.availability===0||item.availability==='0')?0:1; gotAny=true; } });
-      const totalPages = data.pageCount || null;
-      hasMore = (items.length === 30) && !(totalPages && page >= totalPages);
-      page++;
-      if(hasMore) await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
-    }
-    if(!bulkFailed) ok = true;
-  }catch(e){ console.warn('[ADcheck] stock bulk err:', e); bulkFailed = true; }
-
-  // ── 方式B: 画像取得と同じ「itemCodeで1件ずつ検索」（確実だが遅い）。一括が失敗した場合のみ ──
-  if(bulkFailed){
-    const codes = Object.keys(DB).filter(c => !productCache[c]?.retired);
-    let done = 0, rateLimitHits = 0, anyOk = false;
-    for(const code of codes){
-      if(rateLimitHits >= 3) break;
-      setHbtn(`🚨 チェック中 ${done+1}/${codes.length}`);
-      try{
-        const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&format=json&elements=itemCode,availability`;
+  // ── 方式A: shopCode一括。各エンドポイントを順に試し、成功したら採用 ──
+  for(const ep of ENDPOINTS){
+    if(ok) break;
+    let page=1, hasMore=true, rl=0, epErr='';
+    try{
+      while(hasMore){
+        const url = `${ep.base}?applicationId=${encodeURIComponent(appId)}${ep.keyQ}&shopCode=${encodeURIComponent(shopCode)}&availability=0&hits=30&page=${page}&format=json&elements=itemCode,availability`;
         const res = await fetch(url, { headers });
-        if(res.status === 429){ rateLimitHits++; await new Promise(r=>setTimeout(r,5000)); continue; }
+        if(res.status === 429){ rl++; if(rl>=3){ epErr='レート制限'; break; } await new Promise(r=>setTimeout(r,5000)); continue; }
         const data = await res.json().catch(()=>null);
-        if(data && (data.error || data.error_description)){ apiErr = data.error_description || data.error; break; }
-        if(res.ok && data){
-          const item = data.Items && data.Items[0] && data.Items[0].Item;
-          if(item){ availMap[code] = (item.availability===0||item.availability==='0')?0:1; }
-          // ヒット無し（掲載終了）は在庫切れ対象外なので記録しない
-          anyOk = true;
-        }
-      }catch(e){ console.warn('[ADcheck] stock item err:', code, e); }
-      done++;
+        if(data && (data.error || data.error_description)){ epErr = data.error_description || data.error; break; }
+        if(!res.ok || !data){ epErr = 'HTTP '+(res?res.status:'?'); break; }
+        (data.Items||[]).forEach(({Item:item}) => { if(!item||!item.itemCode) return; const code=item.itemCode.split(':')[1]; if(code) availMap[code]=readAvail(item); });
+        const tp = data.pageCount || null;
+        hasMore = ((data.Items||[]).length===30) && !(tp && page>=tp);
+        page++;
+        if(hasMore) await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
+      }
+    }catch(e){ epErr = '通信エラー'; }
+    if(!epErr) ok = true; else if(!apiErr) apiErr = epErr;
+  }
+
+  // ── 方式B: itemCodeで1件ずつ（確実だが遅い）。一括が全滅した場合のみ ──
+  if(!ok){
+    const codes = Object.keys(DB).filter(c => !productCache[c]?.retired);
+    // まず1件テストして、使えるエンドポイントを選ぶ
+    let chosen = null;
+    for(const ep of ENDPOINTS){
+      const c0 = codes[0]; if(!c0) break;
+      try{
+        const url = `${ep.base}?applicationId=${encodeURIComponent(appId)}${ep.keyQ}&itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(c0)}&hits=1&format=json&elements=itemCode,availability`;
+        const res = await fetch(url, { headers });
+        const data = await res.json().catch(()=>null);
+        if(res.ok && data && !(data.error || data.error_description)){ chosen = ep; const it=data.Items&&data.Items[0]&&data.Items[0].Item; if(it) availMap[c0]=readAvail(it); break; }
+        if(data && (data.error || data.error_description)) apiErr = data.error_description || data.error;
+      }catch(e){ apiErr = apiErr || '通信エラー'; }
       await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
     }
-    if(anyOk) ok = true;
+    if(chosen){
+      let done = 1, rl = 0;
+      for(const code of codes){
+        if(availMap[code] !== undefined){ done++; continue; }
+        if(rl >= 3) break;
+        setHbtn(`🚨 チェック中 ${done}/${codes.length}`);
+        try{
+          const url = `${chosen.base}?applicationId=${encodeURIComponent(appId)}${chosen.keyQ}&itemCode=${encodeURIComponent(shopCode)}:${encodeURIComponent(code)}&hits=1&format=json&elements=itemCode,availability`;
+          const res = await fetch(url, { headers });
+          if(res.status === 429){ rl++; await new Promise(r=>setTimeout(r,5000)); continue; }
+          const data = await res.json().catch(()=>null);
+          if(data && (data.error || data.error_description)){ apiErr = data.error_description || data.error; break; }
+          if(res.ok && data){ const it=data.Items&&data.Items[0]&&data.Items[0].Item; if(it) availMap[code]=readAvail(it); }
+        }catch(e){}
+        done++;
+        await new Promise(r=>setTimeout(r, SAFE_INTERVAL));
+      }
+      ok = true;
+    }
   }
 
   if(ok){
@@ -3879,7 +3899,18 @@ async function runStockScan(userTriggered){
   renderStockAlert();
   if(userTriggered){
     if(!ok){
-      alert('在庫チェックに失敗しました。\n' + (apiErr ? ('楽天APIエラー：' + apiErr + '\n\n') : '') + 'アプリID・アクセスキー・店舗コードの設定をご確認ください（画像取得が動くキーであれば通常は成功します）。');
+      let msg = '在庫チェックに失敗しました。\n';
+      if(apiErr) msg += '楽天APIエラー：' + apiErr + '\n\n';
+      if(/Configuration not found/i.test(apiErr||'')){
+        msg += 'これは楽天API側の認証・登録の問題です（コードの不具合ではありません）。\n'
+          + '・アクセスキーが最新か（楽天Developersのアプリ一覧→アクセスキーの目のアイコンで再コピー）\n'
+          + '・アプリIDと同じアプリのアクセスキーか\n'
+          + '・そのアプリにRMS(楽天市場)APIの利用権限があるか\n'
+          + 'をご確認ください。設定画面の「接続テスト」でも切り分けできます。';
+      } else {
+        msg += 'アプリID・アクセスキー・店舗コードの設定をご確認ください。';
+      }
+      alert(msg);
     } else {
       const n = (_stockSoldOut||[]).filter(c=>DB[c]&&!productCache[c]?.retired).length;
       if(n===0) alert('在庫切れの商品はありませんでした。');
