@@ -360,8 +360,10 @@ header + * { margin-top: 4px; }
 /* ズーム時に sticky の top がCSS指定値ピッタリ計算されないため、JSから --z-tab*-top をズーム倍率補正で注入する */
 .tab-bar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 0 8px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 2px; position: sticky; top: var(--z-tab1-top, 52px); z-index: 199; min-height: 34px; box-sizing: border-box; }
 .tab-btn { font-size: 12px; font-weight: 500; padding: 6px 6px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
-.tab-sub-row-3 .tab-btn { padding: 6px 3px; font-size: 11.5px; }  /* 行の折り返し防止（右端の「上部を隠す」用に余白を確保） */
-.tab-sub-row-3 .tab-sep { color:#9333ea; font-size:12px; font-weight:700; align-self:center; padding:0 1px; user-select:none; }
+.tab-sub-row-3 .tab-btn { padding: 6px 2px; font-size: 11px; }  /* タブ15個を1行に収めるため詰めている（v1.1354。右端の「上部を隠す」用の余白は nav 側の padding-right） */
+nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
+.tab-sub-row-3 .tab-sep { color:#9333ea; font-size:11px; font-weight:700; align-self:center; padding:0; user-select:none; }
+.tab-sub-row-3 .tab-btn > span { margin-left: 2px !important; }  /* 件数の左余白も詰める */
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
 /* sub-tab rows (2nd and 3rd row) — 不透明白で塗り、隙間ができないよう疑似要素でも上下を白に */
@@ -555,7 +557,7 @@ header + * { margin-top: 4px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1353</span>
+    <span class="build-date">v1.1356</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -633,9 +635,9 @@ header + * { margin-top: 4px; }
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-mid" onclick="switchTab('monthly-mid')">中立□<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-mid"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-midb" onclick="switchTab('monthly-midb')">中立-20円出稿中□<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-midb"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-mid2" onclick="switchTab('monthly-mid2')">中立-広告無し<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-mid2"></span></button>
-  <button class="tab-btn" id="tab-btn-monthly-mid2y" onclick="switchTab('monthly-mid2y')">中立-広告無し-Yahoo<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-mid2y"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-mid2y" onclick="switchTab('monthly-mid2y')">中立-広告無し-Y<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-mid2y"></span></button>
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退予定▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warn"></span></button>
-  <button class="tab-btn" id="tab-btn-monthly-warnbig" onclick="switchTab('monthly-warnbig')">撤退予定-大サイズ▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warnbig"></span></button>
+  <button class="tab-btn" id="tab-btn-monthly-warnbig" onclick="switchTab('monthly-warnbig')">撤退予定-大▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warnbig"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-warnzero" onclick="switchTab('monthly-warnzero')">撤退予定-在庫0？<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warnzero"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退済■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-out"></span></button>
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-unset"></span></button>
@@ -1926,11 +1928,11 @@ header + * { margin-top: 4px; }
           <option value="mid"  style="color:#F9A825;font-weight:600">中立□</option>
           <option value="midb" style="color:#FFB300;font-weight:600">中立-20円出稿中□</option>
           <option value="mid2" style="color:#E65100;font-weight:600">中立-広告無し</option>
-          <option value="mid2y" style="color:#E65100;font-weight:600">中立-広告無し-Yahoo</option>
+          <option value="mid2y" style="color:#E65100;font-weight:600">中立-広告無し-Y</option>
           <option value="warn" style="color:#C62828;font-weight:600">撤退予定▲</option>
           <option value="warnout" style="color:#C62828;font-weight:600">撤退予定-out記入済▲</option>
-          <option value="warnbig" style="color:#C62828;font-weight:600">撤退予定-大サイズ▲</option>
-          <option value="warnbigout" style="color:#C62828;font-weight:600">撤退予定-大サイズ-out記入済▲</option>
+          <option value="warnbig" style="color:#C62828;font-weight:600">撤退予定-大▲</option>
+          <option value="warnbigout" style="color:#C62828;font-weight:600">撤退予定-大-out記入済▲</option>
           <option value="warnzero" style="color:#AD1457;font-weight:600">撤退予定-在庫0？</option>
           <option value="out"  style="color:#6D1111;font-weight:600">撤退済■</option>
       </select>
@@ -1973,10 +1975,10 @@ header + * { margin-top: 4px; }
   <div class="modal" style="max-width:min(1000px,96vw);width:100%;text-align:left;max-height:min(88vh,780px);height:auto;display:flex;flex-direction:column;padding:16px 20px">
     <div style="flex-shrink:0">
       <h3 style="margin:0 0 4px;font-size:16px">🗑 撤退完了反映</h3>
-      <p style="margin:0 0 10px;font-size:11px;color:var(--text2);line-height:1.6">ネクストエンジンの商品CSVを取り込み、区分「撤退予定-out記入済▲」「撤退予定-大サイズ-out記入済▲」の商品のうち<strong>フリー在庫が合計0</strong>のものを抽出します。確認のうえ、まとめて撤退済■＋引退商品にできます。<br>突き合わせ：ADcheckの<strong>商品番号</strong> ＝ CSVの<strong>商品コード</strong>または<strong>代表商品コード</strong>。<br><span style="color:#b45309">※ 取り込むCSVは、ネクストエンジンの「詳細検索」で<strong>商品名に「out」</strong>を入れて検索し、出てきた商品を書き出したデータです。</span></p>
+      <p style="margin:0 0 10px;font-size:11px;color:var(--text2);line-height:1.6">ネクストエンジンの商品CSVを取り込み、区分「撤退予定-out記入済▲」「撤退予定-大-out記入済▲」の商品のうち<strong>フリー在庫が合計0</strong>のものを抽出します。確認のうえ、まとめて撤退済■＋引退商品にできます。<br>突き合わせ：ADcheckの<strong>商品番号</strong> ＝ CSVの<strong>商品コード</strong>または<strong>代表商品コード</strong>。<br><span style="color:#b45309">※ 取り込むCSVは、ネクストエンジンの「詳細検索」で<strong>商品名に「out」</strong>を入れて検索し、出てきた商品を書き出したデータです。</span></p>
       <div style="display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:8px 10px;background:#f5f6fd;border:1px solid #d7dbe8;border-radius:8px">
         <button onclick="_retireDownloadTargetNums()" style="font-size:12px;font-weight:700;padding:6px 14px;border:none;border-radius:6px;background:#3949AB;color:#fff;cursor:pointer;white-space:nowrap">📥 対象の商品番号をCSVでDL</button>
-        <span style="font-size:10px;color:var(--text2);line-height:1.5">ADcheck内の区分「撤退予定-out記入済▲」「撤退予定-大サイズ-out記入済▲」の商品番号一覧。<br>これをネクストエンジンの詳細検索などに使えます。</span>
+        <span style="font-size:10px;color:var(--text2);line-height:1.5">ADcheck内の区分「撤退予定-out記入済▲」「撤退予定-大-out記入済▲」の商品番号一覧。<br>これをネクストエンジンの詳細検索などに使えます。</span>
       </div>
       <div id="retireDrop" onclick="document.getElementById('retireFileInput').click()" ondragover="event.preventDefault();this.style.background='#eef0fb'" ondragleave="this.style.background='var(--surface2)'" ondrop="_retireDrop(event)" style="border:2px dashed var(--border2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;background:var(--surface2);font-size:12px;color:var(--text2)">📥 ネクストエンジンの商品CSVをドロップ、またはクリックして選択</div>
       <input type="file" id="retireFileInput" accept=".csv" style="display:none" onchange="_retireOnFile(this)">
@@ -6482,7 +6484,7 @@ function _retireDownloadTargetNums(){
     if(pc.status!=='warnout'&&pc.status!=='warnbigout')return; if(pc.retired)return;
     arr.push({num:(pc.itemNumber||'').trim(), code:code, name:pc.manualName||pc.name||code, status:pc.status});
   });
-  if(!arr.length){ alert('対象区分（撤退予定-out記入済▲／撤退予定-大サイズ-out記入済▲）の商品がありません。'); return; }
+  if(!arr.length){ alert('対象区分（撤退予定-out記入済▲／撤退予定-大-out記入済▲）の商品がありません。'); return; }
   arr.sort(function(a,b){ return String(a.num).localeCompare(String(b.num)); });
   var lines=[['商品番号','商品管理番号','商品名','現区分']];
   arr.forEach(function(x){ lines.push([x.num, x.code, x.name, (_RETIRE_LABELS[x.status]||x.status)]); });
@@ -10885,7 +10887,7 @@ function _renewalSeoRowHtml(code) {
   const statusCell = `<div class="status-cell" onclick="event.stopPropagation()">
       <select onchange="applyStatusColor(this);_setRoasTrendStatus('${code}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">
         ${['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','warnzero','out'].map(v => {
-          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};
+          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Y',warn:'撤退予定▲',warnbig:'撤退予定-大▲',warnbigout:'撤退予定-大-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};
           const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',warnzero:'#AD1457',out:'#6D1111'};
           return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;
         }).join('')}
@@ -10970,7 +10972,7 @@ function _renewalFilterEmpty(codes) {
   return codes.filter(code => {
     const m = _renewalTodoMetrics(code, _renewalTodoMonth);
     const metricEmpty = (!m.spendAll && m.ctrAll===null && m.ctrKw===null && m.ctr20===null && m.cvrAll===null && m.cvrKw===null && m.cvr20===null);
-    // 区分が「広告無し」(健常-広告無し/中立-広告無し/中立-広告無し-Yahoo)の商品は、
+    // 区分が「広告無し」(健常-広告無し/中立-広告無し/中立-広告無し-Y)の商品は、
     // 過去に出稿履歴があっても「広告未出稿分」として扱う
     const empty = _isAdNone(code) || metricEmpty;
     if(_renewalTodoMode==='all') return true; return _renewalTodoMode==='noad' ? empty : !empty;
@@ -12228,7 +12230,7 @@ function renderRoasTrend() {
       <div class="status-disp" style="color:${statusColor||'var(--text2)'}">${_statusDispHtml(statusVal||'unset')}</div>
       <select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:11px;border:none;outline:none">
         ${['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','warnzero','out'].map(v => {
-          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};
+          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Y',warn:'撤退予定▲',warnbig:'撤退予定-大▲',warnbigout:'撤退予定-大-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};
           const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',warnzero:'#AD1457',out:'#6D1111'};
           return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;
         }).join('')}
@@ -12309,7 +12311,7 @@ function renderRunaway(){
     const _base=_mid5.length?_mid5.reduce((s,x)=>s+x,0)/_mid5.length:0, _hi=_mid5.length?Math.max(..._mid5):0;
     const dCells=dates.map((d,di)=>{ const v=dayVals[di]; if(v==null) return `<div class="cell r mono" style="background:#fff8e5;font-size:11px;color:var(--text3)">—</div>`; const over=(_base>0)?(v-_base):0; const col=(over>2000)?'#dc2626':((over>0)?'#ea580c':'var(--text)'); const pct=(over>0)?Math.round(over/_base*100):0; const overSub=(over>0)?`<div style="font-size:9px;font-weight:700;color:${col};margin-top:1px">+${pct}%</div>`:''; const _idd=itemDailyData[p.id]&&itemDailyData[p.id][d]; const _s20=_idd?Math.max(0,(_idd.sales||0)-(_idd.salesKw||0)):0; const _roas=(v>0)?Math.round(_s20/v*100):null; const roasSub=(_roas!=null)?`<div style="font-size:9px;color:var(--text3);margin-top:1px">ROAS ${_roas}%</div>`:''; return `<div class="cell r mono" style="background:#fff8e5;font-size:11px;font-weight:${over>0?700:400};color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2">¥${Math.round(v).toLocaleString()}${roasSub}${overSub}</div>`; }).join('');
     const statusVal=cached.status||'unset'; const statusColor=STATUS_COLORS[statusVal]||'';
-    const statusSel=`<div class="status-cell" onclick="event.stopPropagation()"><select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">${['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','warnzero','out'].map(v=>{const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',warnzero:'#AD1457',out:'#6D1111'};return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;}).join('')}</select></div>`;
+    const statusSel=`<div class="status-cell" onclick="event.stopPropagation()"><select onchange="applyStatusColor(this);_setRoasTrendStatus('${p.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">${['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','warnzero','out'].map(v=>{const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Y',warn:'撤退予定▲',warnbig:'撤退予定-大▲',warnbigout:'撤退予定-大-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',warnzero:'#AD1457',out:'#6D1111'};return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;}).join('')}</select></div>`;
     const ssCell=`<div class="status-cell" style="padding:3px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px" onclick="event.stopPropagation()">${_ssCellBtns(p.id)}</div>`;
     return `<div class="item-row"><div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:48px;background:var(--surface)">
       <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cached.itemNumber||'—'}</div>
@@ -12914,10 +12916,10 @@ const STATUS_LABELS = {
   'mid':   '中立□',
   'midb':  '中立-20円出稿中□',
   'mid2':  '中立-広告無し',
-  'mid2y': '中立-広告無し-Yahoo',
+  'mid2y': '中立-広告無し-Y',
   'warn':  '撤退予定▲',
-  'warnbig': '撤退予定-大サイズ▲',
-  'warnbigout': '撤退予定-大サイズ-out記入済▲',
+  'warnbig': '撤退予定-大▲',
+  'warnbigout': '撤退予定-大-out記入済▲',
   'warnout': '撤退予定-out記入済▲',
   'warnzero': '撤退予定-在庫0？',
   'out':   '撤退済■',
@@ -13920,15 +13922,32 @@ function _stageFiles(files) {
 // 行=ファイル種別。列=日付1〜31。ドロップされたファイルの日付を読み取り該当セルに◯（skip時◯skip）
 let _calMonthData = {};   // 'YYYY-MM' -> { type -> { day(Number) -> {n, status:'ok'|'skip', files:[]} } }
 let _calMonths = [];      // ドロップダウンに出す月の配列（当月＋データのある月）
-const _CAL_ROWS = [
+// ①〜⑥＝その日1日ぶんのデータ（日ごとに積み上がる）
+const _CAL_ROWS_DAILY = [
   { k:'rpp',        badge:'①', label:'全体集計',      sub:'rpp_reports' },
   { k:'kw',         badge:'②', label:'KW別実績',      sub:'rpp_keyword_reports' },
   { k:'item',       badge:'③', label:'商品別日次',    sub:'rpp_item_reports' },
   { k:'sales',      badge:'④', label:'商品別売上',    sub:'Item_SalesList' },
   { k:'coupon_item',badge:'⑤', label:'クーポン(商品)', sub:'CouponAdvance_item' },
   { k:'coupon_kw',  badge:'⑥', label:'クーポン(KW)',  sub:'CouponAdvance_kw' },
+];
+// ⑦＝日別データではなく「取込時点のKW登録状態」のスナップショット。最新1件だけが有効で、古いものは上書きされる
+const _CAL_ROWS_SNAP = [
   { k:'itemkw',     badge:'⑦', label:'登録済みKW',    sub:'rpp_item_keyword' },
 ];
+const _CAL_ROWS = _CAL_ROWS_DAILY.concat(_CAL_ROWS_SNAP);
+// スナップショット行で「最新」を判定するため、全月を通した itemkw の最新日付を返す（'YYYY-MM-DD'）
+function _calLatestSnapDate(){
+  let best = '';
+  Object.keys(_calMonthData).forEach(ym => {
+    const rd = (_calMonthData[ym] || {}).itemkw; if(!rd) return;
+    Object.keys(rd).forEach(d => {
+      const ds = ym + '-' + String(d).padStart(2,'0');
+      if(ds > best) best = ds;
+    });
+  });
+  return best;
+}
 // カレンダー行判定（既存の _nichFileType とは独立。coupon(商品/KW)・itemkwを区別）
 function _calFileType(name) {
   const n = String(name || '').toLowerCase();
@@ -14005,7 +14024,7 @@ function _calBuildHtml() {
   return `<div id="dropZoneCalWrap" style="text-align:left;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;background:var(--surface)">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
       <select id="dropZoneCalMonth" onchange="_calRenderMonth(this.value)" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;padding:4px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">${opts}</select>
-      <span style="font-size:11px;color:var(--text3)">◯=取込予定の日 ／ <span style="color:var(--amber);font-weight:700">◯skip</span>=実施したがファイル/データ無し（クーポンは他レポートがある日を自動補完）</span>
+      <span style="font-size:11px;color:var(--text3)">◯=取込予定の日 ／ <span style="color:var(--amber);font-weight:700">◯skip</span>=実施したがファイル/データ無し（クーポンは他レポートがある日を自動補完） ／ <span style="background:#7c3aed;color:#fff;border-radius:8px;padding:0 5px;font-size:9px;font-weight:800">最新</span>=⑦で実際に反映されるスナップショット</span>
     </div>
     <div id="dropZoneCalGrid" style="overflow-x:auto"></div>
   </div>`;
@@ -14026,15 +14045,26 @@ function _calRenderMonth(ym) {
     const hl = (d === todayDay) ? 'background:#fff3e0;color:#e65100;font-weight:700' : 'background:var(--surface2);color:var(--text3)';
     head += `<th style="border:1px solid var(--border);padding:3px 0;font-size:10px;text-align:center;${hl}">${d}</th>`;
   }
-  let body = '';
-  _CAL_ROWS.forEach(row => {
-    const rd = data[row.k] || {};
-    body += `<tr>
-      <td style="position:sticky;left:0;z-index:1;background:var(--surface);border:1px solid var(--border);padding:3px 6px;width:${lw}px;min-width:${lw}px;max-width:${lw}px;white-space:normal;line-height:1.25">
+  const nCols = days + 1;
+  const latestSnap = _calLatestSnapDate();
+  // セクション見出し行（①〜⑥ と ⑦ で性質が違うことを明示）v1.1355
+  const sectionRow = (bg, bar, title, desc) => `<tr>
+      <td colspan="${nCols}" style="border:1px solid var(--border);border-left:4px solid ${bar};background:${bg};padding:5px 9px;text-align:left">
+        ${title ? `<span style="font-size:11px;font-weight:800;color:var(--text)">${title}</span>` : ''}
+        <span style="font-size:${title?'10':'11'}px;color:var(--text2);${title?'margin-left:8px':''}">${desc}</span>
+      </td></tr>`;
+  const labelCell = (row, bg, barCol) => `<td style="position:sticky;left:0;z-index:1;background:${bg};border:1px solid var(--border);border-left:4px solid ${barCol};padding:3px 6px;width:${lw}px;min-width:${lw}px;max-width:${lw}px;white-space:normal;line-height:1.25">
         <span style="font-size:12px;margin-right:3px">${row.badge}</span>
         <span style="font-size:11px;font-weight:700;color:var(--text)">${row.label}</span>
         <span style="font-size:8px;color:var(--text3);display:block">${row.sub}</span>
       </td>`;
+
+  let body = '';
+  // ── ①〜⑥：日別レポート ──
+  body += sectionRow('var(--surface2)', '#1565c0', '日別レポート（①〜⑥）', 'その日1日ぶんのデータ。日ごとに積み上がる');
+  _CAL_ROWS_DAILY.forEach(row => {
+    const rd = data[row.k] || {};
+    body += `<tr>` + labelCell(row, 'var(--surface)', '#1565c0');
     for (let d = 1; d <= days; d++) {
       const cell = rd[d];
       const hlcol = (d === todayDay) ? 'background:#fffaf3' : '';
@@ -14043,6 +14073,30 @@ function _calRenderMonth(ym) {
         const title = cell.synthetic ? 'クーポンファイル無し（実施済み・データ無し）' : (cell.files || []).join(', ');
         if (cell.status === 'skip') mark = `<span title="${title}" style="color:var(--amber);font-size:10px;font-weight:700;white-space:nowrap">◯<span style="font-size:8px">skip</span></span>`;
         else mark = `<span title="${title}" style="color:var(--green);font-size:14px;font-weight:700">◯</span>`;
+      }
+      body += `<td style="border:1px solid var(--border);text-align:center;height:26px;${hlcol}">${mark}</td>`;
+    }
+    body += `</tr>`;
+  });
+  // ── ⑦：スナップショット（性質が違うので区切って表示） ──
+  body += `<tr><td colspan="${nCols}" style="height:9px;border:none;padding:0"></td></tr>`;
+  body += sectionRow('#f3e8ff', '#7c3aed', '', '⑦は日別データではなく「取込時点のKW登録状態」。最新1件だけが有効で、古いものは上書きされます');
+  _CAL_ROWS_SNAP.forEach(row => {
+    const rd = data[row.k] || {};
+    body += `<tr>` + labelCell(row, '#faf5ff', '#7c3aed');
+    for (let d = 1; d <= days; d++) {
+      const cell = rd[d];
+      const ds = ym + '-' + String(d).padStart(2, '0');
+      const isLatest = latestSnap && ds === latestSnap;
+      const hlcol = (d === todayDay) ? 'background:#fdf8ff' : 'background:#faf5ff';
+      let mark = '';
+      if (cell) {
+        const files = (cell.files || []).join(', ');
+        if (isLatest) {
+          mark = `<span title="最新のスナップショット（これが反映されます）&#10;${files}" style="display:inline-block;background:#7c3aed;color:#fff;border-radius:9px;padding:0 5px;font-size:9px;font-weight:800;white-space:nowrap;line-height:15px">最新</span>`;
+        } else {
+          mark = `<span title="より新しいスナップショットがあるため反映されません&#10;${files}" style="color:#c4b5fd;font-size:13px;font-weight:700;text-decoration:line-through">◯</span>`;
+        }
       }
       body += `<td style="border:1px solid var(--border);text-align:center;height:26px;${hlcol}">${mark}</td>`;
     }
@@ -15130,7 +15184,7 @@ function getSorted(ym) {
   // 【状態】サブタブのデフォルト（ソートキー未指定か spend）並び
   if (_subTabFilter && (_sortKey === 'spend' || !_sortKey)) {
     if (_subTabFilter === 'g3' || _subTabFilter === 'mid2' || _subTabFilter === 'mid2y') {
-      // 健常-広告無し / 中立-広告無し / 中立-広告無し-Yahoo は初期表示を総売上の降順に
+      // 健常-広告無し / 中立-広告無し / 中立-広告無し-Y は初期表示を総売上の降順に
       products.sort((a, b) => (_aggFor(b.id, ym).totSales || 0) - (_aggFor(a.id, ym).totSales || 0));
     } else {
       products.sort((a, b) => {
@@ -15195,7 +15249,7 @@ function _markeHeader(){
 }
 function _kubunSelectHtml(code){
   var cached=productCache[code]||{}; var sv=cached.status||'unset';
-  var labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};
+  var labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Y',warn:'撤退予定▲',warnbig:'撤退予定-大▲',warnbigout:'撤退予定-大-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};
   var colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',warnzero:'#AD1457',out:'#6D1111'};
   var sc=colors[sv]||'';
   var opts=['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','warnzero','out'].map(function(v){ return '<option value="'+v+'"'+(sv===v?' selected':'')+' '+(colors[v]?'style="color:'+colors[v]+';font-weight:600"':'')+'>'+labels[v]+'</option>'; }).join('');
@@ -15539,7 +15593,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
         <div class="status-disp" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1px;overflow:hidden;color:${STATUS_COLORS[productCache[p.id]?.status||'unset']||'var(--text2)'}">${_statusDispHtml(productCache[p.id]?.status||'unset')}</div>
         <select id="status-sel-${p.id}" onchange="applyStatusColor(this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:11px;border:none;outline:none">
           ${['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','warnzero','out'].map(v => {
-            const labels = {unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Yahoo',warn:'撤退予定▲',warnbig:'撤退予定-大サイズ▲',warnbigout:'撤退予定-大サイズ-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};
+            const labels = {unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Y',warn:'撤退予定▲',warnbig:'撤退予定-大▲',warnbigout:'撤退予定-大-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};
             const colors = {unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',warnzero:'#AD1457',out:'#6D1111'};
             const cur = productCache[p.id]?.status || 'unset';
             const col = colors[v] ? `style="color:${colors[v]};font-weight:600"` : '';
