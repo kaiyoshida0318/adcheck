@@ -557,7 +557,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1356</span>
+    <span class="build-date">v1.1358</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -648,6 +648,16 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
 
 <!-- Main Screen -->
 <div id="mainScreen">
+
+  <!-- 別タブでショップを切り替えられたときの警告（データ混入の予防）v1.1358 -->
+  <div id="shopDriftBar" style="display:none;position:sticky;top:52px;z-index:200;padding:11px 18px;background:#7f1d1d;color:#fff;box-shadow:0 3px 14px rgba(127,29,29,.45)">
+    <div style="display:flex;align-items:center;gap:10px;max-width:1400px;margin:0 auto">
+      <span style="font-size:20px">🏪</span>
+      <span style="flex:1;min-width:0;font-size:12px;font-weight:700;line-height:1.6" id="shopDriftMsg"></span>
+      <button onclick="location.reload()" style="flex-shrink:0;font-size:11px;font-weight:800;padding:5px 12px;border-radius:5px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.18);color:#fff;cursor:pointer;white-space:nowrap">再読み込み</button>
+      <button onclick="this.closest('#shopDriftBar').style.display='none'" style="flex-shrink:0;font-size:17px;line-height:1;background:transparent;border:none;color:rgba(255,255,255,.85);cursor:pointer;padding:0 2px">×</button>
+    </div>
+  </div>
 
   <!-- 現役商品の在庫切れが出たときだけ出る警告帯。モーダルを開かなくても一覧画面で気づけるように（v1.1352）
        ※誤検知が多かった v1.1344 以前とは違い、いまは要対応（現役）のみ・0件なら一切出ない -->
@@ -2037,7 +2047,7 @@ let productCache = {};
 let currentPage = 1;
 
 // productCacheのlocalStorage永続化(ショップ別)
-function _cacheKey() { return 'adcheck_product_cache_' + (localStorage.getItem(CURRENT_SHOP_KEY) || 'yukaiya'); }
+function _cacheKey() { return 'adcheck_product_cache_' + (_shopScope() || 'yukaiya'); }
 // 旧キー(マイグレーション用)
 const CACHE_KEY_LEGACY = 'adcheck_product_cache';
 // 互換のためCACHE_KEYは関数で都度取得
@@ -2449,10 +2459,36 @@ _applyShopFromUrl();
 // （localStorageの現在ショップは全タブ共有のため、別タブでの切替に引きずられないようにする）
 var _sessionShopId = (function(){ try{ return _getCurrentShopId(); }catch(e){ return ''; } })();
 function _getSessionShopId(){ return _sessionShopId || (function(){ try{ return _getCurrentShopId(); }catch(e){ return ''; } })(); }
+// ★v1.1358★ データの保存先・キャッシュキーは必ずこれを通す（＝このタブのショップに固定）。
+//   localStorage は全タブ共有なので、別タブの切替でこのタブの保存先が変わるのを防ぐ。
+function _shopScope(){ return _getSessionShopId(); }
+// 別タブでショップが切り替えられていないか監視し、見つけたら保存を止めて警告する（二重の安全策）
+var _shopDriftWarned = false;
+function _checkShopDrift(){
+  try{
+    var live = _getCurrentShopId(), mine = _getSessionShopId();
+    if (live && mine && live !== mine && !_shopDriftWarned) {
+      _shopDriftWarned = true;
+      console.warn('[ADcheck] ショップ不整合: このタブ=' + mine + ' / localStorage=' + live + '（別タブで切替された可能性）');
+      try{
+        var b = document.getElementById('shopDriftBar');
+        if (b) { b.querySelector('#shopDriftMsg').textContent =
+          'このタブは「' + mine + '」を表示しています。別のタブで「' + live + '」に切り替えられました。'
+          + 'このタブのデータは「' + mine + '」に保存されます。混乱を避けるため、このタブを再読み込みするか閉じてください。';
+          b.style.display='block'; }
+      }catch(e){}
+    }
+  }catch(e){}
+}
+window.addEventListener('storage', function(ev){ if(ev && ev.key === CURRENT_SHOP_KEY) _checkShopDrift(); });
 
 // 現在ショップに対応するGitHubファイルパスを返す
 function _shopDataDir() {
-  const id = _getCurrentShopId() || 'yukaiya';
+  // ★v1.1358★ 必ず「このタブが読み込んだショップ」を使う。
+  //   以前は _getCurrentShopId()（localStorage＝全タブ共有）を見ていたため、
+  //   別タブでショップを切り替えると、このタブの保存先まで変わって
+  //   別店舗のデータで上書きされていた（KAIRYがゆかい屋に化ける事故の原因）。
+  const id = _shopScope() || 'yukaiya';
   return `data/${id}`;
 }
 // パス取得関数(従来の定数はゲッター化)
@@ -6275,14 +6311,14 @@ function _setRundaysShareUI(){ var n=document.getElementById('rundaysShareNoneBt
 function _setRundaysShareMode(m){ _rundaysShareMode=(m==='none')?'none':(m==='allday')?'allday':'cutday'; _setRundaysShareUI(); _renderRunawayCalendar(); }
 function _setRundaysModeUI(){ const o=document.getElementById('rundaysOnlyBtn'), a=document.getElementById('rundaysAllBtn'); const base='font-size:11px;padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;font-weight:600;'; const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);'; if(o)o.style.cssText=base+(!_rundaysAll?'border:1px solid #dc2626;background:#dc2626;color:#fff;':off); if(a)a.style.cssText=base+(_rundaysAll?'border:1px solid #2563eb;background:#2563eb;color:#fff;':off); }
 function _setRundaysMode(b){ _rundaysAll=b; _setRundaysModeUI(); renderRunawayDays(); }
-function _cpaKey(){ return 'adcheck_coupon_advance_'+((typeof _getCurrentShopId==='function'?_getCurrentShopId():null)||'yukaiya'); }
+function _cpaKey(){ return 'adcheck_coupon_advance_'+(_shopScope()||'yukaiya'); }
 function _cpaLoad(){ try{ const s=localStorage.getItem(_cpaKey()); couponAdvanceRows = s?JSON.parse(s):[]; }catch(e){ couponAdvanceRows=[]; } }
 function _cpaSave(){ try{ localStorage.setItem(_cpaKey(), JSON.stringify(couponAdvanceRows)); }catch(e){} try{ _caMonthCache={}; }catch(e){} try{ _cpaPublishDebounced(); }catch(e){} }
 // \u2500\u2500 \u00A73 \u767B\u9332\u6E08\u307FKW\uFF08\u73FE\u5728\u30BB\u30C3\u30C8\u3055\u308C\u3066\u3044\u308B\u5168KW\uFF09\u30B9\u30CA\u30C3\u30D7\u30B7\u30E7\u30C3\u30C8 \u2500\u2500
 // rpp_item_keyword_*.csv \u3092\u53D6\u308A\u8FBC\u307F\u3001\u5546\u54C1\u3054\u3068\u306E\u73FE\u5728\u30BB\u30C3\u30C8KW\u3092\u4FDD\u6301\u3002\u51FA\u7A3F\u4E2D/\u505C\u6B62 \u5224\u5B9A\u306B\u4F7F\u7528\uFF08\u6700\u65B0\u6708\u306E\u307F\uFF09\u3002
 var _currentKwSnap = { date:'', byCode:{} };
 function _ghCurrentKwFile(){ return _shopDataDir() + '/rpp_current_kw.json'; }
-function _currentKwLsKey(){ return 'adcheck_current_kw_' + (_getCurrentShopId() || 'yukaiya'); }
+function _currentKwLsKey(){ return 'adcheck_current_kw_' + (_shopScope() || 'yukaiya'); }
 function _loadCurrentKwLocal(){
   try{ var s=localStorage.getItem(_currentKwLsKey()); if(s){ var o=JSON.parse(s); if(o&&o.byCode){ _currentKwSnap=o; return; } } }catch(e){}
   _currentKwSnap={ date:'', byCode:{} };
@@ -6635,7 +6671,7 @@ function renderCpa(){
   wrap.innerHTML=legend+header+rowsHtml;
 }
 let couponAdvanceKwRows = [];
-function _cpaKwKey(){ return 'adcheck_coupon_advance_kw_'+((typeof _getCurrentShopId==='function'?_getCurrentShopId():null)||'yukaiya'); }
+function _cpaKwKey(){ return 'adcheck_coupon_advance_kw_'+(_shopScope()||'yukaiya'); }
 function _cpaLoadKw(){ try{ const s=localStorage.getItem(_cpaKwKey()); couponAdvanceKwRows = s?JSON.parse(s):[]; }catch(e){ couponAdvanceKwRows=[]; } }
 function _cpaSaveKw(){ try{ localStorage.setItem(_cpaKwKey(), JSON.stringify(couponAdvanceKwRows)); }catch(e){} try{ _cpaPublishDebounced(); }catch(e){} }
 function _cpaGhFile(){ return `${_shopDataDir()}/coupon_advance.json`; }
@@ -13614,7 +13650,7 @@ function switchTab(tab) {
 }
 
 // ── カレンダーイベント ──
-function _calEventsKey() { return 'adcheck_cal_events_' + (localStorage.getItem(CURRENT_SHOP_KEY) || 'yukaiya'); }
+function _calEventsKey() { return 'adcheck_cal_events_' + (_shopScope() || 'yukaiya'); }
 const CAL_EVENTS_KEY_LEGACY = 'adcheck_cal_events';
 Object.defineProperty(window, 'CAL_EVENTS_KEY', { get() { return _calEventsKey(); } });
 let calEvents = [];
@@ -13905,6 +13941,8 @@ function onDropModalDrop(e) {
 
 // ステージ済みファイルを保持
 let _stagedFiles = null;
+// 直前のチェックでショップを自動判別できなかったか（反映時の確認ダイアログ用）v1.1357
+let _stockShopUndetected = false;
 
 function _stageFiles(files) {
   _stagedFiles = files;
@@ -14109,6 +14147,7 @@ async function runDropZoneCheck() {
   if (!_stagedFiles) return;
   _stagedFiles = await _expandBundleFiles(Array.from(_stagedFiles));
   _calResetData();
+  _stockShopUndetected = false;
   const btn = document.getElementById('dropZoneCheckBtn');
   btn.disabled = true; btn.textContent = '🔍 チェック中...';
   const result = document.getElementById('dropZoneCheckResult');
@@ -14153,9 +14192,24 @@ async function runDropZoneCheck() {
   let shopMismatch = false;
   let shopWarningHtml = '';
   if (detectedList.length === 0) {
-    // ショップコードが検出できないファイルだけ → 警告のみ
-    shopWarningHtml = `<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#1565c0">
-      ℹ️ ファイル名からショップコードを検出できません(売上CSV単体の可能性) - 現在ショップ「<strong>${currentShopName}</strong>」に反映されます
+    // ★v1.1357★ ショップコードを検出できるファイルが1つも無い（＝Item_SalesList単体など）。
+    //   SalesListはファイル名にも中身にもショップの手がかりが無いため、現在ショップにそのまま入る。
+    _stockShopUndetected = true;
+    shopWarningHtml = `<div style="background:#fff8e1;border:2px solid #f59e0b;border-radius:8px;padding:11px 14px;margin-bottom:10px;text-align:left">
+      <div style="font-size:12px;font-weight:800;color:#8a6100;margin-bottom:6px">⚠️ ショップを自動判別できません</div>
+      <div style="font-size:11px;color:#6d4c00;line-height:1.7">
+        ドロップされたファイル（売上CSV単体など）には<strong>ショップを示す情報がありません</strong>。
+        下のショップにそのまま取り込まれます。<u>間違っていないか必ず確認してください。</u>
+      </div>
+      <div style="margin-top:8px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:11px;color:var(--text3);white-space:nowrap">取込先</span>
+        <span style="font-size:19px;font-weight:800;color:#b45309">🏪 ${currentShopName}</span>
+        <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">(${_shopScope()})</span>
+      </div>
+      <div style="font-size:10px;color:#8a6100;margin-top:7px">
+        💡 違う場合は「閉じる」→ ヘッダーの🏪でショップを切り替えてから、もう一度ドロップしてください。
+        ①〜⑥のレポートと一緒にドロップすれば自動判別されます。
+      </div>
     </div>`;
   } else if (detectedList.length === 1) {
     const detected = detectedList[0].toLowerCase();
@@ -14382,6 +14436,22 @@ async function runDropZoneCheck() {
 
 async function runDropZoneApply() {
   if (!_stagedFiles) return;
+  // ★v1.1358★ 取込直前に、このタブのショップと localStorage の現在ショップがズレていないか確認
+  try{
+    var _live = _getCurrentShopId(), _mine = _shopScope();
+    if (_live && _mine && _live !== _mine) {
+      alert('別のタブでショップが「' + _live + '」に切り替えられています。\n\n'
+        + 'このタブは「' + _mine + '」を表示中です。取り違えを防ぐため取込を中止しました。\n'
+        + 'このタブを再読み込みしてから、もう一度お試しください。');
+      return;
+    }
+  }catch(e){}
+  // ショップを自動判別できなかったときだけ、取込先を最終確認する v1.1357
+  if (_stockShopUndetected) {
+    const _sh = _getCurrentShop();
+    const _nm = _sh ? _sh.name : _shopScope();
+    if (!confirm('ショップを自動判別できないファイルです。\n\n取込先：' + _nm + '（' + _shopScope() + '）\n\nこのショップに取り込みます。よろしいですか？')) return;
+  }
   const btn = document.getElementById('dropZoneApplyBtn');
   btn.disabled = true; btn.textContent = '⏳ 反映中...';
   document.getElementById('dropZoneStatus').textContent = '処理中...';
