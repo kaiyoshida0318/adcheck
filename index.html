@@ -460,7 +460,23 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
 .event-list-dates { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
 .event-del-btn { font-size: 11px; padding: 3px 8px; border: 1px solid var(--border2); border-radius: 4px; background: var(--surface); color: var(--text3); cursor: pointer; }
 .event-del-btn:hover { color: var(--danger); border-color: var(--danger); }
-.add-event-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-top: 20px; }
+.add-event-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 24px; }
+/* 登録済みイベント一覧（v1.1365：1行の表／開催中・これから＋過去は年ごとに畳む） */
+.ev-sec-h { font-size: 13px; font-weight: 700; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+.ev-sec-h .ev-cnt { font-size: 11px; font-weight: 600; color: var(--text3); }
+.ev-tbl { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 18px; font-size: 12px; }
+.ev-tbl td { padding: 6px 10px; border-top: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
+.ev-tbl tr:first-child td { border-top: none; }
+.ev-tbl .ev-name { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.ev-tbl .ev-dates { font-family: 'DM Mono', monospace; color: var(--text2); font-size: 11px; }
+.ev-tbl .ev-days { color: var(--text3); font-size: 10px; margin-left: 4px; }
+.ev-tbl .ev-note { font-size: 10px; color: var(--text3); white-space: normal; }
+.ev-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+.ev-short { color: #fff; font-weight: 700; font-size: 10px; padding: 1px 5px; border-radius: 3px; }
+.ev-year { width: 100%; display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-bottom: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text2); font-family: inherit; text-align: left; }
+.ev-year:hover { background: var(--surface); }
+.ev-year .ev-arw { display: inline-block; width: 10px; color: var(--text3); }
+.ev-empty { font-size: 12px; color: var(--text3); padding: 10px 2px 16px; }
 .add-event-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 .form-group label { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 5px; }
 .form-group select { width: 100%; padding: 8px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; background: var(--surface2); color: var(--text); outline: none; cursor: pointer; }
@@ -567,7 +583,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1364</span>
+    <span class="build-date">v1.1365</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1392,12 +1408,9 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="cal-settings-body">
     <p style="font-size:13px;color:var(--text2);margin-bottom:20px">セールや特別期間を登録すると、全商品のカレンダーでその期間のセルに色とラベルが表示されます。</p>
 
-    <h4 style="font-size:13px;font-weight:700;margin-bottom:10px">登録済みイベント</h4>
-    <div id="eventList"><div style="font-size:12px;color:var(--text3);padding:12px 0">まだ登録されていません</div></div>
-
     <div class="add-event-form">
-      <h4 style="font-size:13px;font-weight:700;margin-bottom:14px">＋ イベントを追加</h4>
-      <div class="add-event-row">
+      <h4 style="font-size:13px;font-weight:700;margin-bottom:12px">＋ イベントを追加</h4>
+      <div class="add-event-row" style="grid-template-columns:1fr 1fr 1.3fr">
         <div class="form-group">
           <label>開始日</label>
           <input type="date" id="evStartDate">
@@ -1406,21 +1419,20 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
           <label>終了日</label>
           <input type="date" id="evEndDate">
         </div>
-      </div>
-      <div class="add-event-row">
         <div class="form-group">
           <label>イベント名</label>
           <select id="evLabel" onchange="_calEvSyncColor()"></select>
         </div>
-        <div class="form-group">
-          <label>色（イベント名で自動）</label>
-          <div id="evColorPreview" style="display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px;color:var(--text2)"></div>
-          <input type="hidden" id="evColor" value="#16a34a">
-        </div>
       </div>
-      <div id="evFormStatus" style="font-size:11px;color:var(--danger);margin-bottom:8px;min-height:16px"></div>
-      <button class="modal-btn save" onclick="addCalendarEvent()" style="width:100%;justify-content:center">追加する</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div id="evColorPreview" style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"></div>
+        <input type="hidden" id="evColor" value="#16a34a">
+        <button class="modal-btn save" onclick="addCalendarEvent()" style="min-width:140px;justify-content:center">追加する</button>
+      </div>
+      <div id="evFormStatus" style="font-size:11px;color:var(--danger);margin-top:6px;min-height:14px"></div>
     </div>
+
+    <div id="eventList"></div>
   </div>
 </div>
 
@@ -13909,7 +13921,7 @@ function _calEvSyncColor(){
   const t = CAL_EVENT_TYPES.find(x => x.name === sel.value) || CAL_EVENT_TYPES[0];
   const hid = document.getElementById('evColor'); if (hid) hid.value = t.color;
   const pv = document.getElementById('evColorPreview');
-  if (pv) pv.innerHTML = '<span style="width:24px;height:24px;border-radius:50%;background:'+t.color+';display:inline-block;flex:none"></span>'
+  if (pv) pv.innerHTML = '<span style="width:16px;height:16px;border-radius:50%;background:'+t.color+';display:inline-block;flex:none"></span>'
     + '<span>暴走日カレンダーの表記：</span><span style="background:'+t.color+';color:#fff;font-weight:700;font-size:11px;padding:1px 6px;border-radius:4px">'+t.short+'</span>';
 }
 function _calEvInitForm(){
@@ -13934,20 +13946,52 @@ function closeCalendarSettings() {
   try { if (typeof _currentTab !== 'undefined' && _currentTab === 'runaway-days') renderRunawayDays(); } catch(e) {}
 }
 
+// ── 登録済みイベント一覧（v1.1365）──
+//   「開催中・これから」は日付順で常に表示。終了済みは「過去のイベント」として年ごとに畳む（開閉はこのタブの間だけ覚える）。
+//   calEvents の並び（登録順）は変えない。削除は元の位置(index)で行う。
+let _calPastOpen = {};
+function _calTodayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function _calDays(a,b){ try{ return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000); }catch(e){ return 0; } }
+function _calMd(ds){ return String(ds||'').slice(5).replace('-','/'); }
+function _calTogglePast(y){ _calPastOpen[y] = !_calPastOpen[y]; renderEventList(); }
 function renderEventList() {
-  const el = document.getElementById('eventList');
-  if (calEvents.length === 0) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">まだ登録されていません</div>';
-    return;
-  }
-  el.innerHTML = calEvents.map((ev, i) => { const mt = _calEvMeta(ev); return `
-    <div class="event-list-item">
-      <div class="event-color-dot" style="background:${mt.color}"></div>
-      <div class="event-list-label">${ev.label}<span style="margin-left:8px;background:${mt.color};color:#fff;font-weight:700;font-size:10px;padding:1px 5px;border-radius:4px">${mt.short}</span></div>
-      <div class="event-list-dates">${ev.start} 〜 ${ev.end}</div>
-      <button class="event-del-btn" onclick="deleteCalEvent(${i})">削除</button>
-    </div>
-  `; }).join('');
+  const el = document.getElementById('eventList'); if (!el) return;
+  const today = _calTodayStr();
+  const items = calEvents.map((ev, i) => ({ ev, i, mt:_calEvMeta(ev) }));
+  // 期間が重なっている相手（登録ミスに気づけるように）
+  items.forEach(a => { a.ov = items.filter(b => b !== a && b.ev.start <= a.ev.end && b.ev.end >= a.ev.start).map(b => b.mt.short); });
+  const esc = v => String(v==null?'':v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const row = (x, isPast) => {
+    const ev = x.ev, mt = x.mt, n = _calDays(ev.start, ev.end) + 1;
+    let st = '';
+    if (!isPast) {
+      if (ev.start <= today) st = '<span class="ev-tag" style="background:#dcfce7;color:#15803d">開催中</span>';
+      else { const k = _calDays(today, ev.start); st = '<span class="ev-tag" style="background:var(--surface2);color:var(--text2)">あと'+k+'日</span>'; }
+    }
+    const ov = x.ov.length ? '<span style="color:#b45309">⚠ '+esc(x.ov.join('・'))+' と期間が重複</span>' : '';
+    const yr = ev.start.slice(0,4) !== ev.end.slice(0,4) ? (ev.start.slice(0,4)+'/') : '';
+    return '<tr>'
+      + '<td style="width:1%"><div class="ev-name"><span class="event-color-dot" style="background:'+mt.color+'"></span>'+esc(ev.label)+'</div></td>'
+      + '<td style="width:1%"><span class="ev-short" style="background:'+mt.color+'">'+esc(mt.short)+'</span></td>'
+      + '<td style="width:1%"><span class="ev-dates">'+yr+_calMd(ev.start)+' 〜 '+_calMd(ev.end)+'</span><span class="ev-days">('+n+'日間)</span></td>'
+      + '<td style="width:1%">'+st+'</td>'
+      + '<td class="ev-note">'+ov+'</td>'
+      + '<td style="width:1%;text-align:right"><button class="event-del-btn" onclick="deleteCalEvent('+x.i+')">削除</button></td>'
+      + '</tr>';
+  };
+  const up = items.filter(x => x.ev.end >= today).sort((a,b) => a.ev.start.localeCompare(b.ev.start) || a.ev.end.localeCompare(b.ev.end));
+  const past = items.filter(x => x.ev.end < today).sort((a,b) => b.ev.start.localeCompare(a.ev.start));
+  let h = '<div class="ev-sec-h">開催中・これから<span class="ev-cnt">'+up.length+'件</span></div>';
+  h += up.length ? ('<table class="ev-tbl">'+up.map(x => row(x,false)).join('')+'</table>') : '<div class="ev-empty">予定しているイベントはありません。上のフォームから追加できます。</div>';
+  h += '<div class="ev-sec-h" style="margin-top:6px">過去のイベント<span class="ev-cnt">'+past.length+'件</span></div>';
+  if (!past.length) h += '<div class="ev-empty">まだありません</div>';
+  const years = [...new Set(past.map(x => x.ev.start.slice(0,4)))];
+  years.forEach(y => {
+    const list = past.filter(x => x.ev.start.slice(0,4) === y); const open = !!_calPastOpen[y];
+    h += '<button class="ev-year" onclick="_calTogglePast(\''+y+'\')"><span class="ev-arw">'+(open?'▼':'▶')+'</span>'+y+'年<span class="ev-cnt" style="font-weight:600;color:var(--text3)">'+list.length+'件</span></button>';
+    if (open) h += '<table class="ev-tbl">'+list.map(x => row(x,true)).join('')+'</table>';
+  });
+  el.innerHTML = h;
 }
 
 function selectEvColor(el) {
