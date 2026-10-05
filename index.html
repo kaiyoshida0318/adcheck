@@ -566,7 +566,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1361</span>
+    <span class="build-date">v1.1362</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2167,10 +2167,12 @@ async function fetchImgFromUrl() {
 
   try {
     const BASE = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701';
-    const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${targetCode}&hits=1&format=json&elements=itemName,mediumImageUrls`;
+    const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${targetCode}&hits=1&format=json&elements=itemName,mediumImageUrls,itemCode,itemUrl`;
     const res = await fetch(url, { headers: { 'Origin': 'https://kaiyoshida0318.github.io' } });
     const data = await res.json();
-    const item = data.Items?.[0]?.Item;
+    let item = data.Items?.[0]?.Item;
+    // ★v1.1362★ 別商品（商品番号が同じだけ）がヒットしたら採用しない
+    if (item && _itemMgmtCode(item) !== targetCode) item = null;
     if (item?.mediumImageUrls?.[0]?.imageUrl) {
       _resolvedImgUrl = item.mediumImageUrls[0].imageUrl;
       document.getElementById('editImgPreview').innerHTML = `<img loading="lazy" src="${_resolvedImgUrl}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">`;
@@ -3836,6 +3838,13 @@ function applyImageToDOM(itemId, imgUrl, itemName) {
   }
 }
 
+// 楽天APIの Item から ADcheck のコード（商品管理番号）を取り出す。在庫チェックの codeOf と同じ（v1.1362）
+function _itemMgmtCode(it){
+  const m = String((it && it.itemUrl) || '').match(/item\.rakuten\.co\.jp\/[^/]+\/([^/?#]+)/);
+  if (m && m[1]) return m[1];
+  const ic = String((it && it.itemCode) || '');
+  return ic.includes(':') ? ic.split(':')[1] : '';
+}
 let _fetchInProgress = false;
 async function fetchAllProductInfo() {
   if (_fetchInProgress) return;
@@ -3859,7 +3868,8 @@ async function fetchAllProductInfo() {
   let hasMore = true;
   while (hasMore) {
     try {
-      const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&shopCode=${shopCode}&hits=30&page=${page}&format=json&elements=itemName,mediumImageUrls,itemCode`;
+      // sort未指定だとページ間で取りこぼす / itemUrl は管理番号の抽出に必須（v1.1362・在庫チェックと同じ）
+      const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&shopCode=${shopCode}&hits=30&page=${page}&sort=${encodeURIComponent('+updateTimestamp')}&format=json&elements=itemName,mediumImageUrls,itemCode,itemUrl`;
       const res = await fetch(url, { headers });
       if (res.status === 429) {
         rateLimitHits++;
@@ -3874,7 +3884,8 @@ async function fetchAllProductInfo() {
       if (items.length === 0) break;
       items.forEach(({Item: item}) => {
         if (!item) return;
-        const code = item.itemCode?.split(':')[1];
+        // ★v1.1362★ itemCode は「shopCode:商品番号」で管理番号ではない（239件中65件が別物）。itemUrl から管理番号を取る
+        const code = _itemMgmtCode(item);
         if (code && DB[code]) {
           // 画像が既に取得済みならスキップ
           if (!productCache[code]?.img && !productCache[code]?.manualImg) {
@@ -3906,7 +3917,7 @@ async function fetchAllProductInfo() {
     // 429が多発したら中断
     if (rateLimitHits >= MAX_RATE_LIMIT) { console.warn('[ADcheck] 429多発のためStep2中断'); break; }
     try {
-      const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${itemId}&hits=1&format=json&elements=itemName,mediumImageUrls,itemCode`;
+      const url = `${BASE}?applicationId=${appId}&accessKey=${accessKey}&itemCode=${shopCode}:${itemId}&hits=1&format=json&elements=itemName,mediumImageUrls,itemCode,itemUrl`;
       const res = await fetch(url, { headers });
       if (res.status === 429) {
         rateLimitHits++;
@@ -3916,7 +3927,9 @@ async function fetchAllProductInfo() {
       }
       if (!res.ok) { await new Promise(r => setTimeout(r, SAFE_INTERVAL)); continue; }
       const data = await res.json();
-      const item = data.Items?.[0]?.Item;
+      let item = data.Items?.[0]?.Item;
+      // ★v1.1362★ itemCode検索は「商品番号」で引くので別商品がヒットすることがある（例: ヨガバンド⇔ゴムシート）。管理番号が違えば採用しない
+      if (item && _itemMgmtCode(item) !== itemId) item = null;
       // 既存データ（retired・status等）を保持しながらname・imgのみ更新
       if (!productCache[itemId]) productCache[itemId] = {};
       // ⚠ 既存の name/img を空で上書きしない (手動登録データを保護)
@@ -4363,6 +4376,37 @@ function _stockJsonp(url){
 //  ① Marketplace API(openapi.rakuten.co.jp/ichibams・要accessKey)
 //  ② 一般公開 Ichiba API(app.rakuten.co.jp・appIdのみ) … ①が「API Configuration not found」等で弾かれた場合の代替
 // さらに shopCode一括(速い) → itemCode個別(確実) の順でフォールバック。
+// ── このタブ（_sessionShopId）の楽天店舗コード（v1.1362）──
+//   localStorage.rakuten_shop_code は全タブ共有。別タブでショップを切り替えると、開きっぱなしのタブでも
+//   値が変わる（§マルチショップ上書き と同じ構造）。ショップ設定から「このタブの店舗」の shopCode を引いて照合する。
+function _sessionRakutenShopCode(){
+  try{
+    const sid = _getSessionShopId();
+    const s = (_getShops()||[]).find(x => x && x.id === sid);
+    return String((s && s.shopCode) || '').trim();
+  }catch(e){ return ''; }
+}
+// ── 在庫チェックの一括取得結果から、画像が未登録の商品に画像を自動で入れる（v1.1362）──
+//   在庫チェックは毎日1回、店舗の全商品を画像URLつきで取得している。その結果を流用するので
+//   APIの追加呼び出しは0回（＝429の心配なし）。手動で設定した画像(manualImg)・取得済みの画像(img)は上書きしない。
+//   対象は productCache に登録済みの商品だけ（未登録コードに項目を作ると _stockKind が unknown→active に変わるため）。
+function _stockBackfillImages(infoMap){
+  const filled = [];
+  try{
+    Object.keys(productCache).forEach(code => {
+      if(!code || code === '__global__') return;
+      const pc = productCache[code];
+      if(!pc || typeof pc !== 'object') return;
+      if(pc.img || pc.manualImg) return;
+      const inf = infoMap && infoMap[code];
+      if(!inf || !inf.i) return;
+      pc.img = inf.i;
+      if(!pc.name && inf.n) pc.name = inf.n;
+      filled.push(code);
+    });
+  }catch(e){ console.warn('[ADcheck] _stockBackfillImages err', e); }
+  return filled;
+}
 async function runStockScan(userTriggered, isAuto){
   if(_stockScanRunning) return;
   // 手動でも自動でもない呼び出しはスキャンしない（＝勝手に「確認中…」にならない）。v1.1346
@@ -4371,6 +4415,16 @@ async function runStockScan(userTriggered, isAuto){
   const accessKey = localStorage.getItem('rakuten_access_key');
   const shopCode = localStorage.getItem('rakuten_shop_code');
   if(!appId || !shopCode){ if(userTriggered) alert('楽天アプリID・店舗コードを設定してください（設定画面）。'); return; }
+  // 別タブでショップが切り替えられていたら中止（他店の在庫・画像をこの店のファイルに書き込まないため）v1.1362
+  {
+    const mine = _sessionRakutenShopCode();
+    if(mine && mine.toLowerCase() !== String(shopCode).trim().toLowerCase()){
+      _stockLogPush('⛔ 中止: このタブの店舗コード('+mine+')と現在の設定('+shopCode+')が違います（別タブでショップ切替）');
+      if(userTriggered) alert('別のタブでショップが切り替えられています。\nこのタブの店舗コードは「'+mine+'」、現在の設定は「'+shopCode+'」です。\n取り違えを防ぐため在庫チェックを中止しました。このタブを再読み込みしてください。');
+      renderStockAlert();
+      return;
+    }
+  }
   if(userTriggered) _stockAlertDismissed = false;
   _stockScanRunning = true; _stockLastError = ''; _stockProgress = '在庫を確認中…';
   _stockLogPush('=== 在庫チェック開始（手動='+(!!userTriggered)+' / 自動='+(!!isAuto)+'） 店舗='+shopCode+' キー='+(accessKey?'あり':'なし')+' ===');
@@ -4519,6 +4573,16 @@ async function runStockScan(userTriggered, isAuto){
     _stockDaily = _stockDaily.slice(0,14);
     _stockLogPush('✅ 完了: チェック '+checkedN+' 件 → 在庫切れ 合計 '+soldAll.length+' 件（現役 '+activeN+' / 在庫0？ '+wzeroN+' / 引退 '+retiredN+' / 未登録 '+unknownN+'）／確認できず '+_stockUnchecked.length+' 件');
     try{ await _stockPublish(); }catch(e){}
+    // 画像が未登録の商品に、今回取得した画像を自動で入れる（v1.1362・API追加呼び出しなし）
+    try{
+      const filled = _stockBackfillImages(infoMap);
+      _stockLogPush('🖼 画像の自動取得: '+filled.length+' 件'+(filled.length ? '（'+filled.slice(0,10).join(', ')+(filled.length>10?' ほか':'')+'）' : ''));
+      if(filled.length){
+        saveProductCache();
+        try{ await saveProductCacheToGitHub(); }catch(e){ console.warn('[ADcheck] 画像自動取得の保存失敗', e); _stockLogPush('⚠ 画像の保存に失敗: '+(e && e.message || e)); }
+        try{ renderAll(); }catch(e){}
+      }
+    }catch(e){ console.warn('[ADcheck] image backfill err', e); }
   } else {
     _stockLastError = apiErr || 'チェックに失敗しました';
     _stockLogPush('❌ 失敗: '+_stockLastError+'（診断: '+(diag.join(' / ')||'なし')+'）');
