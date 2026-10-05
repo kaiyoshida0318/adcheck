@@ -567,7 +567,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1363</span>
+    <span class="build-date">v1.1364</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6462,13 +6462,13 @@ function _renderRunawayCalendar(){
   const _sharesSorted=_shares.slice().sort(function(a,b){return b-a;}); const _sn=_sharesSorted.length;
   const _shareColor=function(v){ if(!(v>0)||!_sn) return '#1a1a1a'; var idx=_sharesSorted.indexOf(v); if(idx<0){ var bd=1e9; idx=0; for(var k=0;k<_sn;k++){ var dd=Math.abs(_sharesSorted[k]-v); if(dd<bd){bd=dd;idx=k;} } } if(idx<Math.ceil(_sn*0.10)) return '#dc2626'; if(idx<Math.ceil(_sn*0.20)) return '#ea580c'; return '#1a1a1a'; };
   const wd=['日','月','火','水','木','金','土'];
-  // カレンダー設定のイベントを日付の右に表示（v1.1363）
-  //   セル内の幅が27〜32pxしかなく「マラソン」が日付の右に入らないため、日付のすぐ下にセル幅いっぱいの色帯で出す。
-  //   同じ日に複数イベントが重なったときは縦に積む（期間はマウスを乗せると出る）。
-  const _evBadges=(ds)=>{ let evs=[]; try{ evs=getEventsForDate(ds)||[]; }catch(e){} if(!evs.length) return ''; return '<div style="display:flex;flex-direction:column;gap:1px;margin:1px 0 1px">'+evs.map(function(ev){ const mt=_calEvMeta(ev); return '<span title="'+String(mt.name).replace(/["<>]/g,'')+'（'+ev.start+'〜'+ev.end+'）" style="display:block;flex:none;overflow:hidden;background:'+mt.color+';color:#fff;font-weight:700;font-size:7px;letter-spacing:-0.4px;line-height:9px;height:9px;text-align:center;border-radius:2px;white-space:nowrap">'+mt.short+'</span>'; }).join('')+'</div>'; };
-  const _dayHead=(dd,ds)=>{ const b=_evBadges(ds); return b ? ('<div style="color:var(--text3);font-size:8px;line-height:1.1">'+dd+'</div>'+b) : ''; };
-  // イベントの色帯（1本約10px）が入るぶん、表示中の月で一番多く重なった本数に合わせてセルを高くする（下の比率が切れないように）
-  const _cellH=(function(){ try{ let mx=0; months.forEach(function(ym){ const dim=new Date(ym[0],ym[1],0).getDate(); for(let d=1;d<=dim;d++){ const n=getEventsForDate(ym[0]+'-'+String(ym[1]).padStart(2,'0')+'-'+String(d).padStart(2,'0')).length; if(n>mx) mx=n; } }); return 110 + (mx>0 ? 1 + mx*10 : 0); }catch(e){ return 110; } })();
+  // カレンダー設定のイベントを日付の右に表示（v1.1363 / v1.1364で日付の右に並べる形に変更）
+  //   セル内の幅は27〜32pxしかないので、表記は短く（MS/SS/BF/感謝/他）・7pxで詰めて出す。
+  //   同じ日に複数イベントが重なって入りきらないときは次の行に折り返す（期間はマウスを乗せると出る）。
+  const _evBadges=(ds)=>{ let evs=[]; try{ evs=getEventsForDate(ds)||[]; }catch(e){} if(!evs.length) return ''; return evs.map(function(ev){ const mt=_calEvMeta(ev); return '<span class="rd-evb" title="'+String(mt.name).replace(/["<>]/g,'')+'（'+ev.start+'〜'+ev.end+'）" style="flex:none;background:'+mt.color+';color:#fff;font-weight:700;font-size:7px;letter-spacing:-0.5px;line-height:9px;height:9px;padding:0 1.5px;border-radius:2px;white-space:nowrap">'+mt.short+'</span>'; }).join(''); };
+  const _dayHead=(dd,ds)=>{ const b=_evBadges(ds); return b ? ('<div class="rd-dh" style="display:flex;flex-wrap:wrap;align-items:center;gap:1px 2px;line-height:1.1"><span style="color:var(--text3);font-size:8px;flex:none">'+dd+'</span>'+b+'</div>') : ''; };
+  // 同じ日に2件以上重なると折り返すので、そのぶんだけセルを高くする（下の比率が切れないように）
+  const _cellH=(function(){ try{ let mx=0; months.forEach(function(ym){ const dim=new Date(ym[0],ym[1],0).getDate(); for(let d=1;d<=dim;d++){ const n=getEventsForDate(ym[0]+'-'+String(ym[1]).padStart(2,'0')+'-'+String(d).padStart(2,'0')).length; if(n>mx) mx=n; } }); return 110 + (mx>1 ? (mx-1)*10 : 0); }catch(e){ return 110; } })();
   const cellFor=(ds)=>{
     const r=byDate[ds]; const dd=String(parseInt(ds.slice(8,10),10));
     const _dh=_dayHead(dd,ds);
@@ -13879,11 +13879,11 @@ loadCalEvents();
 //   イベント名はこの5つから選ぶ。色と、暴走日カレンダーに出す短い表記はイベント名で決まる。
 //   保存形式は従来どおり {start,end,label,color}（label＝下の name）。
 const CAL_EVENT_TYPES = [
-  { name:'お買い物マラソン',   color:'#16a34a', short:'マラソン' },
+  { name:'お買い物マラソン',   color:'#16a34a', short:'MS' },
   { name:'スーパーSALE',       color:'#dc2626', short:'SS' },
   { name:'ブラックフライデー', color:'#111111', short:'BF' },
-  { name:'大感謝祭',           color:'#2563eb', short:'大感謝' },
-  { name:'その他販促',         color:'#7c3aed', short:'セール' },
+  { name:'大感謝祭',           color:'#2563eb', short:'感謝' },
+  { name:'その他販促',         color:'#7c3aed', short:'他' },
 ];
 // 旧形式（自由入力のラベル）の読み替え。該当しなければラベル・色をそのまま使う
 function _calEvType(label){
@@ -13902,7 +13902,7 @@ function _calEvMeta(ev){
   const t = _calEvType(ev && ev.label);
   if (t) return t;
   const l = String((ev && ev.label) || '');
-  return { name:l, color:(ev && ev.color) || '#7c3aed', short:l.slice(0,4) };
+  return { name:l, color:(ev && ev.color) || '#7c3aed', short:l.slice(0,3) };
 }
 function _calEvSyncColor(){
   const sel = document.getElementById('evLabel'); if (!sel) return;
