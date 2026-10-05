@@ -583,7 +583,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1365</span>
+    <span class="build-date">v1.1366</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6476,8 +6476,9 @@ function _renderRunawayCalendar(){
   const wd=['日','月','火','水','木','金','土'];
   // カレンダー設定のイベントを日付の右に表示（v1.1363 / v1.1364で日付の右に並べる形に変更）
   //   セル内の幅は27〜32pxしかないので、表記は短く（MS/SS/BF/感謝/他）・7pxで詰めて出す。
+  //   色帯は日付の右の空きいっぱいに伸ばし、文字は中央に置く（v1.1366）。
   //   同じ日に複数イベントが重なって入りきらないときは次の行に折り返す（期間はマウスを乗せると出る）。
-  const _evBadges=(ds)=>{ let evs=[]; try{ evs=getEventsForDate(ds)||[]; }catch(e){} if(!evs.length) return ''; return evs.map(function(ev){ const mt=_calEvMeta(ev); return '<span class="rd-evb" title="'+String(mt.name).replace(/["<>]/g,'')+'（'+ev.start+'〜'+ev.end+'）" style="flex:none;background:'+mt.color+';color:#fff;font-weight:700;font-size:7px;letter-spacing:-0.5px;line-height:9px;height:9px;padding:0 1.5px;border-radius:2px;white-space:nowrap">'+mt.short+'</span>'; }).join(''); };
+  const _evBadges=(ds)=>{ let evs=[]; try{ evs=getEventsForDate(ds)||[]; }catch(e){} if(!evs.length) return ''; return evs.map(function(ev){ const mt=_calEvMeta(ev); return '<span class="rd-evb" title="'+String(mt.name).replace(/["<>]/g,'')+'（'+ev.start+'〜'+ev.end+'）" style="flex:1 1 auto;text-align:center;background:'+mt.color+';color:#fff;font-weight:700;font-size:7px;letter-spacing:-0.5px;line-height:9px;height:9px;padding:0 1.5px;border-radius:2px;white-space:nowrap">'+mt.short+'</span>'; }).join(''); };
   const _dayHead=(dd,ds)=>{ const b=_evBadges(ds); return b ? ('<div class="rd-dh" style="display:flex;flex-wrap:wrap;align-items:center;gap:1px 2px;line-height:1.1"><span style="color:var(--text3);font-size:8px;flex:none">'+dd+'</span>'+b+'</div>') : ''; };
   // 同じ日に2件以上重なると折り返すので、そのぶんだけセルを高くする（下の比率が切れないように）
   const _cellH=(function(){ try{ let mx=0; months.forEach(function(ym){ const dim=new Date(ym[0],ym[1],0).getDate(); for(let d=1;d<=dim;d++){ const n=getEventsForDate(ym[0]+'-'+String(ym[1]).padStart(2,'0')+'-'+String(d).padStart(2,'0')).length; if(n>mx) mx=n; } }); return 110 + (mx>1 ? (mx-1)*10 : 0); }catch(e){ return 110; } })();
