@@ -463,6 +463,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
 .add-event-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-top: 20px; }
 .add-event-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 .form-group label { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 5px; }
+.form-group select { width: 100%; padding: 8px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; background: var(--surface2); color: var(--text); outline: none; cursor: pointer; }
 .form-group input[type=text], .form-group input[type=date] { width: 100%; padding: 8px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; background: var(--surface2); color: var(--text); outline: none; }
 .form-group input:focus { border-color: var(--red); background: var(--surface); }
 
@@ -566,7 +567,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1362</span>
+    <span class="build-date">v1.1363</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1408,21 +1409,13 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
       </div>
       <div class="add-event-row">
         <div class="form-group">
-          <label>ラベル（例：楽天スーパーセール）</label>
-          <input type="text" id="evLabel" placeholder="イベント名">
+          <label>イベント名</label>
+          <select id="evLabel" onchange="_calEvSyncColor()"></select>
         </div>
         <div class="form-group">
-          <label>色</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="evColorPicker">
-            <span class="ev-color-opt" data-color="#e91e63" style="width:24px;height:24px;border-radius:50%;background:#e91e63;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
-            <span class="ev-color-opt" data-color="#ff5722" style="width:24px;height:24px;border-radius:50%;background:#ff5722;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
-            <span class="ev-color-opt" data-color="#ff9800" style="width:24px;height:24px;border-radius:50%;background:#ff9800;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
-            <span class="ev-color-opt" data-color="#4caf50" style="width:24px;height:24px;border-radius:50%;background:#4caf50;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
-            <span class="ev-color-opt" data-color="#2196f3" style="width:24px;height:24px;border-radius:50%;background:#2196f3;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
-            <span class="ev-color-opt" data-color="#9c27b0" style="width:24px;height:24px;border-radius:50%;background:#9c27b0;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
-            <span class="ev-color-opt" data-color="#00bcd4" style="width:24px;height:24px;border-radius:50%;background:#00bcd4;cursor:pointer;border:2px solid transparent" onclick="selectEvColor(this)"></span>
-          </div>
-          <input type="hidden" id="evColor" value="#e91e63">
+          <label>色（イベント名で自動）</label>
+          <div id="evColorPreview" style="display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px;color:var(--text2)"></div>
+          <input type="hidden" id="evColor" value="#16a34a">
         </div>
       </div>
       <div id="evFormStatus" style="font-size:11px;color:var(--danger);margin-bottom:8px;min-height:16px"></div>
@@ -6469,11 +6462,19 @@ function _renderRunawayCalendar(){
   const _sharesSorted=_shares.slice().sort(function(a,b){return b-a;}); const _sn=_sharesSorted.length;
   const _shareColor=function(v){ if(!(v>0)||!_sn) return '#1a1a1a'; var idx=_sharesSorted.indexOf(v); if(idx<0){ var bd=1e9; idx=0; for(var k=0;k<_sn;k++){ var dd=Math.abs(_sharesSorted[k]-v); if(dd<bd){bd=dd;idx=k;} } } if(idx<Math.ceil(_sn*0.10)) return '#dc2626'; if(idx<Math.ceil(_sn*0.20)) return '#ea580c'; return '#1a1a1a'; };
   const wd=['日','月','火','水','木','金','土'];
+  // カレンダー設定のイベントを日付の右に表示（v1.1363）
+  //   セル内の幅が27〜32pxしかなく「マラソン」が日付の右に入らないため、日付のすぐ下にセル幅いっぱいの色帯で出す。
+  //   同じ日に複数イベントが重なったときは縦に積む（期間はマウスを乗せると出る）。
+  const _evBadges=(ds)=>{ let evs=[]; try{ evs=getEventsForDate(ds)||[]; }catch(e){} if(!evs.length) return ''; return '<div style="display:flex;flex-direction:column;gap:1px;margin:1px 0 1px">'+evs.map(function(ev){ const mt=_calEvMeta(ev); return '<span title="'+String(mt.name).replace(/["<>]/g,'')+'（'+ev.start+'〜'+ev.end+'）" style="display:block;flex:none;overflow:hidden;background:'+mt.color+';color:#fff;font-weight:700;font-size:7px;letter-spacing:-0.4px;line-height:9px;height:9px;text-align:center;border-radius:2px;white-space:nowrap">'+mt.short+'</span>'; }).join('')+'</div>'; };
+  const _dayHead=(dd,ds)=>{ const b=_evBadges(ds); return b ? ('<div style="color:var(--text3);font-size:8px;line-height:1.1">'+dd+'</div>'+b) : ''; };
+  // イベントの色帯（1本約10px）が入るぶん、表示中の月で一番多く重なった本数に合わせてセルを高くする（下の比率が切れないように）
+  const _cellH=(function(){ try{ let mx=0; months.forEach(function(ym){ const dim=new Date(ym[0],ym[1],0).getDate(); for(let d=1;d<=dim;d++){ const n=getEventsForDate(ym[0]+'-'+String(ym[1]).padStart(2,'0')+'-'+String(d).padStart(2,'0')).length; if(n>mx) mx=n; } }); return 110 + (mx>0 ? 1 + mx*10 : 0); }catch(e){ return 110; } })();
   const cellFor=(ds)=>{
     const r=byDate[ds]; const dd=String(parseInt(ds.slice(8,10),10));
+    const _dh=_dayHead(dd,ds);
     const _cls=(typeof globalChangeLogs!=='undefined'?globalChangeLogs:[]).filter(function(x){return x&&x.date===ds&&x.note;});
     const clBar=_cls.length?('<div style="display:flex;gap:1px;margin-top:auto">'+_cls.map(function(x){return '<div title="'+String(x.note).replace(/["<>]/g,'')+'" style="flex:1;height:4px;border-radius:2px;background:'+(x.color||'#f97316')+'"></div>';}).join('')+'</div>'):'';
-    if(!r){ return `<div style="height:110px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);opacity:0.5;font-size:10px;color:var(--text3);padding:2px 4px;display:flex;flex-direction:column">${dd}${clBar}</div>`; }
+    if(!r){ return `<div style="height:${_cellH}px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);opacity:0.5;font-size:10px;color:var(--text3);padding:2px 4px;display:flex;flex-direction:column">${_dh||dd}${clBar}</div>`; }
     const sp20=(r.spend||0)-(r.spendKw||0); const spKw=(r.spendKw||0); const spTot=(r.spend||0);
     const sa20=(r.sales||0)-(r.salesKw||0); const roas20=sp20>0?(sa20/sp20*100):null;
     let bg='var(--surface)', rc='var(--text3)', bd='var(--border)';
@@ -6487,8 +6488,8 @@ function _renderRunawayCalendar(){
     const _shareNum=((_allDayMode || _dnum<=_cutDay) && _den>0)?(+(spTot/_den*100).toFixed(1)):null;
     const _shareTxt=(_shareNum!=null)?(_shareNum.toFixed(1)+'%'):'\u2014';
     const _shareCol=(_shareNum!=null)?_shareColor(_shareNum):'var(--text3)';
-    return `<div title="${ds}" style="height:110px;border:1px solid ${bd};border-radius:3px;background:${bg};padding:2px 4px;overflow:hidden;display:flex;flex-direction:column;font-size:8px;line-height:1.1">`
-      +`<div style="color:var(--text3);font-size:8px">${dd}</div>`
+    return `<div title="${ds}" style="height:${_cellH}px;border:1px solid ${bd};border-radius:3px;background:${bg};padding:2px 4px;overflow:hidden;display:flex;flex-direction:column;font-size:8px;line-height:1.1">`
+      +(_dh||`<div style="color:var(--text3);font-size:8px">${dd}</div>`)
       +`<div style="font-weight:700;color:${rc};font-size:11px">${r20txt}</div>`
       +`<div style="color:var(--text3);font-size:7px;margin-top:1px">20</div><div style="font-weight:600;font-size:9px">${num(sp20)}</div>`
       +dv
@@ -13874,18 +13875,63 @@ function saveCalEvents() {
 }
 loadCalEvents();
 
+// ── イベントの種類（v1.1363）──
+//   イベント名はこの5つから選ぶ。色と、暴走日カレンダーに出す短い表記はイベント名で決まる。
+//   保存形式は従来どおり {start,end,label,color}（label＝下の name）。
+const CAL_EVENT_TYPES = [
+  { name:'お買い物マラソン',   color:'#16a34a', short:'マラソン' },
+  { name:'スーパーSALE',       color:'#dc2626', short:'SS' },
+  { name:'ブラックフライデー', color:'#111111', short:'BF' },
+  { name:'大感謝祭',           color:'#2563eb', short:'大感謝' },
+  { name:'その他販促',         color:'#7c3aed', short:'セール' },
+];
+// 旧形式（自由入力のラベル）の読み替え。該当しなければラベル・色をそのまま使う
+function _calEvType(label){
+  const l = String(label||'').trim();
+  const t = CAL_EVENT_TYPES.find(x => x.name === l);
+  if (t) return t;
+  const n = l.replace(/\s/g,'').toLowerCase();
+  if (/^ss$|スーパー(sale|セール)/i.test(n)) return CAL_EVENT_TYPES[1];
+  if (/マラソン/.test(n)) return CAL_EVENT_TYPES[0];
+  if (/ブラック|^bf$|blackfriday/i.test(n)) return CAL_EVENT_TYPES[2];
+  if (/感謝祭/.test(n)) return CAL_EVENT_TYPES[3];
+  return null;
+}
+// 表示用：{ name, color, short }
+function _calEvMeta(ev){
+  const t = _calEvType(ev && ev.label);
+  if (t) return t;
+  const l = String((ev && ev.label) || '');
+  return { name:l, color:(ev && ev.color) || '#7c3aed', short:l.slice(0,4) };
+}
+function _calEvSyncColor(){
+  const sel = document.getElementById('evLabel'); if (!sel) return;
+  const t = CAL_EVENT_TYPES.find(x => x.name === sel.value) || CAL_EVENT_TYPES[0];
+  const hid = document.getElementById('evColor'); if (hid) hid.value = t.color;
+  const pv = document.getElementById('evColorPreview');
+  if (pv) pv.innerHTML = '<span style="width:24px;height:24px;border-radius:50%;background:'+t.color+';display:inline-block;flex:none"></span>'
+    + '<span>暴走日カレンダーの表記：</span><span style="background:'+t.color+';color:#fff;font-weight:700;font-size:11px;padding:1px 6px;border-radius:4px">'+t.short+'</span>';
+}
+function _calEvInitForm(){
+  const sel = document.getElementById('evLabel'); if (!sel) return;
+  if (!sel.options.length) sel.innerHTML = CAL_EVENT_TYPES.map(t => '<option value="'+t.name+'">'+t.name+'</option>').join('');
+  _calEvSyncColor();
+}
+
 // 指定日付にかかるイベントを返す
 function getEventsForDate(dateStr) {
   return calEvents.filter(ev => dateStr >= ev.start && dateStr <= ev.end);
 }
 
 function openCalendarSettings() {
+  _calEvInitForm();
   renderEventList();
   document.getElementById('calendarSettingsPage').style.display = 'block';
 }
 function closeCalendarSettings() {
   document.getElementById('calendarSettingsPage').style.display = 'none';
   renderPage(); // カレンダーを再描画
+  try { if (typeof _currentTab !== 'undefined' && _currentTab === 'runaway-days') renderRunawayDays(); } catch(e) {}
 }
 
 function renderEventList() {
@@ -13894,14 +13940,14 @@ function renderEventList() {
     el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">まだ登録されていません</div>';
     return;
   }
-  el.innerHTML = calEvents.map((ev, i) => `
+  el.innerHTML = calEvents.map((ev, i) => { const mt = _calEvMeta(ev); return `
     <div class="event-list-item">
-      <div class="event-color-dot" style="background:${ev.color}"></div>
-      <div class="event-list-label">${ev.label}</div>
+      <div class="event-color-dot" style="background:${mt.color}"></div>
+      <div class="event-list-label">${ev.label}<span style="margin-left:8px;background:${mt.color};color:#fff;font-weight:700;font-size:10px;padding:1px 5px;border-radius:4px">${mt.short}</span></div>
       <div class="event-list-dates">${ev.start} 〜 ${ev.end}</div>
       <button class="event-del-btn" onclick="deleteCalEvent(${i})">削除</button>
     </div>
-  `).join('');
+  `; }).join('');
 }
 
 function selectEvColor(el) {
@@ -13914,20 +13960,21 @@ function addCalendarEvent() {
   const start = document.getElementById('evStartDate').value;
   const end = document.getElementById('evEndDate').value;
   const label = document.getElementById('evLabel').value.trim();
-  const color = document.getElementById('evColor').value;
+  const _t = CAL_EVENT_TYPES.find(x => x.name === label);
+  const color = _t ? _t.color : document.getElementById('evColor').value;
   const status = document.getElementById('evFormStatus');
 
   if (!start) { status.textContent = '開始日を入力してください'; return; }
   if (!end)   { status.textContent = '終了日を入力してください'; return; }
   if (end < start) { status.textContent = '終了日は開始日以降にしてください'; return; }
-  if (!label) { status.textContent = 'ラベルを入力してください'; return; }
+  if (!label) { status.textContent = 'イベント名を選んでください'; return; }
 
   calEvents.push({ start, end, label, color });
   saveCalEvents();
   // フォームをリセット
   document.getElementById('evStartDate').value = '';
   document.getElementById('evEndDate').value = '';
-  document.getElementById('evLabel').value = '';
+  document.getElementById('evLabel').selectedIndex = 0; _calEvSyncColor();
   status.textContent = '';
   renderEventList();
 }
@@ -15909,7 +15956,7 @@ function renderCalendar(p, ym) {
     const dk = `${ym}-${String(day).padStart(2,'0')}`;
     const d = p.days[dk];
     const evs = getEventsForDate(dk);
-    const evColor = evs.length > 0 ? evs[0].color : null;
+    const evColor = evs.length > 0 ? _calEvMeta(evs[0]).color : null;
     const evLabel = evs.length > 0 ? evs[0].label : null;
     const evStyle = '';
     if (d && d.spend > 0) {
