@@ -506,6 +506,15 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   </script>
 </head>
 <body>
+<!-- ★最上部★ 複数タブで別ショップが開かれているときの警告帯（ヘッダーより上）v1.1359 -->
+<div id="shopDriftBar" style="display:none;padding:12px 18px;background:#7f1d1d;color:#fff;box-shadow:0 3px 14px rgba(0,0,0,.35);position:relative;z-index:400">
+  <div style="display:flex;align-items:center;gap:10px;max-width:1400px;margin:0 auto">
+    <span style="font-size:22px;flex-shrink:0" class="stock-siren">🏪</span>
+    <span style="flex:1;min-width:0;font-size:13px;font-weight:700;line-height:1.6" id="shopDriftMsg"></span>
+    <button id="shopDriftBtn" style="flex-shrink:0;font-size:11px;font-weight:800;padding:6px 14px;border-radius:5px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.18);color:#fff;cursor:pointer;white-space:nowrap"></button>
+    <button onclick="_shopBarDismiss()" title="今回だけ閉じる" style="flex-shrink:0;font-size:18px;line-height:1;background:transparent;border:none;color:rgba(255,255,255,.85);cursor:pointer;padding:0 2px">×</button>
+  </div>
+</div>
 <div id="loadingLock">
   <div class="lock-card">
     <div class="lock-title">📥 データを保存中...</div>
@@ -557,7 +566,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1358</span>
+    <span class="build-date">v1.1360</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -650,14 +659,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
 <div id="mainScreen">
 
   <!-- 別タブでショップを切り替えられたときの警告（データ混入の予防）v1.1358 -->
-  <div id="shopDriftBar" style="display:none;position:sticky;top:52px;z-index:200;padding:11px 18px;background:#7f1d1d;color:#fff;box-shadow:0 3px 14px rgba(127,29,29,.45)">
-    <div style="display:flex;align-items:center;gap:10px;max-width:1400px;margin:0 auto">
-      <span style="font-size:20px">🏪</span>
-      <span style="flex:1;min-width:0;font-size:12px;font-weight:700;line-height:1.6" id="shopDriftMsg"></span>
-      <button onclick="location.reload()" style="flex-shrink:0;font-size:11px;font-weight:800;padding:5px 12px;border-radius:5px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.18);color:#fff;cursor:pointer;white-space:nowrap">再読み込み</button>
-      <button onclick="this.closest('#shopDriftBar').style.display='none'" style="flex-shrink:0;font-size:17px;line-height:1;background:transparent;border:none;color:rgba(255,255,255,.85);cursor:pointer;padding:0 2px">×</button>
-    </div>
-  </div>
+  <!-- 複数タブ警告帯は <body> 直後（ヘッダーより上）へ移動 v1.1359 -->
 
   <!-- 現役商品の在庫切れが出たときだけ出る警告帯。モーダルを開かなくても一覧画面で気づけるように（v1.1352）
        ※誤検知が多かった v1.1344 以前とは違い、いまは要対応（現役）のみ・0件なら一切出ない -->
@@ -2462,25 +2464,103 @@ function _getSessionShopId(){ return _sessionShopId || (function(){ try{ return 
 // ★v1.1358★ データの保存先・キャッシュキーは必ずこれを通す（＝このタブのショップに固定）。
 //   localStorage は全タブ共有なので、別タブの切替でこのタブの保存先が変わるのを防ぐ。
 function _shopScope(){ return _getSessionShopId(); }
-// 別タブでショップが切り替えられていないか監視し、見つけたら保存を止めて警告する（二重の安全策）
-var _shopDriftWarned = false;
-function _checkShopDrift(){
+// ── 開いているタブの一覧を localStorage で共有する（v1.1359）──
+//   各タブが自分のID＋表示中ショップを定期的に書き込み、古いものは掃除する。
+//   これで「どちらのタブにも、そのタブに合った案内」を出せる。
+var _TABS_KEY = 'adcheck_open_tabs';
+var _TAB_TTL  = 15000;   // この時間ビートが無いタブは閉じたとみなす
+var _myTabId  = Math.random().toString(36).slice(2) + Date.now().toString(36);
+function _tabsRead(){ try{ return JSON.parse(localStorage.getItem(_TABS_KEY) || '{}') || {}; }catch(e){ return {}; } }
+function _tabsBeat(){
   try{
-    var live = _getCurrentShopId(), mine = _getSessionShopId();
-    if (live && mine && live !== mine && !_shopDriftWarned) {
-      _shopDriftWarned = true;
-      console.warn('[ADcheck] ショップ不整合: このタブ=' + mine + ' / localStorage=' + live + '（別タブで切替された可能性）');
-      try{
-        var b = document.getElementById('shopDriftBar');
-        if (b) { b.querySelector('#shopDriftMsg').textContent =
-          'このタブは「' + mine + '」を表示しています。別のタブで「' + live + '」に切り替えられました。'
-          + 'このタブのデータは「' + mine + '」に保存されます。混乱を避けるため、このタブを再読み込みするか閉じてください。';
-          b.style.display='block'; }
-      }catch(e){}
+    var now = Date.now(), t = _tabsRead();
+    t[_myTabId] = { shop: _shopScope(), ts: now };
+    Object.keys(t).forEach(function(k){ if(!t[k] || (now - (t[k].ts||0)) > _TAB_TTL) delete t[k]; });
+    localStorage.setItem(_TABS_KEY, JSON.stringify(t));
+  }catch(e){}
+}
+function _tabsLeave(){
+  try{ var t=_tabsRead(); delete t[_myTabId]; localStorage.setItem(_TABS_KEY, JSON.stringify(t)); }catch(e){}
+}
+// 自分以外の生きているタブが表示しているショップ（重複除去）
+function _tabsOtherShops(){
+  var now = Date.now(), t = _tabsRead(), out = [];
+  Object.keys(t).forEach(function(k){
+    if(k === _myTabId || !t[k]) return;
+    if((now - (t[k].ts||0)) > _TAB_TTL) return;
+    var sh = t[k].shop; if(sh && out.indexOf(sh) < 0) out.push(sh);
+  });
+  return out;
+}
+function _shopName(id){
+  try{ var s = _getShops().find(function(x){ return x.id === id; }); return s ? s.name : (id||'?'); }catch(e){ return id||'?'; }
+}
+// ── 状況に応じた案内を出す。両方のタブにそれぞれ適した文言を表示する ──
+//   A: このタブは取込できない（別タブが「現在ショップ」を取っている）→ 赤
+//   B: このタブは取込できる。ただし別ショップのタブも開いている       → 橙
+//   C: 問題なし → 非表示
+var _shopBarDismissed = false;
+function _renderShopStateBar(){
+  var bar = document.getElementById('shopDriftBar'); if(!bar) return;
+  var msgEl = document.getElementById('shopDriftMsg');
+  var btnEl = document.getElementById('shopDriftBtn');
+  var mine = _getSessionShopId(), live = _getCurrentShopId();
+  var others = _tabsOtherShops().filter(function(x){ return x !== mine; });
+  var mineNm = _shopName(mine);
+
+  if (_shopBarDismissed) { bar.style.display = 'none'; return; }
+
+  if (mine && live && mine !== live) {
+    // A: 取込できない側
+    bar.style.background = '#7f1d1d';
+    msgEl.innerHTML = 'このタブは <b>' + mineNm + '</b> です。別のタブで <b>' + _shopName(live) + '</b> が開かれているため、'
+      + '<u>このタブでは取込できません</u>。表示・編集は安全です（保存先は ' + mineNm + ' のままです）。';
+    btnEl.textContent = mineNm + 'で開き直す';
+    btnEl.onclick = function(){ location.href = location.origin + location.pathname + '?shop=' + encodeURIComponent(mine); };
+    btnEl.style.display = '';
+    bar.style.display = 'block';
+  } else if (others.length) {
+    // B: 取込できる側。他ショップのタブが開いている
+    bar.style.background = '#b45309';
+    msgEl.innerHTML = 'このタブは <b>' + mineNm + '</b> です（取込できます）。別のタブで <b>'
+      + others.map(_shopName).join('・') + '</b> が開かれています。'
+      + '<u>そちらのタブでは取込できません</u>。混乱を避けるなら、使わないタブは閉じてください。';
+    btnEl.style.display = 'none';
+    bar.style.display = 'block';
+  } else {
+    bar.style.display = 'none';
+  }
+  // 帯を閉じても/スクロールしても分かるように、ヘッダーの🏪ボタンにも状態を出す
+  try{
+    var sb = document.getElementById('shopSelectorBtn');
+    if (sb) {
+      if (mine && live && mine !== live) {
+        sb.style.setProperty('border-color', '#b71c1c', 'important');
+        sb.style.setProperty('background', '#fdecec', 'important');
+        sb.title = 'このタブは ' + mineNm + '（取込不可：別タブで ' + _shopName(live) + ' が開かれています）';
+      } else if (others.length) {
+        sb.style.setProperty('border-color', '#f59e0b', 'important');
+        sb.style.setProperty('background', '#fff8e1', 'important');
+        sb.title = 'このタブは ' + mineNm + '（取込可）。別タブ: ' + others.map(_shopName).join('・');
+      } else {
+        sb.style.removeProperty('border-color'); sb.style.removeProperty('background');
+        sb.title = '';
+      }
     }
   }catch(e){}
 }
-window.addEventListener('storage', function(ev){ if(ev && ev.key === CURRENT_SHOP_KEY) _checkShopDrift(); });
+function _shopBarDismiss(){ _shopBarDismissed = true; _renderShopStateBar(); }
+// 起動・定期・他タブ変化のタイミングで更新
+_tabsBeat();
+setInterval(function(){ _tabsBeat(); _renderShopStateBar(); }, 5000);
+window.addEventListener('storage', function(ev){
+  if(ev && (ev.key === CURRENT_SHOP_KEY || ev.key === _TABS_KEY)) { try{ _renderShopStateBar(); }catch(e){} }
+});
+window.addEventListener('pagehide', _tabsLeave);
+window.addEventListener('beforeunload', _tabsLeave);
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ try{ _tabsBeat(); _renderShopStateBar(); }catch(e){} }, 400); });
+// 旧名の互換（他所から呼ばれても落ちないように）
+function _checkShopDrift(){ try{ _renderShopStateBar(); }catch(e){} }
 
 // 現在ショップに対応するGitHubファイルパスを返す
 function _shopDataDir() {
@@ -10152,7 +10232,13 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
   let _hdMeta;
   if(monthMode && _monthLast){ let _yy=+_monthLast.slice(0,4), _mm=+_monthLast.slice(5,7)-1; if(_mm<1){_mm=12;_yy--;} _hdMeta='\u3000|\u3000'+_yy+'/'+String(_mm).padStart(2,'0')+'\u3000|\u3000<span style="color:#c2410c;font-weight:700">前月(満了)</span>'; }
   else { _hdMeta=(_monthLast?('\u3000|\u3000'+_monthLast.slice(0,4)+'/'+_monthLast.slice(5,7)+'/'+_monthLast.slice(8,10)):'')+'\u3000|\u3000'+(daily?'日別':'月別'); }
-  const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+(_img?'<img loading="lazy" src="'+_img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:14px;font-weight:700">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+'<span style="user-select:all;-webkit-user-select:all">'+_kwEsc(code)+'</span>'+(_itemNo?('\u3000<span style="color:#00897B;font-weight:700">'+_kwEsc(_itemNo)+'</span>'):'')+_hdMeta+'\u3000'+_idleBtns+_confBtns+'</div></div></div>';
+  // ★v1.1360★ 画像・商品名クリックで商品モーダル（全体情報／KW詳細／編集）を開く。
+  //   商品-売上データ と同じ導線をここでも使えるようにする。画像が無い場合もプレースホルダを押せる。
+  const _open='onclick="event.stopPropagation();openRenewalGraph(\''+code+'\')" title="商品情報を開く（全体情報・KW詳細・編集）" style="cursor:pointer';
+  const _thumb=_img
+    ? ('<img loading="lazy" src="'+_img+'" '+_open+';width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex:none">')
+    : ('<div '+_open+';width:46px;height:46px;border-radius:6px;border:1px dashed var(--border);background:var(--surface2);flex:none;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text3)">\u{1F50D}</div>');
+  const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+_thumb+'<div><div '+_open+';font-size:14px;font-weight:700;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:3px">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+'<span style="user-select:all;-webkit-user-select:all">'+_kwEsc(code)+'</span>'+(_itemNo?('\u3000<span style="color:#00897B;font-weight:700">'+_kwEsc(_itemNo)+'</span>'):'')+_hdMeta+'\u3000'+_idleBtns+_confBtns+'</div></div></div>';
   const _btn='<button onclick="_kwTblToggleCharts(\''+pfx+'\','+idx+',this)" style="font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #00897B;background:#fff;color:#00897B;cursor:pointer;font-weight:700;margin:2px 0 8px">グラフ・表を表示</button>';
   const _chc='<div id="kwTblCh'+pfx+'_'+idx+'" style="display:none;margin-bottom:10px"></div>';
   const _sscell='<div style="flex:0 0 220px;align-self:flex-start;border:1px solid #b9c0cc;border-radius:8px;background:#eef1f6;padding:8px 10px;box-sizing:border-box"><div style="font-size:10px;color:#445;font-weight:700;margin:0 0 5px;text-align:center">マラソン/SS</div>'+_ssCellBtns(code)+'</div>';
@@ -14178,6 +14264,15 @@ async function runDropZoneCheck() {
     // CouponAdvance_<shop>_item_ / CouponAdvance_<shop>_kw_
     const m5 = name.match(/^couponadvance_([^_]+(?:-[^_]+)*)_(?:item|kw)_/i);
     if (m5) return m5[1];
+    // ★v1.1359★ 決まった形に当てはまらなくても、登録済みショップコードが
+    //   ファイル名のどこかにトークンとして入っていれば採用する。
+    //   例: 20260101_yukaiya_Item_SalesList.csv / kai-ry_20260101_Item_SalesList.csv
+    //   売上CSVのようにショップの手がかりが無いファイルを、リネームだけで判別可能にする。
+    try{
+      const toks = String(name).toLowerCase().split(/[^a-z0-9-]+/).filter(Boolean);
+      const known = _getShops().map(s => String(s.shopCode||'').toLowerCase()).filter(c => c.length >= 3);
+      for (const k of known) if (toks.indexOf(k) >= 0) return k;
+    }catch(e){}
     return null;
   };
   for (const f of Array.from(_stagedFiles)) {
@@ -14440,9 +14535,11 @@ async function runDropZoneApply() {
   try{
     var _live = _getCurrentShopId(), _mine = _shopScope();
     if (_live && _mine && _live !== _mine) {
-      alert('別のタブでショップが「' + _live + '」に切り替えられています。\n\n'
-        + 'このタブは「' + _mine + '」を表示中です。取り違えを防ぐため取込を中止しました。\n'
-        + 'このタブを再読み込みしてから、もう一度お試しください。');
+      alert('このタブ（' + _shopName(_mine) + '）では取込できません。\n\n'
+        + '別のタブで「' + _shopName(_live) + '」が開かれているためです。\n'
+        + '取り違えを防ぐため中止しました。\n\n'
+        + '対処: 上の赤い帯の「' + _shopName(_mine) + 'で開き直す」を押すか、\n'
+        + '　　　もう一方のタブを閉じてから、このタブを再読み込みしてください。');
       return;
     }
   }catch(e){}
