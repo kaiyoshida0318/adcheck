@@ -566,7 +566,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1360</span>
+    <span class="build-date">v1.1361</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1507,6 +1507,14 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </div>
       </div>
       <p style="font-size:12px;color:var(--text2);margin:0 0 10px">商品リストCSVをアップロードしてください。</p>
+      <!-- テンプレートCSV（v1.1361） -->
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#eef7ff;border:1px solid #bcdcff;border-radius:8px;padding:10px 14px;margin:0 0 12px">
+        <button onclick="bulkDownloadTemplate()" style="flex-shrink:0;font-size:12px;font-weight:700;padding:7px 14px;border-radius:6px;border:1px solid #1565c0;background:#1565c0;color:#fff;cursor:pointer;white-space:nowrap">📥 テンプレートCSVをダウンロード</button>
+        <div style="flex:1;min-width:220px;font-size:11px;color:#1565c0;line-height:1.7">
+          必要な列だけが入った雛形です。<b>いま登録されている商品が最大20件、現在の値で入った状態</b>で出ます（商品が無ければ記入例が入ります）。<br>
+          <span style="color:var(--text2)">書き換えたい箇所だけ直して、そのまま下にドロップしてください。空欄の項目は更新されません。</span>
+        </div>
+      </div>
       <div id="bulkDropZone" style="border:2px dashed var(--border2);border-radius:10px;padding:20px 16px;text-align:center;cursor:pointer;background:var(--surface2);transition:border-color 0.15s"
         onclick="document.getElementById('bulkFileInput').click()"
         ondragover="event.preventDefault();this.style.borderColor='var(--red)'"
@@ -4671,9 +4679,54 @@ function renderKwFiltered() {
 
 // ── 商品名一括更新 ──
 var _bulkNameFile = null;
+// ── テンプレートCSVを生成してダウンロード（v1.1361）──
+//   アプリのCSV解析は単純なカンマ区切りなので、値に含まれるカンマ・改行は壊れる。
+//   生成時点で全角カンマへ置換し、そのまま取り込み直しても崩れないようにする。
+function bulkDownloadTemplate(){
+  try{
+    var san = function(v){ return String(v==null?'':v).replace(/[\r\n]+/g,' ').replace(/,/g,'，').trim(); };
+    var rows = ['商品管理番号,商品名,商品番号,ジャンルID'];
+    var codes = [];
+    try{
+      codes = Object.keys(productCache)
+        .filter(function(c){ return c && c !== '__global__' && (typeof DB==='undefined' || DB[c]); })
+        .slice(0, 20);
+    }catch(e){ codes = []; }
+    if (codes.length) {
+      codes.forEach(function(c){
+        var pc = productCache[c] || {};
+        rows.push([ san(c), san(pc.manualName || pc.name || ''), san(pc.itemNumber || ''), san(pc.genreId || '') ].join(','));
+      });
+    } else {
+      // 商品がまだ無いときは記入例
+      rows.push('10001289,ヨガバンド,yoga-24-01-band,568297');
+      rows.push('10001259,三角コーナーいらず,np-2f,567831');
+      rows.push('10000606,ベルトループ 18mm,bloop-18-01-18,');
+    }
+    var sid = '';
+    try{ sid = (_getCurrentShop() && _getCurrentShop().id) || _shopScope() || ''; }catch(e){}
+    var d = new Date();
+    var stamp = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+    var name = '商品情報一括更新_' + (sid ? sid + '_' : '') + stamp + '.csv';
+    // ExcelでそのままUTF-8と認識されるようBOMを付ける
+    var blob = new Blob(['\uFEFF' + rows.join('\r\n') + '\r\n'], { type:'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name; a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); a.remove(); }catch(e){} }, 1000);
+    var st = document.getElementById('bulkStatus');
+    if (st) { st.textContent = '✅ ' + name + ' をダウンロードしました（' + (codes.length ? codes.length + '件' : '記入例') + '）'; st.style.color = '#2e7d32'; }
+  }catch(e){
+    console.error('[ADcheck] テンプレートCSV生成エラー', e);
+    var st2 = document.getElementById('bulkStatus');
+    if (st2) { st2.textContent = '❌ テンプレートの作成に失敗しました'; st2.style.color = '#c62828'; }
+  }
+}
 
 function openBulkNameModal() {
   document.getElementById('bulkNameModal').style.display = 'flex';
+  try{ var _st=document.getElementById('bulkStatus'); if(_st){ _st.textContent=''; _st.style.color=''; } }catch(e){}
   _bulkNameFile = null;
   document.getElementById('bulkFileName').textContent = '';
   document.getElementById('bulkStatus').textContent = '';
