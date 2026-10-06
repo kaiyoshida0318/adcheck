@@ -583,7 +583,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1366</span>
+    <span class="build-date">v1.1367</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10790,8 +10790,10 @@ function _analyzeSave(arr){
   productCache['__global__'].analyzeMemo=arr;
   try{ localStorage.setItem('adcheck_analyze_memo', JSON.stringify(arr)); }catch(e){}
   try{ saveProductCache(); }catch(e){}
+  // ★v1.1367★ 共有ファイル(analyze_memo_shared.json)へはすぐ保存する（以前は1.5秒待っていたため、その間に開き直すと古い版が読まれた）
+  try{ _analyzePublishQueued(); }catch(e){}
   if(_analyzeSaveTimer) clearTimeout(_analyzeSaveTimer);
-  _analyzeSaveTimer=setTimeout(function(){ try{ _analyzePublish(); }catch(e){} try{ saveToGitHub(); }catch(e){} }, 1500);
+  _analyzeSaveTimer=setTimeout(function(){ try{ saveToGitHub(); }catch(e){} }, 1500);
 }
 function _analyzeColwGet(){try{if(productCache['__global__']&&productCache['__global__'].analyzeColw)return productCache['__global__'].analyzeColw;}catch(e){}try{var v=localStorage.getItem('adcheck_analyze_colw');return v?JSON.parse(v):null;}catch(e){}return null;}
 function _analyzeColwSave(o){try{localStorage.setItem('adcheck_analyze_colw',JSON.stringify(o));}catch(e){}try{if(!productCache['__global__'])productCache['__global__']={};productCache['__global__'].analyzeColw=o;saveProductCache();}catch(e){}}
@@ -10814,8 +10816,10 @@ function _analyzeSave2(o){
   try{ localStorage.setItem('adcheck_analyze_lists', JSON.stringify(o)); }catch(e){}
   try{ var first=(o.lists[0]&&o.lists[0].rows)||[]; productCache['__global__'].analyzeMemo=first; localStorage.setItem('adcheck_analyze_memo', JSON.stringify(first)); }catch(e){}
   try{ saveProductCache(); }catch(e){}
+  // ★v1.1367★ 共有ファイル(analyze_memo_shared.json)へはすぐ保存する（以前は1.5秒待っていたため、その間に開き直すと古い版が読まれた）
+  try{ _analyzePublishQueued(); }catch(e){}
   if(_analyzeSaveTimer) clearTimeout(_analyzeSaveTimer);
-  _analyzeSaveTimer=setTimeout(function(){ try{ _analyzePublish(); }catch(e){} try{ saveToGitHub(); }catch(e){} }, 1500);
+  _analyzeSaveTimer=setTimeout(function(){ try{ saveToGitHub(); }catch(e){} }, 1500);
 }
 
 var _ANALYZE_SHARED_FILE='data/analyze_memo_shared.json';
@@ -10823,6 +10827,10 @@ async function _analyzeFetch(){
   try{
     var pat=localStorage.getItem('github_pat'); var obj=null;
     var _lo=null,_lts=0; try{ _lo=JSON.parse(localStorage.getItem('adcheck_analyze_lists')||'null'); if(_lo&&_lo.updatedAt)_lts=+_lo.updatedAt||0; }catch(e){}
+    // ★v1.1367★ メモリ上(productCache)の版とも比べる。分析データは画像込みで4MB超あり、localStorage は容量オーバーで
+    //   書けていないことが多い。localStorage だけを見ると「手元に新しい版が無い」と判断して、GitHub の保存前の古い版で
+    //   上書きしてしまい、保存直後に開き直すとチェックが消えていた。
+    try{ var _mo=productCache['__global__']&&productCache['__global__'].analyzeLists; var _mts=(_mo&&+_mo.updatedAt)||0; if(_mo&&Array.isArray(_mo.lists)&&_mo.lists.length&&_mts>_lts){ _lo=_mo; _lts=_mts; } }catch(e){}
     try{ var h={'Accept':'application/vnd.github.v3.raw'}; if(pat) h['Authorization']='token '+pat;
       var r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_ANALYZE_SHARED_FILE+'?t='+Date.now(),{headers:h,cache:'no-store'}); if(r.ok){ obj=JSON.parse(await r.text()); } }catch(e){}
     if(!obj){ var rr=await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+_ANALYZE_SHARED_FILE+'?t='+Date.now(),{cache:'no-store'}); if(rr.ok) obj=JSON.parse(await rr.text()); }
@@ -10831,7 +10839,7 @@ async function _analyzeFetch(){
       if(_lo&&Array.isArray(_lo.lists)&&_lo.lists.length&&_lts>_sts){
         if(!productCache['__global__']) productCache['__global__']={};
         productCache['__global__'].analyzeLists=_lo;
-        try{ if(pat) _analyzePublish(); }catch(e){}
+        try{ if(pat) _analyzePublishQueued(); }catch(e){}
         return true;
       }
       var o={lists:obj.lists, active:obj.active||0, updatedAt:_sts};
@@ -10843,6 +10851,14 @@ async function _analyzeFetch(){
     }
   }catch(e){}
   return false;
+}
+// GitHub への保存を順番に実行する（連続で保存しても PUT が衝突しないように）。v1.1367
+var _anPubBusy=false, _anPubAgain=false;
+async function _analyzePublishQueued(){
+  if(_anPubBusy){ _anPubAgain=true; return; }
+  _anPubBusy=true;
+  try{ do{ _anPubAgain=false; var ok=await _analyzePublish(); if(!ok) console.warn('[ADcheck] 分析メモのGitHub保存に失敗'); }while(_anPubAgain); }
+  finally{ _anPubBusy=false; }
 }
 async function _analyzePublish(){
   var pat=localStorage.getItem('github_pat'); if(!pat) return false;
