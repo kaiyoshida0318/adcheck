@@ -583,7 +583,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1368</span>
+    <span class="build-date">v1.1369</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12281,6 +12281,8 @@ function openKwVolModal(itemCode) {
   const itemKwRows = kwRows.filter(r => r.itemCode === itemCode);
   const allYms = [...new Set(itemKwRows.map(r => r.ym))].sort();
   const months = allYms.slice(-3);
+  // ★v1.1369★ その前の3か月（KWデータがある月で数える＝上の段と同じ数え方）。下の段に並べる
+  const prevMonths = allYms.slice(-6, -3);
   const kws = [...new Set(itemKwRows.map(r => r.kw))];
 
   if (kws.length === 0) {
@@ -12307,7 +12309,7 @@ function openKwVolModal(itemCode) {
   };
 
   const totalClByYm = {};
-  months.forEach(ym => { totalClByYm[ym] = itemKwRows.filter(r => r.ym === ym).reduce((s,r) => s+(r.cl||0), 0); });
+  months.concat(prevMonths).forEach(ym => { totalClByYm[ym] = itemKwRows.filter(r => r.ym === ym).reduce((s,r) => s+(r.cl||0), 0); });
 
   const M = "font-family:'DM Mono',monospace;font-size:11px";
   const rc = v => v>=500?'#2E7D32':v>=300?'#E65100':v>0?'#C62828':'#bbb';
@@ -12315,7 +12317,7 @@ function openKwVolModal(itemCode) {
   const b1 = '1px solid #d0d0d0', b2 = '2px solid #999';
   const thS = `border:${b1};padding:6px 8px;font-size:10px;font-weight:700;color:#555;background:#f0f0f0;white-space:nowrap`;
 
-  const tables = months.map(ym => {
+  const buildTable = ym => {
     const y = ym.slice(0,4), mo = ym.slice(4,6);
     const totalCl = totalClByYm[ym] || 0;
     const kwSorted = kws.map(kw => { const d = getMonthAgg(kw, ym); return { kw, d, vol: d?.vol||0 }; }).sort((a,b) => b.vol - a.vol);
@@ -12346,7 +12348,12 @@ function openKwVolModal(itemCode) {
         <tbody>${rows}</tbody>
       </table>
     </div>`;
-  }).join('');
+  };
+  const tables = months.map(buildTable).join('');
+  const prevTables = prevMonths.map(buildTable).join('');
+  const secH = (t, sub) => `<div style="display:flex;align-items:baseline;gap:8px;padding:0 16px;margin:0 0 8px"><span style="font-size:13px;font-weight:700;color:var(--text)">${t}</span><span style="font-size:11px;color:var(--text3)">${sub}</span></div>`;
+  const ymTxt = ym => ym.slice(0,4)+'/'+ym.slice(4,6);
+  const rangeTxt = arr => arr.length ? (ymTxt(arr[0]) + (arr.length>1 ? '〜'+ymTxt(arr[arr.length-1]) : '')) : '';
 
   const itemNumber = cached.itemNumber || '—';
   const imgSrc = cached.manualImg || cached.img || null;
@@ -12361,7 +12368,11 @@ function openKwVolModal(itemCode) {
     </div>
   </div>`;
 
-  document.getElementById('kwVolModalBody').innerHTML = infoBar + `<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;padding:0 16px 16px">${tables}</div>`;
+  const rowWrap = t => `<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;padding:0 16px 16px">${t}</div>`;
+  const prevSec = prevMonths.length
+    ? `<div style="border-top:2px dashed var(--border);margin:4px 16px 14px"></div>` + secH('その前の3か月', rangeTxt(prevMonths)) + rowWrap(prevTables)
+    : `<div style="border-top:2px dashed var(--border);margin:4px 16px 10px"></div><div style="padding:0 16px 16px;font-size:12px;color:var(--text3)">それより前のKWデータはありません</div>`;
+  document.getElementById('kwVolModalBody').innerHTML = infoBar + secH('直近3か月', rangeTxt(months)) + rowWrap(tables) + prevSec;
   document.getElementById('kwVolModal').style.display = 'flex';
 }
 
