@@ -510,12 +510,16 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
           if (r.width && r.height) {
             ev.x = (ne.clientX - r.left) / r.width  * chart.width;
             ev.y = (ne.clientY - r.top)  / r.height * chart.height;
+            // ★v1.1370★ Chart.js は beforeEvent より前に「ずれた座標」で描画領域内かを判定済み(args.inChartArea)。
+            //   ここで直さないと、ズーム126%なら右側(元座標×1.26が領域外になる位置)でツールチップが一切出ない。
+            if (typeof chart.isPointInArea === 'function') args.inChartArea = chart.isPointInArea(ev);
             return;
           }
         }
         // clientXが無い合成イベント等はoffsetXを保険で使用。
         if (typeof ne.offsetX === 'number' && typeof ne.offsetY === 'number' && ne.target === canvas) {
           ev.x = ne.offsetX; ev.y = ne.offsetY;
+          if (typeof chart.isPointInArea === 'function') args.inChartArea = chart.isPointInArea(ev);
         }
       }
     });
@@ -583,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1369</span>
+    <span class="build-date">v1.1370</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
