@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1373</span>
+    <span class="build-date">v1.1374</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9874,7 +9874,7 @@ function _kwwmRenderAll(body){
   var BD='1px solid var(--border)';
   var KWC='border:'+BD+';vertical-align:middle;background:var(--surface);min-width:180px';
   function _kwwm2col(title,l1,v1,l2,v2,fg,bg){ function cel(l,v){ return '<div style="flex:1;text-align:center;background:'+bg+';border:1px solid '+fg+';border-radius:4px;padding:2px 1px"><div style="font-size:8px;color:var(--text3)">'+l+'</div><div style="font-size:11px;font-weight:700;color:'+fg+'">'+(v!=null?v+'%':'-')+'</div></div>'; } return '<div style="margin-top:8px;width:100%"><div style="font-size:9px;color:var(--text3);margin-bottom:3px">'+title+'</div><div style="display:flex;gap:3px">'+cel(l1,v1)+cel(l2,v2)+'</div></div>'; }
-  var TH='border:'+BD+';padding:6px 12px;font-size:12px;font-weight:700;text-align:center;background:var(--surface2);white-space:nowrap;color:var(--text)';
+  var TH='border:'+BD+';padding:6px 12px;font-size:12px;font-weight:700;text-align:center;background:var(--surface2);white-space:nowrap;color:var(--text);position:sticky;top:0;z-index:3;box-shadow:inset 0 -1px 0 #c8ccd2'; // ★v1.1374★ 見出し固定（枠 .kwwm-scroll の上端に貼り付く）
   var MC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;font-weight:600;color:#333';
   var VC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;color:#333';
   var GC='border:'+BD+';padding:4px 6px;text-align:center;white-space:nowrap;background:var(--surface2)';
@@ -9887,7 +9887,7 @@ function _kwwmRenderAll(body){
   var jobs=[]; var gi=0;
   var CHARTS=(view==='all')?[['saday','売上/1日','#43a047','円'],['seoday','SEO売上/1日','#43a047','円'],['adsaday','広告売上/1日','#43a047','円'],['spday','実績額/1日','#f59e0b','円'],['kwspday','KW実績/1日','#f59e0b','円'],['sp20day','20円実績/1日','#f59e0b','円'],['__empty__'],['kwcpc','KW単価','#ffa726','円'],['cpc20','20円単価','#ffa726','円'],['roas','売上ROAS','#1e88e5','%'],['ctrKWm','CTR/KW','#e53935','%'],['ctr20m','CTR/20','#e53935','%'],['roasAll','ROAS/全体','#1e88e5','%'],['roasKW','ROAS/KW','#1e88e5','%'],['roas20','ROAS/20','#1e88e5','%'],['clday','クリック数/1日','#7e57c2',''],['clkwday','クリック数-KW/1日','#7e57c2',''],['cl20day','クリック数-20/1日','#7e57c2',''],['__empty__'],['cvrKW','CVR/KW','#ec407a','%'],['cvr20','CVR/20','#ec407a','%'],['__empty__'],['cpc','平均クリック単価','#00897b','円'],['kakutanka','客単価','#00897b','円']]:[['spday','実績額/1日','#f59e0b','円'],['saday','売上/1日','#43a047','円'],['cvr','CVR','#ec407a','%'],['roas','ROAS','#1e88e5','%'],['clday','クリック数/1日','#7e57c2',''],['cpc','平均クリック単価','#00897b','円']];
   var _ccm2={}; CHARTS.forEach(function(cf){ if(cf[0]!=='__break__') _ccm2[cf[0]]=cf[2]; });
-  var h='<div style="overflow-x:auto">';
+  var h='<div class="kwwm-scroll" style="overflow:auto;max-height:78vh">';
   var _kwAgg={}; kwRows.forEach(function(r){ if(months.indexOf(r.ym)<0) return; if(!_kwAgg[r.itemCode]) _kwAgg[r.itemCode]={}; var _m=_kwAgg[r.itemCode][r.ym]; if(!_m) _m=_kwAgg[r.itemCode][r.ym]={sp:0,sa:0,od:0,cl:0}; _m.sp+=(+r.spend||0); _m.sa+=(+r.sales||0); _m.od+=(+r.orders||0); _m.cl+=(+r.cl||0); });
   codes.forEach(function(pc){
     var dm={};
@@ -9951,7 +9951,7 @@ function _renderKwWatchMonthlyTable(){
   var _rnwLogs=((productCache[code]&&productCache[code].changeLog)||[]).filter(function(l){return l.date;}).slice().sort(function(a,b){return a.date<b.date?-1:(a.date>b.date?1:0);}); var _rnwLast=_rnwLogs.length?_rnwLogs[_rnwLogs.length-1]:null; var _rnwD=_rnwLast?_rnwLast.date:''; var _rnwT=_rnwLast?_rnwLast.type:''; var _rnwC=(_rnwT==='lp')?['#e8f0fe','#1a73e8']:((_rnwT==='thumb')?['#fff3e0','#e8710a']:((_rnwT==='title')?['#e6f5f3','#0d9488']:((_rnwT==='both')?['#f3ecfb','#8e44ad']:['#f0fdf4','#16a34a']))); var _rnwL=(_rnwT==='lp')?'LP':((_rnwT==='thumb')?'サムネ':((_rnwT==='title')?'タイトル':((_rnwT==='both')?'LP＆サムネ':'操作'))); var _rnwDt=_rnwD?(_rnwL+' '+_rnwD.slice(2,4)+'/'+_rnwD.slice(5,7)+'/'+_rnwD.slice(8,10)):''; var _rnwBtn=_rnwD?'<button onclick="openChangeLog(\''+code+'\')" style="margin-left:10px;font-size:11px;font-weight:700;padding:4px 12px;border:1px solid '+_rnwC[1]+';border-radius:6px;background:'+_rnwC[0]+';color:'+_rnwC[1]+';cursor:pointer;white-space:nowrap">'+_rnwDt+'</button>':''; var _rnwBtnC=_rnwD?'<div style="text-align:center;margin-top:6px"><button onclick="openChangeLog(\''+code+'\')" style="font-size:11px;font-weight:700;padding:4px 12px;border:1px solid '+_rnwC[1]+';border-radius:6px;background:'+_rnwC[0]+';color:'+_rnwC[1]+';cursor:pointer;white-space:nowrap">'+_rnwDt+'</button></div>':''; var head='<div style="display:flex;align-items:center;gap:10px;padding:4px 2px 14px">'+(img?'<img loading="lazy" src="'+img+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">':'')+'<div><div style="font-size:15px;font-weight:700">'+_kwEsc(_kwIndivName(code))+'</div><div style="font-size:11px;color:var(--text3);font-family:monospace">'+_kwEsc(code)+'</div></div>'+_rnwBtn+'</div>';
   var BD='1px solid var(--border)';
   var GRP='2.5px solid var(--text3)';
-  var TH='border:'+BD+';padding:6px 12px;font-size:12px;font-weight:700;text-align:center;background:var(--surface2);white-space:nowrap;color:var(--text)';
+  var TH='border:'+BD+';padding:6px 12px;font-size:12px;font-weight:700;text-align:center;background:var(--surface2);white-space:nowrap;color:var(--text);position:sticky;top:0;z-index:3;box-shadow:inset 0 -1px 0 #c8ccd2'; // ★v1.1374★ 見出し固定（枠 .kwwm-scroll の上端に貼り付く）
   var KWC='border:'+BD+';padding:0;text-align:center;vertical-align:middle;background:var(--surface);min-width:180px';
   var MC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;font-weight:600;color:#333';
   var VC='border:'+BD+';padding:5px 12px;font-size:11px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;color:#333';
@@ -10045,7 +10045,7 @@ function _renderKwWatchMonthlyTable(){
     });
     return out;
   }
-  var h='<div style="overflow-x:auto">'+head+'<table style="border-collapse:collapse"><thead><tr>';
+  var h='<div class="kwwm-scroll" style="overflow:auto;max-height:78vh">'+head+'<table style="border-collapse:collapse"><thead><tr>';
   h+='<th style="'+TH+'">KW\u540d</th>';
   h+='<th style="'+TH+';padding:6px 6px">◯</th>';
   h+='<th style="'+TH+'">\u9805\u76ee</th>';
