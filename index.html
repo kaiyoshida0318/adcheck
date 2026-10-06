@@ -583,7 +583,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1367</span>
+    <span class="build-date">v1.1368</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1054,7 +1054,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </div>
         <div style="position:relative;height:380px"><canvas id="trendCanvas"></canvas></div>
         <div id="trendEmpty" style="display:none;text-align:center;padding:60px;color:var(--text3);font-size:13px">この月の日次データがありません。全-日別データを取り込んでください。</div>
-        <div id="trendTable" style="margin-top:16px;overflow-x:auto"></div>
+        <div id="trendTable" style="margin-top:16px;overflow:auto;max-height:75vh"></div>
       </div>
     </div>
   </div>
@@ -2296,7 +2296,7 @@ function _editClAddRow() {
   if (!productCache[_editItemId]) productCache[_editItemId] = {};
   if (!productCache[_editItemId].changeLog) productCache[_editItemId].changeLog = [];
   const logs = _editClCurrentLogs();
-  logs.push({ date: new Date().toISOString().slice(0,10), note: '' });
+  logs.push({ date: _ymdLocal(), note: '' });
   _editClRender(logs);
 }
 function _editClDeleteRow(idx) {
@@ -6436,11 +6436,13 @@ function _dailyLastThisRange(){
   const from=`${pv.getFullYear()}-${String(pv.getMonth()+1).padStart(2,'0')}-01`;
   return { from, to: maxDate };
 }
+// 端末の日付（日本時間）で 'YYYY-MM-DD' を作る。toISOString() は UTC なので、日本時間 0〜9時は前日になる（v1.1368）
+function _ymdLocal(d){ d = d || new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function onDailyMonthSel(v){
   if (v === '__lt__'){ const r=_dailyLastThisRange(); if (r) setDailyRange(r.from, r.to); return; }
   const y=+v.slice(0,4), m=+v.slice(5,7);
   const firstDay = v + '-01';
-  const lastDay = new Date(y, m, 0).toISOString().slice(0,10);
+  const lastDay = _ymdLocal(new Date(y, m, 0)); // ★v1.1368★ toISOString() だと 9/30 が 9/29 になっていた
   setDailyRange(firstDay, lastDay);
 }
 function setDailyRange(from, to) {
@@ -7347,7 +7349,7 @@ function addGlobalClRow() {
   });
   globalChangeLogs = current;
   // 先頭に新しい行を追加
-  globalChangeLogs.unshift({ date: new Date().toISOString().slice(0,10), note: '', color: '#f97316' });
+  globalChangeLogs.unshift({ date: _ymdLocal(), note: '', color: '#f97316' });
   _renderGlobalClRows(globalChangeLogs);
 }
 function _deleteGlobalClRow(idx) {
@@ -8309,17 +8311,21 @@ function renderTrend(){
   const totSpend20=rows.reduce((a,r)=>a+(r.daySpend20||0),0);
   const shr=(v,tot)=>tot>0&&v>0?(Math.round(v/tot*1000)/10).toFixed(1)+'%':'<span style="color:var(--text3)">—</span>';
   const td='padding:6px 10px;font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);';
-  const th='padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap;';
+  // ★v1.1368★ 見出しを固定：表の枠(#trendTable)を縦スクロールにし、th 1つずつに sticky を付ける（tr の sticky は効かない）。
+  //   border-collapse では sticky のセルの枠線が流れて消えるので、下線は box-shadow で描く。
+  const th='padding:8px 10px;white-space:nowrap;position:sticky;top:0;z-index:2;background:var(--surface2);box-shadow:inset 0 -2px 0 var(--border);';
+  const TH1H=36; // 2段見出し（累積モード）の1段目の高さ。2段目はこの分だけ下に固定する
   const tdD=td+'color:var(--text2);background:rgba(127,127,127,0.05);';
   const tdP=td+'text-align:right;color:var(--text3);font-size:11px;';
   const rev=rows.slice().reverse();
   let thead, body;
   if(_trendMode==='cum'){
-    const grp=(c,lbl,cs)=>`<th colspan="${cs}" style="${th}text-align:center;color:${c};border-left:1px solid var(--border)">${lbl}</th>`;
-    const sub=`<th style="${th}text-align:right;font-size:10px;color:var(--text3);border-left:1px solid var(--border)">累積</th><th style="${th}text-align:right;font-size:10px;color:var(--text3)">日別</th>`;
-    const subA=`<th style="${th}text-align:right;font-size:10px;color:var(--text3)">実績額</th><th style="${th}text-align:right;font-size:10px;color:var(--text3)">月内%</th>`;
+    const grp=(c,lbl,cs)=>`<th colspan="${cs}" style="${th}height:${TH1H}px;text-align:center;color:${c};border-left:1px solid var(--border)">${lbl}</th>`;
+    const th2=th+'top:'+TH1H+'px;';
+    const sub=`<th style="${th2}text-align:right;font-size:10px;color:var(--text3);border-left:1px solid var(--border)">累積</th><th style="${th2}text-align:right;font-size:10px;color:var(--text3)">日別</th>`;
+    const subA=`<th style="${th2}text-align:right;font-size:10px;color:var(--text3)">実績額</th><th style="${th2}text-align:right;font-size:10px;color:var(--text3)">月内%</th>`;
     thead=`<tr style="position:sticky;top:0;background:var(--surface2)">
-      <th rowspan="2" style="${th}text-align:left;vertical-align:bottom">日</th>
+      <th rowspan="2" style="${th}text-align:left;vertical-align:bottom;z-index:3">日</th>
       ${grp('#3b82f6','売上ROAS',2)}${grp('#10b981','ROAS',4)}${grp('#f59e0b','ROAS-KW',4)}${grp('#ef4444','ROAS-20',4)}
     </tr><tr style="background:var(--surface2)">${sub}${sub}${subA}${sub}${subA}${sub}${subA}</tr>`;
     body=rev.map((r,i)=>{
@@ -15172,7 +15178,7 @@ function _clDeleteRow(idx) {
 
 function addChangeLogRow() {
   _clSyncFromDom();
-  _clDraft.push({ date: new Date().toISOString().slice(0,10), note: '', type: '' });
+  _clDraft.push({ date: _ymdLocal(), note: '', type: '' });
   _renderClRows(_clDraft);
 }
 
