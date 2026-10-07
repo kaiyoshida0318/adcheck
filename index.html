@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1378</span>
+    <span class="build-date">v1.1380</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2056,7 +2056,7 @@ function adjustZoom(delta) {
   _applyZoom();
   // CSS transform適用後にヘッダー実サイズを再測定して sticky top を再調整
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => { _applyZoom(); if (typeof _alignTaiouLabel === 'function') _alignTaiouLabel(); });
+    requestAnimationFrame(() => { _applyZoom(); if (typeof _alignTaiouLabel === 'function') _alignTaiouLabel(); if (typeof _stickRenewalHeader === 'function') ['renewal-todo-list','renewal-todoseo-list','renewal-done-list','renewal-lp-list','renewal-thumb-list'].forEach(_stickRenewalHeader); });
   });
 }
 _applyZoom(); // 起動時に即適用
@@ -9149,6 +9149,21 @@ function _hasChangeLog(code) {
 }
 
 // 共通：商品一覧の行HTML（変更記録列付き）。modeで done(実施済) は行クリックでモーダル
+// 区分（ステータス）のプルダウン。実施前-SEO＆広告の区分列と同じもの（v1.1379）
+function _renewalStatusCellHtml(code){
+  const cached = productCache[code] || {};
+  const statusVal = cached.status || 'unset';
+  const statusColor = STATUS_COLORS[statusVal] || '';
+  return `<div class="status-cell" onclick="event.stopPropagation()">
+      <select onchange="applyStatusColor(this);_setRoasTrendStatus('${code}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:${statusColor||'var(--text)'};font-weight:${statusColor?'600':''};width:100%;cursor:pointer">
+        ${['unset','g1','g1b','g2','g3','new','newr','mid','midb','mid2','mid2y','warn','warnout','warnbig','warnbigout','warnzero','out'].map(v => {
+          const labels={unset:'選択前■',g1:'健常◎',g1b:'健常-20円出稿中◯',g2:'健常-要注意◯',g3:'健常-広告無し',new:'新商品',newr:'新商品-リニュ',mid:'中立□',midb:'中立-20円出稿中□',mid2:'中立-広告無し',mid2y:'中立-広告無し-Y',warn:'撤退予定▲',warnbig:'撤退予定-大▲',warnbigout:'撤退予定-大-out記入済▲',warnout:'撤退予定-out記入済▲',warnzero:'撤退予定-在庫0？',out:'撤退済■'};
+          const colors={unset:'',g1:'#1565C0',g1b:'#1E88E5',g2:'#0288D1',g3:'#4FC3F7',new:'#2E7D32',newr:'#2E7D32',mid:'#F9A825',midb:'#FFB300',mid2:'#E65100',mid2y:'#E65100',warn:'#C62828',warnbig:'#C62828',warnbigout:'#C62828',warnout:'#C62828',warnzero:'#AD1457',out:'#6D1111'};
+          return `<option value="${v}"${statusVal===v?' selected':''} ${colors[v]?`style="color:${colors[v]};font-weight:600"`:''}>${labels[v]}</option>`;
+        }).join('')}
+      </select>
+    </div>`;
+}
 function _renewalRowHtml(code, mode) {
   const cached = productCache[code] || {};
   const name = cached.manualName || cached.name || code;
@@ -9168,7 +9183,9 @@ function _renewalRowHtml(code, mode) {
 
   // done(実施済)なら行クリックでグラフモーダル、todo(全体)なら変更記録ボタンで編集
   const rowClick = '';
-  const colW = '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 88px';
+  // ★v1.1379★ 実施前-KW＆20（mode='todo'）だけ、操作の左に区分列（100px）。商品名の列は伸び縮みするので自動で細くなる
+  const _withStatus = (mode === 'todo');
+  const colW = _withStatus ? '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 100px 88px' : '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 88px';
   let metricCells = '';
   {
     const mt = _renewalTodoMetrics(code, _renewalTodoMonth);
@@ -9216,13 +9233,14 @@ function _renewalRowHtml(code, mode) {
       <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
       <div style="padding:6px 8px;display:flex;align-items:center;overflow:hidden"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${name}">${name}</span></div>
       ${metricCells}
+      ${_withStatus ? _renewalStatusCellHtml(code) : ''}
       ${actionCell}
     </div>
   </div>`;
 }
 
-function _renewalHeaderHtml(mode) {
-  const colW = '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 88px';
+function _renewalHeaderHtml(mode, withStatus) {
+  const colW = withStatus ? '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 100px 88px' : '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 88px';
   const cols = [
     {k:'num',     label:'商品番号', bg:'#f1f3f4', align:'left'},
     {k:'code',    label:'管理番号', bg:'#f1f3f4', align:'left'},
@@ -9244,6 +9262,7 @@ function _renewalHeaderHtml(mode) {
     {k:'roas20',  label:'ROAS-20',  bg:'#e0f2f1', align:'right'},
     {k:'log',        label:'操作',     bg:'#fce8e6', align:'center'},
   ];
+  if (withStatus) cols.splice(cols.length-1, 0, {k:'', label:'区分', bg:'#f3e8ff', align:'center'}); // ★v1.1379★ 実施前-KW＆20のみ
   const cells = cols.map(c => {
     const click = c.k ? `onclick="_renewalSortBy('${c.k}')"` : '';
     const cur = c.k ? 'cursor:pointer;' : '';
@@ -11417,7 +11436,11 @@ function _stickRenewalHeader(listId) {
   const apply = () => {
     if (!list || list.offsetParent === null) return;
     const rectTop = list.getBoundingClientRect().top;
-    const avail = Math.floor(window.innerHeight - rectTop - 16);
+    // ズーム時：getBoundingClientRect/innerHeight は画面px、maxHeight はCSS px（×zoomで描画）
+    // → 実測の倍率で割り戻して、リスト下端が画面内に収まるようにする
+    const rh = list.getBoundingClientRect().height, oh = list.offsetHeight;
+    const scale = (oh > 0 && rh > 0) ? (rh / oh) : 1;
+    const avail = Math.floor((window.innerHeight - rectTop - 16) / scale);
     if (avail > 160) list.style.maxHeight = avail + 'px';
     const inner = list.querySelector('[id$="-inner"]');
     if (inner) inner.style.paddingBottom = '64px';
@@ -11480,7 +11503,7 @@ function renderRenewalTodo() {
   }
   codes = _renewalFilterSales(codes);
   _renewalBuildRankCtx(codes);
-  inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'todo')).join('');
+  inner.innerHTML = _renewalHeaderHtml('todo', true) + codes.map(c => _renewalRowHtml(c, 'todo')).join('');
   _stickRenewalHeader('renewal-todo-list');
 }
 
