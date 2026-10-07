@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1376</span>
+    <span class="build-date">v1.1378</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7621,7 +7621,7 @@ function renderItemGraph() {
   }
   _itemChartInstance = new Chart(canvas,{type:'line',data:{labels:chartLabels,datasets},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:!yearMode&&metric!=='all',position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:tooltipLabel}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:yCallback},beginAtZero:true}}}});
   if (!yearMode) _drawRenewalChangeLines(_itemChartInstance, labels, code);
-  else _drawRenewalYearChanges(_itemChartInstance, code, _fyYears);
+  else _drawRenewalYearChanges(_itemChartInstance, code, _fyYears, (typeof _itemGraphFYStart!=='undefined'?_itemGraphFYStart:1));
   _renderItemToggles(metric==='all'||_renewalAllYearMode);
   _renderItemYearToggles(yearMode?_fyYears:null);
   _renderItemRichTable(labels, dataMap, code);
@@ -10954,7 +10954,8 @@ function _analyzeHtml(){
  function collect(){if(LISTS&&LISTS[ACTIVE]&&LISTS[ACTIVE].type==='image')return;if(LISTS&&LISTS[ACTIVE]&&LISTS[ACTIVE].type==='text'){_collectText();return;}var trs=document.querySelectorAll('#tbody tr');var arr=[];trs.forEach(function(tr,idx){var dd=tr.querySelector('.dd');var p2=tr.querySelector('.f-place2');var it=tr.querySelector('.f-item');var pu=tr.querySelector('.f-purpose');var ck=tr.querySelector('.cdone input');arr.push({place:dd?(dd.getAttribute('data-v')||''):'',place2:p2?p2.value:'',item:it?it.value:'',purpose:pu?pu.value:'',done:ck?ck.checked:((DATA[idx]&&DATA[idx].done)||false),hp2:(p2&&p2.style.height)||'',hit:(it&&it.style.height)||'',hpu:(pu&&pu.style.height)||''});});DATA=arr; if(LISTS&&LISTS[ACTIVE])LISTS[ACTIVE].rows=arr;}
  function render(){renderTabs();var _L=LISTS[ACTIVE]||{};var _tbl=document.querySelector('table');var _iv=document.getElementById('imageView');var _tv=document.getElementById('textView');var _uc0=document.getElementById('ucbar');if(_uc0)_uc0.innerHTML='';if(_L.type==='image'){if(_tbl)_tbl.style.display='none';if(_iv)_iv.style.display='block';if(_tv)_tv.style.display='none';_renderImageView();return;}if(_L.type==='text'){if(_tbl)_tbl.style.display='none';if(_iv)_iv.style.display='none';if(_tv)_tv.style.display='block';_renderTextView();return;}if(_tbl)_tbl.style.display='';if(_iv)_iv.style.display='none';if(_tv)_tv.style.display='none';var _mon=((_L.name||'').indexOf(_MK)===0);var _thd=document.getElementById('th-done');if(_thd)_thd.style.display=_mon?'':'none';var _uc=document.getElementById('ucbar');if(_uc)_uc.innerHTML=(_mon&&DATA&&DATA.length)?'<div style="height:1px;background:#e3e6eb;margin:2px 0 10px"></div><button onclick="_uncheckAll()" style="font-size:13px;padding:6px 12px;background:#eef1f5;color:#475160;border:1px solid #c3cad4;border-radius:7px;cursor:pointer;font-weight:600">すべて外す</button>':'';var _mvList=LISTS.map(function(l,j){ if(j===ACTIVE||l.type==='image'||l.type==='text') return ''; return '<option value="'+j+'">'+esc(l.name||('リスト'+(j+1)))+'</option>'; }).join('');var _mvOpts=_mvList?('<option value="">移動...</option>'+_mvList):'';var rows=DATA.map(function(r,i){return '<tr ondragover="_dragOver(event)" ondragenter="_dEnter(this)" ondragleave="_dLeave(this)" ondrop="_drop(event,'+i+')">'+(_mon?('<td class="cdone" style="text-align:center;vertical-align:middle"><input type="checkbox" '+(r.done?'checked':'')+' onchange="_toggleDone('+i+',this.checked)" style="width:18px;height:18px;cursor:pointer"></td>'):'')+'<td style="position:relative"><div class="dd" data-v="'+escA(r.place)+'" onclick="_ddTog('+i+',event)">'+trig(r.place)+'</div><div class="ddmenu" id="ddm-'+i+'">'+menu(i)+'</div></td><td><textarea class="f-place2" oninput="_ed()"'+(r.hp2?(' style="height:'+r.hp2+'"'):'')+'>'+esc(r.place2)+'</textarea></td><td><textarea class="f-item" oninput="_ed()"'+(r.hit?(' style="height:'+r.hit+'"'):'')+'>'+esc(r.item)+'</textarea></td><td><textarea class="f-purpose" oninput="_ed()"'+(r.hpu?(' style="height:'+r.hpu+'"'):'')+'>'+esc(r.purpose||'')+'</textarea></td><td class="ops"><span class="drag" draggable="true" ondragstart="_dragStart(event,'+i+')" ondragend="_dragEnd()" title="ドラッグで移動">&#9776;</span><button onclick="_mv('+i+',-1)" title="上へ">&#8593;</button><button onclick="_mv('+i+',1)" title="下へ">&#8595;</button><button class="del" onclick="_del('+i+')">削除</button>'+(_mvOpts?('<select onchange="_mvToList('+i+',this.value)" title="別のリストへ移動" style="display:block;margin:5px auto 0;font-size:12px;padding:3px 5px;border:1px solid #d4d7de;border-radius:5px;background:#fff;color:#333;cursor:pointer;max-width:120px">'+_mvOpts+'</select>'):'')+'</td></tr>';}).join('');document.getElementById('tbody').innerHTML=rows;}
  function closeMenus(){var ms=document.querySelectorAll('.ddmenu');for(var k=0;k<ms.length;k++){ms[k].style.display='none';}}
- window._ddTog=function(i,e){if(e){e.stopPropagation();}var m=document.getElementById('ddm-'+i);var isOpen=(m.style.display==='block');closeMenus();m.style.display=isOpen?'none':'block';};
+ window._ddTog=function(i,e){if(e){e.stopPropagation();}var m=document.getElementById('ddm-'+i);var isOpen=(m.style.display==='block');closeMenus();m.style.display=isOpen?'none':'block';if(!isOpen){try{/* v1.1378: ボタンの位置に合わせて画面に重ねて出す。下に入らなければ上向きに開く（表の枠の外で切れて見えなかった） */var t=(e&&e.currentTarget)||null;if(!t){var _tr=document.querySelectorAll('#tbody tr')[i];t=_tr?_tr.querySelector('.dd'):null;}if(t){var r=t.getBoundingClientRect();var vh=window.innerHeight||document.documentElement.clientHeight;var below=vh-r.bottom-8,above=r.top-8;m.style.position='fixed';m.style.left=Math.max(4,r.left)+'px';m.style.minWidth=Math.max(210,Math.round(r.width))+'px';m.style.marginTop='0';m.style.zIndex='1000';var need=Math.min(320,m.scrollHeight||320);if(below>=need||below>=above){m.style.top=(r.bottom+2)+'px';m.style.bottom='auto';m.style.maxHeight=Math.max(120,Math.min(320,below))+'px';}else{m.style.top='auto';m.style.bottom=(vh-r.top+2)+'px';m.style.maxHeight=Math.max(120,Math.min(320,above))+'px';}}}catch(_e){}}};
+try{var _asc=document.getElementById('anScroll');if(_asc&&!_asc._ddScrollHooked){_asc._ddScrollHooked=1;_asc.addEventListener('scroll',function(){closeMenus();},{passive:true});}window.addEventListener('resize',function(){closeMenus();});}catch(_e){}
  window._ddPick=function(i,e){if(e){e.preventDefault();e.stopPropagation();}var v=e.currentTarget.getAttribute('data-v');var trs=document.querySelectorAll('#tbody tr');var tr=trs[i];if(tr){var dd=tr.querySelector('.dd');if(dd){dd.setAttribute('data-v',v);dd.innerHTML=trig(v);}}closeMenus();collect();markDirty();};
  window._ed=function(){collect();markDirty();};
  window._mv=function(i,d){closeMenus();collect();var j=i+d;if(j<0||j>=DATA.length)return;var t=DATA[i];DATA[i]=DATA[j];DATA[j]=t;markDirty();render();};
@@ -12100,7 +12101,7 @@ function renderRenewalGraph() {
   if(_isAll){ _scales.y1={position:'right',grid:{drawOnChartArea:false},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true}; }
   _renewalChartInstance = new Chart(canvas,{type:_baseType,data:{labels:chartLabels,datasets},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:!yearMode&&metric!=='all',position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:tooltipLabel}}},scales:_scales}});
   if (!yearMode) _drawRenewalChangeLines(_renewalChartInstance, labels, code);
-  else _drawRenewalYearChanges(_renewalChartInstance, code, _fyYears);
+  else _drawRenewalYearChanges(_renewalChartInstance, code, _fyYears, (typeof _renewalFYStart!=='undefined'?_renewalFYStart:1));
   _renderRenewalToggles(metric==='all'||_renewalAllYearMode);
   _renderRenewalYearToggles(yearMode?_fyYears:null);
   _renderRenewalTable(labels, dataMap, code);
@@ -12195,10 +12196,11 @@ function _renderRenewalTable(labels, dataMap, code){
 }
 
 // 実施済モーダル用：変更記録の縦線（日別=YYYY-MM-DDマッチ、月別=YYYY-MMマッチ）
-function _drawRenewalYearChanges(chart, code, years) {
+function _drawRenewalYearChanges(chart, code, years, fyStart) {
   const logs = (productCache[code]?.changeLog || []).filter(l => l.date);
   chart._rnYLogs = logs;
   chart._rnYYears = years || [];
+  chart._rnYFs = (+fyStart >= 1 && +fyStart <= 12) ? +fyStart : 1; // ★v1.1377★ 年度の開始月（1月始まり／5月始まり）
   if (!chart._rnYHooked) {
     chart._rnYHooked = true;
     const origDraw = chart.draw.bind(chart);
@@ -12219,10 +12221,14 @@ function _renderRenewalYearChangeOverlay(chart) {
   let slot = 0;
   logs.forEach(log => {
     const yy = +log.date.slice(0,4), mo = +log.date.slice(5,7);
-    const yi = years.indexOf(yy);
+    // ★v1.1377★ 年度と年度内の月番号で位置を出す。以前は暦の年・月(1月=0番目)で出していたため、
+    //   5月始まりだと線が4か月ずれ、年度(線の種類)もずれていた。1月始まりでは結果は同じ。
+    const fyS = chart._rnYFs || 1;
+    const fy = (mo >= fyS) ? yy : yy - 1;
+    const yi = years.indexOf(fy);
     if (yi < 0) return;
-    if (_renewalHiddenFY.has(yy)) return;
-    const mi = mo - 1;
+    if (_renewalHiddenFY.has(fy)) return;
+    const mi = (mo - fyS + 12) % 12;
     const day = +log.date.slice(8,10) || 1;
     const dim = new Date(yy, mo, 0).getDate() || 30;
     const rec = years.length - 1 - yi;
