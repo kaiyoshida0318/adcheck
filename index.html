@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1384</span>
+    <span class="build-date">v1.1385</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1382,7 +1382,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
       <div class="table-card">
         <div id="renewal-done-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
-            <input type="text" id="renewalDoneSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalDone()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
+            <input type="text" id="renewalDoneSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalDone()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none"><button type="button" id="renewalDoneClosedBtn" onclick="_toggleRenewalShowClosed()" title="完了にした商品（変更記録は残っています）も一覧に出す" style="margin-left:10px;padding:5px 12px;border:1px solid #16a34a;border-radius:6px;font-size:11px;font-weight:700;background:var(--surface);color:#16a34a;cursor:pointer;white-space:nowrap">完了済を表示</button>
             
             <div class="toolbar-right"></div>
           </div>
@@ -9246,7 +9246,8 @@ function _renewalRowHtml(code, mode) {
   const rowClick = '';
   // ★v1.1379★ 実施前-KW＆20（mode='todo'）だけ、操作の左に区分列（100px）。商品名の列は伸び縮みするので自動で細くなる
   const _withStatus = (mode === 'todo');
-  const colW = _withStatus ? '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 100px 88px' : '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 88px';
+  const _withClose = (mode === 'done'); // ★v1.1385★ 実施済-全体：経過日数＋完了ボタン
+  const colW = _renewalColW(_withStatus, _withClose);
   let metricCells = '';
   {
     const mt = _renewalTodoMetrics(code, _renewalTodoMonth);
@@ -9282,21 +9283,68 @@ function _renewalRowHtml(code, mode) {
   { const _ds = logs.map(l=>l.date).filter(Boolean).sort(); if(_ds.length){ const _d=_ds[_ds.length-1]; _latestMMDD=_d.slice(2,4)+'/'+_d.slice(5,7)+'/'+_d.slice(8,10); } }
   const actionCell = `<div style="padding:6px 10px;display:flex;align-items:center;justify-content:center"><button onclick="event.stopPropagation();openChangeLog('${code}')" title="変更記録を開く" style="font-size:12px;font-weight:600;padding:4px 12px;border-radius:5px;border:${actBorder};background:${actBg};color:${actColor};cursor:pointer;white-space:nowrap;text-shadow:${actShadow}">${_latestMMDD || '記録'}</button></div>`;
 
-  return `<div class="item-row">
+  const _closed = _withClose && _renewalIsClosed(code);
+  const closeCell = _withClose ? _renewalCloseCellHtml(code, _closed) : '';
+  return `<div class="item-row"${_closed ? ' style="opacity:.5"' : ''}>
     <div style="display:grid;grid-template-columns:${colW};align-items:center;min-height:50px;background:var(--surface)" ${rowClick}>
       <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${num}</div>
       <div style="padding:6px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${code}</div>
       <div style="padding:4px;display:flex;align-items:center;justify-content:center">${imgEl}</div>
-      <div style="padding:6px 8px;display:flex;align-items:center;gap:4px;overflow:hidden"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0" title="${name}">${name}</span>${mode === 'done' ? _clChipsHtml(_clUnionTypes(logs)) : ''}</div>
+      <div style="padding:6px 8px;display:flex;align-items:center;gap:4px;overflow:hidden"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0" title="${name}">${name}</span></div>
       ${metricCells}
       ${_withStatus ? _renewalStatusCellHtml(code) : ''}
+      ${closeCell}
       ${actionCell}
     </div>
   </div>`;
 }
 
-function _renewalHeaderHtml(mode, withStatus) {
-  const colW = withStatus ? '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 100px 88px' : '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px 88px';
+// ── ★v1.1385★ リニューアル「完了」：一定期間たって問題ないと判断した商品を実施済から外す ──
+//   productCache[code].renewalClosedAt = 'YYYY-MM-DD'（完了にした日）。変更記録は消さない。
+//   完了日より後の日付の変更記録が追加されたら、自動で実施済に戻る。
+const RENEWAL_CLOSE_DAYS = 90;   // 経過日数がこれ以上で色付け（完了の目安）
+let _renewalShowClosed = false;  // 実施済-全体で完了済も表示するか
+function _renewalColW(withStatus, withClose){
+  return '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px ' + (withStatus ? '100px ' : '') + (withClose ? '96px ' : '') + '88px';
+}
+function _renewalLatestLogDate(code){
+  return ((productCache[code] && productCache[code].changeLog) || []).map(l => l && l.date).filter(Boolean).sort().pop() || '';
+}
+function _renewalIsClosed(code){
+  const at = productCache[code] && productCache[code].renewalClosedAt;
+  if (!at) return false;
+  const ld = _renewalLatestLogDate(code);
+  return !ld || ld <= at;
+}
+function _renewalElapsedDays(code){
+  const ld = _renewalLatestLogDate(code);
+  if (!ld) return null;
+  return Math.round((new Date(_ymdLocal() + 'T00:00:00') - new Date(ld + 'T00:00:00')) / 864e5);
+}
+function _renewalCloseCellHtml(code, closed){
+  const d = _renewalElapsedDays(code);
+  const over = d != null && d >= RENEWAL_CLOSE_DAYS;
+  const dayTxt = d == null ? '—' : ('経過 ' + d + '日');
+  const daySt = over ? 'background:#fff3e0;color:#e8710a;' : 'color:var(--text3);';
+  const at = productCache[code] && productCache[code].renewalClosedAt;
+  const btn = closed
+    ? `<button onclick="event.stopPropagation();_setRenewalClosed('${code}',false)" title="${at ? at + ' に完了' : ''}" style="font-size:10px;font-weight:700;padding:2px 10px;border-radius:5px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">戻す</button>`
+    : `<button onclick="event.stopPropagation();_setRenewalClosed('${code}',true)" title="問題なしとして実施済から外す（変更記録は残ります）" style="font-size:10px;font-weight:700;padding:2px 10px;border-radius:5px;border:1px solid #16a34a;background:#f0fdf4;color:#16a34a;cursor:pointer;white-space:nowrap">完了</button>`;
+  return `<div style="padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;white-space:nowrap;${daySt}">${dayTxt}</span>${btn}</div>`;
+}
+function _setRenewalClosed(code, on){
+  if (!productCache[code]) productCache[code] = {};
+  if (on) productCache[code].renewalClosedAt = _ymdLocal();
+  else delete productCache[code].renewalClosedAt;
+  saveProductCache(); saveToGitHub();
+  if (typeof _updateRenewalCounts === 'function') _updateRenewalCounts();
+  if (typeof _renderCurrentRenewal === 'function') _renderCurrentRenewal();
+}
+function _toggleRenewalShowClosed(){ _renewalShowClosed = !_renewalShowClosed; renderRenewalDone(); }
+
+function _renewalHeaderHtml(mode, withStatus, withClose) {
+  const colW = _renewalColW(withStatus, withClose);
   const cols = [
     {k:'num',     label:'商品番号', bg:'#f1f3f4', align:'left'},
     {k:'code',    label:'管理番号', bg:'#f1f3f4', align:'left'},
@@ -9319,6 +9367,7 @@ function _renewalHeaderHtml(mode, withStatus) {
     {k:'log',        label:'操作',     bg:'#fce8e6', align:'center'},
   ];
   if (withStatus) cols.splice(cols.length-1, 0, {k:'', label:'区分', bg:'#f3e8ff', align:'center'}); // ★v1.1379★ 実施前-KW＆20のみ
+  if (withClose) cols.splice(cols.length-1, 0, {k:'', label:'経過・完了', bg:'#e6f4ea', align:'center'}); // ★v1.1385★ 実施済-全体のみ
   const cells = cols.map(c => {
     const click = c.k ? `onclick="_renewalSortBy('${c.k}')"` : '';
     const cur = c.k ? 'cursor:pointer;' : '';
@@ -9868,7 +9917,7 @@ function renderKwWatchMonthly(){
   }
   _renderKwWatchMonthlyTable();
 }
-function _changeLogCodes(){ var arr=[]; Object.keys(productCache).forEach(function(c){ var cl=productCache[c]&&productCache[c].changeLog; if(cl&&cl.length) arr.push(c); }); return arr; }
+function _changeLogCodes(){ var arr=[]; Object.keys(productCache).forEach(function(c){ var cl=productCache[c]&&productCache[c].changeLog; if(cl&&cl.length&&!_renewalIsClosed(c)) arr.push(c); }); return arr; }
 function renderRenewalMonthly(){ _kwwmSrcFn=_changeLogCodes; _kwwmBodyId='renewalMonthlyBody'; _kwwmSelId='renewalMonthlySel'; _kwwmIdPfx='rnwm'; _kwWatchMonthlyCode='__ALL__'; renderKwWatchMonthly(); }
 // ── 期間：前月まで（満了）／当月込（v1.1373）──
 //   満了＝最新のKWデータの日が月末まで届いていない月（＝途中の月）を外して、直近4か月を出す。既定は満了。
@@ -11647,6 +11696,15 @@ function renderRenewalDone() {
   if (!inner) return;
   const q = (document.getElementById('renewalDoneSearch')?.value || '').toLowerCase().trim();
   let codes = Object.keys(productCache).filter(code => _hasChangeLog(code) && !productCache[code]?.retired);
+  // ★v1.1385★ 完了済は既定で非表示（ボタンで表示切替）
+  const _nClosed = codes.filter(c => _renewalIsClosed(c)).length;
+  const _cb = document.getElementById('renewalDoneClosedBtn');
+  if (_cb) {
+    _cb.textContent = (_renewalShowClosed ? '完了済を隠す' : '完了済を表示') + '（' + _nClosed + '）';
+    _cb.style.background = _renewalShowClosed ? '#16a34a' : 'var(--surface)';
+    _cb.style.color = _renewalShowClosed ? '#fff' : '#16a34a';
+  }
+  if (!_renewalShowClosed) codes = codes.filter(c => !_renewalIsClosed(c));
   if (q) codes = codes.filter(code => _renewalMatchQuery(code, q));
   codes = _renewalFilterEmpty(codes);
   codes = _renewalFilterColor(codes);
@@ -11654,7 +11712,7 @@ function renderRenewalDone() {
   codes = _renewalApplySort(codes);
   if (codes.length === 0) { inner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">該当する商品がありません</div>'; _stickRenewalHeader('renewal-done-list'); return; }
   _renewalBuildRankCtx(codes);
-  inner.innerHTML = _renewalHeaderHtml('todo') + codes.map(c => _renewalRowHtml(c, 'done')).join('');
+  inner.innerHTML = _renewalHeaderHtml('todo', false, true) + codes.map(c => _renewalRowHtml(c, 'done')).join('');
   _stickRenewalHeader('renewal-done-list');
 }
 
@@ -11697,7 +11755,7 @@ function renderRenewalThumb() {
 // 件数バッジ更新（タブの横）
 function _updateRenewalCounts() {
   const all  = Object.keys(DB).filter(code => !productCache[code]?.retired).length;
-  const done = Object.keys(productCache).filter(code => _hasChangeLog(code) && !productCache[code]?.retired).length;
+  const done = Object.keys(productCache).filter(code => _hasChangeLog(code) && !productCache[code]?.retired && !_renewalIsClosed(code)).length;
   const lp = Object.keys(productCache).filter(code => _hasChangeLogType(code, 'lp') && !productCache[code]?.retired).length;
   const thumb = Object.keys(productCache).filter(code => _hasChangeLogType(code, 'thumb') && !productCache[code]?.retired).length;
   const e1 = document.getElementById('cnt-renewal-todo');
