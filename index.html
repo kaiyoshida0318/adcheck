@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1385</span>
+    <span class="build-date">v1.1386</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1382,7 +1382,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
       <div class="table-card">
         <div id="renewal-done-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
-            <input type="text" id="renewalDoneSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalDone()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none"><button type="button" id="renewalDoneClosedBtn" onclick="_toggleRenewalShowClosed()" title="完了にした商品（変更記録は残っています）も一覧に出す" style="margin-left:10px;padding:5px 12px;border:1px solid #16a34a;border-radius:6px;font-size:11px;font-weight:700;background:var(--surface);color:#16a34a;cursor:pointer;white-space:nowrap">完了済を表示</button>
+            <input type="text" id="renewalDoneSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalDone()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none"><span id="renewalDoneMonthWrap" style="margin-left:14px;display:inline-flex;align-items:center"></span>
             
             <div class="toolbar-right"></div>
           </div>
@@ -9305,7 +9305,7 @@ function _renewalRowHtml(code, mode) {
 const RENEWAL_CLOSE_DAYS = 90;   // 経過日数がこれ以上で色付け（完了の目安）
 let _renewalShowClosed = false;  // 実施済-全体で完了済も表示するか
 function _renewalColW(withStatus, withClose){
-  return '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px ' + (withStatus ? '100px ' : '') + (withClose ? '96px ' : '') + '88px';
+  return '90px 76px 40px minmax(0,1.2fr) 92px 92px 76px 76px 76px 64px 64px 64px 64px 64px 64px 64px 64px 64px ' + (withStatus ? '100px ' : '') + (withClose ? '112px ' : '') + '88px';
 }
 function _renewalLatestLogDate(code){
   return ((productCache[code] && productCache[code].changeLog) || []).map(l => l && l.date).filter(Boolean).sort().pop() || '';
@@ -9327,9 +9327,11 @@ function _renewalCloseCellHtml(code, closed){
   const dayTxt = d == null ? '—' : ('経過 ' + d + '日');
   const daySt = over ? 'background:#fff3e0;color:#e8710a;' : 'color:var(--text3);';
   const at = productCache[code] && productCache[code].renewalClosedAt;
-  const btn = closed
-    ? `<button onclick="event.stopPropagation();_setRenewalClosed('${code}',false)" title="${at ? at + ' に完了' : ''}" style="font-size:10px;font-weight:700;padding:2px 10px;border-radius:5px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">戻す</button>`
-    : `<button onclick="event.stopPropagation();_setRenewalClosed('${code}',true)" title="問題なしとして実施済から外す（変更記録は残ります）" style="font-size:10px;font-weight:700;padding:2px 10px;border-radius:5px;border:1px solid #16a34a;background:#f0fdf4;color:#16a34a;cursor:pointer;white-space:nowrap">完了</button>`;
+  const seg = (label, active, toClosed, tip) => `<button type="button" ${active ? 'disabled' : `onclick="event.stopPropagation();_setRenewalClosed('${code}',${toClosed})"`} title="${tip}" style="font-size:10px;font-weight:700;padding:2px 7px;border:none;white-space:nowrap;${active ? (toClosed ? 'background:#6b7280;color:#fff;' : 'background:#1a73e8;color:#fff;') + 'cursor:default;' : 'background:var(--surface);color:var(--text3);cursor:pointer;'}">${label}</button>`;
+  const btn = `<div style="display:inline-flex;border:1px solid var(--border2);border-radius:6px;overflow:hidden">`
+    + seg('観測中', !closed, false, closed ? 'クリックで観測中に戻す（実施済に再表示）' : '観測中（実施済に表示中）')
+    + seg('完了', closed, true, closed ? ((at ? at + ' に観測完了' : '観測完了') + '（実施済から非表示・変更記録は残る）') : 'クリックで観測完了にする（実施済から外れます。変更記録は残ります）')
+    + `</div>`;
   return `<div style="padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:3px">
       <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;white-space:nowrap;${daySt}">${dayTxt}</span>${btn}</div>`;
 }
@@ -9367,7 +9369,7 @@ function _renewalHeaderHtml(mode, withStatus, withClose) {
     {k:'log',        label:'操作',     bg:'#fce8e6', align:'center'},
   ];
   if (withStatus) cols.splice(cols.length-1, 0, {k:'', label:'区分', bg:'#f3e8ff', align:'center'}); // ★v1.1379★ 実施前-KW＆20のみ
-  if (withClose) cols.splice(cols.length-1, 0, {k:'', label:'経過・完了', bg:'#e6f4ea', align:'center'}); // ★v1.1385★ 実施済-全体のみ
+  if (withClose) cols.splice(cols.length-1, 0, {k:'', label:'観測状況', bg:'#e6f4ea', align:'center'}); // ★v1.1385★ 実施済-全体のみ
   const cells = cols.map(c => {
     const click = c.k ? `onclick="_renewalSortBy('${c.k}')"` : '';
     const cur = c.k ? 'cursor:pointer;' : '';
@@ -11617,10 +11619,17 @@ function _buildRenewalTodoMonthSelect(tabSel) {
     const lbl = m.slice(0,4) + '/' + m.slice(5,7);
     return `<option value="${m}"${m===_renewalTodoMonth?' selected':''}>${lbl}</option>`;
   }).join('');
-  wrap.innerHTML = `${_renewalColorBtn()}<button onclick="_toggleRenewalTodoEmpty()" style="font-size:12px;font-weight:700;padding:6px 16px;border:none;border-radius:999px;cursor:pointer;margin-right:10px;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.15);background:${_renewalTodoMode==='noad'?'#9aa0a6':(_renewalTodoMode==='all'?'#1a73e8':'#34a853')}">${_renewalTodoMode==='noad'?'広告未出稿分':(_renewalTodoMode==='all'?'出稿＆未出稿':'広告出稿分')}</button><label style="font-size:11px;color:var(--text3);margin-right:6px">表示月</label>`
+  const _isDone = (tabSel === '#tab-renewal-done');
+  const _monthHtml = `<label style="font-size:11px;color:var(--text3);margin-right:6px">表示月</label>`
     + `<select id="renewalTodoMonth" onchange="_onRenewalTodoMonthChange(this.value)" style="font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">`
     + (opts || '<option value="">データなし</option>')
     + `</select>`;
+  // ★v1.1386★ 実施済-全体：表示月は検索欄の右へ、右端には「観測完了を表示」
+  if (_isDone) { const mw = document.getElementById('renewalDoneMonthWrap'); if (mw) mw.innerHTML = _monthHtml; }
+  const _tail = _isDone
+    ? `<button type="button" id="renewalDoneClosedBtn" onclick="_toggleRenewalShowClosed()" title="観測完了にした商品（変更記録は残っています）も一覧に出す" style="padding:5px 12px;border:1px solid #6b7280;border-radius:6px;font-size:11px;font-weight:700;background:var(--surface);color:#4b5563;cursor:pointer;white-space:nowrap">観測完了を表示</button>`
+    : _monthHtml;
+  wrap.innerHTML = `${_renewalColorBtn()}<button onclick="_toggleRenewalTodoEmpty()" style="font-size:12px;font-weight:700;padding:6px 16px;border:none;border-radius:999px;cursor:pointer;margin-right:10px;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.15);background:${_renewalTodoMode==='noad'?'#9aa0a6':(_renewalTodoMode==='all'?'#1a73e8':'#34a853')}">${_renewalTodoMode==='noad'?'広告未出稿分':(_renewalTodoMode==='all'?'出稿＆未出稿':'広告出稿分')}</button>` + _tail;
 }
 
 function _onRenewalTodoMonthChange(v) {
@@ -11700,9 +11709,9 @@ function renderRenewalDone() {
   const _nClosed = codes.filter(c => _renewalIsClosed(c)).length;
   const _cb = document.getElementById('renewalDoneClosedBtn');
   if (_cb) {
-    _cb.textContent = (_renewalShowClosed ? '完了済を隠す' : '完了済を表示') + '（' + _nClosed + '）';
-    _cb.style.background = _renewalShowClosed ? '#16a34a' : 'var(--surface)';
-    _cb.style.color = _renewalShowClosed ? '#fff' : '#16a34a';
+    _cb.textContent = (_renewalShowClosed ? '観測完了を隠す' : '観測完了を表示') + '（' + _nClosed + '）';
+    _cb.style.background = _renewalShowClosed ? '#6b7280' : 'var(--surface)';
+    _cb.style.color = _renewalShowClosed ? '#fff' : '#4b5563';
   }
   if (!_renewalShowClosed) codes = codes.filter(c => !_renewalIsClosed(c));
   if (q) codes = codes.filter(code => _renewalMatchQuery(code, q));
