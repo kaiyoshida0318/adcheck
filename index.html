@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1387</span>
+    <span class="build-date">v1.1389</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2358,7 +2358,8 @@ function _rnwBadgeHtml(code, log, col){
   const date = `<button ${oc} title="変更記録を開く" style="font-size:11px;font-weight:600;padding:4px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-family:'DM Mono',monospace">${dt}</button>`;
   return col
     ? `<div style="display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;margin-top:6px">${chips}${date}</div>`
-    : `<span style="display:inline-flex;align-items:center;gap:4px;margin-left:10px">${chips}${date}</span>`;
+    : `<span style="display:inline-flex;align-items:center;gap:4px;margin-left:10px">${chips}${date}</span>`
+      + ((typeof _kwwmSrcFn !== 'undefined' && _kwwmSrcFn === _changeLogCodes) ? _renewalCloseCellHtml(code, _renewalIsClosed(code), true) : '');
 }
 
 // 編集モーダル内の変更記録ヘルパー
@@ -9321,19 +9322,24 @@ function _renewalElapsedDays(code){
   if (!ld) return null;
   return Math.round((new Date(_ymdLocal() + 'T00:00:00') - new Date(ld + 'T00:00:00')) / 864e5);
 }
-function _renewalCloseCellHtml(code, closed){
+function _renewalCloseCellHtml(code, closed, horizontal){
   const d = _renewalElapsedDays(code);
   const over = d != null && d >= RENEWAL_CLOSE_DAYS;
   const dayTxt = d == null ? '—' : ('経過 ' + d + '日');
   const daySt = over ? 'background:#fff3e0;color:#e8710a;' : 'color:var(--text3);';
   const at = productCache[code] && productCache[code].renewalClosedAt;
-  const seg = (label, active, toClosed, tip) => `<button type="button" ${active ? 'disabled' : `onclick="event.stopPropagation();_setRenewalClosed('${code}',${toClosed})"`} title="${tip}" style="font-size:10px;font-weight:700;padding:2px 7px;border:none;white-space:nowrap;${active ? (toClosed ? 'background:#6b7280;color:#fff;' : 'background:#1a73e8;color:#fff;') + 'cursor:default;' : 'background:var(--surface);color:var(--text3);cursor:pointer;'}">${label}</button>`;
+  // 横並び版（月別推移）は LP/売り方 ボタンと同じ大きさ
+  const _bs = horizontal ? 'font-size:11px;font-weight:700;padding:4px 10px;' : 'font-size:10px;font-weight:700;padding:2px 7px;';
+  const seg = (label, active, toClosed, tip) => `<button type="button" ${active ? 'disabled' : `onclick="event.stopPropagation();_setRenewalClosed('${code}',${toClosed})"`} title="${tip}" style="${_bs}border:none;white-space:nowrap;${active ? (toClosed ? 'background:#6b7280;color:#fff;' : 'background:#1a73e8;color:#fff;') + 'cursor:default;' : 'background:var(--surface);color:var(--text3);cursor:pointer;'}">${label}</button>`;
   const btn = `<div style="display:inline-flex;border:1px solid var(--border2);border-radius:6px;overflow:hidden">`
     + seg('観測中', !closed, false, closed ? 'クリックで観測中に戻す（実施済に再表示）' : '観測中（実施済に表示中）')
     + seg('完了', closed, true, closed ? ((at ? at + ' に観測完了' : '観測完了') + '（実施済から非表示・変更記録は残る）') : 'クリックで観測完了にする（実施済から外れます。変更記録は残ります）')
     + `</div>`;
+  const daySpan = `<span style="${horizontal ? 'font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;' : 'font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;'}white-space:nowrap;${daySt}">${dayTxt}</span>`;
+  // ★v1.1388★ 実施済-月別推移の商品名右にも出せる横並び版（class="rnw-obs" はその場で書き換える目印）
+  if (horizontal) return `<span class="rnw-obs" data-code="${code}" style="display:inline-flex;align-items:center;gap:6px;margin-left:14px;padding-left:14px;border-left:1px solid var(--border2)"><span style="font-size:11px;color:var(--text3);font-weight:700">観測状況</span>${daySpan}${btn}</span>`;
   return `<div style="padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:3px">
-      <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;white-space:nowrap;${daySt}">${dayTxt}</span>${btn}</div>`;
+      ${daySpan}${btn}</div>`;
 }
 function _setRenewalClosed(code, on){
   if (!productCache[code]) productCache[code] = {};
@@ -9341,6 +9347,11 @@ function _setRenewalClosed(code, on){
   else delete productCache[code].renewalClosedAt;
   saveProductCache(); saveToGitHub();
   if (typeof _updateRenewalCounts === 'function') _updateRenewalCounts();
+  if (typeof _currentTab !== 'undefined' && _currentTab === 'renewal-monthly') {
+    // 月別推移では見ている位置を崩さないよう、その場でスイッチだけ書き換える（一覧からは次に開いたときに外れる）
+    document.querySelectorAll('.rnw-obs[data-code="' + code + '"]').forEach(el => { el.outerHTML = _renewalCloseCellHtml(code, _renewalIsClosed(code), true); });
+    return;
+  }
   if (typeof _renderCurrentRenewal === 'function') _renderCurrentRenewal();
 }
 function _toggleRenewalShowClosed(){ _renewalShowClosed = !_renewalShowClosed; renderRenewalDone(); }
