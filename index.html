@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1386</span>
+    <span class="build-date">v1.1387</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1382,7 +1382,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
       <div class="table-card">
         <div id="renewal-done-list" style="overflow-y:auto;max-height:75vh;overflow-x:auto">
           <div class="table-toolbar" style="position:sticky;top:0;z-index:30;background:var(--surface)">
-            <input type="text" id="renewalDoneSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalDone()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none"><span id="renewalDoneMonthWrap" style="margin-left:14px;display:inline-flex;align-items:center"></span>
+            <span id="renewalDoneMonthWrap" style="margin-right:14px;display:inline-flex;align-items:center"></span><input type="text" id="renewalDoneSearch" placeholder="商品名・商品番号・商品管理番号で検索..." oninput="renderRenewalDone()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);width:300px;outline:none">
             
             <div class="toolbar-right"></div>
           </div>
@@ -11549,9 +11549,18 @@ function _stickRenewalHeader(listId) {
   setTimeout(apply, 120);
   setTimeout(apply, 320);
 }
-window.addEventListener('resize', () => {
+function _restickRenewalLists(){
   ['renewal-todo-list','renewal-todoseo-list','renewal-done-list','renewal-lp-list','renewal-thumb-list'].forEach(_stickRenewalHeader);
-});
+}
+window.addEventListener('resize', _restickRenewalLists);
+// ★v1.1387★ 上部（タブ行など）の高さが変わったら測り直す
+(function(){
+  if (typeof ResizeObserver !== 'function') return;
+  let _t = null;
+  const ro = new ResizeObserver(() => { clearTimeout(_t); _t = setTimeout(_restickRenewalLists, 80); });
+  const start = () => { const tc = document.getElementById('topChrome'); if (tc) ro.observe(tc); const hd = document.querySelector('header'); if (hd) ro.observe(hd); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
 
 // renewal graph modal: モーダル本体をネイティブに1つのスクローラーとしてスクロール
 
@@ -11563,6 +11572,8 @@ window.addEventListener('resize', () => {
     if (!active) return;
     const list = active.querySelector('[id^="renewal-"][id$="-list"]');
     if (!list) return;
+    // ★v1.1387★ 念のため：リスト下端が画面外にはみ出していたら高さを測り直す
+    if (list.getBoundingClientRect().bottom > window.innerHeight + 2) _stickRenewalHeader(list.id);
     if (list.contains(e.target)) return;
     if (!active.contains(e.target)) return;
     let dy = e.deltaY;
@@ -14040,6 +14051,8 @@ function toggleTopChrome(){
   const collapsed = t.style.display==='none';
   t.style.display = collapsed ? '' : 'none';
   if(bar) bar.style.display = collapsed ? 'none' : 'flex';
+  // ★v1.1387★ 上部の表示/非表示でリストの位置が変わるので、リストの高さを測り直す（下端が画面外に出てスクロールできなくなるのを防ぐ）
+  if (typeof _restickRenewalLists === 'function') _restickRenewalLists();
 }
 // 当日の広告調整で使う必要ページを新しいタブで一括オープン
 function _openDailyWorkPages() {
