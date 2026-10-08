@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1391</span>
+    <span class="build-date">v1.1392</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2377,8 +2377,20 @@ function _rnwNoteHtml(code, log){
   if (idx < 0 || !note) return '';   // コメントが空なら出さない
   const esc = v => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   return `<input type="text" class="rnw-note" value="${esc(note)}" title="${esc(note)}（Enterで保存）" data-code="${code}" data-idx="${idx}" data-orig="${esc(note)}"`
-    + ` onkeydown="if(event.key==='Enter'){this.blur();}else if(event.key==='Escape'){this.value=this.dataset.orig;this.blur();}" onchange="_rnwSaveNote(this)"`
-    + ` style="flex:1 1 260px;min-width:160px;max-width:520px;margin-left:8px;font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text)">`;
+    + ` onkeydown="if(event.key==='Enter'){this.blur();}else if(event.key==='Escape'){this.value=this.dataset.orig;this.blur();_rnwFitNote(this);}" oninput="_rnwFitNote(this)" onchange="_rnwSaveNote(this)"`
+    + ` style="flex:0 0 auto;width:${_rnwNoteW(note)}px;max-width:520px;margin-left:8px;font-size:12px;font-family:inherit;padding:5px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);box-sizing:border-box">`;
+}
+// ★v1.1392★ コメント欄の幅を中身の文字の長さにぴったり合わせる（最大520px）
+let _rnwMeasureCtx = null;
+function _rnwNoteW(text){
+  try {
+    if (!_rnwMeasureCtx) _rnwMeasureCtx = document.createElement('canvas').getContext('2d');
+    _rnwMeasureCtx.font = '12px ' + getComputedStyle(document.body).fontFamily;
+    const w = Math.ceil(_rnwMeasureCtx.measureText(String(text || '')).width) + 16 + 2 + 2; // 文字幅＋左右余白＋枠＋わずかなゆとり
+    return Math.max(48, Math.min(520, w));
+  } catch(e) { return 200; }
+}
+function _rnwFitNote(el){ el.style.width = _rnwNoteW(el.value) + 'px';
 }
 function _rnwSaveNote(el){
   const code = el.dataset.code, idx = +el.dataset.idx;
