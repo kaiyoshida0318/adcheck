@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1389</span>
+    <span class="build-date">v1.1391</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2358,8 +2358,39 @@ function _rnwBadgeHtml(code, log, col){
   const date = `<button ${oc} title="変更記録を開く" style="font-size:11px;font-weight:600;padding:4px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-family:'DM Mono',monospace">${dt}</button>`;
   return col
     ? `<div style="display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;margin-top:6px">${chips}${date}</div>`
-    : `<span style="display:inline-flex;align-items:center;gap:4px;margin-left:10px">${chips}${date}</span>`
-      + ((typeof _kwwmSrcFn !== 'undefined' && _kwwmSrcFn === _changeLogCodes) ? _renewalCloseCellHtml(code, _renewalIsClosed(code), true) : '');
+    : _rnwHeadLogHtml(code, log, oc);
+}
+// ★v1.1391★ 月別推移の商品名右：変更記録画面と同じ並び（日付 → 選んだ種別ボタン → コメント）＋その右に観測状況
+function _rnwHeadLogHtml(code, log, oc){
+  const d = log.date, dFull = d.slice(0,4) + '/' + d.slice(5,7) + '/' + d.slice(8,10);
+  const isRenewal = (typeof _kwwmSrcFn !== 'undefined' && _kwwmSrcFn === _changeLogCodes);
+  const date = `<button ${oc} title="変更記録を開く" style="font-size:12px;font-weight:500;padding:5px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);cursor:pointer;white-space:nowrap;font-family:'DM Mono',monospace">${dFull}</button>`;
+  const chips = _clTypes(log).map(v => { const x = _clDef(v); return `<button ${oc} style="padding:5px 9px;border-radius:5px;font-size:11px;font-weight:700;border:1.5px solid ${x.color};background:${x.color};color:${x.fg};cursor:pointer;white-space:nowrap">${x.label}</button>`; }).join('');
+  return `<span style="display:inline-flex;align-items:center;gap:8px;margin-left:10px;flex-shrink:0">${date}${chips ? `<span style="display:inline-flex;gap:3px">${chips}</span>` : ''}</span>`
+    + (isRenewal ? _rnwNoteHtml(code, log) + _renewalCloseCellHtml(code, _renewalIsClosed(code), true) : '');
+}
+// ★v1.1390★ 実施済-月別推移：最新の変更記録のコメント（メモ）をその場で見る・直す
+function _rnwNoteHtml(code, log){
+  const arr = (productCache[code] && productCache[code].changeLog) || [];
+  const idx = arr.indexOf(log);
+  const note = (log && log.note || '').trim();
+  if (idx < 0 || !note) return '';   // コメントが空なら出さない
+  const esc = v => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return `<input type="text" class="rnw-note" value="${esc(note)}" title="${esc(note)}（Enterで保存）" data-code="${code}" data-idx="${idx}" data-orig="${esc(note)}"`
+    + ` onkeydown="if(event.key==='Enter'){this.blur();}else if(event.key==='Escape'){this.value=this.dataset.orig;this.blur();}" onchange="_rnwSaveNote(this)"`
+    + ` style="flex:1 1 260px;min-width:160px;max-width:520px;margin-left:8px;font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text)">`;
+}
+function _rnwSaveNote(el){
+  const code = el.dataset.code, idx = +el.dataset.idx;
+  const arr = productCache[code] && productCache[code].changeLog;
+  if (!arr || !arr[idx]) return;
+  const v = el.value.trim();
+  if ((arr[idx].note || '') === v) return;
+  arr[idx].note = v;
+  el.dataset.orig = v; el.title = v;
+  saveProductCache();
+  _saveToast('saving');
+  Promise.resolve(saveToGitHub()).then(() => _saveToast('done')).catch(() => _saveToast('error'));
 }
 
 // 編集モーダル内の変更記録ヘルパー
