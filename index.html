@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1405</span>
+    <span class="build-date">v1.1406</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14312,7 +14312,19 @@ function _fitYoyBox(id){
   };
   requestAnimationFrame(() => requestAnimationFrame(apply));
   setTimeout(apply, 150);
+  setTimeout(apply, 900);    // ★v1.1406★ 上のタブ行・件数・画像などが後から読み込まれて位置が変わる分も拾う
+  a._fitApply = apply;
 }
+// ★v1.1406★ 表の下端が画面の下端からずれていたら（空きが出た／はみ出した）その場で合わせ直す
+function _yoyFitCheck(){
+  if (typeof _currentTab === 'undefined' || _currentTab !== 'yoy') return;
+  const a = document.getElementById(_yoyView === 'top' ? 'yoyTopArea' : 'yoyCompareArea');
+  if (!a || a.offsetParent === null) return;
+  const gap = window.innerHeight - 14 - a.getBoundingClientRect().bottom;
+  if (Math.abs(gap) > 4 && a.scrollHeight > a.clientHeight + 4) { if (a._fitApply) a._fitApply(); else _fitYoyBox(a.id); }
+}
+window.addEventListener('load', () => { try { _yoyFitCheck(); } catch(e){} });
+document.addEventListener('mousemove', (function(){ let t = 0; return function(){ const n = Date.now(); if (n - t < 400) return; t = n; try { _yoyFitCheck(); } catch(e){} }; })(), { passive: true });
 // ★v1.1399★ 全-比較を開いている間は外側（ページ）のスクロールを止め、表の中だけをスクロールさせる
 function _yoyPageLock(on){
   const de = document.documentElement;
@@ -14323,6 +14335,7 @@ function _yoyPageLock(on){
 // 表の外（月の切り替えボタンの上など）でホイールを回したときも、表の中をスクロールさせる
 document.addEventListener('wheel', function(e){
   if (typeof _currentTab === 'undefined' || _currentTab !== 'yoy') return;
+  try { _yoyFitCheck(); } catch(_e){}
   const box = document.getElementById(_yoyView === 'top' ? 'yoyTopArea' : 'yoyCompareArea');
   if (!box || box.offsetParent === null || box.contains(e.target)) return;
   const panel = document.getElementById('tab-yoy');
