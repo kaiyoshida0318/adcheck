@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1406</span>
+    <span class="build-date">v1.1407</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1082,7 +1082,8 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text2);flex-wrap:wrap"><span style="font-weight:600">売上 前期比</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2563eb;margin-right:3px;vertical-align:middle"></span>上昇</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#16a34a;margin-right:3px;vertical-align:middle"></span>上昇(2割以内)</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ca8a04;margin-right:3px;vertical-align:middle"></span>減少(2割以内)</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dc2626;margin-right:3px;vertical-align:middle"></span>2割超の減少</span></div>
       </div>
       <div id="yoyCompareArea" style="position:relative;overflow:auto;max-height:72vh"></div>
-      <div id="yoyTopArea" style="display:none;overflow:auto;max-height:76vh"></div>
+      <div id="yoyMetricNav" style="display:none;flex-wrap:wrap;gap:6px;margin:0 0 10px"></div>
+      <div id="yoyTopArea" style="display:none;overflow:auto;max-height:76vh" onscroll="_yoyNavSpy()"></div>
     </div>
   </div>
   <!-- 全-月別データ -->
@@ -13983,6 +13984,7 @@ function _setYoyViewUI(){
   if (ta) ta.style.display = top ? '' : 'none';
   if (typeof _fitYoyTopArea === 'function') _fitYoyTopArea();
   const pw = document.getElementById('yoyTopRight'); if (pw) pw.style.display = top ? 'inline-flex' : 'none';
+  const nv = document.getElementById('yoyMetricNav'); if (nv) nv.style.display = top ? 'flex' : 'none';
 }
 // 期間内の商品別集計（ym='YYYY-MM'、maxDay=何日まで）
 function _yoyTopAgg(ym, maxDay){
@@ -14166,6 +14168,36 @@ function exportYoyTop(){
 // ★v1.1404★ 商品で絞り込み：タイルの「絞込」を押すと、全指標・両方の月でその商品だけを表示（順位は全商品の中での順位）
 let _yoyFocusCode = null;
 function setYoyTopFocus(code){ _yoyFocusCode = (_yoyFocusCode === code) ? null : (code || null); const a = document.getElementById('yoyTopArea'); if (a) { a.scrollTop = 0; a.scrollLeft = 0; } renderYoyTop(); }
+// ★v1.1407★ 指標ボタン：押すとその指標の段まで表の中をスクロール（絞り込み中はその列まで横に）。今見ている指標のボタンが光る
+function _renderYoyNav(){
+  const nav = document.getElementById('yoyMetricNav'); if (!nav) return;
+  nav.style.display = (_yoyView === 'top') ? 'flex' : 'none';
+  nav.innerHTML = _YOYTOP_METRICS.map(mt => '<button class="yt-navbtn" data-mk="'+mt.k+'" onclick="_yoyNavGo(\''+mt.k+'\')" style="font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer;font-weight:700;white-space:nowrap;border:1.5px solid '+mt.col+';background:'+mt.bg+';color:'+mt.col+'">'+mt.label+'</button>').join('');
+  _yoyNavSpy();
+}
+function _yoyNavGo(k){
+  const a = document.getElementById('yoyTopArea'); if (!a) return;
+  const el = document.getElementById(_yoyFocusCode ? 'yt-col-'+k : 'yt-blk-'+k); if (!el) return;
+  const ar = a.getBoundingClientRect(), er = el.getBoundingClientRect();
+  const scale = (a.offsetHeight > 0 && ar.height > 0) ? ar.height / a.offsetHeight : 1;
+  if (_yoyFocusCode) a.scrollTo({ left: Math.max(0, a.scrollLeft + (er.left - ar.left) / scale - 140), behavior:'smooth' });
+  else a.scrollTo({ top: Math.max(0, a.scrollTop + (er.top - ar.top) / scale), behavior:'smooth' });
+  _yoyNavMark(k);
+}
+function _yoyNavMark(k){
+  document.querySelectorAll('#yoyMetricNav .yt-navbtn').forEach(b => {
+    const mt = _YOYTOP_METRICS.find(m => m.k === b.dataset.mk); const on = (b.dataset.mk === k);
+    b.style.background = on ? mt.col : mt.bg; b.style.color = on ? '#fff' : mt.col;
+  });
+}
+function _yoyNavSpy(){
+  if (_yoyFocusCode) return;
+  const a = document.getElementById('yoyTopArea'); if (!a || a.offsetParent === null) return;
+  const top = a.getBoundingClientRect().top + 4; let cur = _YOYTOP_METRICS[0].k;
+  _YOYTOP_METRICS.forEach(mt => { const el = document.getElementById('yt-blk-'+mt.k); if (el && el.getBoundingClientRect().top <= top) cur = mt.k; });
+  if (a.scrollTop + a.clientHeight >= a.scrollHeight - 2) cur = _YOYTOP_METRICS[_YOYTOP_METRICS.length-1].k;   // 一番下まで来たら最後の指標
+  _yoyNavMark(cur);
+}
 function renderYoyTop(){
   const area = document.getElementById('yoyTopArea'); if (!area) return;
   if (_yoyMode === 'yoy3'){ _yoyMode = 'yoy'; _setYoyModeUI(); }   // 3年分はこの表示では使わない
@@ -14262,7 +14294,7 @@ function renderYoyTop(){
         + '<div style="font-size:9px;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'合計 ':'全体 ')+totTxt(mt, r)+'</div>'
         + '</td>';
     };
-    const head = _YOYTOP_METRICS.map(mt => '<th style="padding:8px 10px;background:'+mt.bg+';color:'+mt.col+';font-size:12px;font-weight:800;border-left:1px solid var(--border);white-space:nowrap;min-width:96px">'+mt.label+'<div style="font-size:9px;font-weight:600;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'金額／構成比':'値／全体への影響')+'</div></th>').join('');
+    const head = _YOYTOP_METRICS.map(mt => '<th id="yt-col-'+mt.k+'" data-mk="'+mt.k+'" style="padding:8px 10px;background:'+mt.bg+';color:'+mt.col+';font-size:12px;font-weight:800;border-left:1px solid var(--border);white-space:nowrap;min-width:96px">'+mt.label+'<div style="font-size:9px;font-weight:600;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'金額／構成比':'値／全体への影響')+'</div></th>').join('');
     const mrow = (title, ym, res, isTop) => '<tr style="border-top:'+(isTop?'0':'1px dashed var(--border2)')+'">'
       + '<td style="position:sticky;left:0;z-index:2;background:'+(isTop?'#f8fafc':'#f1f5f9')+';padding:8px 12px;white-space:nowrap;border-right:1px solid var(--border)">'
       +   '<div style="display:inline-block;font-size:10px;font-weight:700;color:#fff;background:'+(isTop?'#334155':'#64748b')+';border-radius:4px;padding:1px 6px">'+title+'</div>'
@@ -14276,12 +14308,13 @@ function renderYoyTop(){
       +   '<tbody>' + mrow('今月', P.top, resT, true) + mrow(modeLbl, P.cmp, resC, false) + '</tbody></table></div>';
     area.innerHTML = html;
     _renderYoyPinUI();
+    _renderYoyNav(); _yoyNavMark('');
     _fitYoyTopArea();
     return;
   }
   html += '<div style="border:1px solid var(--border);border-radius:10px;background:var(--surface);width:max-content;min-width:100%">';
   _YOYTOP_METRICS.forEach((mt, mi) => {
-    html += '<div style="display:flex;align-items:stretch;'+(mi?'border-top:2px solid var(--border2);':'')+'">'
+    html += '<div id="yt-blk-'+mt.k+'" data-mk="'+mt.k+'" style="display:flex;align-items:stretch;'+(mi?'border-top:2px solid var(--border2);':'')+'">'
       + '<div style="width:130px;flex:0 0 130px;box-sizing:border-box;padding:10px 12px;background:'+mt.bg+';border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;position:sticky;left:0;z-index:4'+(mi===0?';border-top-left-radius:10px':'')+(mi===_YOYTOP_METRICS.length-1?';border-bottom-left-radius:10px':'')+'">'
       +   '<div style="font-size:15px;font-weight:800;color:'+mt.col+'">'+mt.label+'</div>'
       +   '<div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.4">'+note(mt)+'</div>'
@@ -14294,6 +14327,7 @@ function renderYoyTop(){
   area.innerHTML = html + '</div>';
   _yoyTopPins.forEach(c => { if (c) _yoyTopPaint(c); });
   _renderYoyPinUI();
+  _renderYoyNav();
   _fitYoyTopArea();
 }
 // ★v1.1398★ 表の高さを画面の下端に合わせる（ズーム時に下が画面外へはみ出し、ページと表の二重スクロールで見にくくなっていた）
