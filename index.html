@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1394</span>
+    <span class="build-date">v1.1395</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -13993,7 +13993,7 @@ function _yoyTopAgg(ym, maxDay){
   try { if (typeof couponAdvanceRows === 'undefined' || !couponAdvanceRows || !couponAdvanceRows.length) { try{ _cpaLoad(); }catch(e){} } } catch(e){}
   try { (couponAdvanceRows || []).forEach(r => { if (r && inR(r.date) && m[r.itemCode]) m[r.itemCode].ca += (r.sales || 0); }); } catch(e){}
   delete m['__global__'];
-  Object.keys(m).forEach(c => { const x = m[c]; x.seo = Math.max(0, x.tot - x.ad - x.ca); x.ad20 = Math.max(0, x.ad - x.kw); });
+  Object.keys(m).forEach(c => { const x = m[c]; x.seo = Math.max(0, x.tot - x.ad - x.ca); x.ad20 = Math.max(0, x.ad - x.kw); x.sp20 = Math.max(0, x.sp - x.spKw); });
   return m;
 }
 const _YOYTOP_METRICS = [
@@ -14002,14 +14002,16 @@ const _YOYTOP_METRICS = [
   { k:'kw',   label:'広告売上-KW', col:'#00897B', bg:'#e9f7f5', type:'amt' },
   { k:'ad20', label:'広告売上-20', col:'#ea580c', bg:'#fff4ec', type:'amt' },
   { k:'sp',   label:'実績額',     col:'#b45309', bg:'#fdf6e7', type:'amt' },
-  { k:'roas', label:'ROAS',      col:'#7c3aed', bg:'#f5f0fe', type:'roas' },
+  { k:'roas', label:'ROAS',      col:'#7c3aed', bg:'#f5f0fe', type:'roas', num:'ad', den:'sp' },
+  { k:'roasKw', label:'ROAS-KW', col:'#6d28d9', bg:'#f3eefd', type:'roas', num:'kw', den:'spKw' },
+  { k:'roas20', label:'ROAS-20', col:'#9333ea', bg:'#f8f0fe', type:'roas', num:'ad20', den:'sp20' },
   { k:'cpa',  label:'獲得単価',   col:'#dc2626', bg:'#fdf0f0', type:'cpa' },
 ];
 // 1か月分：指標ごとの上位10と合計
 function _yoyTopCalc(agg){
   const codes = Object.keys(agg);
   const sum = k => codes.reduce((t,c) => t + (agg[c][k] || 0), 0);
-  const T = { seo:sum('seo'), ad:sum('ad'), kw:sum('kw'), ad20:sum('ad20'), sp:sum('sp'), od:sum('od') };
+  const T = { seo:sum('seo'), ad:sum('ad'), kw:sum('kw'), ad20:sum('ad20'), sp:sum('sp'), spKw:sum('spKw'), sp20:sum('sp20'), od:sum('od') };
   const out = {};
   _YOYTOP_METRICS.forEach(mt => {
     let list = [];
@@ -14019,12 +14021,14 @@ function _yoyTopCalc(agg){
         .map(x => Object.assign(x, { share: tot > 0 ? x.v / tot * 100 : 0 }));
       out[mt.k] = { total: tot, list };
     } else if (mt.type === 'roas'){
-      const R = T.sp > 0 ? T.ad / T.sp * 100 : 0;
-      list = codes.filter(c => (agg[c].sp || 0) > 0 && T.sp - agg[c].sp > 0).map(c => {
-        const a = agg[c]; const without = (T.ad - a.ad) / (T.sp - a.sp) * 100;
-        return { code:c, v: a.ad / a.sp * 100, imp: R - without };
+      // ROAS／ROAS-KW／ROAS-20：売上(num) ÷ 実績額(den)。その商品を除いたときとの差で並べる
+      const N = mt.num, D = mt.den;
+      const R = T[D] > 0 ? T[N] / T[D] * 100 : 0;
+      list = codes.filter(c => (agg[c][D] || 0) > 0 && T[D] - agg[c][D] > 0).map(c => {
+        const a = agg[c]; const without = (T[N] - (a[N]||0)) / (T[D] - a[D]) * 100;
+        return { code:c, v: (a[N]||0) / a[D] * 100, imp: R - without };
       }).sort((a,b) => Math.abs(b.imp) - Math.abs(a.imp)).slice(0,10);
-      out.roas = { total: R, list };
+      out[mt.k] = { total: R, list };
     } else if (mt.type === 'cpa'){
       const C = T.od > 0 ? T.sp / T.od : 0;
       list = codes.filter(c => (agg[c].sp || 0) > 0 && T.od - (agg[c].od || 0) > 0).map(c => {
@@ -14110,7 +14114,7 @@ function renderYoyTop(){
       + rankTag + '</div>';
   };
   const totTxt = (mt, r) => mt.type === 'amt' ? yen(r.total) : (mt.type === 'roas' ? (r.total ? Math.round(r.total) + '%' : '—') : (r.total ? yen(r.total) : '—'));
-  const note = mt => mt.type === 'amt' ? '数字＝金額／全体に占める割合' : (mt.type === 'roas' ? '数字＝商品のROAS／全体ROASを動かしている幅（+押し上げ・−押し下げ）' : '数字＝商品の獲得単価／全体の獲得単価を動かしている幅（+高くしている・−安くしている）');
+  const note = mt => mt.type === 'amt' ? '数字＝金額／全体に占める割合' : (mt.type === 'roas' ? '数字＝商品の'+mt.label+'／全体の'+mt.label+'を動かしている幅（+押し上げ・−押し下げ）' : '数字＝商品の獲得単価／全体の獲得単価を動かしている幅（+高くしている・−安くしている）');
   // ★v1.1394★ 指標ごとに「今月」の行と「比較月」の行を上下に並べる。指標名は2行の中央、その右に月、続けて1〜10位
   const monthCell = (title, ym, mt, r, isTop) => '<div style="width:128px;flex:0 0 128px;padding:8px 10px;border-right:1px solid var(--border);background:'+(isTop?'#f8fafc':'#f1f5f9')+';display:flex;flex-direction:column;justify-content:center">'
       + '<div style="display:inline-block;align-self:flex-start;font-size:10px;font-weight:700;color:#fff;background:'+(isTop?'#334155':'#64748b')+';border-radius:4px;padding:1px 6px">'+title+'</div>'
