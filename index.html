@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1393</span>
+    <span class="build-date">v1.1394</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14111,25 +14111,32 @@ function renderYoyTop(){
   };
   const totTxt = (mt, r) => mt.type === 'amt' ? yen(r.total) : (mt.type === 'roas' ? (r.total ? Math.round(r.total) + '%' : '—') : (r.total ? yen(r.total) : '—'));
   const note = mt => mt.type === 'amt' ? '数字＝金額／全体に占める割合' : (mt.type === 'roas' ? '数字＝商品のROAS／全体ROASを動かしている幅（+押し上げ・−押し下げ）' : '数字＝商品の獲得単価／全体の獲得単価を動かしている幅（+高くしている・−安くしている）');
-  const section = (title, ym, res, other, isTop) => {
-    let h = '<div style="margin-bottom:18px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)">'
-      + '<div style="padding:9px 14px;background:'+(isTop?'#334155':'#64748b')+';color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;gap:10px"><span>'+title+'</span><span style="font-family:\'DM Mono\',monospace">'+lbl(ym)+'</span></div>';
-    _YOYTOP_METRICS.forEach(mt => {
-      const r = res[mt.k];
-      h += '<div style="display:flex;align-items:stretch;border-top:1px solid var(--border)">'
-        + '<div style="width:150px;flex:0 0 150px;padding:10px 12px;background:'+mt.bg+';border-right:1px solid var(--border)">'
-        +   '<div style="font-size:13px;font-weight:800;color:'+mt.col+'">'+mt.label+'</div>'
-        +   '<div style="font-size:10px;color:var(--text3);margin-top:4px">'+(mt.type==='amt'?'合計':'全体')+'</div>'
-        +   '<div style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;color:var(--text)">'+totTxt(mt, r)+'</div>'
-        +   '<div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.35">'+note(mt)+'</div>'
-        + '</div>'
-        + '<div style="display:flex;gap:6px;padding:8px 10px;flex:1;min-width:0;flex-wrap:nowrap;align-items:flex-start;overflow-x:auto">'
-        +   (r.list.length ? r.list.map((x,i) => tile(mt, x, i, other[mt.k], isTop)).join('') : '<div style="padding:18px;color:var(--text3);font-size:12px">データがありません</div>')
-        + '</div></div>';
-    });
-    return h + '</div>';
-  };
-  area.innerHTML = section('今月', P.top, resT, resC, true) + section(modeLbl, P.cmp, resC, resT, false);
+  // ★v1.1394★ 指標ごとに「今月」の行と「比較月」の行を上下に並べる。指標名は2行の中央、その右に月、続けて1〜10位
+  const monthCell = (title, ym, mt, r, isTop) => '<div style="width:128px;flex:0 0 128px;padding:8px 10px;border-right:1px solid var(--border);background:'+(isTop?'#f8fafc':'#f1f5f9')+';display:flex;flex-direction:column;justify-content:center">'
+      + '<div style="display:inline-block;align-self:flex-start;font-size:10px;font-weight:700;color:#fff;background:'+(isTop?'#334155':'#64748b')+';border-radius:4px;padding:1px 6px">'+title+'</div>'
+      + '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--text);margin-top:3px;white-space:nowrap">'+ym.slice(0,4)+'/'+ym.slice(4,6)+'</div>'
+      + (P.partial ? '<div style="font-size:10px;color:var(--text2);white-space:nowrap">1〜'+md+'日</div>' : '')
+      + '<div style="font-size:10px;color:var(--text3);margin-top:4px">'+(mt.type==='amt'?'合計':'全体')+'</div>'
+      + '<div style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;color:'+mt.col+'">'+totTxt(mt, r)+'</div>'
+      + '</div>';
+  const rowHtml = (title, ym, mt, r, other, isTop) => '<div style="display:flex;align-items:stretch;'+(isTop?'':'border-top:1px dashed var(--border2);')+'">'
+      + monthCell(title, ym, mt, r, isTop)
+      + '<div style="display:flex;gap:6px;padding:8px 10px;flex:1;min-width:0;flex-wrap:nowrap;align-items:flex-start;overflow-x:auto">'
+      +   (r.list.length ? r.list.map((x,i) => tile(mt, x, i, other, isTop)).join('') : '<div style="padding:18px;color:var(--text3);font-size:12px">データがありません</div>')
+      + '</div></div>';
+  let html = '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)">';
+  _YOYTOP_METRICS.forEach((mt, mi) => {
+    html += '<div style="display:flex;align-items:stretch;'+(mi?'border-top:2px solid var(--border2);':'')+'">'
+      + '<div style="width:130px;flex:0 0 130px;padding:10px 12px;background:'+mt.bg+';border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center">'
+      +   '<div style="font-size:15px;font-weight:800;color:'+mt.col+'">'+mt.label+'</div>'
+      +   '<div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.4">'+note(mt)+'</div>'
+      + '</div>'
+      + '<div style="flex:1;min-width:0;display:flex;flex-direction:column">'
+      +   rowHtml('今月', P.top, mt, resT[mt.k], resC[mt.k], true)
+      +   rowHtml(modeLbl, P.cmp, mt, resC[mt.k], resT[mt.k], false)
+      + '</div></div>';
+  });
+  area.innerHTML = html + '</div>';
 }
 
 function renderYoy(){
