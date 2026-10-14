@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1402</span>
+    <span class="build-date">v1.1404</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1073,7 +1073,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         <button id="yoyModeMom" onclick="setYoyMode('mom')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">前月比較</button>
         <button id="yoyModePick" onclick="setYoyMode('pick')" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">特定月比較</button>
         <select id="yoySel" onchange="setYoyMonth(this.value)" style="margin-left:10px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select><select id="yoySelA" onchange="setYoyPick('a',this.value)" style="display:none;margin-left:10px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select><span id="yoyPickArrow" style="display:none;margin:0 6px;color:var(--text3);font-weight:700">→</span><select id="yoySelB" onchange="setYoyPick('b',this.value)" style="display:none;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer"></select>
-        <span id="yoyTopRight" style="display:none;margin-left:auto;align-items:center;gap:14px"><button id="yoyExportBtn" onclick="exportYoyTop()" title="今表示している寄与度トップ（全指標・今月と比較月）をCSVで保存" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;border:1px solid #0f766e;background:#0f766e;color:#fff;white-space:nowrap">⬇ エクスポート</button><span id="yoyPinWrap" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);font-weight:600"></span></span><button id="yoyTglUp" onclick="toggleYoyLine('up')" style="margin-left:12px;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #16a34a;background:#16a34a;color:#fff;">上昇線</button>
+        <span id="yoyTopRight" style="display:none;margin-left:auto;align-items:center;gap:14px"><span id="yoyPinWrap" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);font-weight:600"></span><button id="yoyExportBtn" onclick="exportYoyTop()" title="今表示している寄与度トップ（全指標・今月と比較月）をCSVで保存" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;border:1px solid #0f766e;background:#0f766e;color:#fff;white-space:nowrap">⬇ エクスポート</button></span><button id="yoyTglUp" onclick="toggleYoyLine('up')" style="margin-left:12px;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #16a34a;background:#16a34a;color:#fff;">上昇線</button>
         <button id="yoyTglDown" onclick="toggleYoyLine('down')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid #dc2626;background:#dc2626;color:#fff;">下降線</button>
         <button id="yoyColBlue" onclick="toggleYoyColor('blue')" style="margin-left:12px;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">青商品</button>
         <button id="yoyColGreen" onclick="toggleYoyColor('green')" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">緑商品</button>
@@ -14027,9 +14027,9 @@ function _yoyTopCalc(agg){
     let list = [];
     if (mt.type === 'amt'){
       const tot = T[mt.k];
-      list = codes.map(c => ({ code:c, v:agg[c][mt.k] || 0 })).filter(x => x.v > 0).sort((a,b) => b.v - a.v).slice(0,YOYTOP_N)
+      const all = codes.map(c => ({ code:c, v:agg[c][mt.k] || 0 })).filter(x => x.v > 0).sort((a,b) => b.v - a.v)
         .map(x => Object.assign(x, { share: tot > 0 ? x.v / tot * 100 : 0 }));
-      out[mt.k] = { total: tot, list };
+      out[mt.k] = { total: tot, list: all.slice(0, YOYTOP_N), all };
     } else if (mt.type === 'roas'){
       // ROAS／ROAS-KW／ROAS-20：売上(num) ÷ 実績額(den)。その商品を除いたときとの差で並べる
       const N = mt.num, D = mt.den;
@@ -14037,15 +14037,15 @@ function _yoyTopCalc(agg){
       list = codes.filter(c => (agg[c][D] || 0) > 0 && T[D] - agg[c][D] > 0).map(c => {
         const a = agg[c]; const without = (T[N] - (a[N]||0)) / (T[D] - a[D]) * 100;
         return { code:c, v: (a[N]||0) / a[D] * 100, imp: R - without };
-      }).sort((a,b) => Math.abs(b.imp) - Math.abs(a.imp)).slice(0,YOYTOP_N);
-      out[mt.k] = { total: R, list };
+      }).sort((a,b) => Math.abs(b.imp) - Math.abs(a.imp));
+      out[mt.k] = { total: R, list: list.slice(0, YOYTOP_N), all: list };
     } else if (mt.type === 'cpa'){
       const C = T.od > 0 ? T.sp / T.od : 0;
       list = codes.filter(c => (agg[c].sp || 0) > 0 && T.od - (agg[c].od || 0) > 0).map(c => {
         const a = agg[c]; const without = (T.sp - a.sp) / (T.od - (a.od || 0));
         return { code:c, v: (a.od > 0 ? a.sp / a.od : null), imp: C - without };
-      }).sort((a,b) => Math.abs(b.imp) - Math.abs(a.imp)).slice(0,YOYTOP_N);
-      out.cpa = { total: C, list };
+      }).sort((a,b) => Math.abs(b.imp) - Math.abs(a.imp));
+      out.cpa = { total: C, list: list.slice(0, YOYTOP_N), all: list };
     }
   });
   return out;
@@ -14089,7 +14089,7 @@ function _yoyTopPeriods(){
 //   枠がいっぱいのときに他の商品をクリックしても何も起きない。枠ごとに色が違う。ダブルクリックで商品の詳細
 const _YOYPIN_COLORS = ['#f59e0b', '#2563eb', '#16a34a'];
 const _YOYPIN_BG     = ['#fffbeb', '#eff6ff', '#f0fdf4'];
-let _yoyPinN = (function(){ try { const v = parseInt(localStorage.getItem('adcheck_yoy_pin_n'), 10); return (v >= 0 && v <= 3) ? v : 2; } catch(e){ return 2; } })();
+let _yoyPinN = (function(){ try { const v = parseInt(localStorage.getItem('adcheck_yoy_pin_n'), 10); return (v >= 0 && v <= 2) ? v : (v > 2 ? 2 : 2); } catch(e){ return 2; } })();   // ★v1.1403★ 最大2
 let _yoyTopPins = [];          // 枠の番号順（空きは null）
 let _yoyTopHover = null;
 function _yoyTopPaint(code){
@@ -14106,7 +14106,7 @@ function _yoyTopPin(code){
   if (_yoyPinN <= 0) return;                              // 選択枠なし
   const k = _yoyTopPins.indexOf(code);
   if (k >= 0) { _yoyTopPins[k] = null; _yoyTopPaint(code); _renderYoyPinUI(); return; }   // もう一度クリック＝外す
-  for (let i = 0; i < _yoyPinN; i++) { if (!_yoyTopPins[i]) { _yoyTopPins[i] = code; _yoyTopPaint(code); _renderYoyPinUI(); return; } }
+  for (let i = 0; i < Math.min(_yoyPinN, 2); i++) { if (!_yoyTopPins[i]) { _yoyTopPins[i] = code; _yoyTopPaint(code); _renderYoyPinUI(); return; } }
   // 枠がいっぱい → 何もしない
 }
 function setYoyPinN(n){
@@ -14121,12 +14121,15 @@ function _renderYoyPinUI(){
   const rg = document.getElementById('yoyTopRight'); if (rg) rg.style.display = (_yoyView === 'top') ? 'inline-flex' : 'none';
   const b = (v, lbl) => { const on = (_yoyPinN === v); return '<button onclick="setYoyPinN('+v+')" style="font-size:12px;padding:5px 11px;border-radius:6px;cursor:pointer;font-weight:700;border:1px solid '+(on?'#475569':'var(--border)')+';background:'+(on?'#475569':'var(--surface2)')+';color:'+(on?'#fff':'var(--text3)')+'">'+lbl+'</button>'; };
   const esc = t => String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // ★v1.1403★ 選んだ商品の欄は常に2つ分・同じ幅で表示（選んでも外しても周りが動かない）
   let chips = '';
-  for (let i = 0; i < _yoyPinN; i++) {
-    const c = _yoyTopPins[i]; const pc = c ? (productCache[c] || {}) : null; const nm = pc ? (pc.manualName || pc.name || c) : '未選択';
-    chips += '<span title="'+esc(nm)+'" style="display:inline-flex;align-items:center;gap:4px;max-width:150px;padding:3px 8px;border-radius:6px;border:2px solid '+_YOYPIN_COLORS[i]+';background:'+(c?_YOYPIN_BG[i]:'var(--surface)')+';font-size:11px;font-weight:700;color:'+(c?'var(--text)':'var(--text3)')+';cursor:'+(c?'pointer':'default')+'"'+(c?' onclick="_yoyTopPin(\''+esc(c)+'\')"':'')+'><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(nm)+'</span>'+(c?'<span style="color:var(--text3)">✕</span>':'')+'</span>';
+  for (let i = 0; i < 2; i++) {
+    const usable = i < _yoyPinN;
+    const c = usable ? _yoyTopPins[i] : null; const pc = c ? (productCache[c] || {}) : null;
+    const nm = c ? (pc.manualName || pc.name || c) : (usable ? '未選択' : '—');
+    chips += '<span title="'+esc(c ? nm : '')+'" style="display:inline-flex;align-items:center;justify-content:space-between;gap:4px;width:150px;box-sizing:border-box;height:28px;padding:0 8px;border-radius:6px;border:2px '+(usable?'solid':'dashed')+' '+(usable?_YOYPIN_COLORS[i]:'var(--border)')+';background:'+(c?_YOYPIN_BG[i]:'var(--surface)')+';font-size:11px;font-weight:700;color:'+(c?'var(--text)':'var(--text3)')+';opacity:'+(usable?'1':'.5')+';cursor:'+(c?'pointer':'default')+'"'+(c?' onclick="_yoyTopPin(\''+esc(c)+'\')"':'')+'><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(nm)+'</span>'+(c?'<span style="color:var(--text3);flex:0 0 auto">✕</span>':'')+'</span>';
   }
-  w.innerHTML = '<span>選択枠</span>' + b(0,'なし') + b(1,'1') + b(2,'2') + b(3,'3') + (chips ? '<span style="display:inline-flex;gap:6px;margin-left:6px">'+chips+'</span>' : '');
+  w.innerHTML = '<span style="display:inline-flex;gap:6px;margin-right:6px">'+chips+'</span><span>選択枠</span>' + b(0,'なし') + b(1,'1') + b(2,'2');
 }
 // ★v1.1402★ 寄与度トップのエクスポート（CSV・Excelでそのまま開ける）
 let _yoyTopLast = null;
@@ -14159,6 +14162,9 @@ function exportYoyTop(){
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fn;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
+// ★v1.1404★ 商品で絞り込み：タイルの「絞込」を押すと、全指標・両方の月でその商品だけを表示（順位は全商品の中での順位）
+let _yoyFocusCode = null;
+function setYoyTopFocus(code){ _yoyFocusCode = (_yoyFocusCode === code) ? null : (code || null); const a = document.getElementById('yoyTopArea'); if (a) { a.scrollTop = 0; a.scrollLeft = 0; } renderYoyTop(); }
 function renderYoyTop(){
   const area = document.getElementById('yoyTopArea'); if (!area) return;
   if (_yoyMode === 'yoy3'){ _yoyMode = 'yoy'; _setYoyModeUI(); }   // 3年分はこの表示では使わない
@@ -14194,7 +14200,9 @@ function renderYoyTop(){
       + '<div style="display:flex;justify-content:center;height:58px;overflow:hidden">' + imgEl + '</div>'
       + '<div style="font-size:10px;color:var(--text2);margin-top:3px;line-height:14px;height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(name)+'</div>'
       + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;color:var(--text);line-height:15px;height:15px">'+l1+'</div>'
-      + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;color:'+mt.col+';line-height:15px;height:15px">'+l2+'</div>'
+      + '<div style="position:relative;font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;color:'+mt.col+';line-height:15px;height:15px">'+l2
+      +   '<button onclick="event.stopPropagation();setYoyTopFocus(\''+esc(x.code)+'\')" ondblclick="event.stopPropagation()" title="'+(_yoyFocusCode===x.code?'絞り込みを解除':'この商品だけを表示')+'" style="position:absolute;right:1px;top:0;height:15px;padding:0 4px;font-size:9px;line-height:13px;font-weight:700;border-radius:4px;cursor:pointer;border:1px solid '+(_yoyFocusCode===x.code?'#0f766e':'var(--border2)')+';background:'+(_yoyFocusCode===x.code?'#0f766e':'var(--surface)')+';color:'+(_yoyFocusCode===x.code?'#fff':'var(--text3)')+'">'+(_yoyFocusCode===x.code?'解除':'絞込')+'</button>'
+      + '</div>'
       + '</div>';
   };
   // ★v1.1396★ 1位の左に、各行が何の数字かを書く見出し列（タイルと同じ高さで揃える）
@@ -14221,10 +14229,21 @@ function renderYoyTop(){
   const rowHtml = (title, ym, mt, r, other, isTop) => '<div style="display:flex;align-items:stretch;'+(isTop?'':'border-top:1px dashed var(--border2);')+'">'
       + monthCell(title, ym, mt, r, isTop)
       + '<div style="display:flex;gap:6px;padding:8px 10px;flex:0 0 auto;flex-wrap:nowrap;align-items:flex-start">'
-      +   (r.list.length ? labelCol(mt, isTop) + r.list.map((x,i) => tile(mt, x, i, other, isTop)).join('') : '<div style="padding:18px;color:var(--text3);font-size:12px">データがありません</div>')
+      +   (_yoyFocusCode
+            ? (() => { const k = (r.all || []).findIndex(y => y.code === _yoyFocusCode);
+                       return labelCol(mt, isTop) + (k >= 0 ? tile(mt, r.all[k], k, other, isTop) + '<div style="align-self:center;font-size:11px;color:var(--text3);padding-left:6px;white-space:nowrap">全'+r.all.length+'商品中 '+(k+1)+'位</div>'
+                                                             : '<div style="align-self:center;padding:0 12px;color:var(--text3);font-size:12px;white-space:nowrap">この月は数字がありません</div>'); })()
+            : (r.list.length ? labelCol(mt, isTop) + r.list.map((x,i) => tile(mt, x, i, other, isTop)).join('') : '<div style="padding:18px;color:var(--text3);font-size:12px">データがありません</div>'))
       + '</div></div>';
   // ★v1.1398★ 左右スクロールは表全体で1本（今月・比較月が一緒に動く）。指標名・月・見出し列は左に固定
-  let html = '<div style="border:1px solid var(--border);border-radius:10px;background:var(--surface);width:max-content;min-width:100%">';
+  let html = '';
+  if (_yoyFocusCode) {
+    const fpc = productCache[_yoyFocusCode] || {}; const fnm = fpc.manualName || fpc.name || _yoyFocusCode;
+    html += '<div style="position:sticky;top:0;left:0;z-index:6;display:flex;align-items:center;gap:10px;padding:7px 12px;margin-bottom:8px;background:#ecfdf5;border:1px solid #0f766e;border-radius:8px;font-size:12px;font-weight:700;color:#0f766e;width:max-content">'
+      + '<span>絞り込み中：</span><span style="color:var(--text)">'+esc(fnm)+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--text3);font-weight:400">'+esc(fpc.itemNumber||'')+' '+esc(_yoyFocusCode)+'</span>'
+      + '<button onclick="setYoyTopFocus(null)" style="font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid #0f766e;background:#0f766e;color:#fff;cursor:pointer;font-weight:700">解除してトップ'+YOYTOP_N+'に戻る</button></div>';
+  }
+  html += '<div style="border:1px solid var(--border);border-radius:10px;background:var(--surface);width:max-content;min-width:100%">';
   _YOYTOP_METRICS.forEach((mt, mi) => {
     html += '<div style="display:flex;align-items:stretch;'+(mi?'border-top:2px solid var(--border2);':'')+'">'
       + '<div style="width:130px;flex:0 0 130px;box-sizing:border-box;padding:10px 12px;background:'+mt.bg+';border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;position:sticky;left:0;z-index:4'+(mi===0?';border-top-left-radius:10px':'')+(mi===_YOYTOP_METRICS.length-1?';border-bottom-left-radius:10px':'')+'">'
