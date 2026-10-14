@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1407</span>
+    <span class="build-date">v1.1408</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14005,18 +14005,19 @@ function _yoyTopAgg(ym, maxDay){
   return m;
 }
 const YOYTOP_N = 20;   // ★v1.1398★ 20位まで（左右スクロール）
-const _YOYTOP_METRICS = [
+const _YOYTOP_METRICS = [   // ★v1.1408★ 並び：総売上・売上ROAS・SEO売上・広告売上・実績額・ROAS・実績額-KW・ROAS-KW・実績額-20・ROAS-20、その後に残りの指標
+  { k:'tot',  label:'総売上',     col:'#0369a1', bg:'#f0f9ff', type:'amt' },   // ★v1.1408★
+  { k:'sroas', label:'売上ROAS', col:'#0f766e', bg:'#ecfdf5', type:'roas', num:'tot', den:'sp' },   // ★v1.1400★ 総売上 ÷ 実績額
   { k:'seo',  label:'SEO売上',   col:'#1565C0', bg:'#eef4fb', type:'amt' },
   { k:'ad',   label:'広告売上',   col:'#16a34a', bg:'#eefaf1', type:'amt' },
+  { k:'sp',   label:'実績額',     col:'#b45309', bg:'#fdf6e7', type:'amt' },
+  { k:'roas', label:'ROAS',      col:'#7c3aed', bg:'#f5f0fe', type:'roas', num:'ad', den:'sp' },
+  { k:'spKw', label:'実績額-KW',  col:'#92400e', bg:'#fbf3e4', type:'amt' },
+  { k:'roasKw', label:'ROAS-KW', col:'#6d28d9', bg:'#f3eefd', type:'roas', num:'kw', den:'spKw' },
+  { k:'sp20', label:'実績額-20',  col:'#c2410c', bg:'#fef3ea', type:'amt' },
+  { k:'roas20', label:'ROAS-20', col:'#9333ea', bg:'#f8f0fe', type:'roas', num:'ad20', den:'sp20' },
   { k:'kw',   label:'広告売上-KW', col:'#00897B', bg:'#e9f7f5', type:'amt' },
   { k:'ad20', label:'広告売上-20', col:'#ea580c', bg:'#fff4ec', type:'amt' },
-  { k:'sp',   label:'実績額',     col:'#b45309', bg:'#fdf6e7', type:'amt' },
-  { k:'spKw', label:'実績額-KW',  col:'#92400e', bg:'#fbf3e4', type:'amt' },
-  { k:'sp20', label:'実績額-20',  col:'#c2410c', bg:'#fef3ea', type:'amt' },
-  { k:'sroas', label:'売上ROAS', col:'#0f766e', bg:'#ecfdf5', type:'roas', num:'tot', den:'sp' },   // ★v1.1400★ 総売上 ÷ 実績額
-  { k:'roas', label:'ROAS',      col:'#7c3aed', bg:'#f5f0fe', type:'roas', num:'ad', den:'sp' },
-  { k:'roasKw', label:'ROAS-KW', col:'#6d28d9', bg:'#f3eefd', type:'roas', num:'kw', den:'spKw' },
-  { k:'roas20', label:'ROAS-20', col:'#9333ea', bg:'#f8f0fe', type:'roas', num:'ad20', den:'sp20' },
   { k:'cpa',  label:'獲得単価',   col:'#dc2626', bg:'#fdf0f0', type:'cpa' },
 ];
 // 1か月分：指標ごとの上位10と合計
