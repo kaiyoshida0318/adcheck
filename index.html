@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1396</span>
+    <span class="build-date">v1.1397</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14002,6 +14002,8 @@ const _YOYTOP_METRICS = [
   { k:'kw',   label:'広告売上-KW', col:'#00897B', bg:'#e9f7f5', type:'amt' },
   { k:'ad20', label:'広告売上-20', col:'#ea580c', bg:'#fff4ec', type:'amt' },
   { k:'sp',   label:'実績額',     col:'#b45309', bg:'#fdf6e7', type:'amt' },
+  { k:'spKw', label:'実績額-KW',  col:'#92400e', bg:'#fbf3e4', type:'amt' },
+  { k:'sp20', label:'実績額-20',  col:'#c2410c', bg:'#fef3ea', type:'amt' },
   { k:'roas', label:'ROAS',      col:'#7c3aed', bg:'#f5f0fe', type:'roas', num:'ad', den:'sp' },
   { k:'roasKw', label:'ROAS-KW', col:'#6d28d9', bg:'#f3eefd', type:'roas', num:'kw', den:'spKw' },
   { k:'roas20', label:'ROAS-20', col:'#9333ea', bg:'#f8f0fe', type:'roas', num:'ad20', den:'sp20' },
@@ -14111,7 +14113,7 @@ function renderYoyTop(){
       + '<div style="font-size:10px;color:var(--text2);margin-top:3px;line-height:14px;height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(name)+'</div>'
       + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;color:var(--text);line-height:15px;height:15px">'+l1+'</div>'
       + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;color:'+mt.col+';line-height:15px;height:15px">'+l2+'</div>'
-      + rankTag + '</div>';
+      + '</div>';
   };
   // ★v1.1396★ 1位の左に、各行が何の数字かを書く見出し列（タイルと同じ高さで揃える）
   const labelCol = (mt, isTop) => {
@@ -14122,7 +14124,6 @@ function renderYoyTop(){
       + '<div style="height:58px"></div>'
       + ln('商品名', 14, 'margin-top:3px')
       + ln(n1, 15) + ln(n2, 15, 'color:'+mt.col)
-      + ln(isTop ? '比較月の順位' : '今月の順位', 13)
       + '</div>';
   };
   const totTxt = (mt, r) => mt.type === 'amt' ? yen(r.total) : (mt.type === 'roas' ? (r.total ? Math.round(r.total) + '%' : '—') : (r.total ? yen(r.total) : '—'));
