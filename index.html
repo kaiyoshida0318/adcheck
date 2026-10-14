@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1404</span>
+    <span class="build-date">v1.1405</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14130,6 +14130,7 @@ function _renderYoyPinUI(){
     chips += '<span title="'+esc(c ? nm : '')+'" style="display:inline-flex;align-items:center;justify-content:space-between;gap:4px;width:150px;box-sizing:border-box;height:28px;padding:0 8px;border-radius:6px;border:2px '+(usable?'solid':'dashed')+' '+(usable?_YOYPIN_COLORS[i]:'var(--border)')+';background:'+(c?_YOYPIN_BG[i]:'var(--surface)')+';font-size:11px;font-weight:700;color:'+(c?'var(--text)':'var(--text3)')+';opacity:'+(usable?'1':'.5')+';cursor:'+(c?'pointer':'default')+'"'+(c?' onclick="_yoyTopPin(\''+esc(c)+'\')"':'')+'><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(nm)+'</span>'+(c?'<span style="color:var(--text3);flex:0 0 auto">✕</span>':'')+'</span>';
   }
   w.innerHTML = '<span style="display:inline-flex;gap:6px;margin-right:6px">'+chips+'</span><span>選択枠</span>' + b(0,'なし') + b(1,'1') + b(2,'2');
+  w.style.visibility = _yoyFocusCode ? 'hidden' : '';   // 絞り込み中は選択枠を隠す（位置は動かさない）
 }
 // ★v1.1402★ 寄与度トップのエクスポート（CSV・Excelでそのまま開ける）
 let _yoyTopLast = null;
@@ -14242,6 +14243,41 @@ function renderYoyTop(){
     html += '<div style="position:sticky;top:0;left:0;z-index:6;display:flex;align-items:center;gap:10px;padding:7px 12px;margin-bottom:8px;background:#ecfdf5;border:1px solid #0f766e;border-radius:8px;font-size:12px;font-weight:700;color:#0f766e;width:max-content">'
       + '<span>絞り込み中：</span><span style="color:var(--text)">'+esc(fnm)+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--text3);font-weight:400">'+esc(fpc.itemNumber||'')+' '+esc(_yoyFocusCode)+'</span>'
       + '<button onclick="setYoyTopFocus(null)" style="font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid #0f766e;background:#0f766e;color:#fff;cursor:pointer;font-weight:700">解除してトップ'+YOYTOP_N+'に戻る</button></div>';
+  }
+  // ★v1.1405★ 絞り込み中：指標を横に並べた表（列＝指標、行＝今月／比較月）。色の選択枠は使わない
+  if (_yoyFocusCode) {
+    const fpc = productCache[_yoyFocusCode] || {}; const fimg = fpc.manualImg || fpc.img || '';
+    const cell = (mt, r) => {
+      const all = (r && r.all) || []; const k = all.findIndex(y => y.code === _yoyFocusCode);
+      if (k < 0) return '<td style="padding:10px 8px;border-left:1px solid var(--border);text-align:center;color:var(--text3);font-size:11px;vertical-align:middle">—<div style="font-size:9px;margin-top:2px">数字なし</div></td>';
+      const x = all[k];
+      let l1 = '', l2 = '';
+      if (mt.type === 'amt'){ l1 = yen(x.v); l2 = x.share.toFixed(1) + '%'; }
+      else if (mt.type === 'roas'){ l1 = Math.round(x.v) + '%'; const up = x.imp >= 0; l2 = '<span style="color:'+(up?'#16a34a':'#dc2626')+'">'+(up?'+':'−')+Math.abs(x.imp).toFixed(1)+'pt</span>'; }
+      else { l1 = (x.v == null) ? '注文0' : yen(x.v); const bad = x.imp > 0; l2 = '<span style="color:'+(bad?'#dc2626':'#16a34a')+'">'+(x.imp>=0?'+':'−')+'¥'+Math.round(Math.abs(x.imp)).toLocaleString()+'</span>'; }
+      return '<td style="padding:8px 8px;border-left:1px solid var(--border);text-align:center;vertical-align:middle;white-space:nowrap">'
+        + '<div style="display:inline-flex;align-items:baseline;gap:3px"><span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:'+(k<3?mt.col:'#94a3b8')+';color:#fff;font-size:11px;font-weight:800">'+(k+1)+'</span><span style="font-size:9px;color:var(--text3)">位／'+all.length+'</span></div>'
+        + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:13px;color:var(--text);margin-top:4px">'+l1+'</div>'
+        + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:12px;color:'+mt.col+'">'+l2+'</div>'
+        + '<div style="font-size:9px;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'合計 ':'全体 ')+totTxt(mt, r)+'</div>'
+        + '</td>';
+    };
+    const head = _YOYTOP_METRICS.map(mt => '<th style="padding:8px 10px;background:'+mt.bg+';color:'+mt.col+';font-size:12px;font-weight:800;border-left:1px solid var(--border);white-space:nowrap;min-width:96px">'+mt.label+'<div style="font-size:9px;font-weight:600;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'金額／構成比':'値／全体への影響')+'</div></th>').join('');
+    const mrow = (title, ym, res, isTop) => '<tr style="border-top:'+(isTop?'0':'1px dashed var(--border2)')+'">'
+      + '<td style="position:sticky;left:0;z-index:2;background:'+(isTop?'#f8fafc':'#f1f5f9')+';padding:8px 12px;white-space:nowrap;border-right:1px solid var(--border)">'
+      +   '<div style="display:inline-block;font-size:10px;font-weight:700;color:#fff;background:'+(isTop?'#334155':'#64748b')+';border-radius:4px;padding:1px 6px">'+title+'</div>'
+      +   '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;margin-top:3px">'+ym.slice(0,4)+'/'+ym.slice(4,6)+'</div>'
+      +   (P.partial ? '<div style="font-size:10px;color:var(--text2)">1〜'+md+'日</div>' : '')
+      + '</td>' + _YOYTOP_METRICS.map(mt => cell(mt, res[mt.k])).join('') + '</tr>';
+    html += '<div style="display:flex;align-items:flex-start;gap:12px;width:max-content;min-width:100%">'
+      + (fimg ? '<img src="'+esc(fimg)+'" onerror="this.style.display=\'none\'" style="width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--border);flex:0 0 auto;position:sticky;left:0">' : '')
+      + '<table style="border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">'
+      +   '<thead><tr><th style="position:sticky;left:0;z-index:3;background:var(--surface2);padding:8px 12px;font-size:11px;color:var(--text3);border-right:1px solid var(--border)">月</th>'+head+'</tr></thead>'
+      +   '<tbody>' + mrow('今月', P.top, resT, true) + mrow(modeLbl, P.cmp, resC, false) + '</tbody></table></div>';
+    area.innerHTML = html;
+    _renderYoyPinUI();
+    _fitYoyTopArea();
+    return;
   }
   html += '<div style="border:1px solid var(--border);border-radius:10px;background:var(--surface);width:max-content;min-width:100%">';
   _YOYTOP_METRICS.forEach((mt, mi) => {
