@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1431</span>
+    <span class="build-date">v1.1432</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14427,7 +14427,7 @@ function renderYoyTop(){
     const n1 = mt.type === 'amt' ? mt.label : (mt.type === 'roas' ? mt.label : '獲得単価');
     const n2 = mt.type === 'amt' ? '構成比' : '全体への影響';
     const ln = (t, h, extra) => '<div style="font-size:9px;font-weight:700;color:var(--text3);line-height:'+h+'px;height:'+h+'px;white-space:nowrap;'+(extra||'')+'">'+t+'</div>';
-    return '<div style="flex:0 0 66px;width:66px;box-sizing:border-box;text-align:right;padding:6px 6px 4px 0;border-right:1px dashed var(--border2);margin-right:2px;position:sticky;left:258px;z-index:2;background:var(--surface);align-self:stretch;box-shadow:5px 0 6px -5px rgba(0,0,0,.18)">'
+    return '<div style="flex:0 0 66px;width:66px;box-sizing:border-box;text-align:right;padding:6px 6px 4px 0;border-right:1px dashed var(--border2);margin-right:2px;position:sticky;left:218px;z-index:3;background:var(--surface);align-self:stretch;box-shadow:5px 0 6px -5px rgba(0,0,0,.18)">'
       + '<div style="height:58px"></div>'
       + ln('商品名', 14, 'margin-top:3px')
       + ln(n1, 15) + ln(n2, 15, 'color:'+mt.col)
@@ -14437,12 +14437,13 @@ function renderYoyTop(){
   const totTxt = (mt, r) => mt.type === 'amt' ? yen(r.total) : (mt.type === 'roas' ? (r.total ? Math.round(r.total) + '%' : '—') : (mt.type === 'cvr' ? (r.total ? r.total.toFixed(2) + '%' : '—') : (r.total ? yen(r.total) : '—')));
   const note = mt => mt.type === 'amt' ? '数字＝金額／全体に占める割合' : (mt.type === 'roas' ? '数字＝商品の'+mt.label+'／全体の'+mt.label+'を動かしている幅（+押し上げ・−押し下げ）' : '数字＝商品の獲得単価／全体の獲得単価を動かしている幅（+高くしている・−安くしている）');
   // ★v1.1394★ 指標ごとに「今月」の行と「比較月」の行を上下に並べる。指標名は2行の中央、その右に月、続けて1〜10位
-  const monthCell = (title, ym, mt, r, isTop, mmd) => '<div style="width:128px;flex:0 0 128px;box-sizing:border-box;padding:8px 10px;border-right:1px solid var(--border);background:'+(isTop?'#f8fafc':'#f1f5f9')+';display:flex;flex-direction:column;justify-content:center;position:sticky;left:130px;z-index:3">'
+  // ★v1.1432★ 月の列を 128→88px に詰めた（見出し列の固定位置も 258→218px）。桁の多い合計は文字を小さく
+  const monthCell = (title, ym, mt, r, isTop, mmd) => '<div style="width:88px;flex:0 0 88px;box-sizing:border-box;padding:8px 6px;border-right:1px solid var(--border);background:'+(isTop?'#f8fafc':'#f1f5f9')+';display:flex;flex-direction:column;justify-content:center;position:sticky;left:130px;z-index:3">'
       + '<div style="display:inline-block;align-self:flex-start;font-size:10px;font-weight:700;color:#fff;background:'+(isTop?'#334155':'#64748b')+';border-radius:4px;padding:1px 6px">'+title+'</div>'
       + '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--text);margin-top:3px;white-space:nowrap">'+ym.slice(0,4)+'/'+ym.slice(4,6)+'</div>'
       + (mmd ? '<div style="font-size:10px;color:var(--text2);white-space:nowrap">1〜'+mmd+'日</div>' : '')
       + '<div style="font-size:10px;color:var(--text3);margin-top:4px">'+(mt.type==='amt'?'合計':'全体')+'</div>'
-      + '<div style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;color:'+mt.col+'">'+totTxt(mt, r)+'</div>'
+      + (() => { const t = totTxt(mt, r); return '<div style="font-family:\'DM Mono\',monospace;font-size:'+(t.length > 8 ? 11 : 13)+'px;font-weight:700;color:'+mt.col+';white-space:nowrap">'+t+'</div>'; })()
       + '</div>';
   const rowHtml = (title, ym, mt, r, other, isTop, mmd) => '<div style="display:flex;align-items:stretch;'+(isTop?'':'border-top:1px dashed var(--border2);')+'">'
       + monthCell(title, ym, mt, r, isTop, mmd)
