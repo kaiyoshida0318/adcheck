@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1423</span>
+    <span class="build-date">v1.1425</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14097,17 +14097,17 @@ function _yoyTopAgg(ym, maxDay){
   const md = maxDay || 31, ymc = ym.replace('-', '');
   const inR = d => d && String(d).startsWith(ym) && ((parseInt(String(d).slice(8,10),10) || 99) <= md);
   const m = {};
-  const en = c => (m[c] || (m[c] = { tot:0, ad:0, kw:0, sp:0, spKw:0, od:0, odKw:0, ca:0 }));
+  const en = c => (m[c] || (m[c] = { tot:0, ad:0, kw:0, sp:0, spKw:0, od:0, odKw:0, cl:0, clKw:0, ca:0 }));
   (salesRows || []).forEach(r => { if (r.ym !== ymc) return; if (md < 31 && !inR(r.date)) return; en(r.itemCode).tot += (r.sales || 0); });
   for (const code in itemDailyData){
-    const by = itemDailyData[code]; let t = false; const a = { ad:0, kw:0, sp:0, spKw:0, od:0, odKw:0 };
-    for (const d in by){ if (!inR(d)) continue; const v = by[d]; a.ad += v.sales||0; a.kw += v.salesKw||0; a.sp += v.spend||0; a.spKw += v.spendKw||0; a.od += v.orders||0; a.odKw += v.ordersKw||0; t = true; }
+    const by = itemDailyData[code]; let t = false; const a = { ad:0, kw:0, sp:0, spKw:0, od:0, odKw:0, cl:0, clKw:0 };
+    for (const d in by){ if (!inR(d)) continue; const v = by[d]; a.ad += v.sales||0; a.kw += v.salesKw||0; a.sp += v.spend||0; a.spKw += v.spendKw||0; a.od += v.orders||0; a.odKw += v.ordersKw||0; a.cl += v.cl||0; a.clKw += v.clKw||0; t = true; }   // ★v1.1425★ クリック数も
     if (t){ const x = en(code); Object.assign(x, a); }
   }
   try { if (typeof couponAdvanceRows === 'undefined' || !couponAdvanceRows || !couponAdvanceRows.length) { try{ _cpaLoad(); }catch(e){} } } catch(e){}
   try { (couponAdvanceRows || []).forEach(r => { if (r && inR(r.date) && m[r.itemCode]) m[r.itemCode].ca += (r.sales || 0); }); } catch(e){}
   delete m['__global__'];
-  Object.keys(m).forEach(c => { const x = m[c]; x.seo = Math.max(0, x.tot - x.ad - x.ca); x.ad20 = Math.max(0, x.ad - x.kw); x.sp20 = Math.max(0, x.sp - x.spKw); });
+  Object.keys(m).forEach(c => { const x = m[c]; x.seo = Math.max(0, x.tot - x.ad - x.ca); x.ad20 = Math.max(0, x.ad - x.kw); x.sp20 = Math.max(0, x.sp - x.spKw); x.od20 = Math.max(0, x.od - x.odKw); x.cl20 = Math.max(0, x.cl - x.clKw); });
   return m;
 }
 const YOYTOP_N = 20;
@@ -14130,8 +14130,15 @@ function _renderYoyImpUI(){
     + b('pos','ROAS寄与度+','#16a34a','全体のROASを上げている商品だけ、影響の大きい順（＋pt）');   // ★v1.1418★ 表記変更（旧：プラス寄与度高い）
 }
 // ★v1.1409★ 絞り込み中（商品1つ）の表だけの並び：総売上・売上ROAS → ROAS系 → 売上系 → 実績額系 → 獲得単価
-const _YOYFOCUS_ORDER = ['sroas','roas','roasKw','roas20','tot','seo','ad','kw','ad20','sp','spKw','sp20','cpa'];   // ★v1.1416★
-function _yoyMetricsFor(focus){ return focus ? _YOYFOCUS_ORDER.map(k => _YOYTOP_METRICS.find(m => m.k === k)).filter(Boolean).concat(_YOYTOP_METRICS.filter(m => _YOYFOCUS_ORDER.indexOf(m.k) < 0)) : _YOYTOP_METRICS; }   // ★v1.1398★ 20位まで（左右スクロール）
+const _YOYFOCUS_ORDER = ['sroas','roas','roasKw','roas20','tot','seo','ad','kw','ad20','sp','spKw','sp20','cpa','cvr','cvrKw','cvr20'];   // ★v1.1416★ ★v1.1425★ CVR系を追加（絞り込み中だけ）
+function _yoyMetricsFor(focus){ return focus ? _YOYFOCUS_ORDER.map(k => _YOYALL_METRICS().find(m => m.k === k)).filter(Boolean).concat(_YOYTOP_METRICS.filter(m => _YOYFOCUS_ORDER.indexOf(m.k) < 0)) : _YOYTOP_METRICS; }
+// ★v1.1425★ 絞り込み中だけ出す指標：CVR＝注文数÷クリック数（寄与度＝全体CVR − その商品を除いた全体CVR）
+const _YOYFOCUS_EXTRA = [
+  { k:'cvr',   label:'CVR',    col:'#db2777', bg:'#fdf2f8', type:'cvr', num:'od',   den:'cl' },
+  { k:'cvrKw', label:'CVR-KW', col:'#be185d', bg:'#fce7f3', type:'cvr', num:'odKw', den:'clKw' },
+  { k:'cvr20', label:'CVR-20', col:'#e11d48', bg:'#fff1f2', type:'cvr', num:'od20', den:'cl20' },
+];
+function _YOYALL_METRICS(){ return _YOYTOP_METRICS.concat(_YOYFOCUS_EXTRA); }   // ★v1.1398★ 20位まで（左右スクロール）
 // ★v1.1419★ ROAS寄与度-／+ のときは ROAS系（売上ROAS・ROAS・ROAS-KW・ROAS-20）だけを出す（ボタン・表・エクスポートとも）
 // ★v1.1421★ ただし商品を絞り込んでいる間は、ROAS寄与度-／+ でも全指標を出す
 function _yoyShownMetrics(focus){ return _yoyMetricsFor(focus).filter(mt => focus || _yoyImpMode === 'all' || mt.type === 'roas'); }
@@ -14154,9 +14161,9 @@ const _YOYTOP_METRICS = [   // ★v1.1416★ 並び：売上ROAS・ROAS・ROAS-K
 function _yoyTopCalc(agg){
   const codes = Object.keys(agg);
   const sum = k => codes.reduce((t,c) => t + (agg[c][k] || 0), 0);
-  const T = { tot:sum('tot'), seo:sum('seo'), ad:sum('ad'), kw:sum('kw'), ad20:sum('ad20'), sp:sum('sp'), spKw:sum('spKw'), sp20:sum('sp20'), od:sum('od') };
+  const T = { tot:sum('tot'), seo:sum('seo'), ad:sum('ad'), kw:sum('kw'), ad20:sum('ad20'), sp:sum('sp'), spKw:sum('spKw'), sp20:sum('sp20'), od:sum('od'), odKw:sum('odKw'), od20:sum('od20'), cl:sum('cl'), clKw:sum('clKw'), cl20:sum('cl20') };
   const out = {};
-  _YOYTOP_METRICS.forEach(mt => {
+  _YOYALL_METRICS().forEach(mt => {
     let list = [];
     if (mt.type === 'amt'){
       const tot = T[mt.k];
@@ -14180,6 +14187,15 @@ function _yoyTopCalc(agg){
         return { code:c, v: (a.od > 0 ? a.sp / a.od : null), imp: C - without };
       }).sort((a,b) => Math.abs(b.imp) - Math.abs(a.imp));
       out.cpa = { total: C, list: _yoyImpPick(list, true).slice(0, YOYTOP_N), all: list };
+    } else if (mt.type === 'cvr'){
+      // ★v1.1425★ CVR／CVR-KW／CVR-20：注文数(num) ÷ クリック数(den)。その商品を除いたときとの差で並べる
+      const N = mt.num, D = mt.den;
+      const R = T[D] > 0 ? T[N] / T[D] * 100 : 0;
+      list = codes.filter(c => (agg[c][D] || 0) > 0 && T[D] - (agg[c][D] || 0) > 0).map(c => {
+        const a = agg[c], d = a[D] || 0, n = a[N] || 0; const without = (T[N] - n) / (T[D] - d) * 100;
+        return { code:c, v: n / d * 100, imp: R - without };
+      }).sort((a,b) => Math.abs(b.imp) - Math.abs(a.imp));
+      out[mt.k] = { total: R, list: _yoyImpPick(list, false).slice(0, YOYTOP_N), all: list };
     }
   });
   return out;
@@ -14285,13 +14301,14 @@ function exportYoyTop(){
   const q = v => { const t = (v == null) ? '' : String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g,'""') + '"' : t; };
   const rows = [['指標','区分','年月','期間','全体(合計)','順位','商品管理番号','商品番号','商品名','値','値の単位','構成比(%)','全体への影響','影響の単位']];
   const push = (mt, kubun, month, period, r) => {
-    const tot = mt.type === 'amt' ? Math.round(r.total) : (mt.type === 'roas' ? (r.total ? r.total.toFixed(1) : '') : (r.total ? Math.round(r.total) : ''));
+    const tot = mt.type === 'amt' ? Math.round(r.total) : (mt.type === 'roas' ? (r.total ? r.total.toFixed(1) : '') : (mt.type === 'cvr' ? (r.total ? r.total.toFixed(2) : '') : (r.total ? Math.round(r.total) : '')));
     r.list.forEach((x, i) => {
       const pc = productCache[x.code] || {};
       const name = pc.manualName || pc.name || x.code;
       let v = '', vu = '', sh = '', im = '', iu = '';
       if (mt.type === 'amt') { v = Math.round(x.v); vu = '円'; sh = x.share.toFixed(1); }
       else if (mt.type === 'roas') { v = (x.v == null) ? '' : x.v.toFixed(1); vu = (x.v == null) ? '広告なし' : '%'; im = x.imp.toFixed(1); iu = 'pt'; }
+      else if (mt.type === 'cvr') { v = x.v.toFixed(2); vu = '%'; im = x.imp.toFixed(2); iu = 'pt'; }
       else { v = (x.v == null) ? '' : Math.round(x.v); vu = (x.v == null) ? '注文0' : '円'; im = Math.round(x.imp); iu = '円'; }
       rows.push([mt.label, kubun, month, period, tot, i + 1, x.code, pc.itemNumber || '', name, v, vu, sh, im, iu]);
     });
@@ -14334,7 +14351,7 @@ function _yoyNavGo(k){
 }
 function _yoyNavMark(k){
   document.querySelectorAll('#yoyMetricNav .yt-navbtn').forEach(b => {
-    const mt = _YOYTOP_METRICS.find(m => m.k === b.dataset.mk); const on = (b.dataset.mk === k);
+    const mt = _YOYALL_METRICS().find(m => m.k === b.dataset.mk); const on = (b.dataset.mk === k);
     b.style.background = on ? mt.col : mt.bg; b.style.color = on ? '#fff' : mt.col;
   });
 }
@@ -14371,6 +14388,8 @@ function renderYoyTop(){
     } else if (mt.type === 'roas'){
       l1 = (x.v == null) ? _yoyNoAdBadge(false) : Math.round(x.v) + '%';
       const up = x.imp >= 0; l2 = '<span style="color:'+(up?'#16a34a':'#dc2626')+'">'+(up?'+':'−')+Math.abs(x.imp).toFixed(1)+'pt</span>';
+    } else if (mt.type === 'cvr'){
+      l1 = x.v.toFixed(2) + '%'; const up = x.imp >= 0; l2 = '<span style="color:'+(up?'#16a34a':'#dc2626')+'">'+(up?'+':'−')+Math.abs(x.imp).toFixed(2)+'pt</span>';
     } else {
       l1 = (x.v == null) ? '注文0' : yen(x.v);
       const bad = x.imp > 0; l2 = '<span style="color:'+(bad?'#dc2626':'#16a34a')+'">'+(x.imp>=0?'+':'−')+yen(Math.abs(x.imp)).slice(1).replace(/^/,'¥')+'</span>';
@@ -14382,7 +14401,7 @@ function renderYoyTop(){
       // ★v1.1423★ 横幅を詰める（108→74px）。順位は画像の左上、絞込ボタンは画像の右下に重ねる
       + '<div style="position:relative;width:58px;height:58px;margin:0 auto">' + imgEl
       +   '<div style="position:absolute;top:-5px;left:-7px;min-width:18px;height:18px;padding:0 3px;box-sizing:border-box;border-radius:9px;background:'+(i<3?mt.col:'#94a3b8')+';color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:1;box-shadow:0 0 0 2px var(--surface)">'+(i+1)+'</div>'
-      +   '<button onclick="event.stopPropagation();setYoyTopFocus(\''+esc(x.code)+'\')" ondblclick="event.stopPropagation()" title="'+(_yoyFocusCode===x.code?'絞り込みを解除':'この商品だけを表示')+'" style="position:absolute;right:-5px;bottom:1px;z-index:2;height:15px;padding:0 4px;font-size:9px;line-height:13px;font-weight:700;border-radius:4px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.15);border:1px solid '+(_yoyFocusCode===x.code?'#0f766e':'var(--border2)')+';background:'+(_yoyFocusCode===x.code?'#0f766e':'var(--surface)')+';color:'+(_yoyFocusCode===x.code?'#fff':'var(--text3)')+'">'+(_yoyFocusCode===x.code?'解除':'絞込')+'</button>'
+      +   '<button onclick="event.stopPropagation();setYoyTopFocus(\''+esc(x.code)+'\')" ondblclick="event.stopPropagation()" onmouseenter="this.style.background=\'#0f766e\';this.style.color=\'#fff\'" onmouseleave="this.style.background=\''+(_yoyFocusCode===x.code?'#0f766e':'#ecfdf5')+'\';this.style.color=\''+(_yoyFocusCode===x.code?'#fff':'#0f766e')+'\'" title="'+(_yoyFocusCode===x.code?'絞り込みを解除':'この商品だけを表示')+'" style="position:absolute;right:-6px;bottom:0;z-index:2;height:16px;padding:0 5px;font-size:9px;line-height:13px;font-weight:800;border-radius:5px;cursor:pointer;box-shadow:0 1px 3px rgba(15,118,110,.35);border:1.5px solid #0f766e;background:'+(_yoyFocusCode===x.code?'#0f766e':'#ecfdf5')+';color:'+(_yoyFocusCode===x.code?'#fff':'#0f766e')+'">'+(_yoyFocusCode===x.code?'解除':'絞込')+'</button>'
       + '</div>'
       + '<div style="font-size:10px;color:var(--text2);margin-top:3px;line-height:14px;height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(name)+'</div>'
       + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;color:var(--text);line-height:15px;height:15px">'+l1+'</div>'
@@ -14401,7 +14420,7 @@ function renderYoyTop(){
       + ln(n1, 15) + ln(n2, 15, 'color:'+mt.col)
       + '</div>';
   };
-  const totTxt = (mt, r) => mt.type === 'amt' ? yen(r.total) : (mt.type === 'roas' ? (r.total ? Math.round(r.total) + '%' : '—') : (r.total ? yen(r.total) : '—'));
+  const totTxt = (mt, r) => mt.type === 'amt' ? yen(r.total) : (mt.type === 'roas' ? (r.total ? Math.round(r.total) + '%' : '—') : (mt.type === 'cvr' ? (r.total ? r.total.toFixed(2) + '%' : '—') : (r.total ? yen(r.total) : '—')));
   const note = mt => mt.type === 'amt' ? '数字＝金額／全体に占める割合' : (mt.type === 'roas' ? '数字＝商品の'+mt.label+'／全体の'+mt.label+'を動かしている幅（+押し上げ・−押し下げ）' : '数字＝商品の獲得単価／全体の獲得単価を動かしている幅（+高くしている・−安くしている）');
   // ★v1.1394★ 指標ごとに「今月」の行と「比較月」の行を上下に並べる。指標名は2行の中央、その右に月、続けて1〜10位
   const monthCell = (title, ym, mt, r, isTop, mmd) => '<div style="width:128px;flex:0 0 128px;box-sizing:border-box;padding:8px 10px;border-right:1px solid var(--border);background:'+(isTop?'#f8fafc':'#f1f5f9')+';display:flex;flex-direction:column;justify-content:center;position:sticky;left:130px;z-index:3">'
@@ -14423,8 +14442,10 @@ function renderYoyTop(){
   // ★v1.1398★ 左右スクロールは表全体で1本（今月・比較月が一緒に動く）。指標名・月・見出し列は左に固定
   let html = '';
   if (_yoyFocusCode) {
-    const fpc = productCache[_yoyFocusCode] || {}; const fnm = fpc.manualName || fpc.name || _yoyFocusCode;
-    html += '<div style="position:sticky;top:0;left:0;z-index:6;display:flex;align-items:center;gap:10px;padding:7px 12px;margin-bottom:8px;background:#ecfdf5;border:1px solid #0f766e;border-radius:8px;font-size:12px;font-weight:700;color:#0f766e;width:max-content">'
+    const fpc = productCache[_yoyFocusCode] || {}; const fnm = fpc.manualName || fpc.name || _yoyFocusCode; const fimg0 = fpc.manualImg || fpc.img || '';
+    // ★v1.1425★ 商品画像は表の左の列から、この帯の中へ移した（空いた横幅にCVR系の列を入れる）
+    html += '<div style="position:sticky;top:0;left:0;z-index:6;display:flex;align-items:center;gap:10px;padding:4px 12px 4px 4px;margin-bottom:8px;background:#ecfdf5;border:1px solid #0f766e;border-radius:8px;font-size:12px;font-weight:700;color:#0f766e;width:max-content">'
+      + (fimg0 ? '<img src="'+esc(fimg0)+'" onerror="this.style.display=\'none\'" style="width:34px;height:34px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex:0 0 auto;background:#fff">' : '')
       + '<span>絞り込み中：</span><span style="color:var(--text)">'+esc(fnm)+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--text3);font-weight:400">'+esc(fpc.itemNumber||'')+' '+esc(_yoyFocusCode)+'</span>'
       + '<button onclick="setYoyTopFocus(null)" style="font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid #0f766e;background:#0f766e;color:#fff;cursor:pointer;font-weight:700">解除してトップ'+YOYTOP_N+'に戻る</button></div>';
   }
@@ -14433,20 +14454,21 @@ function renderYoyTop(){
     const fpc = productCache[_yoyFocusCode] || {}; const fimg = fpc.manualImg || fpc.img || '';
     const cell = (mt, r) => {
       const all = (r && r.all) || []; const k = all.findIndex(y => y.code === _yoyFocusCode);
-      if (k < 0) return '<td style="padding:10px 8px;border-left:1px solid var(--border);text-align:center;color:var(--text3);font-size:11px;vertical-align:middle">—<div style="font-size:9px;margin-top:2px">数字なし</div></td>';
+      if (k < 0) return '<td style="padding:10px 4px;border-left:1px solid var(--border);text-align:center;color:var(--text3);font-size:11px;vertical-align:middle">—<div style="font-size:9px;margin-top:2px">数字なし</div></td>';
       const x = all[k];
       let l1 = '', l2 = '';
       if (mt.type === 'amt'){ l1 = yen(x.v); l2 = x.share.toFixed(1) + '%'; }
+      else if (mt.type === 'cvr'){ l1 = x.v.toFixed(2) + '%'; const up = x.imp >= 0; l2 = '<span style="color:'+(up?'#16a34a':'#dc2626')+'">'+(up?'+':'−')+Math.abs(x.imp).toFixed(2)+'pt</span>'; }
       else if (mt.type === 'roas'){ l1 = (x.v == null) ? _yoyNoAdBadge(true) : Math.round(x.v) + '%'; const up = x.imp >= 0; l2 = '<span style="color:'+(up?'#16a34a':'#dc2626')+'">'+(up?'+':'−')+Math.abs(x.imp).toFixed(1)+'pt</span>'; }
       else { l1 = (x.v == null) ? '注文0' : yen(x.v); const bad = x.imp > 0; l2 = '<span style="color:'+(bad?'#dc2626':'#16a34a')+'">'+(x.imp>=0?'+':'−')+'¥'+Math.round(Math.abs(x.imp)).toLocaleString()+'</span>'; }
-      return '<td style="padding:8px 8px;border-left:1px solid var(--border);text-align:center;vertical-align:middle;white-space:nowrap">'
+      return '<td style="padding:8px 4px;border-left:1px solid var(--border);text-align:center;vertical-align:middle;white-space:nowrap">'
         + '<div style="display:inline-flex;align-items:baseline;gap:3px"><span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:'+(k<3?mt.col:'#94a3b8')+';color:#fff;font-size:11px;font-weight:800">'+(k+1)+'</span><span style="font-size:9px;color:var(--text3)">位／'+all.length+'</span></div>'
         + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:13px;color:var(--text);margin-top:4px">'+l1+'</div>'
         + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:12px;color:'+mt.col+'">'+l2+'</div>'
         + '<div style="font-size:9px;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'合計 ':'全体 ')+totTxt(mt, r)+'</div>'
         + '</td>';
     };
-    const head = _yoyShownMetrics(true).map(mt => '<th id="yt-col-'+mt.k+'" data-mk="'+mt.k+'" style="padding:8px 10px;background:'+mt.bg+';color:'+mt.col+';font-size:12px;font-weight:800;border-left:1px solid var(--border);white-space:nowrap;min-width:96px">'+mt.label+'<div style="font-size:9px;font-weight:600;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'金額／構成比':'値／全体への影響')+'</div></th>').join('');
+    const head = _yoyShownMetrics(true).map(mt => '<th id="yt-col-'+mt.k+'" data-mk="'+mt.k+'" style="padding:8px 5px;background:'+mt.bg+';color:'+mt.col+';font-size:12px;font-weight:800;border-left:1px solid var(--border);white-space:nowrap;min-width:80px">'+mt.label+'<div style="font-size:9px;font-weight:600;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'金額／構成比':'値／全体への影響')+'</div></th>').join('');
     const mrow = (title, ym, res, isTop, mmd) => '<tr style="border-top:'+(isTop?'0':'1px dashed var(--border2)')+'">'
       + '<td style="position:sticky;left:0;z-index:2;background:'+(isTop?'#f8fafc':'#f1f5f9')+';padding:8px 12px;white-space:nowrap;border-right:1px solid var(--border)">'
       +   '<div style="display:inline-block;font-size:10px;font-weight:700;color:#fff;background:'+(isTop?'#334155':'#64748b')+';border-radius:4px;padding:1px 6px">'+title+'</div>'
@@ -14454,7 +14476,6 @@ function renderYoyTop(){
       +   (mmd ? '<div style="font-size:10px;color:var(--text2)">1〜'+mmd+'日</div>' : '')
       + '</td>' + _yoyShownMetrics(true).map(mt => cell(mt, res[mt.k])).join('') + '</tr>';
     html += '<div style="display:flex;align-items:flex-start;gap:12px;width:max-content;min-width:100%">'
-      + (fimg ? '<img src="'+esc(fimg)+'" onerror="this.style.display=\'none\'" style="width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--border);flex:0 0 auto;position:sticky;left:0">' : '')
       + '<table style="border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">'
       +   '<thead><tr><th style="position:sticky;left:0;z-index:3;background:var(--surface2);padding:8px 12px;font-size:11px;color:var(--text3);border-right:1px solid var(--border)">月</th>'+head+'</tr></thead>'
       +   '<tbody>' + M.map((m, i) => mrow(m.title, m.ym, m.res, i === 0, m.md)).join('') + '</tbody></table></div>';
