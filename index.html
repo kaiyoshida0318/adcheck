@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1419</span>
+    <span class="build-date">v1.1420</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -2908,8 +2908,62 @@ async function saveToGitHub(options = {}) {
   }
 }
 
+// ★v1.1420★ データ読み込みの高速化（「新しいタブ」・再読み込み・ショップ切替で効く）
+//  ① 一度読んだファイルはブラウザ内（Cache Storage）に保存する。次からは GitHub 上のファイル一覧（小さい通信1回）で
+//     中身の指紋（blob sha）を確認し、同じなら通信せずに保存分を使う。誰かが更新していれば sha が変わるので取り直す。
+//  ② rpp_data／rpp_item／rpp_kw／分析メモを順番待ちせず、同時に取りに行く。
+//  ※ PAT が無いときは今まで通り（raw から毎回取得）。
+const _GHC_NAME = 'adcheck-ghfile-v1';
+const _GHC_KEY = p => 'https://adcheck-cache.invalid/' + p;
+let _ghDirShaP = {};   // dir -> { t, p:Promise<{path:sha}|null> }（10秒だけ使い回す：保存直後の古い一覧を使わないため）
+let _ghPre = {};       // path -> { t, p:Promise<Response|null> }（起動時の先読み。60秒を過ぎたら使わない）
+function _ghDirShas(dir){
+  const pat = localStorage.getItem('github_pat'); if (!pat) return Promise.resolve(null);
+  const c = _ghDirShaP[dir]; if (c && Date.now() - c.t < 10000) return c.p;
+  const pr = fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+dir+'?t='+Date.now(), { headers:{ 'Authorization':'token '+pat, 'Accept':'application/vnd.github.v3+json' }, cache:'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(a => { if (!Array.isArray(a)) return null; const m = {}; a.forEach(f => { if (f && f.type === 'file' && f.path && f.sha) m[f.path] = f.sha; }); return m; })
+    .catch(() => null);
+  _ghDirShaP[dir] = { t: Date.now(), p: pr };
+  return pr;
+}
+async function _gitBlobSha(buf){   // git の blob sha（"blob <バイト数>\0" + 中身 の SHA-1）
+  const head = new TextEncoder().encode('blob ' + buf.byteLength + '\0');
+  const all = new Uint8Array(head.length + buf.byteLength); all.set(head, 0); all.set(new Uint8Array(buf), head.length);
+  const h = await crypto.subtle.digest('SHA-1', all);
+  return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function _ghGet(path){
+  const pat = localStorage.getItem('github_pat');
+  const net = () => fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+path+'?t='+Date.now(), { headers: pat ? { 'Authorization':'token '+pat, 'Accept':'application/vnd.github.v3.raw' } : { 'Accept':'application/vnd.github.v3.raw' }, cache:'no-store' });
+  let cache = null;
+  try { if (pat && window.caches && window.crypto && crypto.subtle) cache = await caches.open(_GHC_NAME); } catch(e) { cache = null; }
+  if (!cache) return net();
+  try {
+    const hit = await cache.match(_GHC_KEY(path));
+    if (hit) {
+      const shas = await _ghDirShas(path.slice(0, path.lastIndexOf('/')));
+      const want = shas && shas[path];
+      if (want && hit.headers.get('x-blob-sha') === want) { console.log('[ADcheck] 保存済みのデータを使用（ダウンロードなし）:', path); return hit; }
+    }
+  } catch(e) {}
+  const r = await net();
+  if (!r.ok) return r;
+  const buf = await r.arrayBuffer();
+  (async () => { try { const sha = await _gitBlobSha(buf); await cache.put(_GHC_KEY(path), new Response(buf.slice(0), { headers:{ 'Content-Type':'application/json', 'x-blob-sha': sha } })); } catch(e) {} })();
+  return new Response(buf, { status: 200, headers: { 'Content-Type':'application/json' } });
+}
+function _ghPrefetch(paths){ paths.forEach(p => { _ghPre[p] = { t: Date.now(), p: _ghGet(p).catch(() => null) }; }); }
+function _ghTake(path){   // 先読み済みならそれを使う（1回だけ）。無ければ今取りに行く
+  const e = _ghPre[path]; delete _ghPre[path];
+  if (e && Date.now() - e.t < 60000) return e.p;
+  return _ghGet(path).catch(() => null);
+}
+
 async function loadFromGitHub() {
   try {
+    // ★v1.1420★ 大きいファイルを先に同時に取りに行く（下の処理はここで取ったものを使う）
+    try { _ghPre = {}; if (localStorage.getItem('github_pat')) _ghPrefetch([_ghFile(), _ghItemFile(), _ghKwFile(), 'data/analyze_memo_shared.json']); } catch(e) {}
     // §3 現在KWスナップショット: まずローカル即時反映→GitHubから最新を取得(失敗許容)
     // ※awaitで待つ: readFiles取込直後に古いスナップショットが遅れて上書きするレースを防ぐ
     _loadCurrentKwLocal();
@@ -2919,12 +2973,9 @@ async function loadFromGitHub() {
     const _apiFetch = async (path) => {
       if (pat) {
         // PAT認証付きAPIで取得(最新・キャッシュ無効)
-        const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`;
         try {
-          const r = await fetch(apiUrl, {
-            headers: { 'Authorization': `token ${pat}`, 'Accept': 'application/vnd.github.v3.raw' },
-            cache: 'no-store'
-          });
+          const r = await _ghTake(path);   // ★v1.1420★ 先読み・ブラウザ内の保存分を使う（中身は GitHub と同じものだけ）
+          if (!r) throw new Error('fetch failed');
           if (r.ok) return r;
           if (r.status !== 404) { console.warn('[ADcheck] GitHub API '+r.status+' -> keep local (no stale raw):', path); return r; }
           console.warn('[ADcheck] GitHub API 404 -> raw fallback:', path);
@@ -11127,7 +11178,7 @@ async function _analyzeFetch(){
     //   上書きしてしまい、保存直後に開き直すとチェックが消えていた。
     try{ var _mo=productCache['__global__']&&productCache['__global__'].analyzeLists; var _mts=(_mo&&+_mo.updatedAt)||0; if(_mo&&Array.isArray(_mo.lists)&&_mo.lists.length&&_mts>_lts){ _lo=_mo; _lts=_mts; } }catch(e){}
     try{ var h={'Accept':'application/vnd.github.v3.raw'}; if(pat) h['Authorization']='token '+pat;
-      var r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_ANALYZE_SHARED_FILE+'?t='+Date.now(),{headers:h,cache:'no-store'}); if(r.ok){ obj=JSON.parse(await r.text()); } }catch(e){}
+      var r=pat ? await _ghTake(_ANALYZE_SHARED_FILE) : await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_ANALYZE_SHARED_FILE+'?t='+Date.now(),{headers:h,cache:'no-store'}); if(r&&r.ok){ obj=JSON.parse(await r.text()); } }catch(e){}   // ★v1.1420★
     if(!obj){ var rr=await fetch('https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/main/'+_ANALYZE_SHARED_FILE+'?t='+Date.now(),{cache:'no-store'}); if(rr.ok) obj=JSON.parse(await rr.text()); }
     if(obj && Array.isArray(obj.lists) && obj.lists.length){
       var _sts=+obj.updatedAt||0;
