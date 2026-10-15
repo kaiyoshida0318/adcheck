@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1426</span>
+    <span class="build-date">v1.1428</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14111,6 +14111,8 @@ function _yoyTopAgg(ym, maxDay){
   return m;
 }
 const YOYTOP_N = 20;
+// ★v1.1427★ 寄与度トップ20の画像が読めなかったときの代わり（58pxのまま。66pxの共通版だと商品名にかぶる）
+function _ytImgErr(el){ try{ const d = document.createElement('div'); d.style.cssText = 'width:58px;height:58px;box-sizing:border-box;margin:0 auto;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)'; d.textContent = '画像'; el.replaceWith(d); }catch(e){} }
 // ★v1.1422★ 「広告なし」をオレンジのバッジで目立たせる（big＝絞り込み中の表用）
 function _yoyNoAdBadge(big){ return '<span style="display:inline-block;font-family:\'Noto Sans JP\',sans-serif;font-size:'+(big?'11':'10')+'px;font-weight:800;line-height:'+(big?'16':'13')+'px;padding:0 '+(big?'8':'7')+'px;border-radius:9px;background:#fff7ed;color:#c2410c;border:1px solid #fb923c;letter-spacing:.05em;vertical-align:middle" title="この月は広告費0円（売上だけある）">広告なし</span>'; }
 // ★v1.1414★ 寄与度の向きで絞る：all＝影響の大きい順（＋−混在）／neg＝マイナス寄与（全体を悪くしている：ROAS系は−pt、獲得単価は＋¥）だけ大きい順／pos＝プラス寄与だけ大きい順
@@ -14136,28 +14138,32 @@ function _yoyMetricsFor(focus){ return focus ? _YOYFOCUS_ORDER.map(k => _YOYALL_
 // ★v1.1426★ ROAS系の分母（実績額）の呼び名
 const _YOY_SP_LABEL = { sp:'実績額', spKw:'実績額-KW', sp20:'実績額-20' };
 const _YOYFOCUS_EXTRA = [
-  { k:'cvr',   label:'CVR',    col:'#db2777', bg:'#fdf2f8', type:'cvr', num:'od',   den:'cl' },
-  { k:'cvrKw', label:'CVR-KW', col:'#be185d', bg:'#fce7f3', type:'cvr', num:'odKw', den:'clKw' },
-  { k:'cvr20', label:'CVR-20', col:'#e11d48', bg:'#fff1f2', type:'cvr', num:'od20', den:'cl20' },
+  { k:'cvr', g:'cvr',   label:'CVR',    col:'#c2410c', bg:'#fed7aa', type:'cvr', num:'od',   den:'cl' },
+  { k:'cvrKw', g:'cvr', label:'CVR-KW', col:'#d9480f', bg:'#fde8c8', type:'cvr', num:'odKw', den:'clKw' },
+  { k:'cvr20', g:'cvr', label:'CVR-20', col:'#ea580c', bg:'#fff7ed', type:'cvr', num:'od20', den:'cl20' },
 ];
-function _YOYALL_METRICS(){ return _YOYTOP_METRICS.concat(_YOYFOCUS_EXTRA); }   // ★v1.1398★ 20位まで（左右スクロール）
+function _YOYALL_METRICS(){ return _YOYTOP_METRICS.concat(_YOYFOCUS_EXTRA); }
+// ★v1.1428★ 同じ系統（g）のまとまりの境目を太線で区切る。list の中で「前の指標とグループが変わる」指標のキーを返す
+const _YOY_GRP_LINE = '3px solid #64748b';
+function _yoyGroupStarts(list){ const st = new Set(); list.forEach((mt, i) => { if (i > 0 && mt.g !== list[i-1].g) st.add(mt.k); }); return st; }   // ★v1.1398★ 20位まで（左右スクロール）
 // ★v1.1419★ ROAS寄与度-／+ のときは ROAS系（売上ROAS・ROAS・ROAS-KW・ROAS-20）だけを出す（ボタン・表・エクスポートとも）
 // ★v1.1421★ ただし商品を絞り込んでいる間は、ROAS寄与度-／+ でも全指標を出す
 function _yoyShownMetrics(focus){ return _yoyMetricsFor(focus).filter(mt => focus || _yoyImpMode === 'all' || mt.type === 'roas'); }
+// ★v1.1427★ 色は商品-売上データの列の色にそろえた（総売上・売上ROAS＝青、売上＝緑、実績額＝黄、獲得単価＝紫、CVR＝オレンジ、ROAS＝ピンク）
 const _YOYTOP_METRICS = [   // ★v1.1416★ 並び：売上ROAS・ROAS・ROAS-KW・ROAS-20 → 総売上・SEO売上・広告売上系 → 実績額系 → 獲得単価（絞り込み中も同じ）
-  { k:'sroas', label:'売上ROAS', col:'#0f766e', bg:'#ecfdf5', type:'roas', num:'tot', den:'sp' },   // ★v1.1400★ 総売上 ÷ 実績額
-  { k:'roas', label:'ROAS',      col:'#7c3aed', bg:'#f5f0fe', type:'roas', num:'ad', den:'sp' },
-  { k:'roasKw', label:'ROAS-KW', col:'#6d28d9', bg:'#f3eefd', type:'roas', num:'kw', den:'spKw' },
-  { k:'roas20', label:'ROAS-20', col:'#9333ea', bg:'#f8f0fe', type:'roas', num:'ad20', den:'sp20' },
-  { k:'tot',  label:'総売上',     col:'#0369a1', bg:'#f0f9ff', type:'amt' },   // ★v1.1408★
-  { k:'seo',  label:'SEO売上',   col:'#1565C0', bg:'#eef4fb', type:'amt' },
-  { k:'ad',   label:'広告売上',   col:'#16a34a', bg:'#eefaf1', type:'amt' },
-  { k:'kw',   label:'広告売上-KW', col:'#00897B', bg:'#e9f7f5', type:'amt' },
-  { k:'ad20', label:'広告売上-20', col:'#ea580c', bg:'#fff4ec', type:'amt' },
-  { k:'sp',   label:'実績額',     col:'#b45309', bg:'#fdf6e7', type:'amt' },
-  { k:'spKw', label:'実績額-KW',  col:'#92400e', bg:'#fbf3e4', type:'amt' },
-  { k:'sp20', label:'実績額-20',  col:'#c2410c', bg:'#fef3ea', type:'amt' },
-  { k:'cpa',  label:'獲得単価',   col:'#dc2626', bg:'#fdf0f0', type:'cpa' },
+  { k:'sroas', g:'sroas', label:'売上ROAS', col:'#1d4ed8', bg:'#bfdbfe', type:'roas', num:'tot', den:'sp' },   // ★v1.1400★ 総売上 ÷ 実績額
+  { k:'roas', g:'roas', label:'ROAS',      col:'#be123c', bg:'#fecdd3', type:'roas', num:'ad', den:'sp' },
+  { k:'roasKw', g:'roas', label:'ROAS-KW', col:'#e11d48', bg:'#ffe4e8', type:'roas', num:'kw', den:'spKw' },
+  { k:'roas20', g:'roas', label:'ROAS-20', col:'#f43f5e', bg:'#fff1f2', type:'roas', num:'ad20', den:'sp20' },
+  { k:'tot', g:'sales',  label:'総売上',     col:'#1d4ed8', bg:'#bfdbfe', type:'amt' },   // ★v1.1408★
+  { k:'seo', g:'sales',  label:'SEO売上',   col:'#2563eb', bg:'#dbeafe', type:'amt' },
+  { k:'ad', g:'ad',   label:'広告売上',   col:'#166534', bg:'#ceead4', type:'amt' },
+  { k:'kw', g:'ad',   label:'広告売上-KW', col:'#15803d', bg:'#bbf7d0', type:'amt' },
+  { k:'ad20', g:'ad', label:'広告売上-20', col:'#047857', bg:'#d1fae5', type:'amt' },
+  { k:'sp', g:'sp',   label:'実績額',     col:'#854d0e', bg:'#fef08a', type:'amt' },
+  { k:'spKw', g:'sp', label:'実績額-KW',  col:'#a16207', bg:'#fef9c3', type:'amt' },
+  { k:'sp20', g:'sp', label:'実績額-20',  col:'#b45309', bg:'#fefce8', type:'amt' },
+  { k:'cpa', g:'cpa',  label:'獲得単価',   col:'#6d28d9', bg:'#ddd6fe', type:'cpa' },
 ];
 // 1か月分：指標ごとの上位10と合計
 function _yoyTopCalc(agg){
@@ -14339,7 +14345,8 @@ function _renderYoyNav(){
   const nav = document.getElementById('yoyMetricNav'); if (!nav) return;
   nav.style.display = (_yoyView === 'top') ? 'flex' : 'none';
   // ★v1.1418★ ROAS寄与度-／+ を押している間は、ROAS系（売上ROAS・ROAS・ROAS-KW・ROAS-20）のボタンだけ出す
-  nav.innerHTML = _yoyShownMetrics(!!_yoyFocusCode).map(mt => '<button class="yt-navbtn" data-mk="'+mt.k+'" onclick="_yoyNavGo(\''+mt.k+'\')" style="font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer;font-weight:700;white-space:nowrap;border:1.5px solid '+mt.col+';background:'+mt.bg+';color:'+mt.col+'">'+mt.label+'</button>').join('');
+  const _navL = _yoyShownMetrics(!!_yoyFocusCode), _navGS = _yoyGroupStarts(_navL);   // ★v1.1428★ グループの境目に区切り
+  nav.innerHTML = _navL.map(mt => (_navGS.has(mt.k) ? '<span style="align-self:stretch;width:2px;margin:2px 4px;background:#cbd5e1;border-radius:1px"></span>' : '') + '<button class="yt-navbtn" data-mk="'+mt.k+'" onclick="_yoyNavGo(\''+mt.k+'\')" style="font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer;font-weight:700;white-space:nowrap;border:1.5px solid '+mt.col+';background:'+mt.bg+';color:'+mt.col+'">'+mt.label+'</button>').join('');
   _yoyNavSpy();
 }
 function _yoyNavGo(k){
@@ -14382,8 +14389,8 @@ function renderYoyTop(){
   const modeLbl = (_yoyMode === 'mom') ? '前月' : (_yoyMode === 'pick' ? '比較する月' : '前年同月');
   const tile = (mt, x, i, otherRes, isTop) => {
     const pc = productCache[x.code] || {}; const name = pc.manualName || pc.name || x.code; const img = pc.manualImg || pc.img || '';
-    const imgEl = img ? '<img loading="lazy" src="'+esc(img)+'" onerror="_seoImgErr(this)" style="width:58px;height:58px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block;margin:0 auto">'
-                      : '<div style="width:58px;height:58px;margin:0 auto;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)">画像</div>';
+    const imgEl = img ? '<img loading="lazy" src="'+esc(img)+'" onerror="_ytImgErr(this)" style="width:58px;height:58px;box-sizing:border-box;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block;margin:0 auto">'
+                      : '<div style="width:58px;height:58px;box-sizing:border-box;margin:0 auto;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)">画像</div>';
     let l1 = '', l2 = '';
     if (mt.type === 'amt'){
       l1 = yen(x.v); l2 = x.share.toFixed(1) + '%';
@@ -14456,16 +14463,18 @@ function renderYoyTop(){
   // ★v1.1405★ 絞り込み中：指標を横に並べた表（列＝指標、行＝今月／比較月）。色の選択枠は使わない
   if (_yoyFocusCode) {
     const fpc = productCache[_yoyFocusCode] || {}; const fimg = fpc.manualImg || fpc.img || '';
+    const _fGS = _yoyGroupStarts(_yoyShownMetrics(true));   // ★v1.1428★ グループの頭の列は左を太線に
+    const _bl = mt => 'border-left:' + (_fGS.has(mt.k) ? _YOY_GRP_LINE : '1px solid var(--border)') + ';';
     const cell = (mt, r) => {
       const all = (r && r.all) || []; const k = all.findIndex(y => y.code === _yoyFocusCode);
-      if (k < 0) return '<td style="padding:10px 4px;border-left:1px solid var(--border);text-align:center;color:var(--text3);font-size:11px;vertical-align:middle">—<div style="font-size:9px;margin-top:2px">数字なし</div></td>';
+      if (k < 0) return '<td style="padding:10px 4px;'+_bl(mt)+'text-align:center;color:var(--text3);font-size:11px;vertical-align:middle">—<div style="font-size:9px;margin-top:2px">数字なし</div></td>';
       const x = all[k];
       let l1 = '', l2 = '';
       if (mt.type === 'amt'){ l1 = yen(x.v); l2 = x.share.toFixed(1) + '%'; }
       else if (mt.type === 'cvr'){ l1 = x.v.toFixed(2) + '%'; const up = x.imp >= 0; l2 = '<span style="color:'+(up?'#16a34a':'#dc2626')+'">'+(up?'+':'−')+Math.abs(x.imp).toFixed(2)+'pt</span>'; }
       else if (mt.type === 'roas'){ l1 = (x.v == null) ? _yoyNoAdBadge(true) : Math.round(x.v) + '%'; const up = x.imp >= 0; l2 = '<span style="color:'+(up?'#16a34a':'#dc2626')+'">'+(up?'+':'−')+Math.abs(x.imp).toFixed(1)+'pt</span>'; }
       else { l1 = (x.v == null) ? '注文0' : yen(x.v); const bad = x.imp > 0; l2 = '<span style="color:'+(bad?'#dc2626':'#16a34a')+'">'+(x.imp>=0?'+':'−')+'¥'+Math.round(Math.abs(x.imp)).toLocaleString()+'</span>'; }
-      return '<td style="padding:8px 4px;border-left:1px solid var(--border);text-align:center;vertical-align:middle;white-space:nowrap">'
+      return '<td style="padding:8px 4px;'+_bl(mt)+'text-align:center;vertical-align:middle;white-space:nowrap">'
         + '<div style="display:inline-flex;align-items:baseline;gap:3px"><span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:'+(k<3?mt.col:'#94a3b8')+';color:#fff;font-size:11px;font-weight:800">'+(k+1)+'</span><span style="font-size:9px;color:var(--text3)">位／'+all.length+'</span></div>'
         + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:13px;color:var(--text);margin-top:4px">'+l1+'</div>'
         + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:12px;color:'+mt.col+'">'+l2+'</div>'
@@ -14473,7 +14482,7 @@ function renderYoyTop(){
         + '<div style="font-size:9px;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'合計 ':'全体 ')+totTxt(mt, r)+'</div>'
         + '</td>';
     };
-    const head = _yoyShownMetrics(true).map(mt => '<th id="yt-col-'+mt.k+'" data-mk="'+mt.k+'" style="padding:8px 5px;background:'+mt.bg+';color:'+mt.col+';font-size:12px;font-weight:800;border-left:1px solid var(--border);white-space:nowrap;min-width:80px">'+mt.label+'<div style="font-size:9px;font-weight:600;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'金額／構成比':'値／全体への影響')+'</div></th>').join('');
+    const head = _yoyShownMetrics(true).map(mt => '<th id="yt-col-'+mt.k+'" data-mk="'+mt.k+'" style="padding:8px 5px;background:'+mt.bg+';color:'+mt.col+';font-size:12px;font-weight:800;'+_bl(mt)+'white-space:nowrap;min-width:80px">'+mt.label+'<div style="font-size:9px;font-weight:600;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'金額／構成比':'値／全体への影響')+'</div></th>').join('');
     const mrow = (title, ym, res, isTop, mmd) => '<tr style="border-top:'+(isTop?'0':'1px dashed var(--border2)')+'">'
       + '<td style="position:sticky;left:0;z-index:2;background:'+(isTop?'#f8fafc':'#f1f5f9')+';padding:8px 12px;white-space:nowrap;border-right:1px solid var(--border)">'
       +   '<div style="display:inline-block;font-size:10px;font-weight:700;color:#fff;background:'+(isTop?'#334155':'#64748b')+';border-radius:4px;padding:1px 6px">'+title+'</div>'
@@ -14492,9 +14501,9 @@ function renderYoyTop(){
     return;
   }
   html += '<div style="border:1px solid var(--border);border-radius:10px;background:var(--surface);width:max-content;min-width:100%">';
-  const SM = _yoyShownMetrics(false);
+  const SM = _yoyShownMetrics(false); const _tGS = _yoyGroupStarts(SM);   // ★v1.1428★ グループの境目は太線、同じグループ内は細線
   SM.forEach((mt, mi) => {
-    html += '<div id="yt-blk-'+mt.k+'" data-mk="'+mt.k+'" style="display:flex;align-items:stretch;'+(mi?'border-top:2px solid var(--border2);':'')+'">'
+    html += '<div id="yt-blk-'+mt.k+'" data-mk="'+mt.k+'" style="display:flex;align-items:stretch;'+(mi?(_tGS.has(mt.k)?'border-top:'+_YOY_GRP_LINE+';':'border-top:1px solid var(--border2);'):'')+'">'
       + '<div style="width:130px;flex:0 0 130px;box-sizing:border-box;padding:10px 12px;background:'+mt.bg+';border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;position:sticky;left:0;z-index:4'+(mi===0?';border-top-left-radius:10px':'')+(mi===SM.length-1?';border-bottom-left-radius:10px':'')+'">'
       +   '<div style="font-size:15px;font-weight:800;color:'+mt.col+'">'+mt.label+'</div>'
       +   '<div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.4">'+note(mt)+'</div>'
