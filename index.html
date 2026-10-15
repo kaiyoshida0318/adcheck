@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1422</span>
+    <span class="build-date">v1.1423</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14378,13 +14378,15 @@ function renderYoyTop(){
     // もう片方の月での順位（上段なら比較月での順位、下段なら今月での順位）
     const oi = otherRes ? otherRes.list.findIndex(y => y.code === x.code) : -1;
     const rankTag = '<div style="font-size:10px;color:var(--text3);line-height:13px;height:13px">' + (oi >= 0 ? (oi+1)+'位' : '圏外') + '</div>';
-    return '<div class="yt-tile" data-code="'+esc(x.code)+'" title="'+esc(name)+'\n（クリックで選択枠に入れる・もう一度で外す／ダブルクリックで詳細）" onclick="_yoyTopPin(\''+esc(x.code)+'\')" ondblclick="openRenewalGraph(\''+esc(x.code)+'\')" onmouseenter="_yoyTopHi(\''+esc(x.code)+'\',true)" onmouseleave="_yoyTopHi(\''+esc(x.code)+'\',false)" style="cursor:pointer;flex:0 0 108px;width:108px;box-sizing:border-box;text-align:center;position:relative;padding:6px 2px 4px;border-radius:8px">'
-      + '<div style="position:absolute;top:0;left:2px;min-width:18px;height:18px;padding:0 3px;box-sizing:border-box;border-radius:9px;background:'+(i<3?mt.col:'#94a3b8')+';color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:1">'+(i+1)+'</div>'
-      + '<div style="display:flex;justify-content:center;height:58px;overflow:hidden">' + imgEl + '</div>'
+    return '<div class="yt-tile" data-code="'+esc(x.code)+'" title="'+esc(name)+'\n（クリックで選択枠に入れる・もう一度で外す／ダブルクリックで詳細）" onclick="_yoyTopPin(\''+esc(x.code)+'\')" ondblclick="openRenewalGraph(\''+esc(x.code)+'\')" onmouseenter="_yoyTopHi(\''+esc(x.code)+'\',true)" onmouseleave="_yoyTopHi(\''+esc(x.code)+'\',false)" style="cursor:pointer;flex:0 0 74px;width:74px;box-sizing:border-box;text-align:center;position:relative;padding:6px 1px 4px;border-radius:8px">'
+      // ★v1.1423★ 横幅を詰める（108→74px）。順位は画像の左上、絞込ボタンは画像の右下に重ねる
+      + '<div style="position:relative;width:58px;height:58px;margin:0 auto">' + imgEl
+      +   '<div style="position:absolute;top:-5px;left:-7px;min-width:18px;height:18px;padding:0 3px;box-sizing:border-box;border-radius:9px;background:'+(i<3?mt.col:'#94a3b8')+';color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:1;box-shadow:0 0 0 2px var(--surface)">'+(i+1)+'</div>'
+      +   '<button onclick="event.stopPropagation();setYoyTopFocus(\''+esc(x.code)+'\')" ondblclick="event.stopPropagation()" title="'+(_yoyFocusCode===x.code?'絞り込みを解除':'この商品だけを表示')+'" style="position:absolute;right:-5px;bottom:1px;z-index:2;height:15px;padding:0 4px;font-size:9px;line-height:13px;font-weight:700;border-radius:4px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.15);border:1px solid '+(_yoyFocusCode===x.code?'#0f766e':'var(--border2)')+';background:'+(_yoyFocusCode===x.code?'#0f766e':'var(--surface)')+';color:'+(_yoyFocusCode===x.code?'#fff':'var(--text3)')+'">'+(_yoyFocusCode===x.code?'解除':'絞込')+'</button>'
+      + '</div>'
       + '<div style="font-size:10px;color:var(--text2);margin-top:3px;line-height:14px;height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(name)+'</div>'
       + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;color:var(--text);line-height:15px;height:15px">'+l1+'</div>'
       + '<div style="position:relative;font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;color:'+mt.col+';line-height:15px;height:15px">'+l2
-      +   '<button onclick="event.stopPropagation();setYoyTopFocus(\''+esc(x.code)+'\')" ondblclick="event.stopPropagation()" title="'+(_yoyFocusCode===x.code?'絞り込みを解除':'この商品だけを表示')+'" style="position:absolute;right:1px;top:0;height:15px;padding:0 4px;font-size:9px;line-height:13px;font-weight:700;border-radius:4px;cursor:pointer;border:1px solid '+(_yoyFocusCode===x.code?'#0f766e':'var(--border2)')+';background:'+(_yoyFocusCode===x.code?'#0f766e':'var(--surface)')+';color:'+(_yoyFocusCode===x.code?'#fff':'var(--text3)')+'">'+(_yoyFocusCode===x.code?'解除':'絞込')+'</button>'
       + '</div>'
       + '</div>';
   };
@@ -14411,7 +14413,7 @@ function renderYoyTop(){
       + '</div>';
   const rowHtml = (title, ym, mt, r, other, isTop, mmd) => '<div style="display:flex;align-items:stretch;'+(isTop?'':'border-top:1px dashed var(--border2);')+'">'
       + monthCell(title, ym, mt, r, isTop, mmd)
-      + '<div style="display:flex;gap:6px;padding:8px 10px;flex:0 0 auto;flex-wrap:nowrap;align-items:flex-start">'
+      + '<div style="display:flex;gap:4px;padding:8px 10px;flex:0 0 auto;flex-wrap:nowrap;align-items:flex-start">'
       +   (_yoyFocusCode
             ? (() => { const k = (r.all || []).findIndex(y => y.code === _yoyFocusCode);
                        return labelCol(mt, isTop) + (k >= 0 ? tile(mt, r.all[k], k, other, isTop) + '<div style="align-self:center;font-size:11px;color:var(--text3);padding-left:6px;white-space:nowrap">全'+r.all.length+'商品中 '+(k+1)+'位</div>'
