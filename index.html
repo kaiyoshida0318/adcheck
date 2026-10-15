@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1417</span>
+    <span class="build-date">v1.1418</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14073,8 +14073,8 @@ function _renderYoyImpUI(){
   w.style.display = (_yoyView === 'top') ? 'inline-flex' : 'none';
   const b = (v, lbl, col, tip) => { const on = (_yoyImpMode === v); return '<button onclick="setYoyImpMode(\''+v+'\')" title="'+tip+'" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;border:1px solid '+(on?col:'var(--border)')+';background:'+(on?col:'var(--surface2)')+';color:'+(on?'#fff':'var(--text3)')+'">'+lbl+'</button>'; };
   w.innerHTML = b('all','すべて','#475569','影響の大きい順（＋も−も）')
-    + b('neg','マイナス寄与度高い','#dc2626','全体を悪くしている商品だけ、影響の大きい順（ROAS系は−pt、獲得単価は単価を上げている＋¥）')
-    + b('pos','プラス寄与度高い','#16a34a','全体を良くしている商品だけ、影響の大きい順（ROAS系は＋pt、獲得単価は単価を下げている−¥）');
+    + b('neg','ROAS寄与度-','#dc2626','全体のROASを下げている商品だけ、影響の大きい順（−pt）')   // ★v1.1418★ 表記変更（旧：マイナス寄与度高い）
+    + b('pos','ROAS寄与度+','#16a34a','全体のROASを上げている商品だけ、影響の大きい順（＋pt）');   // ★v1.1418★ 表記変更（旧：プラス寄与度高い）
 }
 // ★v1.1409★ 絞り込み中（商品1つ）の表だけの並び：総売上・売上ROAS → ROAS系 → 売上系 → 実績額系 → 獲得単価
 const _YOYFOCUS_ORDER = ['sroas','roas','roasKw','roas20','tot','seo','ad','kw','ad20','sp','spKw','sp20','cpa'];   // ★v1.1416★
@@ -14217,7 +14217,7 @@ function _renderYoyPinUI(){
     chips += '<span title="'+esc(c ? nm : '')+'" style="display:inline-flex;align-items:center;justify-content:space-between;gap:4px;width:150px;box-sizing:border-box;height:28px;padding:0 8px;border-radius:6px;border:2px '+(usable?'solid':'dashed')+' '+(usable?_YOYPIN_COLORS[i]:'var(--border)')+';background:'+(c?_YOYPIN_BG[i]:'var(--surface)')+';font-size:11px;font-weight:700;color:'+(c?'var(--text)':'var(--text3)')+';opacity:'+(usable?'1':'.5')+';cursor:'+(c?'pointer':'default')+'"'+(c?' onclick="_yoyTopPin(\''+esc(c)+'\')"':'')+'><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(nm)+'</span>'+(c?'<span style="color:var(--text3);flex:0 0 auto">✕</span>':'')+'</span>';
   }
   w.innerHTML = '<span style="display:inline-flex;gap:6px">'+chips+'</span>';
-  w.style.visibility = _yoyFocusCode ? 'hidden' : '';   // 絞り込み中は選択枠を隠す（位置は動かさない）
+  w.style.visibility = ''; w.style.display = _yoyFocusCode ? 'none' : 'inline-flex';   // ★v1.1418★ 絞り込み中は選択枠を消して場所も空ける（見えない枠の幅でエクスポートが2段目に落ちていた）
 }
 // ★v1.1402★ 寄与度トップのエクスポート（CSV・Excelでそのまま開ける）
 let _yoyTopLast = null;
@@ -14263,7 +14263,8 @@ function setYoyTopFocus(code){
 function _renderYoyNav(){
   const nav = document.getElementById('yoyMetricNav'); if (!nav) return;
   nav.style.display = (_yoyView === 'top') ? 'flex' : 'none';
-  nav.innerHTML = _yoyMetricsFor(!!_yoyFocusCode).map(mt => '<button class="yt-navbtn" data-mk="'+mt.k+'" onclick="_yoyNavGo(\''+mt.k+'\')" style="font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer;font-weight:700;white-space:nowrap;border:1.5px solid '+mt.col+';background:'+mt.bg+';color:'+mt.col+'">'+mt.label+'</button>').join('');
+  // ★v1.1418★ ROAS寄与度-／+ を押している間は、ROAS系（売上ROAS・ROAS・ROAS-KW・ROAS-20）のボタンだけ出す
+  nav.innerHTML = _yoyMetricsFor(!!_yoyFocusCode).filter(mt => _yoyImpMode === 'all' || mt.type === 'roas').map(mt => '<button class="yt-navbtn" data-mk="'+mt.k+'" onclick="_yoyNavGo(\''+mt.k+'\')" style="font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer;font-weight:700;white-space:nowrap;border:1.5px solid '+mt.col+';background:'+mt.bg+';color:'+mt.col+'">'+mt.label+'</button>').join('');
   _yoyNavSpy();
 }
 function _yoyNavGo(k){
