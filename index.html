@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1418</span>
+    <span class="build-date">v1.1419</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14079,6 +14079,8 @@ function _renderYoyImpUI(){
 // ★v1.1409★ 絞り込み中（商品1つ）の表だけの並び：総売上・売上ROAS → ROAS系 → 売上系 → 実績額系 → 獲得単価
 const _YOYFOCUS_ORDER = ['sroas','roas','roasKw','roas20','tot','seo','ad','kw','ad20','sp','spKw','sp20','cpa'];   // ★v1.1416★
 function _yoyMetricsFor(focus){ return focus ? _YOYFOCUS_ORDER.map(k => _YOYTOP_METRICS.find(m => m.k === k)).filter(Boolean).concat(_YOYTOP_METRICS.filter(m => _YOYFOCUS_ORDER.indexOf(m.k) < 0)) : _YOYTOP_METRICS; }   // ★v1.1398★ 20位まで（左右スクロール）
+// ★v1.1419★ ROAS寄与度-／+ のときは ROAS系（売上ROAS・ROAS・ROAS-KW・ROAS-20）だけを出す（ボタン・表・エクスポートとも）
+function _yoyShownMetrics(focus){ return _yoyMetricsFor(focus).filter(mt => _yoyImpMode === 'all' || mt.type === 'roas'); }
 const _YOYTOP_METRICS = [   // ★v1.1416★ 並び：売上ROAS・ROAS・ROAS-KW・ROAS-20 → 総売上・SEO売上・広告売上系 → 実績額系 → 獲得単価（絞り込み中も同じ）
   { k:'sroas', label:'売上ROAS', col:'#0f766e', bg:'#ecfdf5', type:'roas', num:'tot', den:'sp' },   // ★v1.1400★ 総売上 ÷ 実績額
   { k:'roas', label:'ROAS',      col:'#7c3aed', bg:'#f5f0fe', type:'roas', num:'ad', den:'sp' },
@@ -14240,7 +14242,7 @@ function exportYoyTop(){
       rows.push([mt.label, kubun, month, period, tot, i + 1, x.code, pc.itemNumber || '', name, v, vu, sh, im, iu]);
     });
   };
-  _YOYTOP_METRICS.forEach(mt => { M.forEach(m => push(mt, m.title, ym(m.ym), m.md ? ('1〜' + m.md + '日') : '月全体', m.res[mt.k])); });
+  _yoyShownMetrics(!!_yoyFocusCode).forEach(mt => { M.forEach(m => push(mt, m.title, ym(m.ym), m.md ? ('1〜' + m.md + '日') : '月全体', m.res[mt.k])); });
   const csv = '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n');
   const shop = (typeof _getSessionShopId === 'function' ? (_getSessionShopId() || '') : '');
   const last = M[M.length - 1].ym;
@@ -14264,7 +14266,7 @@ function _renderYoyNav(){
   const nav = document.getElementById('yoyMetricNav'); if (!nav) return;
   nav.style.display = (_yoyView === 'top') ? 'flex' : 'none';
   // ★v1.1418★ ROAS寄与度-／+ を押している間は、ROAS系（売上ROAS・ROAS・ROAS-KW・ROAS-20）のボタンだけ出す
-  nav.innerHTML = _yoyMetricsFor(!!_yoyFocusCode).filter(mt => _yoyImpMode === 'all' || mt.type === 'roas').map(mt => '<button class="yt-navbtn" data-mk="'+mt.k+'" onclick="_yoyNavGo(\''+mt.k+'\')" style="font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer;font-weight:700;white-space:nowrap;border:1.5px solid '+mt.col+';background:'+mt.bg+';color:'+mt.col+'">'+mt.label+'</button>').join('');
+  nav.innerHTML = _yoyShownMetrics(!!_yoyFocusCode).map(mt => '<button class="yt-navbtn" data-mk="'+mt.k+'" onclick="_yoyNavGo(\''+mt.k+'\')" style="font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer;font-weight:700;white-space:nowrap;border:1.5px solid '+mt.col+';background:'+mt.bg+';color:'+mt.col+'">'+mt.label+'</button>').join('');
   _yoyNavSpy();
 }
 function _yoyNavGo(k){
@@ -14285,9 +14287,10 @@ function _yoyNavMark(k){
 function _yoyNavSpy(){
   if (_yoyFocusCode) return;
   const a = document.getElementById('yoyTopArea'); if (!a || a.offsetParent === null) return;
-  const top = a.getBoundingClientRect().top + 4; let cur = _YOYTOP_METRICS[0].k;
-  _YOYTOP_METRICS.forEach(mt => { const el = document.getElementById('yt-blk-'+mt.k); if (el && el.getBoundingClientRect().top <= top) cur = mt.k; });
-  if (a.scrollTop + a.clientHeight >= a.scrollHeight - 2) cur = _YOYTOP_METRICS[_YOYTOP_METRICS.length-1].k;   // 一番下まで来たら最後の指標
+  const SM = _yoyShownMetrics(false); if (!SM.length) return;
+  const top = a.getBoundingClientRect().top + 4; let cur = SM[0].k;
+  SM.forEach(mt => { const el = document.getElementById('yt-blk-'+mt.k); if (el && el.getBoundingClientRect().top <= top) cur = mt.k; });
+  if (a.scrollTop + a.clientHeight >= a.scrollHeight - 2) cur = SM[SM.length-1].k;   // 一番下まで来たら最後の指標
   _yoyNavMark(cur);
 }
 function renderYoyTop(){
@@ -14387,13 +14390,13 @@ function renderYoyTop(){
         + '<div style="font-size:9px;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'合計 ':'全体 ')+totTxt(mt, r)+'</div>'
         + '</td>';
     };
-    const head = _yoyMetricsFor(true).map(mt => '<th id="yt-col-'+mt.k+'" data-mk="'+mt.k+'" style="padding:8px 10px;background:'+mt.bg+';color:'+mt.col+';font-size:12px;font-weight:800;border-left:1px solid var(--border);white-space:nowrap;min-width:96px">'+mt.label+'<div style="font-size:9px;font-weight:600;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'金額／構成比':'値／全体への影響')+'</div></th>').join('');
+    const head = _yoyShownMetrics(true).map(mt => '<th id="yt-col-'+mt.k+'" data-mk="'+mt.k+'" style="padding:8px 10px;background:'+mt.bg+';color:'+mt.col+';font-size:12px;font-weight:800;border-left:1px solid var(--border);white-space:nowrap;min-width:96px">'+mt.label+'<div style="font-size:9px;font-weight:600;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'金額／構成比':'値／全体への影響')+'</div></th>').join('');
     const mrow = (title, ym, res, isTop, mmd) => '<tr style="border-top:'+(isTop?'0':'1px dashed var(--border2)')+'">'
       + '<td style="position:sticky;left:0;z-index:2;background:'+(isTop?'#f8fafc':'#f1f5f9')+';padding:8px 12px;white-space:nowrap;border-right:1px solid var(--border)">'
       +   '<div style="display:inline-block;font-size:10px;font-weight:700;color:#fff;background:'+(isTop?'#334155':'#64748b')+';border-radius:4px;padding:1px 6px">'+title+'</div>'
       +   '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;margin-top:3px">'+ym.slice(0,4)+'/'+ym.slice(4,6)+'</div>'
       +   (mmd ? '<div style="font-size:10px;color:var(--text2)">1〜'+mmd+'日</div>' : '')
-      + '</td>' + _yoyMetricsFor(true).map(mt => cell(mt, res[mt.k])).join('') + '</tr>';
+      + '</td>' + _yoyShownMetrics(true).map(mt => cell(mt, res[mt.k])).join('') + '</tr>';
     html += '<div style="display:flex;align-items:flex-start;gap:12px;width:max-content;min-width:100%">'
       + (fimg ? '<img src="'+esc(fimg)+'" onerror="this.style.display=\'none\'" style="width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--border);flex:0 0 auto;position:sticky;left:0">' : '')
       + '<table style="border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">'
@@ -14407,9 +14410,10 @@ function renderYoyTop(){
     return;
   }
   html += '<div style="border:1px solid var(--border);border-radius:10px;background:var(--surface);width:max-content;min-width:100%">';
-  _YOYTOP_METRICS.forEach((mt, mi) => {
+  const SM = _yoyShownMetrics(false);
+  SM.forEach((mt, mi) => {
     html += '<div id="yt-blk-'+mt.k+'" data-mk="'+mt.k+'" style="display:flex;align-items:stretch;'+(mi?'border-top:2px solid var(--border2);':'')+'">'
-      + '<div style="width:130px;flex:0 0 130px;box-sizing:border-box;padding:10px 12px;background:'+mt.bg+';border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;position:sticky;left:0;z-index:4'+(mi===0?';border-top-left-radius:10px':'')+(mi===_YOYTOP_METRICS.length-1?';border-bottom-left-radius:10px':'')+'">'
+      + '<div style="width:130px;flex:0 0 130px;box-sizing:border-box;padding:10px 12px;background:'+mt.bg+';border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;position:sticky;left:0;z-index:4'+(mi===0?';border-top-left-radius:10px':'')+(mi===SM.length-1?';border-bottom-left-radius:10px':'')+'">'
       +   '<div style="font-size:15px;font-weight:800;color:'+mt.col+'">'+mt.label+'</div>'
       +   '<div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.4">'+note(mt)+'</div>'
       + '</div>'
