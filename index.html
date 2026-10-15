@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1420</span>
+    <span class="build-date">v1.1421</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14131,7 +14131,8 @@ function _renderYoyImpUI(){
 const _YOYFOCUS_ORDER = ['sroas','roas','roasKw','roas20','tot','seo','ad','kw','ad20','sp','spKw','sp20','cpa'];   // ★v1.1416★
 function _yoyMetricsFor(focus){ return focus ? _YOYFOCUS_ORDER.map(k => _YOYTOP_METRICS.find(m => m.k === k)).filter(Boolean).concat(_YOYTOP_METRICS.filter(m => _YOYFOCUS_ORDER.indexOf(m.k) < 0)) : _YOYTOP_METRICS; }   // ★v1.1398★ 20位まで（左右スクロール）
 // ★v1.1419★ ROAS寄与度-／+ のときは ROAS系（売上ROAS・ROAS・ROAS-KW・ROAS-20）だけを出す（ボタン・表・エクスポートとも）
-function _yoyShownMetrics(focus){ return _yoyMetricsFor(focus).filter(mt => _yoyImpMode === 'all' || mt.type === 'roas'); }
+// ★v1.1421★ ただし商品を絞り込んでいる間は、ROAS寄与度-／+ でも全指標を出す
+function _yoyShownMetrics(focus){ return _yoyMetricsFor(focus).filter(mt => focus || _yoyImpMode === 'all' || mt.type === 'roas'); }
 const _YOYTOP_METRICS = [   // ★v1.1416★ 並び：売上ROAS・ROAS・ROAS-KW・ROAS-20 → 総売上・SEO売上・広告売上系 → 実績額系 → 獲得単価（絞り込み中も同じ）
   { k:'sroas', label:'売上ROAS', col:'#0f766e', bg:'#ecfdf5', type:'roas', num:'tot', den:'sp' },   // ★v1.1400★ 総売上 ÷ 実績額
   { k:'roas', label:'ROAS',      col:'#7c3aed', bg:'#f5f0fe', type:'roas', num:'ad', den:'sp' },
