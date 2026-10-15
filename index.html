@@ -587,7 +587,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <span class="build-date">v1.1421</span>
+    <span class="build-date">v1.1422</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -14111,6 +14111,8 @@ function _yoyTopAgg(ym, maxDay){
   return m;
 }
 const YOYTOP_N = 20;
+// ★v1.1422★ 「広告なし」をオレンジのバッジで目立たせる（big＝絞り込み中の表用）
+function _yoyNoAdBadge(big){ return '<span style="display:inline-block;font-family:\'Noto Sans JP\',sans-serif;font-size:'+(big?'11':'10')+'px;font-weight:800;line-height:'+(big?'16':'13')+'px;padding:0 '+(big?'8':'7')+'px;border-radius:9px;background:#fff7ed;color:#c2410c;border:1px solid #fb923c;letter-spacing:.05em;vertical-align:middle" title="この月は広告費0円（売上だけある）">広告なし</span>'; }
 // ★v1.1414★ 寄与度の向きで絞る：all＝影響の大きい順（＋−混在）／neg＝マイナス寄与（全体を悪くしている：ROAS系は−pt、獲得単価は＋¥）だけ大きい順／pos＝プラス寄与だけ大きい順
 let _yoyImpMode = 'all';
 function _yoyImpPick(list, isCpa){
@@ -14367,7 +14369,7 @@ function renderYoyTop(){
     if (mt.type === 'amt'){
       l1 = yen(x.v); l2 = x.share.toFixed(1) + '%';
     } else if (mt.type === 'roas'){
-      l1 = (x.v == null) ? '広告なし' : Math.round(x.v) + '%';
+      l1 = (x.v == null) ? _yoyNoAdBadge(false) : Math.round(x.v) + '%';
       const up = x.imp >= 0; l2 = '<span style="color:'+(up?'#16a34a':'#dc2626')+'">'+(up?'+':'−')+Math.abs(x.imp).toFixed(1)+'pt</span>';
     } else {
       l1 = (x.v == null) ? '注文0' : yen(x.v);
@@ -14433,7 +14435,7 @@ function renderYoyTop(){
       const x = all[k];
       let l1 = '', l2 = '';
       if (mt.type === 'amt'){ l1 = yen(x.v); l2 = x.share.toFixed(1) + '%'; }
-      else if (mt.type === 'roas'){ l1 = (x.v == null) ? '広告なし' : Math.round(x.v) + '%'; const up = x.imp >= 0; l2 = '<span style="color:'+(up?'#16a34a':'#dc2626')+'">'+(up?'+':'−')+Math.abs(x.imp).toFixed(1)+'pt</span>'; }
+      else if (mt.type === 'roas'){ l1 = (x.v == null) ? _yoyNoAdBadge(true) : Math.round(x.v) + '%'; const up = x.imp >= 0; l2 = '<span style="color:'+(up?'#16a34a':'#dc2626')+'">'+(up?'+':'−')+Math.abs(x.imp).toFixed(1)+'pt</span>'; }
       else { l1 = (x.v == null) ? '注文0' : yen(x.v); const bad = x.imp > 0; l2 = '<span style="color:'+(bad?'#dc2626':'#16a34a')+'">'+(x.imp>=0?'+':'−')+'¥'+Math.round(Math.abs(x.imp)).toLocaleString()+'</span>'; }
       return '<td style="padding:8px 8px;border-left:1px solid var(--border);text-align:center;vertical-align:middle;white-space:nowrap">'
         + '<div style="display:inline-flex;align-items:baseline;gap:3px"><span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:'+(k<3?mt.col:'#94a3b8')+';color:#fff;font-size:11px;font-weight:800">'+(k+1)+'</span><span style="font-size:9px;color:var(--text3)">位／'+all.length+'</span></div>'
