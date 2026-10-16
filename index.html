@@ -589,7 +589,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1437</span>
+    <span class="build-date">v1.1438</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -1684,7 +1684,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
 
     <!-- 不足日確認 -->
     <div style="text-align:left;border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden">
-      <div onclick="_toggleMissingCheck(this)" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;background:var(--surface2);font-size:12px;font-weight:700;color:var(--text2);user-select:none">
+      <div id="missingCheckHead" onclick="_toggleMissingCheck(this)" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;background:var(--surface2);font-size:12px;font-weight:700;color:var(--text2);user-select:none">
         <span>📅 不足日を確認（取込済みの月で欠けている日）</span>
         <span class="acc-arrow" style="font-size:10px;color:var(--text3)">▶</span>
       </div>
@@ -4390,9 +4390,20 @@ function renderDailyGapAlert(){
   b.textContent = '🚨 日別データ欠け（' + gaps[0] + (gaps.length > 1 ? ' ほか' + (gaps.length - 1) + '日' : '') + '）';   // ★v1.1437★ 年月日を（）で囲む
   b.title = '全-日別データで、次の日のレポートは取り込まれているのに、この日のレポートが入っていません。\n'
     + '欠けている日（' + gaps.length + '日）：\n' + gaps.slice(0, 31).join('\n') + (gaps.length > 31 ? '\n…' : '')
-    + '\n\nその日のレポートを取り込むと、このボタンは消えます。クリックで 全-日別データ を開きます';
+    + '\n\nその日のレポートを取り込むと、このボタンは消えます。クリックで「＋レポート追加」の不足日の確認を開きます';
 }
-function _dailyGapOpen(){ try{ switchTab('daily'); }catch(e){} }
+// ★v1.1438★ 押したら「＋レポート追加」を開き、「不足日を確認」を開いて、欠けている最初の日の月のカレンダーを出す
+function _dailyGapOpen(){
+  try{ openDropZone(); }catch(e){ return; }
+  const head = document.getElementById('missingCheckHead'); if (!head) return;
+  const body = head.nextElementSibling;
+  if (body && body.style.display === 'none') { try{ _toggleMissingCheck(head); }catch(e){} }
+  else { try{ _checkMissingDays(); }catch(e){} }
+  const g = (_dailyGapLast && _dailyGapLast[0]) || ''; const ym = g ? g.slice(0,4) + '-' + g.slice(5,7) : '';
+  const sel = document.getElementById('missingCalMonth');
+  if (ym && sel && [...sel.options].some(o => o.value === ym)) { sel.value = ym; try{ _renderMissingCal(ym); }catch(e){} }
+  setTimeout(() => { try{ head.scrollIntoView({ block:'start', behavior:'smooth' }); }catch(e){} }, 60);
+}
 // dailyRows が入れ替わったら（読み込み・取り込み・削除・ショップ切替）判定し直す。行数と最初・最後の日で変化を見る（軽い）
 let _dailyGapSig = null;
 function _dailyGapWatch(){
