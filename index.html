@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1441</span>
+    <span class="build-date">v1.1442</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12281,10 +12281,15 @@ function renderKwTrend(resetScroll){
   const lmLbl = (+latestAll.slice(5,7)) + '月';
   listEl.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--text3);padding:2px 4px 6px">KW（' + kws.length + '）</div>' + kws.map(o => {
     const on = (o.kw === _kwtKw);
-    const sub = o.zero ? (lmLbl + ' 表示0（登録中）') : o.live ? (lmLbl + ' 実績 ' + yen(o.sp) + '・ROAS ' + (o.sp > 0 ? Math.round(o.sa / o.sp * 100) + '%' : '—')) : ('最終出稿 ' + o.lastD.slice(0,7).replace('-','/'));
+    // ★v1.1442★ 出稿中KWの下の行を見やすく（濃い文字・ROASは売上データと同じ色分け）。出稿していないKWは従来どおり薄く
+    const lr = o.sp > 0 ? Math.round(o.sa / o.sp * 100) : null;
+    const lrCol = lr == null ? 'var(--text3)' : lr >= 500 ? 'var(--green)' : lr >= 300 ? 'var(--amber)' : lr > 0 ? 'var(--danger)' : 'var(--text3)';
+    const sub = o.zero ? ('<span style="color:#b45309;font-weight:700">' + lmLbl + ' 表示0（登録中）</span>')
+      : o.live ? ('<span style="color:var(--text2)">' + lmLbl + ' 実績 </span><b style="color:var(--text)">' + yen(o.sp) + '</b><span style="color:var(--text3)">・</span><span style="color:var(--text2)">ROAS </span><b style="color:' + lrCol + '">' + (lr == null ? '—' : lr.toLocaleString() + '%') + '</b>')
+      : ('最終出稿 ' + o.lastD.slice(0,7).replace('-','/'));
     return '<div data-kw="' + esc(o.kw) + '" onclick="_kwtSel(this.dataset.kw)" title="' + esc(o.kw) + '" style="cursor:pointer;padding:7px 9px;margin-bottom:4px;border-radius:7px;border:1px solid ' + (on ? '#7c3aed' : 'var(--border)') + ';background:' + (on ? '#f3e8ff' : (o.live ? 'var(--surface)' : 'var(--surface2)')) + ';box-shadow:' + (on ? 'inset 3px 0 0 #7c3aed' : 'none') + '">'
       + '<div style="font-size:12px;font-weight:700;color:' + (o.live ? 'var(--text)' : 'var(--text3)') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(o.kw) + '</div>'
-      + '<div style="font-size:10px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + sub + '</div></div>';
+      + '<div style="font-size:' + (o.live ? '11px' : '10px') + ';color:var(--text3);margin-top:' + (o.live ? '2px' : '1px') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + sub + '</div></div>';
   }).join('');
   const kw = _kwtKw; const kwAll = allRows.filter(r => (r.kw || '(空)') === kw);
   // KWごとの行（KW割合の分母に使う）
