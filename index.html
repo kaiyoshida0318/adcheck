@@ -50,6 +50,9 @@ body { font-family: 'Noto Sans JP', sans-serif; font-size: 13px; background: var
 .stock-siren { animation: stockSiren 1.1s ease-in-out infinite; }
 @keyframes stockSiren { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.22); opacity: .65; } }
 /* ヘッダーの在庫チェックボタン：在庫切れありのとき点滅させる */
+/* ★v1.1440★ 当日データのKW名リンク */
+.kwt-link { cursor: pointer; border-bottom: 1px dashed transparent; }
+.kwt-link:hover { color: #7c3aed; border-bottom-color: #7c3aed; }
 #stockCheckBtn.stock-alarm, #dailyGapBtn { animation: stockBtnAlarm 1.3s ease-in-out infinite; }   /* ★v1.1436★ 日別データ欠けも同じ光り方 */
 @keyframes stockBtnAlarm {
   0%,100% { box-shadow: 0 0 0 0 rgba(183,28,28,.55); }
@@ -589,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1439</span>
+    <span class="build-date">v1.1440</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9723,6 +9726,8 @@ function onKwBasicMonth(v){ _kwBasicMonth = v; _renderKwBasicTable(); }
 // ===== KW個別データ タブ =====
 const _KWINDIV_SAVED_KEY='adcheck_kwindiv_saved';
 let _kwIndivCode=null, _kwIndivPeriod='daily', _kwIndivCharts=[];
+// ★v1.1440★ 商品-当日データのKW名 → クリックで KW-個別推移（日別）を開く
+const _kwtLink=(code,kw)=>'<span class="kwt-link" title="クリックで KW-個別推移（日別）を開く" data-code="'+_kwEsc(code)+'" data-kw="'+_kwEsc(kw)+'" onclick="event.stopPropagation();openKwTrend(this.dataset.code,this.dataset.kw)">'+_kwEsc(kw)+'</span>';
 const _kwEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 function _kwIndivSavedGet(){ try{ return JSON.parse(localStorage.getItem(_KWINDIV_SAVED_KEY)||'[]')||[]; }catch(e){ return []; } }
 function _kwIndivSavedSet(a){ try{ localStorage.setItem(_KWINDIV_SAVED_KEY, JSON.stringify(a)); }catch(e){} }
@@ -10772,7 +10777,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
       +'</tr></thead><tbody>';
     _rowKws.forEach(kw=>{ if(_pastSet[kw]){ var _bx='□'; var _Tg=_T+';background:#fafafa'; var _ag=_pastAgg[kw]||{}; var _ul=function(t){ return (t==null||t==='')?('<span style="color:#bbb">'+_bx+'</span>'):('<span style="text-decoration:underline;color:#555">'+t+'</span>'); };
       _h+='<tr>'
-        +'<td style="'+_Tg+';font-weight:700;text-align:left;font-size:12px;color:#888">'+_kwEsc(kw)+_wchBadge(kw)+'</td>'
+        +'<td style="'+_Tg+';font-weight:700;text-align:left;font-size:12px;color:#888">'+_kwtLink(code,kw)+_wchBadge(kw)+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#666">'+_n2(_kwVol[kw])+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px">'+_ul(_ag.sp?Math.round(_ag.sp).toLocaleString():null)+'</td>'
@@ -10792,7 +10797,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
         var _zme=(typeof _zeroMecpc!=='undefined')?_zeroMecpc[kw]:null; // 目安CPC(登録済みKWスナップショット)
         var _zk=_zeroImpKind(_zme); // 'zeroImpBlack'(46+) / 'zeroImpRed'(45-)
         _h+='<tr>'
-          +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwEsc(kw)+_wchBadge(kw)+'</td>'
+          +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwtLink(code,kw)+_wchBadge(kw)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+_n2(_zv)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">0.00%</td>'
           +'<td style="'+_T+';font-size:11px;background:#fff">—</td>'
@@ -12213,7 +12218,7 @@ function _pmGo(to){
 }
 function openKwTrend(code, kw){
   document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
-  _kwtCode = code; _kwtGrain = 'day'; _kwtSpan = '30'; _kwtMonth = '';
+  _kwtCode = code; _kwtGrain = 'day'; _kwtSpan = '30'; _kwtMonth = ''; _kwtAutoSet = false;
   const c = productCache[code] || {};
   const name = c.manualName || c.name || code, num = c.itemNumber || code, img = c.manualImg || c.img || null;
   document.getElementById('kwTrendName').textContent = name;
@@ -12222,7 +12227,15 @@ function openKwTrend(code, kw){
   document.getElementById('kwTrendModal').style.display = 'flex';
   const kws = _kwtKwList(code);
   _kwtKw = (kw && kws.some(o => o.kw === kw)) ? kw : (kws[0] ? kws[0].kw : null);
-  renderKwTrend(true);
+  _kwtAutoMonth(kws); renderKwTrend(true);
+}
+// ★v1.1440★ 今月出ていないKWを日別で開いたときは、空の30日ではなく「最後に出稿した月」を表示する
+let _kwtAutoSet = false;
+function _kwtAutoMonth(kws){
+  if (_kwtGrain !== 'day') return;
+  const o = (kws || _kwtKwList(_kwtCode)).find(x => x.kw === _kwtKw);
+  if (o && !o.live && o.lastD){ _kwtMonth = o.lastD.slice(0,7); _kwtSpan = 'month'; _kwtAutoSet = true; }
+  else if (_kwtAutoSet){ _kwtMonth = ''; _kwtSpan = '30'; _kwtAutoSet = false; }
 }
 function closeKwTrend(){
   const m = document.getElementById('kwTrendModal'); if (m) m.style.display = 'none';
@@ -12230,10 +12243,10 @@ function closeKwTrend(){
   try{ if (_kwtChart) _kwtChart.destroy(); }catch(e){} _kwtChart = null;
   _kwtCode = null;
 }
-function _kwtSel(kw){ _kwtKw = kw; renderKwTrend(true); }
+function _kwtSel(kw){ _kwtKw = kw; _kwtAutoMonth(); renderKwTrend(true); }
 function _kwtSetGrain(g){ _kwtGrain = g; renderKwTrend(); }
-function _kwtSetSpan(s){ _kwtSpan = s; renderKwTrend(); }
-function _kwtSetMonth(m){ _kwtMonth = m; _kwtSpan = 'month'; renderKwTrend(); }   // Amacheck と同じく、月を選んだら「今月」
+function _kwtSetSpan(s){ _kwtSpan = s; _kwtAutoSet = false; renderKwTrend(); }
+function _kwtSetMonth(m){ _kwtMonth = m; _kwtSpan = 'month'; _kwtAutoSet = false; renderKwTrend(); }   // Amacheck と同じく、月を選んだら「今月」
 function _kwtSetMSpan(s){ _kwtMSpan = s; renderKwTrend(); }
 function _kwtToggle(k){ if (_kwtHidden.has(k)) _kwtHidden.delete(k); else _kwtHidden.add(k); renderKwTrend(); }
 // 日付ユーティリティ（ローカル時刻で進める）
@@ -12333,8 +12346,9 @@ function renderKwTrend(resetScroll){
   const lastPt = points[points.length - 1];
   const partial = _kwtGrain === 'month' && lastPt && lastPt.ym === latestAll.slice(0,7) && latestAll < _kwtS(new Date(+latestAll.slice(0,4), +latestAll.slice(5,7), 0));
   ctl += '<span style="margin-left:auto;font-size:12px;font-weight:700;color:var(--text2);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(kw) + '">🔑 ' + esc(kw) + '</span></div>'
-    + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">※ 階段の線＝<b style="color:#00897B">入札額</b>（CPC実績）と<b style="color:#7c3aed">目安CPC</b>（右端の目盛り）。札は入札額を変えた' + (_kwtGrain === 'day' ? '日' : '月') + '　広告ROAS の色：<span style="color:var(--green)">500%以上</span>・<span style="color:var(--amber)">300〜499%</span>・<span style="color:var(--danger)">299%以下</span>（商品-売上データと同じ）' + (partial ? '　／　' + latestAll.slice(0,7).replace('-','/') + ' は途中の月（' + (+latestAll.slice(8,10)) + '日まで）' : '') + '</div>';
-  const tg = KWT_SERIES.map(s => { const on = !_kwtHidden.has(s.k); return '<button onclick="_kwtToggle(\'' + s.k + '\')" style="font-size:12px;font-weight:700;padding:5px 13px;border-radius:7px;cursor:pointer;border:2px solid ' + s.col + ';background:' + (on ? s.col : 'transparent') + ';color:' + (on ? '#fff' : 'var(--text3)') + ';' + (on ? '' : 'text-decoration:line-through;opacity:.55;') + '">● ' + s.label + '</button>'; }).join('');
+    + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">※ ' + (_kwtGrain === 'day' ? '階段の線＝<b style="color:#00897B">入札額</b>（当日データの入札）と<b style="color:#7c3aed">目安CPC</b>（右端の目盛り）。札は入札額を変えた日' : '階段の線＝<b style="color:#7c3aed">目安CPC</b>（右端の目盛り）') + '　広告ROAS の色：<span style="color:var(--green)">500%以上</span>・<span style="color:var(--amber)">300〜499%</span>・<span style="color:var(--danger)">299%以下</span>（商品-売上データと同じ）' + (partial ? '　／　' + latestAll.slice(0,7).replace('-','/') + ' は途中の月（' + (+latestAll.slice(8,10)) + '日まで）' : '') + '</div>';
+  // ★v1.1440★ 月別は入札額のボタンなし
+  const tg = KWT_SERIES.filter(s => !(_kwtGrain === 'month' && s.k === 'act')).map(s => { const on = !_kwtHidden.has(s.k); return '<button onclick="_kwtToggle(\'' + s.k + '\')" style="font-size:12px;font-weight:700;padding:5px 13px;border-radius:7px;cursor:pointer;border:2px solid ' + s.col + ';background:' + (on ? s.col : 'transparent') + ';color:' + (on ? '#fff' : 'var(--text3)') + ';' + (on ? '' : 'text-decoration:line-through;opacity:.55;') + '">● ' + s.label + '</button>'; }).join('');
   // 表
   const TH = 'padding:7px 10px;font-size:11px;font-weight:700;color:#444;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2;text-align:right';
   const TD = 'padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:right;font-family:\'DM Mono\',monospace';
@@ -12353,8 +12367,7 @@ function renderKwTrend(resetScroll){
     const dcol = p.wd === 0 ? '#c62828' : p.wd === 6 ? '#1565c0' : 'var(--text)';
     const monEdge = (_kwtGrain === 'day' && i > 0 && points[i-1].ym !== p.ym) ? 'border-bottom:2px solid #cbd5e1;' : '';
     const chg = chgSet.has(i); const chgInfo = chg ? bidChg.find(c => c.i === i) : null;
-    const rowSty = chg ? 'outline:2px dashed #00897B;outline-offset:-2px;' : '';
-    tbl += '<tr style="' + rowSty + '"' + (chg ? ' title="この' + (_kwtGrain === 'day' ? '日' : '月') + 'に入札額が ¥' + chgInfo.from + ' → ¥' + chgInfo.to + ' に変わりました"' : '') + '>'
+    tbl += '<tr' + (chg ? ' title="この' + (_kwtGrain === 'day' ? '日' : '月') + 'に入札額が ¥' + chgInfo.from + ' → ¥' + chgInfo.to + ' に変わりました"' : '') + '>'
       + '<td style="' + TD + ';' + monEdge + 'text-align:left;font-family:inherit;font-weight:700;color:' + dcol + '">' + p.tlabel + '</td>';
     if (!v.has){ tbl += ('<td style="' + TD + ';' + monEdge + '">' + dash + '</td>').repeat(10) + '</tr>'; continue; }
     const roas = v.sp > 0 ? Math.round(v.sa / v.sp * 100) : null;
@@ -12382,7 +12395,7 @@ function renderKwTrend(resetScroll){
   const labels = points.map(p => p.label);
   const sales = vals.map(v => v.has ? v.sa : null), spend = vals.map(v => v.has ? v.sp : null), roasS = vals.map(v => (v.has && v.sp > 0) ? Math.round(v.sa / v.sp * 1000) / 10 : null);
   const ds = [];
-  const H = k => _kwtHidden.has(k);
+  const H = k => _kwtHidden.has(k) || (_kwtGrain === 'month' && k === 'act');   // ★v1.1440★ 月別では入札額の線・札を出さない
   if (!H('sales')) ds.push({ type:'bar', label:'広告売上', data:sales, backgroundColor:'#2563ebcc', yAxisID:'y', order:3 });
   if (!H('spend')) ds.push({ type:'bar', label:'実績額', data:spend, backgroundColor:'#dc2626cc', yAxisID:'y', order:3 });
   if (!H('roas'))  ds.push({ type:'line', label:'広告ROAS', data:roasS, borderColor:'#1D9E75', backgroundColor:'#1D9E75', borderWidth:2.6, tension:0.3, pointRadius:3, pointHoverRadius:6, spanGaps:true, yAxisID:'y1', order:1 });
@@ -12414,9 +12427,9 @@ function renderKwTrend(resetScroll){
     plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(it) => { const v = it.raw; if (v == null) return null; const l = it.dataset.label; return l + '：' + (l === '広告ROAS' ? v + '%' : '¥' + Math.round(v).toLocaleString()); } } } },
     scales:{
       x:{ grid:{ color:'rgba(0,0,0,0.06)' }, ticks:{ color:'#718096', font:{ size:11 }, maxRotation:0, autoSkip:true } },
-      y:{ position:'left', beginAtZero:true, grid:{ color:'rgba(0,0,0,0.06)' }, ticks:{ color:'#718096', font:{ size:11 }, callback:v => '¥' + Number(v).toLocaleString() }, display:!(H('sales') && H('spend')) },
+      y:{ position:'left', beginAtZero:true, grid:{ color:'rgba(0,0,0,0.06)' }, ticks:{ color:'#718096', font:{ size:11 }, callback:v => '¥' + Number(v).toLocaleString() }, display:!(H('sales') && H('spend')) && vals.some(v => v.has && (v.sa > 0 || v.sp > 0)) },
       y1:{ position:'right', beginAtZero:true, suggestedMax:600, grid:{ drawOnChartArea:false }, ticks:{ color:'#1D9E75', font:{ size:11 }, callback:v => v + '%' }, display:!H('roas') },
-      y2:{ position:'right', min:y2min, max:y2max, grid:{ drawOnChartArea:false }, ticks:{ color:'#00897B', font:{ size:11 }, callback:v => '¥' + v }, title:{ display:true, text:'入札・目安', color:'#00897B', font:{ size:11, weight:'700' } }, display:bv.length > 0 },
+      y2:{ position:'right', min:y2min, max:y2max, grid:{ drawOnChartArea:false }, ticks:{ color:(H('act') ? '#7c3aed' : '#00897B'), font:{ size:11 }, callback:v => '¥' + v }, title:{ display:true, text:(H('act') ? '目安CPC' : '入札・目安'), color:(H('act') ? '#7c3aed' : '#00897B'), font:{ size:11, weight:'700' } }, display:bv.length > 0 },
     } } });
 }
 
