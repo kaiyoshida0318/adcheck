@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1442</span>
+    <span class="build-date">v1.1443</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12243,6 +12243,8 @@ function closeKwTrend(){
   try{ if (_kwtChart) _kwtChart.destroy(); }catch(e){} _kwtChart = null;
   _kwtCode = null;
 }
+let _kwtListMin = false; try{ _kwtListMin = localStorage.getItem('adcheck_kwt_list_min') === '1'; }catch(e){}
+function _kwtListToggle(){ _kwtListMin = !_kwtListMin; try{ localStorage.setItem('adcheck_kwt_list_min', _kwtListMin ? '1' : '0'); }catch(e){} renderKwTrend(); }
 function _kwtSel(kw){ _kwtKw = kw; _kwtAutoMonth(); renderKwTrend(true); }
 function _kwtSetGrain(g){ _kwtGrain = g; renderKwTrend(); }
 function _kwtSetSpan(s){ _kwtSpan = s; _kwtAutoSet = false; renderKwTrend(); }
@@ -12279,13 +12281,18 @@ function renderKwTrend(resetScroll){
   if (!kws.length){ listEl.innerHTML = ''; bodyEl.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3);font-size:13px">この商品のKWデータがありません。</div>'; return; }
   const latestAll = allRows.reduce((m, r) => r.date > m ? r.date : m, '');
   const lmLbl = (+latestAll.slice(5,7)) + '月';
-  listEl.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--text3);padding:2px 4px 6px">KW（' + kws.length + '）</div>' + kws.map(o => {
+  // ★v1.1443★ KW一覧はたためる（たたむとグラフが一覧の分だけ広がる）
+  listEl.style.flex = _kwtListMin ? '0 0 38px' : '0 0 196px'; listEl.style.padding = _kwtListMin ? '10px 4px' : '12px 8px 12px 12px';
+  if (_kwtListMin){
+    listEl.innerHTML = '<button onclick="_kwtListToggle()" title="KW一覧をひらく" style="width:30px;padding:8px 0;border:1px solid #c4b5fd;border-radius:7px;background:#f3e8ff;color:#7c3aed;cursor:pointer;font-size:12px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="font-size:15px;line-height:1">»</span><span style="line-height:1">KW</span><span style="font-size:10px;line-height:1">' + kws.length + '</span></button>';
+  } else
+  listEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 6px 4px"><span style="font-size:11px;font-weight:700;color:var(--text3);white-space:nowrap">KW（' + kws.length + '）<span style="font-weight:400">・' + lmLbl + '</span></span><button onclick="_kwtListToggle()" title="KW一覧をたたんでグラフを広くする" style="white-space:nowrap;font-size:11px;font-weight:700;padding:3px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer">◀ たたむ</button></div>' + kws.map(o => {
     const on = (o.kw === _kwtKw);
     // ★v1.1442★ 出稿中KWの下の行を見やすく（濃い文字・ROASは売上データと同じ色分け）。出稿していないKWは従来どおり薄く
     const lr = o.sp > 0 ? Math.round(o.sa / o.sp * 100) : null;
     const lrCol = lr == null ? 'var(--text3)' : lr >= 500 ? 'var(--green)' : lr >= 300 ? 'var(--amber)' : lr > 0 ? 'var(--danger)' : 'var(--text3)';
     const sub = o.zero ? ('<span style="color:#b45309;font-weight:700">' + lmLbl + ' 表示0（登録中）</span>')
-      : o.live ? ('<span style="color:var(--text2)">' + lmLbl + ' 実績 </span><b style="color:var(--text)">' + yen(o.sp) + '</b><span style="color:var(--text3)">・</span><span style="color:var(--text2)">ROAS </span><b style="color:' + lrCol + '">' + (lr == null ? '—' : lr.toLocaleString() + '%') + '</b>')
+      : o.live ? ('<span style="color:var(--text2)">実績 </span><b style="color:var(--text)">' + yen(o.sp) + '</b><span style="color:var(--text3)">・</span><span style="color:var(--text2)">ROAS </span><b style="color:' + lrCol + '">' + (lr == null ? '—' : lr.toLocaleString() + '%') + '</b>')
       : ('最終出稿 ' + o.lastD.slice(0,7).replace('-','/'));
     return '<div data-kw="' + esc(o.kw) + '" onclick="_kwtSel(this.dataset.kw)" title="' + esc(o.kw) + '" style="cursor:pointer;padding:7px 9px;margin-bottom:4px;border-radius:7px;border:1px solid ' + (on ? '#7c3aed' : 'var(--border)') + ';background:' + (on ? '#f3e8ff' : (o.live ? 'var(--surface)' : 'var(--surface2)')) + ';box-shadow:' + (on ? 'inset 3px 0 0 #7c3aed' : 'none') + '">'
       + '<div style="font-size:12px;font-weight:700;color:' + (o.live ? 'var(--text)' : 'var(--text3)') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(o.kw) + '</div>'
@@ -12394,7 +12401,7 @@ function renderKwTrend(resetScroll){
   const st = bodyEl.scrollTop;
   const zeroNote = kwAll.length ? '' : '<div style="font-size:12px;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 12px;margin-bottom:8px">このKWは登録済みですが、まだ表示（インプレッション）がないためデータがありません。' + (snapGui ? '　登録中の目安CPC：¥' + snapGui : '') + '</div>';
   bodyEl.innerHTML = ctl + zeroNote + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">' + tg + '</div>'
-    + '<div style="position:relative;height:380px;margin-bottom:14px"><canvas id="kwTrendCanvas"></canvas></div>'
+    + '<div style="position:relative;height:430px;margin-bottom:14px"><canvas id="kwTrendCanvas"></canvas></div>'
     + '<div style="font-size:13px;font-weight:700;color:var(--text2);margin:4px 0 6px">📋 ' + (_kwtGrain === 'day' ? '日別' : '月別') + 'データ <span style="font-size:11px;font-weight:400;color:var(--text3)">（列は商品-当日データと同じ。日別は「その日時点」、月別は「その月の最終日時点」の値）</span></div>'
     + '<div style="border:1px solid var(--border);border-radius:8px">' + tbl + '</div>';
   bodyEl.scrollTop = resetScroll ? 0 : st;
@@ -18116,8 +18123,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 </div>
 
 <!-- ★v1.1439★ KW-個別推移 モーダル（左＝KW一覧、右＝そのKWの日別／月別のグラフと表） -->
-<div id="kwTrendModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
-  <div style="background:var(--surface);border-radius:12px;width:96vw;max-width:1280px;height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3);position:relative;margin:auto;overflow:hidden">
+<div id="kwTrendModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9200;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto">
+  <!-- ★v1.1443★ グラフを広く：横幅 1280→1760px、KW一覧は細く＆たためる -->
+  <div style="background:var(--surface);border-radius:12px;width:98vw;max-width:1760px;height:94vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3);position:relative;margin:auto;overflow:hidden">
     <div style="display:flex;gap:4px;padding:10px 24px 0;border-bottom:1px solid var(--border)"><button onclick="_pmGo('graph')" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">全体情報</button><button onclick="_pmGo('kwd')" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">KW-全体推移</button><button style="padding:9px 20px;border:none;background:none;cursor:default;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)">KW-個別推移</button><button onclick="_pmGo('edit')" style="padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent">商品情報を編集</button></div>
     <div style="padding:16px 24px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
@@ -18130,7 +18138,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <button onclick="closeKwTrend()" style="border:none;background:rgba(0,0,0,0.08);cursor:pointer;font-size:16px;color:#333;line-height:1;padding:6px 11px;border-radius:50%;flex-shrink:0">✕</button>
     </div>
     <div style="flex:1;min-height:0;display:flex">
-      <div id="kwTrendList" style="flex:0 0 230px;overflow-y:auto;padding:12px 10px 12px 16px;border-right:1px solid var(--border);background:var(--surface2)"></div>
+      <div id="kwTrendList" style="flex:0 0 196px;overflow-y:auto;padding:12px 8px 12px 12px;border-right:1px solid var(--border);background:var(--surface2)"></div>
       <div id="kwTrendBody" style="flex:1;min-width:0;overflow-y:auto;padding:12px 20px 18px"></div>
     </div>
   </div>
