@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1444</span>
+    <span class="build-date">v1.1445</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -674,8 +674,6 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-warn" onclick="switchTab('monthly-warn')">撤退予定▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warn"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-warnbig" onclick="switchTab('monthly-warnbig')">撤退予定-大▲<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warnbig"></span></button>
   <button class="tab-btn" id="tab-btn-monthly-warnzero" onclick="switchTab('monthly-warnzero')">撤退予定-在庫0？<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-warnzero"></span></button>
-  <!-- ★v1.1444 一時ボタン★ 撤退予定3区分の一括CSV。使い終わったらこの1行と _tmpDlWarnCsv を削除 -->
-  <button id="tmpWarnCsvBtn" onclick="_tmpDlWarnCsv()" title="撤退予定▲・撤退予定-大▲・撤退予定-在庫0？ の全商品（商品番号・商品名）をCSVでダウンロード" style="font-size:11px;font-weight:700;padding:3px 9px;margin:0 4px;border:1.5px solid #C62828;border-radius:6px;background:#fff5f5;color:#C62828;cursor:pointer;white-space:nowrap;align-self:center">⬇ 撤退予定3種CSV</button>
   <button class="tab-btn" id="tab-btn-monthly-out" onclick="switchTab('monthly-out')">撤退済■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-out"></span></button>
   <span class="tab-sep">|</span><button class="tab-btn" id="tab-btn-monthly-unset" onclick="switchTab('monthly-unset')">選択前■<span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:3px" id="cnt-monthly-unset"></span></button>
   <button id="topHideBtn" onclick="toggleTopChrome()" style="font-size:10px;padding:2px 7px;position:absolute;right:8px;top:4px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;z-index:5">上部を隠す</button>
@@ -16600,21 +16598,6 @@ function heatColor(v, max) {
   return `rgba(191,0,0,${(0.1 + p * 0.7).toFixed(2)})`;
 }
 
-// ★v1.1444 一時機能★ 撤退予定▲（out記入済を含む）・撤退予定-大▲（out記入済を含む）・撤退予定-在庫0？ の商品を CSV で一括ダウンロード
-// タブの件数と同じ数え方（引退商品は除く）。使い終わったらボタン（tmpWarnCsvBtn）ごと削除する
-function _tmpDlWarnCsv(){
-  const ST = ['warn','warnout','warnbig','warnbigout','warnzero'];
-  const list = getProducts().filter(p => !productCache[p.id]?.retired && ST.includes(productCache[p.id]?.status));
-  if (!list.length){ alert('対象（撤退予定▲・撤退予定-大▲・撤退予定-在庫0？）の商品がありません。'); return; }
-  const rows = list.map(p => { const pc = productCache[p.id] || {}; return { num: pc.itemNumber || '', name: pc.manualName || pc.name || p.name || '', code: p.id, ord: ['warn','warnout'].includes(pc.status) ? 0 : ['warnbig','warnbigout'].includes(pc.status) ? 1 : 2 }; })
-    .sort((a, b) => (a.ord - b.ord) || String(a.num || a.code).localeCompare(String(b.num || b.code), 'ja', { numeric:true }));
-  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const csv = '\uFEFF' + [['商品番号','商品名']].concat(rows.map(r => [r.num || r.code, r.name])).map(r => r.map(q).join(',')).join('\r\n') + '\r\n';
-  const d = new Date(), ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
-  const url = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
-  const a = document.createElement('a'); a.href = url; a.download = '撤退予定3種_商品一覧_' + ds + '.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 1000);
-  console.log('[ADcheck] 撤退予定3種CSV: ' + rows.length + '件');
-}
 function _updateStatusCounts() {
   const products = getProducts().filter(p => !productCache[p.id]?.retired);
   const total = products.length;
