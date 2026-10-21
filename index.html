@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1459</span>
+    <span class="build-date">v1.1460</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12965,6 +12965,8 @@ function _renewalTripleValues(metric, labels, dataMap) {
   });
   return { all, kw, p20 };
 }
+// ★v1.1460★ クリック数（KW経由／20円＝それ以外）
+function _renewalClicks(labels, dataMap){ const kw = [], p20 = []; labels.forEach(l => { const d = dataMap[l] || {}; const c = d.cl || 0, k = d.clKw || 0; kw.push(k); p20.push(Math.max(0, c - k)); }); return { kw, p20 }; }
 function renderRenewalGraph() {
   const canvas = document.getElementById('renewalGraphCanvas');
   const empty  = document.getElementById('renewalGraphEmpty');
@@ -13055,8 +13057,12 @@ function renderRenewalGraph() {
   } else if (metric==='roas'||metric==='cvr'||metric==='ctr') {
     const tri=_renewalTripleValues(metric,labels,dataMap);
     const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:'#fbbf24'},{key:'kw',label:'ROAS-KW',color:'#f59e0b'},{key:'p20',label:'ROAS20',color:'#38bdf8'}]:(metric==='ctr')?[{key:'all',label:'CTR\u5168\u4f53',color:'#34d399',hide:true},{key:'kw',label:'CTR-KW',color:'#f59e0b'},{key:'p20',label:'CTR20',color:'#38bdf8',hide:true}]:[{key:'all',label:'CVR\u5168\u4f53',color:'#a78bfa'},{key:'kw',label:'CVR(KW)',color:'#f59e0b'},{key:'p20',label:'CVR(20\u5186)',color:'#38bdf8'}];
-    datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:v=>v+'%',borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,hidden:!!d.hide}));
-    yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+ctx.raw+'%';
+    datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:v=>v+'%',borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,hidden:!!d.hide,yAxisID:'y',order:0}));
+    yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+(ctx.dataset._fmt?ctx.dataset._fmt(ctx.raw):ctx.raw+'%');
+    // ★v1.1460★ CTR＆クリック数：KWと20円のクリック数を積み上げ棒（右の目盛り）で重ねる
+    if (metric==='ctr'){ const ck=_renewalClicks(labels,dataMap); const cf=v=>Math.round(v).toLocaleString()+'回';
+      datasets.push({type:'bar',label:'クリック-KW',data:ck.kw,_fmt:cf,backgroundColor:'#fcd34dcc',borderColor:'#f59e0b',borderWidth:0,yAxisID:'y1',stack:'cl',order:2});
+      datasets.push({type:'bar',label:'クリック-20',data:ck.p20,_fmt:cf,backgroundColor:'#7dd3fccc',borderColor:'#0ea5e9',borderWidth:0,yAxisID:'y1',stack:'cl',order:2}); _chartKind='ctrcl'; }
   } else if (metric==='spend'||metric==='orders') {
     const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa';
     const defs=[{key:'all',label:un+'\u5168\u4f53',color:base},{key:'kw',label:un+'-KW',color:'#f59e0b'},{key:'p20',label:un+'-20',color:'#38bdf8'}];
@@ -13087,13 +13093,14 @@ function renderRenewalGraph() {
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
       if (metric==='all'){ series=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas'||s.key==='roasAll'); normalize=true; }
-      else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
+      else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}];
+        if (metric==='ctr'){ const ck=_renewalClicks(labels,dataMap); const cf=v=>Math.round(v).toLocaleString()+'回'; series.push({key:'clKw',label:'クリック-KW',color:'#b45309',fmt:cf,vals:ck.kw,axis:'y1'},{key:'cl20',label:'クリック-20',color:'#0369a1',fmt:cf,vals:ck.p20,axis:'y1'}); } }   // ★v1.1460★
       else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa'; series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:'#f59e0b',fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:'#38bdf8',fmt:uf,vals:tri.p20}]; }
       else if (metric==='sales'){ const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
       else if (metric==='seoad'){ const sa=_prodSalesArrays(labels,dataMap,code,false); const ad=labels.map(l=>(dataMap[l]||{}).sales||0); const pf=v=>v+'%'; const seoP=sa.tot.map((tv,i)=>tv>0?Math.round(sa.seo[i]/tv*1000)/10:0); const adP=sa.tot.map((tv,i)=>tv>0?Math.round(ad[i]/tv*1000)/10:0); series=[{key:'seoP',label:'SEO\u58f2\u4e0a\u6bd4\u7387',color:'#7c3aed',fmt:pf,vals:seoP},{key:'adP',label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',color:'#10b981',fmt:pf,vals:adP}]; }
       else { const fmt=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).fmt; const lbl=(metric==='ctr')?'CTR-KW':(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).label; series=[{key:'_single',label:lbl,color:(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color,fmt,vals:_renewalRepValue(metric,labels,dataMap,code)}]; }
       const multi=series.length>1; _renewalAllYearMode=multi; _renewalSeries=series; datasets=[];
-      series.forEach(se=>{ let pv=se.vals; if(normalize){const nz=se.vals.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} pv=se.vals.map(v=>mid>0?Math.round(v/mid*50*10)/10:0);} _years.forEach((fy,yi)=>{ const rec=_years.length-1-yi; const arr=new Array(12).fill(null),arrR=new Array(12).fill(null); labels.forEach((ym,idx)=>{ if(_fyOf(ym)!==fy)return; const fmi=_fmiOf(ym); arr[fmi]=pv[idx]; arrR[fmi]=se.vals[idx]; }); const color=se.color; datasets.push({label:multi?(se.label+' '+fy):(fy+'\u5e74'),data:arr,_raw:arrR,_fmt:se.fmt,_mk:se.key,_fy:fy,borderColor:color,backgroundColor:color+'22',borderDash:_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length],borderWidth:rec===0?(multi?2.4:2.6):(multi?1.6:1.9),pointRadius:multi?2.5:3,pointHoverRadius:multi?5:6,tension:0.3,fill:false,spanGaps:true,hidden:_renewalHiddenMetric.has(se.key)||_renewalHiddenFY.has(fy)}); }); });
+      series.forEach(se=>{ let pv=se.vals; if(normalize){const nz=se.vals.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} pv=se.vals.map(v=>mid>0?Math.round(v/mid*50*10)/10:0);} _years.forEach((fy,yi)=>{ const rec=_years.length-1-yi; const arr=new Array(12).fill(null),arrR=new Array(12).fill(null); labels.forEach((ym,idx)=>{ if(_fyOf(ym)!==fy)return; const fmi=_fmiOf(ym); arr[fmi]=pv[idx]; arrR[fmi]=se.vals[idx]; }); const color=se.color; datasets.push({yAxisID:se.axis||'y',label:multi?(se.label+' '+fy):(fy+'\u5e74'),data:arr,_raw:arrR,_fmt:se.fmt,_mk:se.key,_fy:fy,borderColor:color,backgroundColor:color+'22',borderDash:_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length],borderWidth:rec===0?(multi?2.4:2.6):(multi?1.6:1.9),pointRadius:multi?2.5:3,pointHoverRadius:multi?5:6,tension:0.3,fill:false,spanGaps:true,hidden:_renewalHiddenMetric.has(se.key)||_renewalHiddenFY.has(fy)}); }); });
       yCallback=normalize?(v=>v+'%'):(v=>series[0].fmt(v));
       tooltipLabel=ctx=>{const ds=ctx.dataset;const r=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(r):r;return ' '+ds.label+': '+rs;};
     }
@@ -13102,6 +13109,7 @@ function renderRenewalGraph() {
   const _isAll=(!yearMode&&_chartKind==='all');
   const _scales={x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}},stacked:_isAll},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:yCallback},beginAtZero:true,stacked:_isAll,position:'left'}};
   if(_isAll){ _scales.y1={position:'right',grid:{drawOnChartArea:false},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true}; }
+  if(metric==='ctr'){ const _stk=(!yearMode&&_chartKind==='ctrcl'); if(_stk) _scales.x.stacked=true; _scales.y1={position:'right',stacked:_stk,grid:{drawOnChartArea:false},ticks:{color:textColor,font:{size:11},callback:v=>v+'回'},beginAtZero:true,title:{display:true,text:'クリック数',color:textColor,font:{size:11}}}; }   // ★v1.1460★
   _renewalChartInstance = new Chart(canvas,{type:_baseType,data:{labels:chartLabels,datasets},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:!yearMode&&metric!=='all',position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:tooltipLabel}}},scales:_scales}});
   if (!yearMode) _drawRenewalChangeLines(_renewalChartInstance, labels, code);
   else _drawRenewalYearChanges(_renewalChartInstance, code, _fyYears, (typeof _renewalFYStart!=='undefined'?_renewalFYStart:1));
@@ -13166,6 +13174,7 @@ function _renderRenewalTable(labels, dataMap, code){
   if (metric==='roas'||metric==='cvr'||metric==='ctr'){
     const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||{}).color||'#888'; const dep=(metric!=='ctr');
     cols=[{label:M+'\u5168\u4f53',color:base,fmt:pf,vals:tri.all,dep},{label:M+'-KW',color:'#f59e0b',fmt:pf,vals:tri.kw,dep},{label:M+'20',color:'#38bdf8',fmt:pf,vals:tri.p20,dep}];
+    if (metric==='ctr'){ const ck=_renewalClicks(labels,dataMap); const rf=v=>Math.round(v||0).toLocaleString()+'回'; cols.push({label:'クリック-KW',color:'#b45309',fmt:rf,vals:ck.kw},{label:'クリック-20',color:'#0369a1',fmt:rf,vals:ck.p20}); }   // ★v1.1460★
   } else if (metric==='spend'){
     const all=labels.map(l=>dataMap[l]?.spend||0); const kw=labels.map(l=>dataMap[l]?.spendKw||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i]));
     cols=[{label:'\u5b9f\u7e3e\u984d\u5168\u4f53',color:'#ef4444',fmt:yf,vals:all},{label:'\u5b9f\u7e3e\u984d-KW',color:'#f59e0b',fmt:yf,vals:kw},{label:'\u5b9f\u7e3e\u984d-20',color:'#38bdf8',fmt:yf,vals:p20}];
@@ -18397,7 +18406,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         <option value="spend">広告-実績額</option>
         <option value="roas">広告-ROAS</option>
         <option value="cvr">広告-CVR</option>
-        <option value="ctr">広告-CTR</option>
+        <option value="ctr">広告-CTR＆クリック数</option>
         <option value="orders">広告-個数</option>
         <option value="cpc">平均単価</option>
       </select>
