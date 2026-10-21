@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1458</span>
+    <span class="build-date">v1.1459</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -15082,6 +15082,13 @@ function renderYoyTop(){
   const yen = v => '¥' + Math.round(v).toLocaleString();
   const lbl = m => m.slice(0,4) + '/' + m.slice(4,6) + (P.partial ? '（1〜' + md + '日）' : '');
   const modeLbl = (_yoyMode === 'mom') ? '前月' : (_yoyMode === 'pick' ? '比較する月' : '前年同月');
+  // ★v1.1459★ 伸び率＝すぐ下の行（比較月）を100%としたときの、この行の金額。金額の指標だけ
+  const growth = (a, b) => { a = a || 0; b = b || 0;
+    if (b > 0){ const g = Math.round(a / b * 100); return '<span style="color:'+(g >= 100 ? '#16a34a' : '#dc2626')+'">'+g.toLocaleString()+'%</span>'; }
+    return a > 0 ? '<span style="color:#2563eb">新規</span>' : '<span style="color:var(--text3)">—</span>'; };
+  // 途中の月とまるまる1か月を比べると伸び率がおかしくなるので、日数の条件が同じ行どうしだけ比べる
+  const belowOf = (i) => (M[i+1] && (!!M[i].md === !!M[i+1].md)) ? M[i+1] : null;
+  const belowVal = (below, code) => { if (!below) return 0; const o = (below.all || []).find(y => y.code === code); return o ? (o.v || 0) : 0; };
   const tile = (mt, x, i, otherRes, isTop) => {
     const pc = productCache[x.code] || {}; const name = pc.manualName || pc.name || x.code; const img = pc.manualImg || pc.img || '';
     const imgEl = img ? '<img loading="lazy" src="'+esc(img)+'" onerror="_ytImgErr(this)" style="width:58px;height:58px;box-sizing:border-box;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block;margin:0 auto">'
@@ -15112,10 +15119,11 @@ function renderYoyTop(){
       + '<div style="position:relative;font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;color:'+mt.col+';line-height:15px;height:15px">'+l2
       + '</div>'
       + (mt.type === 'roas' ? '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);line-height:14px;height:14px;white-space:nowrap">'+yen(x.sp || 0)+'</div>' : '')   // ★v1.1426★ 実績額
+      + ((mt.type === 'amt' && otherRes) ? '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;line-height:15px;height:15px;white-space:nowrap" title="下の月を100%としたときの、この月の金額">'+growth(x.v, belowVal(otherRes, x.code))+'</div>' : '')   // ★v1.1459★ 伸び率
       + '</div>';
   };
   // ★v1.1396★ 1位の左に、各行が何の数字かを書く見出し列（タイルと同じ高さで揃える）
-  const labelCol = (mt, isTop) => {
+  const labelCol = (mt, isTop, hasBelow) => {
     const n1 = mt.type === 'amt' ? mt.label : (mt.type === 'roas' ? mt.label : '獲得単価');
     const n2 = mt.type === 'amt' ? '構成比' : '全体への影響';
     const ln = (t, h, extra) => '<div style="font-size:9px;font-weight:700;color:var(--text3);line-height:'+h+'px;height:'+h+'px;white-space:nowrap;'+(extra||'')+'">'+t+'</div>';
@@ -15124,27 +15132,29 @@ function renderYoyTop(){
       + ln('商品名', 14, 'margin-top:3px')
       + ln(n1, 15) + ln(n2, 15, 'color:'+mt.col)
       + (mt.type === 'roas' ? ln(_YOY_SP_LABEL[mt.den] || '実績額', 14) : '')   // ★v1.1426★
+      + ((mt.type === 'amt' && hasBelow) ? '<div title="下の月を100%としたときの、この月の金額" style="font-size:9px;font-weight:700;color:var(--text3);line-height:15px;height:15px;white-space:nowrap">伸び率</div>' : '')   // ★v1.1459★
       + '</div>';
   };
   const totTxt = (mt, r) => mt.type === 'amt' ? yen(r.total) : (mt.type === 'roas' ? (r.total ? Math.round(r.total) + '%' : '—') : (mt.type === 'cvr' ? (r.total ? r.total.toFixed(2) + '%' : '—') : (r.total ? yen(r.total) : '—')));
-  const note = mt => mt.type === 'amt' ? '数字＝金額／全体に占める割合' : (mt.type === 'roas' ? '数字＝商品の'+mt.label+'／全体の'+mt.label+'を動かしている幅（+押し上げ・−押し下げ）' : '数字＝商品の獲得単価／全体の獲得単価を動かしている幅（+高くしている・−安くしている）');
+  const note = mt => mt.type === 'amt' ? '数字＝金額／全体に占める割合／伸び率（下の月＝100%）' : (mt.type === 'roas' ? '数字＝商品の'+mt.label+'／全体の'+mt.label+'を動かしている幅（+押し上げ・−押し下げ）' : '数字＝商品の獲得単価／全体の獲得単価を動かしている幅（+高くしている・−安くしている）');
   // ★v1.1394★ 指標ごとに「今月」の行と「比較月」の行を上下に並べる。指標名は2行の中央、その右に月、続けて1〜10位
   // ★v1.1432★ 月の列を 128→88px に詰めた（見出し列の固定位置も 258→218px）。桁の多い合計は文字を小さく
-  const monthCell = (title, ym, mt, r, isTop, mmd) => '<div style="width:88px;flex:0 0 88px;box-sizing:border-box;padding:8px 6px;border-right:1px solid var(--border);background:'+(isTop?'#f8fafc':'#f1f5f9')+';display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:sticky;left:130px;z-index:3">'
+  const monthCell = (title, ym, mt, r, isTop, mmd, below) => '<div style="width:88px;flex:0 0 88px;box-sizing:border-box;padding:8px 6px;border-right:1px solid var(--border);background:'+(isTop?'#f8fafc':'#f1f5f9')+';display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:sticky;left:130px;z-index:3">'
       + '<div style="display:inline-block;align-self:center;font-size:10px;font-weight:700;color:#fff;background:'+(isTop?'#334155':'#64748b')+';border-radius:4px;padding:1px 6px">'+title+'</div>'
       + '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--text);margin-top:3px;white-space:nowrap">'+ym.slice(0,4)+'/'+ym.slice(4,6)+'</div>'
       + (mmd ? '<div style="font-size:10px;color:var(--text2);white-space:nowrap">1〜'+mmd+'日</div>' : '')
       + '<div style="font-size:10px;color:var(--text3);margin-top:4px">'+(mt.type==='amt'?'合計':'全体')+'</div>'
       + (() => { const t = totTxt(mt, r); return '<div style="font-family:\'DM Mono\',monospace;font-size:'+(t.length > 8 ? 11 : 13)+'px;font-weight:700;color:'+mt.col+';white-space:nowrap">'+t+'</div>'; })()
+      + ((mt.type === 'amt' && below) ? '<div title="下の月を100%としたときの、この月の合計" style="font-size:9px;color:var(--text3);margin-top:3px">伸び率</div><div style="font-family:\'DM Mono\',monospace;font-size:12px;font-weight:700">'+growth(r.total, below.total)+'</div>' : '')   // ★v1.1459★
       + '</div>';
   const rowHtml = (title, ym, mt, r, other, isTop, mmd) => '<div style="display:flex;align-items:stretch;'+(isTop?'':'border-top:1px dashed var(--border2);')+'">'
-      + monthCell(title, ym, mt, r, isTop, mmd)
+      + monthCell(title, ym, mt, r, isTop, mmd, other)
       + '<div style="display:flex;gap:4px;padding:8px 10px;flex:0 0 auto;flex-wrap:nowrap;align-items:flex-start">'
       +   (_yoyFocusCode
             ? (() => { const k = (r.all || []).findIndex(y => y.code === _yoyFocusCode);
-                       return labelCol(mt, isTop) + (k >= 0 ? tile(mt, r.all[k], k, other, isTop) + '<div style="align-self:center;font-size:11px;color:var(--text3);padding-left:6px;white-space:nowrap">全'+r.all.length+'商品中 '+(k+1)+'位</div>'
+                       return labelCol(mt, isTop, !!other) + (k >= 0 ? tile(mt, r.all[k], k, other, isTop) + '<div style="align-self:center;font-size:11px;color:var(--text3);padding-left:6px;white-space:nowrap">全'+r.all.length+'商品中 '+(k+1)+'位</div>'
                                                              : '<div style="align-self:center;padding:0 12px;color:var(--text3);font-size:12px;white-space:nowrap">この月は数字がありません</div>'); })()
-            : (r.list.length ? labelCol(mt, isTop) + r.list.map((x,i) => tile(mt, x, i, other, isTop)).join('') : '<div style="padding:18px;color:var(--text3);font-size:12px">データがありません</div>'))
+            : (r.list.length ? labelCol(mt, isTop, !!other) + r.list.map((x,i) => tile(mt, x, i, other, isTop)).join('') : '<div style="padding:18px;color:var(--text3);font-size:12px">データがありません</div>'))
       + '</div></div>';
   // ★v1.1398★ 左右スクロールは表全体で1本（今月・比較月が一緒に動く）。指標名・月・見出し列は左に固定
   let html = '';
@@ -15161,7 +15171,7 @@ function renderYoyTop(){
     const fpc = productCache[_yoyFocusCode] || {}; const fimg = fpc.manualImg || fpc.img || '';
     const _fGS = _yoyGroupStarts(_yoyShownMetrics(true));   // ★v1.1428★ グループの頭の列は左を太線に
     const _bl = mt => 'border-left:' + (_fGS.has(mt.k) ? _YOY_GRP_LINE : '1px solid var(--border)') + ';';
-    const cell = (mt, r) => {
+    const cell = (mt, r, below) => {
       const all = (r && r.all) || []; const k = all.findIndex(y => y.code === _yoyFocusCode);
       if (k < 0) return '<td style="padding:10px 4px;'+_bl(mt)+'text-align:center;color:var(--text3);font-size:11px;vertical-align:middle">—<div style="font-size:9px;margin-top:2px">数字なし</div></td>';
       const x = all[k];
@@ -15175,20 +15185,21 @@ function renderYoyTop(){
         + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:13px;color:var(--text);margin-top:4px">'+l1+'</div>'
         + '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:12px;color:'+mt.col+'">'+l2+'</div>'
         + (mt.type === 'roas' ? '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);margin-top:1px" title="'+(_YOY_SP_LABEL[mt.den] || '実績額')+'">'+(_YOY_SP_LABEL[mt.den] || '実績額').replace('実績額','実績')+' '+yen(x.sp || 0)+'</div>' : '')   // ★v1.1426★
+        + ((mt.type === 'amt' && below) ? '<div title="下の月を100%としたときの、この月の金額" style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;margin-top:1px"><span style="font-family:inherit;font-size:9px;color:var(--text3);font-weight:600">伸び率 </span>'+growth(x.v, belowVal(below, x.code))+'</div>' : '')   // ★v1.1459★
         + '<div style="font-size:9px;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'合計 ':'全体 ')+totTxt(mt, r)+'</div>'
         + '</td>';
     };
     const head = _yoyShownMetrics(true).map(mt => '<th id="yt-col-'+mt.k+'" data-mk="'+mt.k+'" style="padding:8px 5px;background:'+mt.bg+';color:'+mt.col+';font-size:12px;font-weight:800;'+_bl(mt)+'white-space:nowrap;min-width:80px">'+mt.label+'<div style="font-size:9px;font-weight:600;color:var(--text3);margin-top:2px">'+(mt.type==='amt'?'金額／構成比':'値／全体への影響')+'</div></th>').join('');
-    const mrow = (title, ym, res, isTop, mmd) => '<tr style="border-top:'+(isTop?'0':'1px dashed var(--border2)')+'">'
+    const mrow = (title, ym, res, isTop, mmd, belowRes) => '<tr style="border-top:'+(isTop?'0':'1px dashed var(--border2)')+'">'
       + '<td style="position:sticky;left:0;z-index:2;background:'+(isTop?'#f8fafc':'#f1f5f9')+';padding:8px 12px;white-space:nowrap;border-right:1px solid var(--border)">'
       +   '<div style="display:inline-block;font-size:10px;font-weight:700;color:#fff;background:'+(isTop?'#334155':'#64748b')+';border-radius:4px;padding:1px 6px">'+title+'</div>'
       +   '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;margin-top:3px">'+ym.slice(0,4)+'/'+ym.slice(4,6)+'</div>'
       +   (mmd ? '<div style="font-size:10px;color:var(--text2)">1〜'+mmd+'日</div>' : '')
-      + '</td>' + _yoyShownMetrics(true).map(mt => cell(mt, res[mt.k])).join('') + '</tr>';
+      + '</td>' + _yoyShownMetrics(true).map(mt => cell(mt, res[mt.k], belowRes ? belowRes[mt.k] : null)).join('') + '</tr>';
     html += '<div style="display:flex;align-items:flex-start;gap:12px;width:max-content;min-width:100%">'
       + '<table style="border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">'
       +   '<thead><tr><th style="position:sticky;left:0;z-index:3;background:var(--surface2);padding:8px 12px;font-size:11px;color:var(--text3);border-right:1px solid var(--border)">月</th>'+head+'</tr></thead>'
-      +   '<tbody>' + M.map((m, i) => mrow(m.title, m.ym, m.res, i === 0, m.md)).join('') + '</tbody></table></div>';
+      +   '<tbody>' + M.map((m, i) => mrow(m.title, m.ym, m.res, i === 0, m.md, belowOf(i) ? belowOf(i).res : null)).join('') + '</tbody></table></div>';
     area.innerHTML = html;
     _renderYoyPinUI();
     _renderYoyImpUI();
@@ -15205,7 +15216,7 @@ function renderYoyTop(){
       +   '<div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.4">'+note(mt)+'</div>'
       + '</div>'
       + '<div style="flex:1 0 auto;display:flex;flex-direction:column">'
-      +   M.map((m, i) => rowHtml(m.title, m.ym, mt, m.res[mt.k], null, i === 0, m.md)).join('')
+      +   M.map((m, i) => rowHtml(m.title, m.ym, mt, m.res[mt.k], (belowOf(i) ? belowOf(i).res[mt.k] : null), i === 0, m.md)).join('')   // ★v1.1459★ すぐ下の行（比較月）を渡す
       + '</div></div>';
   });
   area.innerHTML = html + '</div>';
