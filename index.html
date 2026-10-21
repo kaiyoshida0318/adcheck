@@ -588,11 +588,11 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     </div>
   </div>
   <div class="header-right">
-    <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button>
+    <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button><button onclick="openAnalysisExport()" title="ADcheckのデータを分析用（GPTなど）にZIPでダウンロード" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #0f766e;background:#f0fdfa;color:#0f766e;cursor:pointer;white-space:nowrap;margin-right:8px">📦 分析用データ</button>
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1455</span>
+    <span class="build-date">v1.1457</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12275,6 +12275,7 @@ function _kwtSel(kw){ _kwtKw = kw; _kwtAutoMonth(); renderKwTrend(true); }
 function _kwtSetGrain(g){ _kwtGrain = g; renderKwTrend(); }
 function _kwtSetSpan(s){ _kwtSpan = s; _kwtAutoSet = false; renderKwTrend(); }
 function _kwtSetMonth(m){ _kwtMonth = m; _kwtSpan = 'month'; _kwtAutoSet = false; renderKwTrend(); }   // Amacheck と同じく、月を選んだら「今月」
+function _kwtSetMEnd(m){ _kwtMonth = m; _kwtAutoSet = false; renderKwTrend(); }   // ★v1.1456★ 月別：表示の最終月
 function _kwtSetMSpan(s){ _kwtMSpan = s; renderKwTrend(); }
 function _kwtToggle(k){ if (_kwtHidden.has(k)) _kwtHidden.delete(k); else _kwtHidden.add(k); renderKwTrend(); }
 // 日付ユーティリティ（ローカル時刻で進める）
@@ -12352,7 +12353,7 @@ function renderKwTrend(resetScroll){
       points.push({ key: ds, label: (d.getMonth()+1) + '/' + d.getDate(), tlabel: ds.slice(5).replace('-','/') + '(' + '日月火水木金土'[wd] + ')', wd, rows: kwAll.filter(r => r.date === ds), last: ds, ym: ds.slice(0,7) });
     }
   } else {
-    const lastM = months[months.length - 1];
+    const lastM = (_kwtMonth && months.indexOf(_kwtMonth) >= 0) ? _kwtMonth : months[months.length - 1];   // ★v1.1456★ 月セレクトで選んだ月まで
     let first;
     if (_kwtMSpan === 'cal') first = lastM.slice(0,4) + '-01';
     else if (_kwtMSpan === 'fy5') first = (+lastM.slice(5,7) >= 5 ? lastM.slice(0,4) : String(+lastM.slice(0,4) - 1)) + '-05';
@@ -12390,6 +12391,8 @@ function renderKwTrend(resetScroll){
       + months.slice().reverse().map(m => '<option value="' + m + '"' + (m === _kwtMonth ? ' selected' : '') + '>' + m.replace('-','/') + '</option>').join('') + '</select>'
       + '<div style="display:flex;gap:4px">' + BTN(_kwtSpan === '30', '30日', "_kwtSetSpan('30')") + BTN(_kwtSpan === '2m', '先月-今月', "_kwtSetSpan('2m')") + BTN(_kwtSpan === 'month', '今月', "_kwtSetSpan('month')") + '</div>';
   } else {
+    ctl += '<select onchange="_kwtSetMEnd(this.value)" title="この月までを表示" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;min-width:120px">'
+      + months.slice().reverse().map(m => '<option value="' + m + '"' + (m === _kwtMonth ? ' selected' : '') + '>' + m.replace('-','/') + ' まで</option>').join('') + '</select>';
     ctl += '<div style="display:flex;gap:4px">' + BTN(_kwtMSpan === 'cal', '1月始まり', "_kwtSetMSpan('cal')") + BTN(_kwtMSpan === 'fy5', '5月始まり', "_kwtSetMSpan('fy5')") + BTN(_kwtMSpan === '2y', '2年横並び', "_kwtSetMSpan('2y')") + '</div>';
   }
   const lastPt = points[points.length - 1];
@@ -12505,6 +12508,235 @@ function renderKwTrend(resetScroll){
     } } });
 }
 
+// ════════════════════════════════════════════════════════════════
+// ★v1.1457★ 分析用データ（ZIP）… ADcheckに入っているデータを、GPT等で分析しやすいCSV＋説明書(README)にまとめて出す
+//   ・このタブで開いているショップのデータだけを出す（ゆかい屋／kairy はショップを切り替えてそれぞれ出す）
+//   ・期間で絞り込める（商品マスタ・登録KW・CA調整は期間に関係なく現在の内容）
+// ════════════════════════════════════════════════════════════════
+const _AX_WD = '日月火水木金土';
+function _axDateOfDailyRow(r){ const c = String((r && r.code) || ''); return /^\d{8}$/.test(c) ? c.slice(0,4) + '-' + c.slice(4,6) + '-' + c.slice(6,8) : ''; }
+function _axShopId(){ try{ return _getSessionShopId() || 'shop'; }catch(e){ return 'shop'; } }
+function _axShopName(){ try{ return _shopName(_axShopId()) || _axShopId(); }catch(e){ return _axShopId(); } }
+// データのある最初の日・最後の日
+function _axRange(){
+  let mn = '', mx = '';
+  const up = d => { if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return; if (!mn || d < mn) mn = d; if (!mx || d > mx) mx = d; };
+  kwRows.forEach(r => up(r.date)); salesRows.forEach(r => up(r.date));
+  Object.keys(itemDailyData || {}).forEach(c => Object.keys(itemDailyData[c] || {}).forEach(up));
+  Object.keys(DB || {}).forEach(c => Object.keys((DB[c] && DB[c].days) || {}).forEach(up));
+  (dailyRows || []).forEach(r => { if (!r.isPeriod) up(_axDateOfDailyRow(r)); });
+  return { mn, mx };
+}
+function _axYmd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function _axD(s){ return new Date(+s.slice(0,4), +s.slice(5,7) - 1, +s.slice(8,10)); }
+let _axPresetCur = '90';
+function openAnalysisExport(){
+  const m = document.getElementById('axModal'); if (!m) return;
+  const rg = _axRange();
+  document.getElementById('axShop').textContent = _axShopName();
+  document.getElementById('axDataRange').textContent = rg.mn ? (rg.mn.replace(/-/g,'/') + ' 〜 ' + rg.mx.replace(/-/g,'/')) : 'データがありません';
+  const f = document.getElementById('axFrom'), t = document.getElementById('axTo');
+  f.min = t.min = rg.mn || ''; f.max = t.max = rg.mx || '';
+  _axPreset(_axPresetCur || '90');
+  document.getElementById('axMsg').textContent = '';
+  m.style.display = 'flex';
+}
+function closeAnalysisExport(){ const m = document.getElementById('axModal'); if (m) m.style.display = 'none'; }
+function _axPreset(p){
+  _axPresetCur = p;
+  const rg = _axRange(); if (!rg.mx) return;
+  const end = _axD(rg.mx); let from = rg.mn, to = rg.mx;
+  if (p === '30' || p === '90' || p === '365'){ const d = new Date(end); d.setDate(d.getDate() - (+p - 1)); from = _axYmd(d); }
+  else if (p === 'tm'){ from = rg.mx.slice(0,8) + '01'; }
+  else if (p === 'lm'){ const s = new Date(end.getFullYear(), end.getMonth() - 1, 1), e = new Date(end.getFullYear(), end.getMonth(), 0); from = _axYmd(s); to = _axYmd(e); }
+  else if (p === 'ty'){ from = rg.mx.slice(0,4) + '-01-01'; }
+  else if (p === 'fy'){ const y = (end.getMonth() + 1 >= 5) ? end.getFullYear() : end.getFullYear() - 1; from = y + '-05-01'; }
+  if (from < rg.mn) from = rg.mn;
+  document.getElementById('axFrom').value = from; document.getElementById('axTo').value = to;
+  _axPresetUI(); _axPreview();
+}
+function _axPresetUI(){
+  document.querySelectorAll('#axPresets button').forEach(b => {
+    const on = b.dataset.p === _axPresetCur;
+    b.style.background = on ? '#0f766e' : 'var(--surface2)'; b.style.color = on ? '#fff' : 'var(--text)'; b.style.borderColor = on ? '#0f766e' : 'var(--border)';
+  });
+}
+function _axDateEdited(){ _axPresetCur = ''; _axPresetUI(); _axPreview(); }
+function _axPreview(){
+  const el = document.getElementById('axPreview'); if (!el) return;
+  const from = document.getElementById('axFrom').value, to = document.getElementById('axTo').value;
+  if (!from || !to || from > to){ el.innerHTML = '<span style="color:#c62828">期間の指定が正しくありません</span>'; return; }
+  const inR = d => d && d >= from && d <= to;
+  let ad = 0; Object.keys(itemDailyData || {}).forEach(c => Object.keys(itemDailyData[c] || {}).forEach(d => { if (inR(d)) ad++; }));
+  const kw = kwRows.filter(r => inR(r.date)).length, sa = salesRows.filter(r => inR(r.date)).length;
+  const days = Math.round((_axD(to) - _axD(from)) / 86400000) + 1;
+  el.innerHTML = days.toLocaleString() + '日間　／　商品×日の広告データ ' + ad.toLocaleString() + '行・総売上 ' + sa.toLocaleString() + '行・KW×日 ' + kw.toLocaleString() + '行';
+}
+// CSV（BOM付きUTF-8。数値は桁区切りなし）
+function _axCsv(header, rows){
+  const q = v => { if (v == null) return ''; if (typeof v === 'number'){ if (!isFinite(v)) return ''; return String(Math.round(v * 100) / 100); } const s = String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  return '﻿' + [header].concat(rows).map(r => r.map(q).join(',')).join('\r\n') + '\r\n';
+}
+function _axBuild(from, to){
+  const inR = d => !!d && d >= from && d <= to;
+  const wd = d => _AX_WD[_axD(d).getDay()];
+  const pct = (a, b) => b > 0 ? Math.round(a / b * 10000) / 100 : null;
+  const P = code => { const pc = productCache[code] || {}; return { num: pc.itemNumber || '', name: pc.manualName || pc.name || '', st: (typeof STATUS_LABELS !== 'undefined' && STATUS_LABELS[pc.status || 'unset']) || pc.status || '' }; };
+  const snap = (_currentKwSnap && _currentKwSnap.byCode) || {};
+  const files = [], counts = {};
+  const add = (name, header, rows) => { files.push({ name, text: _axCsv(header, rows) }); counts[name] = rows.length; };
+
+  // 01 商品マスタ
+  const codesAll = new Set(Object.keys(productCache || {}).filter(c => c !== '__global__'));
+  Object.keys(itemDailyData || {}).forEach(c => codesAll.add(c)); kwRows.forEach(r => r.itemCode && codesAll.add(r.itemCode));
+  const ssLbl = a => (a || []).map(m => (+m) + '月').join('/');
+  const marLbl = a => (a || []).map(k => (typeof MARATHON_BTN !== 'undefined' && MARATHON_BTN[k]) ? MARATHON_BTN[k].lbl : k).join('/');
+  add('01_商品マスタ.csv', ['商品管理番号','商品番号','商品名','区分','引退済み','放置中','SS対象','マラソン','注視KW','登録KW数(現在)','商品URL'],
+    [...codesAll].sort().map(c => { const pc = productCache[c] || {}, p = P(c); const sn = _snapKwMap(snap[c]);
+      return [c, p.num, p.name, p.st, pc.retired ? 'はい' : '', pc.idle ? 'はい' : '', ssLbl(pc.ss), marLbl(pc.marathon), (pc.watchKws || []).join(' / '), sn ? Object.keys(sn).length : '', (DB[c] && DB[c].url) || ('https://item.rakuten.co.jp/' + (function(){ try{ return (_getCurrentShop() || {}).shopCode || ''; }catch(e){ return ''; } })() + '/' + c + '/')]; }));
+
+  // 02 商品別・日別・広告（RPP商品レポート）
+  const r02 = [];
+  const codes02 = new Set([...Object.keys(itemDailyData || {}), ...Object.keys(DB || {})]);
+  [...codes02].sort().forEach(c => {
+    const a = itemDailyData[c] || {}, b = (DB[c] && DB[c].days) || {};
+    const ds = new Set([...Object.keys(a), ...Object.keys(b)].filter(inR));
+    [...ds].sort().forEach(d => {
+      const x = a[d], y = b[d] || {}, p = P(c);
+      const sp = x ? x.spend : (y.spend || 0), cl = x ? x.cl : (y.clicks || 0), sa = x ? x.sales : (y.sales720 || 0), od = x ? x.orders : (y.orders720 || 0);
+      const imp = x && x.imp ? Math.round(x.imp) : (y.ctr > 0 && cl > 0 ? Math.round(cl / (y.ctr / 100)) : null);
+      const spK = x ? (x.spendKw || 0) : null, clK = x ? (x.clKw || 0) : null, saK = x ? (x.salesKw || 0) : null, odK = x ? (x.ordersKw || 0) : null;
+      r02.push([d, wd(d), c, p.num, p.name, sp, cl, imp, (y.ctr != null && y.ctr !== '') ? y.ctr : (imp ? pct(cl, imp) : null), cl > 0 ? Math.round(sp / cl) : null, y.bid != null ? y.bid : null, sa, od, pct(sa, sp), pct(od, cl),
+        spK, clK, saK, odK, spK == null ? null : Math.max(0, sp - spK), clK == null ? null : Math.max(0, cl - clK), saK == null ? null : Math.max(0, sa - saK), odK == null ? null : Math.max(0, od - odK)]);
+    });
+  });
+  add('02_商品別_日別_広告.csv', ['日付','曜日','商品管理番号','商品番号','商品名','実績額','クリック数','表示回数(推定)','CTR(%)','CPC','商品CPC(入札)','広告売上(720h)','広告注文数(720h)','広告ROAS(%)','CVR(%)','KW-実績額','KW-クリック数','KW-広告売上','KW-注文数','商品CPC分-実績額','商品CPC分-クリック数','商品CPC分-広告売上','商品CPC分-注文数'], r02);
+
+  // 03 商品別・日別・総売上（RPP+SEO。Item_SalesList）
+  const ds03 = _getDailySales(), r03 = [];
+  Object.keys(ds03).sort().forEach(c => Object.keys(ds03[c]).filter(inR).sort().forEach(d => {
+    const v = ds03[c][d], x = (itemDailyData[c] || {})[d], p = P(c), sp = x ? x.spend : 0, ads = x ? x.sales : 0;
+    r03.push([d, wd(d), c, p.num, p.name, v.sales || 0, v.orders || 0, v.units || 0, ads, Math.max(0, (v.sales || 0) - ads), sp, pct(v.sales || 0, sp)]);
+  }));
+  add('03_商品別_日別_総売上.csv', ['日付','曜日','商品管理番号','商品番号','商品名','総売上(広告+SEO)','注文件数','個数','広告売上(720h)','SEO売上(推定)','実績額','売上ROAS(%)'], r03);
+
+  // 04 KW別・日別（RPPキーワードレポート：クリックがあったKWだけ載る）
+  const r04 = [];
+  kwRows.filter(r => inR(r.date)).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || String(a.itemCode).localeCompare(String(b.itemCode)) || String(a.kw).localeCompare(String(b.kw))).forEach(r => {
+    const p = P(r.itemCode), sn = _snapKwMap(snap[r.itemCode]);
+    const imp = (r.ctr > 0 && r.cl > 0) ? Math.round(r.cl * 100 / r.ctr) : null;
+    r04.push([r.date, wd(r.date), r.itemCode, p.num, p.name, r.kw, r.spend || 0, r.cl || 0, imp, r.ctr || null, r.cpcAct || (r.cl > 0 ? Math.round((r.spend || 0) / r.cl) : null), r.mcpc || null, r.sales || 0, r.orders || 0, pct(r.orders || 0, r.cl || 0), pct(r.sales || 0, r.spend || 0), sn ? (Object.prototype.hasOwnProperty.call(sn, r.kw) ? 'はい' : 'いいえ') : '不明']);
+  });
+  add('04_KW別_日別.csv', ['日付','曜日','商品管理番号','商品番号','商品名','キーワード','実績額','クリック数','表示回数(推定)','CTR(%)','CPC実績','目安CPC','広告売上(720h)','注文数(720h)','CVR(%)','ROAS(%)','現在も登録中'], r04);
+
+  // 05 ショップ全体・日別 ／ 06 ショップ全体・月別
+  const SH = [['spend','実績額'],['cl','クリック数'],['sales','広告売上(720h)'],['orders','注文数(720h)'],['cpc','CPC'],['cvr','CVR(%)'],['roas','ROAS(%)'],['cpa','CPA'],
+    ['spendKw','KW-実績額'],['clKw','KW-クリック数'],['salesKw','KW-広告売上'],['ordersKw','KW-注文数'],['spend20','商品CPC分-実績額'],['cl20','商品CPC分-クリック数'],['sales20','商品CPC分-広告売上'],['orders20','商品CPC分-注文数'],['cpc20','商品CPC分-CPC'],['cvr20','商品CPC分-CVR(%)'],['roas20','商品CPC分-ROAS(%)'],['cpa20','商品CPC分-CPA']];
+  const shopTot = {}; Object.keys(ds03).forEach(c => Object.keys(ds03[c]).forEach(d => { if (inR(d)) shopTot[d] = (shopTot[d] || 0) + (ds03[c][d].sales || 0); }));
+  add('05_ショップ全体_日別.csv', ['日付','曜日'].concat(SH.map(s => s[1])).concat(['総売上(広告+SEO)']),
+    (dailyRows || []).filter(r => !r.isPeriod && inR(_axDateOfDailyRow(r))).map(r => { const d = _axDateOfDailyRow(r); return [d, wd(d)].concat(SH.map(s => r[s[0]] != null ? r[s[0]] : null)).concat([shopTot[d] != null ? shopTot[d] : null]); }).sort((a, b) => a[0] < b[0] ? -1 : 1));
+  const fYm = from.slice(0,4) + from.slice(5,7), tYm = to.slice(0,4) + to.slice(5,7);
+  add('06_ショップ全体_月別.csv', ['月'].concat(SH.map(s => s[1])),
+    (nichinichiRows || []).filter(r => r.isPeriod && /^\d{6}$/.test(String(r.code)) && r.code >= fYm && r.code <= tYm).map(r => [String(r.code).slice(0,4) + '-' + String(r.code).slice(4,6)].concat(SH.map(s => r[s[0]] != null ? r[s[0]] : null))).sort((a, b) => a[0] < b[0] ? -1 : 1));
+
+  // 07 商品別・月別サマリー（期間内の日だけを集計）
+  const m07 = {};
+  const g = (c, ym) => (m07[c + '|' + ym] || (m07[c + '|' + ym] = { c, ym, sp:0, cl:0, sa:0, od:0, spK:0, saK:0, tot:0, tod:0 }));
+  r02.forEach(r => { const o = g(r[2], r[0].slice(0,7)); o.sp += r[5] || 0; o.cl += r[6] || 0; o.sa += r[11] || 0; o.od += r[12] || 0; o.spK += r[15] || 0; o.saK += r[17] || 0; });
+  r03.forEach(r => { const o = g(r[2], r[0].slice(0,7)); o.tot += r[5] || 0; o.tod += r[6] || 0; });
+  add('07_商品別_月別サマリー.csv', ['月','商品管理番号','商品番号','商品名','区分(現在)','実績額','クリック数','広告売上(720h)','広告注文数(720h)','広告ROAS(%)','CVR(%)','総売上(広告+SEO)','総注文件数','SEO売上(推定)','売上ROAS(%)','KW-実績額','KW-広告売上','KW-ROAS(%)','商品CPC分-実績額','商品CPC分-広告売上','商品CPC分-ROAS(%)'],
+    Object.values(m07).sort((a, b) => (a.ym < b.ym ? -1 : a.ym > b.ym ? 1 : 0) || String(a.c).localeCompare(String(b.c))).map(o => { const p = P(o.c); const s20 = Math.max(0, o.sp - o.spK), a20 = Math.max(0, o.sa - o.saK);
+      return [o.ym, o.c, p.num, p.name, p.st, o.sp, o.cl, o.sa, o.od, pct(o.sa, o.sp), pct(o.od, o.cl), o.tot, o.tod, Math.max(0, o.tot - o.sa), pct(o.tot, o.sp), o.spK, o.saK, pct(o.saK, o.spK), s20, a20, pct(a20, s20)]; }));
+
+  // 08 登録KW（現在）
+  const r08 = []; Object.keys(snap).sort().forEach(c => { const sn = _snapKwMap(snap[c]) || {}, p = P(c); Object.keys(sn).forEach(k => r08.push([_currentKwSnap.date || '', c, p.num, p.name, k, sn[k] != null ? sn[k] : null])); });
+  add('08_登録KW_現在.csv', ['取込日','商品管理番号','商品番号','商品名','キーワード','目安CPC'], r08);
+
+  // 09 変更記録（商品ごと＋全体）
+  const r09 = [];
+  const clT = l => { try{ return _clTypes(l).map(v => (_clDef(v) || {}).label || v).join('/'); }catch(e){ return l.type || ''; } };
+  Object.keys(productCache || {}).forEach(c => { if (c === '__global__') return; ((productCache[c] || {}).changeLog || []).forEach(l => { if (!l || !inR(l.date)) return; const p = P(c); r09.push([l.date, c, p.num, p.name, clT(l), l.note || '']); }); });
+  try{ ((productCache['__global__'] || {}).changeLogs || []).forEach(l => { if (l && inR(l.date)) r09.push([l.date, '(全体)', '', '', '', l.note || '']); }); }catch(e){}
+  add('09_変更記録.csv', ['日付','商品管理番号','商品番号','商品名','変更の種類','メモ'], r09.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+
+  // 10 カレンダー（セール等）
+  add('10_カレンダー_イベント.csv', ['開始日','終了日','イベント'], (calEvents || []).filter(e => e && (e.end || e.start) >= from && e.start <= to).map(e => [e.start, e.end || e.start, e.label || '']).sort((a, b) => a[0] < b[0] ? -1 : 1));
+
+  // 11 在庫切れ
+  add('11_在庫切れ_日別件数.csv', ['日付','在庫切れ(現役)','在庫切れ(引退)','在庫切れ合計'], (_stockDaily || []).filter(s => s && inR(s.date)).map(s => [s.date, s.active, s.retired, s.total]).sort((a, b) => a[0] < b[0] ? -1 : 1));
+  add('12_在庫切れ_現在.csv', ['商品管理番号','商品番号','商品名','区分','在庫切れになった日','最終チェック日時'], (_stockSoldOut || []).map(c => { const p = P(c), inf = (_stockInfo || {})[c] || {}; return [c, p.num, p.name || inf.n || '', p.st, (_stockSince || {})[c] || '', _stockCheckedAt || '']; }));
+
+  // 13/14 CA調整（クーポンアドバンス）… 取り込んだCSVのまま（期間で絞り込まない）
+  const gen = arr => { const ks = []; (arr || []).forEach(o => Object.keys(o || {}).forEach(k => { if (ks.indexOf(k) < 0) ks.push(k); })); return { ks, rows: (arr || []).map(o => ks.map(k => { const v = (o || {})[k]; return (v != null && typeof v === 'object') ? JSON.stringify(v) : v; })) }; };
+  try{ _cpaLoad(); }catch(e){} try{ _cpaLoadKw(); }catch(e){}
+  const ca = gen(couponAdvanceRows), cak = gen(couponAdvanceKwRows);
+  if (ca.rows.length) add('13_CA調整_商品.csv', ca.ks, ca.rows);
+  if (cak.rows.length) add('14_CA調整_KW.csv', cak.ks, cak.rows);
+
+  return { files, counts };
+}
+function _axReadme(from, to, counts, rg){
+  const now = new Date(); const ts = _axYmd(now) + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const L = [];
+  L.push('# ADcheck 分析用データ（楽天RPP広告）', '');
+  L.push('- ショップ：' + _axShopName() + '（' + _axShopId() + '）');
+  L.push('- 期間：' + from + ' 〜 ' + to + '（データがある期間：' + (rg.mn || '-') + ' 〜 ' + (rg.mx || '-') + '）');
+  L.push('- 作成：' + ts + '（ADcheck ' + ((document.querySelector('.build-date') || {}).textContent || '') + '）', '');
+  L.push('## ファイル一覧', '', '| ファイル | 行数 | 中身 |', '|---|---:|---|');
+  const D = {
+    '01_商品マスタ.csv':'商品の一覧（現在の区分・SS/マラソン対象など）。期間に関係なく全商品',
+    '02_商品別_日別_広告.csv':'商品×日のRPP広告実績。KW経由と商品CPC経由（いわゆる20円入札）の内訳つき',
+    '03_商品別_日別_総売上.csv':'商品×日の総売上（広告＋SEO）。SEO売上＝総売上−広告売上（推定）',
+    '04_KW別_日別.csv':'商品×キーワード×日のRPP実績。クリックがあったKWだけ載る',
+    '05_ショップ全体_日別.csv':'ショップ全体の日別RPP実績＋総売上',
+    '06_ショップ全体_月別.csv':'ショップ全体の月別RPP実績（月まるごとの値。期間の端の月も月全体）',
+    '07_商品別_月別サマリー.csv':'02と03を商品×月に集計（期間内の日だけ）',
+    '08_登録KW_現在.csv':'今RPPに登録しているキーワードと目安CPC（最新の取込時点）',
+    '09_変更記録.csv':'商品ページ等を変えた日（LP・サムネ・タイトル・売り方）と全体の出来事',
+    '10_カレンダー_イベント.csv':'セール等のイベント期間（SS＝スーパーSALE など）',
+    '11_在庫切れ_日別件数.csv':'在庫切れ商品数の推移',
+    '12_在庫切れ_現在.csv':'今在庫切れの商品',
+    '13_CA調整_商品.csv':'クーポンアドバンス（商品）。取り込んだCSVそのまま・期間で絞り込みなし',
+    '14_CA調整_KW.csv':'クーポンアドバンス（KW）。取り込んだCSVそのまま・期間で絞り込みなし',
+  };
+  Object.keys(counts).forEach(n => L.push('| ' + n + ' | ' + counts[n].toLocaleString() + ' | ' + (D[n] || '') + ' |'));
+  L.push('', '## 用語と注意点', '');
+  L.push('- **実績額**：RPP広告費（円）。**CPC**＝実績額÷クリック数。**CTR**＝クリック数÷表示回数。');
+  L.push('- **広告売上・注文数**：RPPの「720時間（30日）」計測。広告クリック後30日以内の売上で、直近の日は後から増えることがある。');
+  L.push('- **広告ROAS(%)**＝広告売上÷実績額×100。**売上ROAS(%)**＝総売上（広告＋SEO）÷実績額×100。**CVR(%)**＝注文数÷クリック数×100。');
+  L.push('- **KW-〇〇**：登録キーワード経由。**商品CPC分-〇〇**：キーワード以外（商品CPC＝主に20円入札）経由＝全体−KW。');
+  L.push('- **表示回数(推定)**：レポートのクリック数とCTRから逆算した値。');
+  L.push('- **04_KW別_日別**：楽天のKWレポートはクリックが1回以上あったKWしか載らない。行が無い日は「クリック0」で、広告が止まっていたとは限らない。');
+  L.push('- **目安CPC**：楽天が示す目安単価。**CPC実績**：その日の実際の1クリック単価（≒入札額）。**現在も登録中**：08の登録KWに入っているか。');
+  L.push('- **区分**：ADcheckでの商品の分類（健常◎・中立□・撤退予定▲ など）。現在の値で、過去の区分ではない。');
+  L.push('- 金額は円、％は％の値（例：250＝250%）。空欄は「データなし／計算できない」。');
+  L.push('', '## 分析の頼み方の例', '');
+  L.push('- 「07で、実績額が多いのに売上ROASが低い商品を挙げて、02・04から原因（CPC・CVR・KW）を探して」');
+  L.push('- 「04で、目安CPCより入札が低くクリックが取れていないKWと、ROASが高いのに入札を絞っているKWを出して」');
+  L.push('- 「09の変更記録の前後14日で、総売上・CVR・ROASがどう変わったか比べて」');
+  L.push('- 「05・10から、セール期間とそれ以外で ROAS・CPC・総売上を比べて」');
+  return L.join('\n') + '\n';
+}
+async function _axDownload(){
+  const from = document.getElementById('axFrom').value, to = document.getElementById('axTo').value, msg = document.getElementById('axMsg'), btn = document.getElementById('axBtn');
+  if (!from || !to || from > to){ msg.style.color = '#c62828'; msg.textContent = '期間を正しく指定してください。'; return; }
+  if (typeof JSZip === 'undefined'){ msg.style.color = '#c62828'; msg.textContent = 'ZIPの部品が読み込めていません。ページを再読み込みしてください。'; return; }
+  btn.disabled = true; const o = btn.textContent; btn.textContent = '作成中…'; msg.style.color = 'var(--text3)'; msg.textContent = '';
+  await new Promise(r => setTimeout(r, 30));
+  try{
+    const rg = _axRange();
+    const b = _axBuild(from, to);
+    const dir = 'ADcheck_分析用_' + _axShopId() + '_' + from.replace(/-/g,'') + '-' + to.replace(/-/g,'');
+    const zip = new JSZip();
+    zip.file(dir + '/00_README.md', _axReadme(from, to, b.counts, rg));
+    b.files.forEach(f => zip.file(dir + '/' + f.name, f.text));
+    const blob = await zip.generateAsync({ type:'blob', compression:'DEFLATE', compressionOptions:{ level:6 } });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = dir + '.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    msg.style.color = '#0f766e'; msg.textContent = '✅ ' + dir + '.zip（' + (blob.size / 1024 / 1024).toFixed(1) + 'MB）を保存しました';
+  }catch(e){ console.error('[ADcheck] 分析用データ作成エラー', e); msg.style.color = '#c62828'; msg.textContent = '作成に失敗しました：' + (e && e.message || e); }
+  btn.disabled = false; btn.textContent = o;
+}
+
 function openRenewalGraph(code) {
   document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
   _renewalHiddenFY.clear(); _renewalHiddenMetric.clear();
@@ -12601,7 +12833,7 @@ function _setRenewalGraphPeriod(period) {
   _setRenewalGraphPeriodBtnUI(period);
   _renewalDayToggleUI();
   _syncRenewalMetricOptions();
-  _syncRenewalDayMonth();
+  _syncRenewalDayMonth(true);   // ★v1.1456★ 日別⇔月別の切替では選んだ月を引き継ぐ
   renderRenewalGraph();
 }
 
@@ -12609,14 +12841,16 @@ function _setRenewalGraphPeriod(period) {
 function _syncRenewalDayMonth(keepSelection) {
   const sel = document.getElementById('renewalGraphDayMonth');
   if (!sel) return;
-  if (_renewalGraphPeriod !== 'daily') { sel.style.display = 'none'; return; }
+  // ★v1.1456★ 月別でも表示（月別では「この月まで」を表示）
   sel.style.display = '';
   const code = _renewalGraphCode;
   const byDate = (code && itemDailyData[code]) || {};
   // 利用可能な月(YYYY-MM)を新しい順に
   const months = [...new Set(_itemDateUniverse(code).map(d => d.slice(0,7)))].sort().reverse();
   const prev = keepSelection ? sel.value : null;
-  sel.innerHTML = months.map(m => `<option value="${m}">${m.slice(0,4)}年${m.slice(5,7)}月</option>`).join('');
+  const _sfx = _renewalGraphPeriod === 'daily' ? '' : ' まで';
+  sel.title = _renewalGraphPeriod === 'daily' ? '' : 'この月までを表示';
+  sel.innerHTML = months.map(m => `<option value="${m}">${m.slice(0,4)}年${m.slice(5,7)}月${_sfx}</option>`).join('');
   // 以前の選択を維持、無ければ最新月
   if (prev && months.includes(prev)) sel.value = prev;
   else if (months.length) sel.value = months[0];
@@ -12779,6 +13013,9 @@ function renderRenewalGraph() {
     // 当月（まだ締まっていない月）は数値が不完全なので月別表示から除外
     const _now = new Date();
     const _curYm = _now.getFullYear() + '-' + String(_now.getMonth()+1).padStart(2,'0');
+    // ★v1.1456★ 月セレクトで選んだ月までに絞る（2年横並びはその月から24か月さかのぼる）
+    const _mEnd = document.getElementById('renewalGraphDayMonth')?.value || '';
+    if (_mEnd) labels = labels.filter(m => m <= _mEnd);
     labels.forEach(m => { dataMap[m] = monthly[m]; }); if (typeof _renewalView2y!=='undefined' && _renewalView2y) labels=labels.slice(-24);
   }
 
@@ -18196,6 +18433,48 @@ window.addEventListener('DOMContentLoaded', async () => {
     <div style="flex:1;min-height:0;display:flex">
       <div id="kwTrendList" style="flex:0 0 196px;overflow-y:auto;padding:12px 8px 12px 12px;border-right:1px solid var(--border);background:var(--surface2)"></div>
       <div id="kwTrendBody" style="flex:1;min-width:0;overflow-y:auto;padding:12px 20px 18px"></div>
+    </div>
+  </div>
+</div>
+<!-- ★v1.1457★ 分析用データ（ZIP）モーダル -->
+<div id="axModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9300;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this)closeAnalysisExport()">
+  <div style="background:var(--surface);border-radius:12px;width:94vw;max-width:620px;box-shadow:0 8px 32px rgba(0,0,0,0.3);margin:auto;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:10px;padding:16px 22px;border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:800;flex:1">📦 分析用データをダウンロード</div>
+      <button onclick="closeAnalysisExport()" style="border:none;background:rgba(0,0,0,0.08);cursor:pointer;font-size:15px;color:#333;line-height:1;padding:6px 10px;border-radius:50%">✕</button>
+    </div>
+    <div style="padding:18px 22px 20px">
+      <div style="display:flex;gap:10px;align-items:baseline;margin-bottom:4px"><span style="font-size:12px;color:var(--text3);width:64px;flex-shrink:0">ショップ</span><b id="axShop" style="font-size:15px"></b></div>
+      <div style="font-size:11px;color:var(--text3);margin:0 0 14px 74px">別のショップは、上のショップ切替で切り替えてから出してください</div>
+      <div style="display:flex;gap:10px;align-items:baseline;margin-bottom:12px"><span style="font-size:12px;color:var(--text3);width:64px;flex-shrink:0">データ</span><span id="axDataRange" style="font-size:13px;font-family:'DM Mono',monospace"></span></div>
+      <div style="display:flex;gap:10px;align-items:flex-start"><span style="font-size:12px;color:var(--text3);width:64px;flex-shrink:0;padding-top:7px">期間</span>
+        <div style="flex:1">
+          <div id="axPresets" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px">
+            <button data-p="30" onclick="_axPreset('30')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">直近30日</button>
+            <button data-p="90" onclick="_axPreset('90')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">直近90日</button>
+            <button data-p="tm" onclick="_axPreset('tm')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">今月</button>
+            <button data-p="lm" onclick="_axPreset('lm')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">先月</button>
+            <button data-p="ty" onclick="_axPreset('ty')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">今年(1月〜)</button>
+            <button data-p="fy" onclick="_axPreset('fy')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">今期(5月〜)</button>
+            <button data-p="365" onclick="_axPreset('365')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">直近1年</button>
+            <button data-p="all" onclick="_axPreset('all')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">全期間</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="date" id="axFrom" onchange="_axDateEdited()" style="font-size:13px;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)">
+            <span style="color:var(--text3)">〜</span>
+            <input type="date" id="axTo" onchange="_axDateEdited()" style="font-size:13px;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)">
+          </div>
+          <div id="axPreview" style="font-size:11px;color:var(--text2);margin-top:8px"></div>
+        </div>
+      </div>
+      <div style="margin:16px 0 0;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:11px;color:var(--text2);line-height:1.7">
+        <b>入るもの（CSV＋説明書 README）</b>：商品マスタ／商品別・日別の広告と総売上／KW別・日別／ショップ全体の日別・月別／商品別・月別サマリー／登録KW／変更記録／カレンダー／在庫切れ／CA調整<br>
+        ZIPをそのままGPTに渡して「README を読んでから分析して」と頼むと、列の意味が伝わります。
+      </div>
+      <div style="margin-top:16px">
+        <button id="axBtn" onclick="_axDownload()" style="font-size:14px;font-weight:800;padding:9px 22px;border-radius:8px;border:none;background:#0f766e;color:#fff;cursor:pointer;white-space:nowrap">⬇ ZIPをダウンロード</button>
+        <div id="axMsg" style="font-size:12px;font-weight:700;margin-top:8px;word-break:break-all"></div>
+      </div>
     </div>
   </div>
 </div>
