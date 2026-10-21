@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1445</span>
+    <span class="build-date">v1.1446</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6930,16 +6930,30 @@ function _snapKwMap(raw){
 }
 // \u76EE\u5B89CPC\u304B\u3089 \u25A0 \u306E\u8272\u7A2E\u5225\u3092\u6C7A\u5B9A\uFF0846\u5186\u4EE5\u4E0A=\u8D64 / 46\u5186\u672A\u6E80(=45\u5186\u4EE5\u4E0B)=\u9ED2 / \u4E0D\u660E=\u8D64\uFF09
 function _zeroImpKind(mecpc){ return (mecpc!=null && mecpc<=45) ? 'zeroImpBlack' : 'zeroImpRed'; }
+// ★v1.1446★ 他のファイルと同時に保存すると GitHub が 409（SHA不一致）等を返すことがあるので、ほかの保存と同じく自動リトライ（最大5回）
 async function _saveCurrentKwToGitHub(){
   var pat=localStorage.getItem('github_pat'); if(!pat) return false;
-  try{
-    var headers={'Authorization':'token '+pat,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
-    var url='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_ghCurrentKwFile();
-    var getRes=await fetch(url,{headers,cache:'no-store'}); var sha=getRes.ok?(await getRes.json()).sha:null;
-    var base64=btoa(unescape(encodeURIComponent(JSON.stringify(_currentKwSnap))));
-    var body={message:'Update current kw snapshot',content:base64}; if(sha) body.sha=sha;
-    var putRes=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)}); return putRes.ok;
-  }catch(e){ return false; }
+  var headers={'Authorization':'token '+pat,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+  var url='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+_ghCurrentKwFile();
+  var base64=btoa(unescape(encodeURIComponent(JSON.stringify(_currentKwSnap))));
+  var MAX=5;
+  for(var i=0;i<=MAX;i++){
+    if(i>0){ await new Promise(function(r){ setTimeout(r, 600 + i*500 + Math.floor(Math.random()*400)); }); }
+    try{
+      var getRes=await fetch(url,{headers,cache:'no-store'});
+      // GET が 404 以外で失敗 → SHA 不明のまま上書きしない（リトライ）
+      if(!getRes.ok && getRes.status!==404){ console.warn('[ADcheck] 登録KW保存: GET '+getRes.status+' でリトライ ('+(i+1)+'/'+MAX+')'); continue; }
+      var sha=getRes.ok?(await getRes.json()).sha:null;
+      var body={message:'Update current kw snapshot',content:base64}; if(sha) body.sha=sha;
+      var putRes=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)});
+      if(putRes.ok){ if(i>0) console.log('[ADcheck] 登録KW保存成功（'+i+'回リトライ後）'); return true; }
+      var st=putRes.status; var msg=''; try{ msg=((await putRes.json())||{}).message||''; }catch(e){}
+      var again = st===409 || (st===422 && /sha/i.test(msg)) || st>=500 || st===403 || st===429;
+      console.warn('[ADcheck] 登録KW保存: PUT '+st+' '+msg+(again&&i<MAX?' → リトライ ('+(i+1)+'/'+MAX+')':''));
+      if(!again) return false;
+    }catch(e){ console.warn('[ADcheck] 登録KW保存: 通信エラー → リトライ ('+(i+1)+'/'+MAX+')', e); }
+  }
+  return false;
 }
 async function _loadCurrentKwFromGitHub(){
   try{
