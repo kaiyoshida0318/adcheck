@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1460</span>
+    <span class="build-date">v1.1461</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12551,6 +12551,7 @@ function _axPreset(p){
   else if (p === 'lm'){ const s = new Date(end.getFullYear(), end.getMonth() - 1, 1), e = new Date(end.getFullYear(), end.getMonth(), 0); from = _axYmd(s); to = _axYmd(e); }
   else if (p === 'ty'){ from = rg.mx.slice(0,4) + '-01-01'; }
   else if (p === 'fy'){ const y = (end.getMonth() + 1 >= 5) ? end.getFullYear() : end.getFullYear() - 1; from = y + '-05-01'; }
+  else if (p === '2510'){ from = '2025-10-01'; }   // ★v1.1461★ GPT指示書の初期期間
   if (from < rg.mn) from = rg.mn;
   document.getElementById('axFrom').value = from; document.getElementById('axTo').value = to;
   _axPresetUI(); _axPreview();
@@ -12734,6 +12735,217 @@ async function _axDownload(){
     const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = dir + '.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
     msg.style.color = '#0f766e'; msg.textContent = '✅ ' + dir + '.zip（' + (blob.size / 1024 / 1024).toFixed(1) + 'MB）を保存しました';
   }catch(e){ console.error('[ADcheck] 分析用データ作成エラー', e); msg.style.color = '#c62828'; msg.textContent = '作成に失敗しました：' + (e && e.message || e); }
+  btn.disabled = false; btn.textContent = o;
+}
+
+// ════════════════════════════════════════════════════════════════
+// ★v1.1461★ 分析用データ「拡張版」（GPTの実装指示書に合わせた版）
+//   ・既存の01〜14は列名・意味を変えず、必要な列を後ろに足す（06だけは指示どおり日別からの再集計）
+//   ・「データが無い（未取得）」は空欄、「取得済みで実績0」は 0 と区別する
+//   ・15 検証（商品合計とショップ全体の一致）、16/17 同日数比較（各月1〜N日）を追加
+// ════════════════════════════════════════════════════════════════
+function _axBuildV2(from, to){
+  const base = _axBuild(from, to);   // 08〜14 は既存のまま使う
+  const keep = {}; base.files.forEach(f => { keep[f.name] = f; });
+  const inR = d => !!d && d >= from && d <= to;
+  const wd = d => _AX_WD[_axD(d).getDay()];
+  const R = (a, b, m) => (b > 0 && a != null) ? Math.round(a / b * (m || 1) * 100) / 100 : null;   // 合計から計算する率・単価
+  const P = code => { const pc = productCache[code] || {}; return { num: pc.itemNumber || '', name: pc.manualName || pc.name || '', st: (typeof STATUS_LABELS !== 'undefined' && STATUS_LABELS[pc.status || 'unset']) || pc.status || '', stc: pc.status || 'unset' }; };
+  const snap = (_currentKwSnap && _currentKwSnap.byCode) || {};
+  const files = [], counts = {};
+  const add = (name, header, rows) => { files.push({ name, text: _axCsv(header, rows) }); counts[name] = rows.length; };
+  // ---- 取得済みの日（＝その日のレポートを取り込んでいる日）----
+  const adLoaded = new Set(), kwLoaded = new Set(), saLoaded = new Set();
+  Object.keys(itemDailyData || {}).forEach(c => Object.keys(itemDailyData[c] || {}).forEach(d => adLoaded.add(d)));
+  Object.keys(DB || {}).forEach(c => Object.keys((DB[c] && DB[c].days) || {}).forEach(d => adLoaded.add(d)));
+  kwRows.forEach(r => kwLoaded.add(r.date)); salesRows.forEach(r => saLoaded.add(r.date));
+  const days = []; for (let d = _axD(from); _axYmd(d) <= to; d.setDate(d.getDate() + 1)) days.push(_axYmd(d));
+  const dsAll = _getDailySales();
+  // 商品×日 の値（未取得は null）
+  const rec = (c, d) => {
+    const o = { ad: adLoaded.has(d), kw: kwLoaded.has(d), saOk: saLoaded.has(d) };
+    const x = (itemDailyData[c] || {})[d], y = ((DB[c] && DB[c].days) || {})[d];
+    if (o.ad){ o.has = !!(x || y); o.sp = x ? x.spend || 0 : (y ? y.spend || 0 : 0); o.cl = x ? x.cl || 0 : (y ? y.clicks || 0 : 0); o.sa = x ? x.sales || 0 : (y ? y.sales720 || 0 : 0); o.od = x ? x.orders || 0 : (y ? y.orders720 || 0 : 0);
+      o.imp = x && x.imp ? x.imp : ((y && y.ctr > 0 && o.cl > 0) ? o.cl / (y.ctr / 100) : 0); o.bid = (y && y.bid != null) ? y.bid : null; }
+    if (o.ad && o.kw){ o.spK = x ? x.spendKw || 0 : 0; o.clK = x ? x.clKw || 0 : 0; o.saK = x ? x.salesKw || 0 : 0; o.odK = x ? x.ordersKw || 0 : 0; }
+    if (o.saOk){ const v = (dsAll[c] || {})[d]; o.tot = v ? v.sales || 0 : 0; o.tod = v ? v.orders || 0 : 0; o.tun = v ? v.units || 0 : 0; }
+    return o;
+  };
+  // 集計の入れ物（率は最後に合計から計算）
+  const Z = () => ({ adDays:0, kwDays:0, saDays:0, sp:0, cl:0, imp:0, sa:0, od:0, spK:0, clK:0, saK:0, odK:0, tot:0, tod:0, tun:0 });
+  const acc = (a, o) => { if (o.ad){ a.adDays++; a.sp += o.sp; a.cl += o.cl; a.imp += o.imp; a.sa += o.sa; a.od += o.od; }
+    if (o.ad && o.kw){ a.kwDays++; a.spK += o.spK; a.clK += o.clK; a.saK += o.saK; a.odK += o.odK; }
+    if (o.saOk){ a.saDays++; a.tot += o.tot; a.tod += o.tod; a.tun += o.tun; } };
+  // 1行ぶんの指標（ad/kw/sales が未取得なら空欄）
+  const MET_H = ['総売上(広告+SEO)','総注文件数','総個数','SEO売上(推定)','実績額','クリック数','表示回数(推定)','広告売上(720h)','広告注文数(720h)','CPC','CVR(%)','ROAS(%)','CPA','売上ROAS(%)',
+    'KW-実績額','KW-クリック数','KW-広告売上','KW-注文数','KW-CPC','KW-CVR(%)','KW-ROAS(%)','KW-CPA',
+    '商品CPC分-実績額','商品CPC分-クリック数','商品CPC分-広告売上','商品CPC分-注文数','商品CPC分-CPC','商品CPC分-CVR(%)','商品CPC分-ROAS(%)','商品CPC分-CPA'];
+  const met = a => { const ad = a.adDays > 0, kw = a.kwDays > 0, sa = a.saDays > 0;
+    const s20 = Math.max(0, a.sp - a.spK), c20 = Math.max(0, a.cl - a.clK), a20 = Math.max(0, a.sa - a.saK), o20 = Math.max(0, a.od - a.odK);
+    const A = v => ad ? v : null, K = v => (ad && kw) ? v : null, S = v => sa ? v : null;
+    return [S(a.tot), S(a.tod), S(a.tun), (sa && ad) ? Math.max(0, a.tot - a.sa) : null,
+      A(a.sp), A(a.cl), A(Math.round(a.imp)), A(a.sa), A(a.od), A(R(a.sp, a.cl)), A(R(a.od, a.cl, 100)), A(R(a.sa, a.sp, 100)), A(R(a.sp, a.od)), (sa && ad) ? R(a.tot, a.sp, 100) : null,
+      K(a.spK), K(a.clK), K(a.saK), K(a.odK), K(R(a.spK, a.clK)), K(R(a.odK, a.clK, 100)), K(R(a.saK, a.spK, 100)), K(R(a.spK, a.odK)),
+      K(s20), K(c20), K(a20), K(o20), K(R(s20, c20)), K(R(o20, c20, 100)), K(R(a20, s20, 100)), K(R(s20, o20))]; };
+
+  // ---- 01 商品マスタ（既存＋区分コード・最初/最後のデータ日）----
+  const codesAll = new Set(Object.keys(productCache || {}).filter(c => c !== '__global__'));
+  Object.keys(itemDailyData || {}).forEach(c => codesAll.add(c)); Object.keys(DB || {}).forEach(c => codesAll.add(c)); kwRows.forEach(r => r.itemCode && codesAll.add(r.itemCode)); Object.keys(dsAll).forEach(c => codesAll.add(c));
+  const codes = [...codesAll].sort();
+  const firstLast = {}; const fl = (c, d) => { const o = firstLast[c] || (firstLast[c] = { f:'', l:'' }); if (!o.f || d < o.f) o.f = d; if (!o.l || d > o.l) o.l = d; };
+  Object.keys(itemDailyData || {}).forEach(c => Object.keys(itemDailyData[c] || {}).forEach(d => fl(c, d))); Object.keys(dsAll).forEach(c => Object.keys(dsAll[c]).forEach(d => fl(c, d)));
+  { const f = keep['01_商品マスタ.csv']; const lines = f.text.replace(/^﻿/, '').trim().split('\r\n'); const head = lines[0];
+    const byCode = {}; lines.slice(1).forEach(l => { const c = l.split(',')[0]; byCode[c] = l; });
+    const text = '﻿' + head + ',区分コード,最初のデータ日,最後のデータ日\r\n' + codes.map(c => { const fx = firstLast[c] || {}; const b = byCode[c] || _axCsv(['x'], [[c]]).replace(/^﻿/, '').split('\r\n')[1] + ',,,,,,,,,,'; return b + ',' + P(c).stc + ',' + (fx.f || '') + ',' + (fx.l || ''); }).join('\r\n') + '\r\n';
+    files.push({ name:'01_商品マスタ.csv', text }); counts['01_商品マスタ.csv'] = codes.length; }
+
+  // ---- 02 商品別・日別・広告（既存の列＋CPA・内訳の率・KW内訳の有無）----
+  const r02 = [];
+  codes.forEach(c => { days.forEach(d => { const o = rec(c, d); if (!o.ad || !o.has) return; const p = P(c);
+    const kwOk = o.kw; const s20 = kwOk ? Math.max(0, o.sp - o.spK) : null, c20 = kwOk ? Math.max(0, o.cl - o.clK) : null, a20 = kwOk ? Math.max(0, o.sa - o.saK) : null, o20 = kwOk ? Math.max(0, o.od - o.odK) : null;
+    const y = ((DB[c] && DB[c].days) || {})[d] || {};
+    r02.push([d, wd(d), c, p.num, p.name, o.sp, o.cl, o.imp ? Math.round(o.imp) : null, (y.ctr != null && y.ctr !== '') ? y.ctr : R(o.cl, o.imp, 100), R(o.sp, o.cl), o.bid, o.sa, o.od, R(o.sa, o.sp, 100), R(o.od, o.cl, 100),
+      kwOk ? o.spK : null, kwOk ? o.clK : null, kwOk ? o.saK : null, kwOk ? o.odK : null, s20, c20, a20, o20,
+      R(o.sp, o.od), kwOk ? R(o.spK, o.clK) : null, kwOk ? R(o.odK, o.clK, 100) : null, kwOk ? R(o.spK, o.odK) : null, kwOk ? R(s20, c20) : null, kwOk ? R(o20, c20, 100) : null, kwOk ? R(s20, o20) : null, kwOk ? 'あり' : 'なし']); }); });
+  add('02_商品別_日別_広告.csv', ['日付','曜日','商品管理番号','商品番号','商品名','実績額','クリック数','表示回数(推定)','CTR(%)','CPC','商品CPC(入札)','広告売上(720h)','広告注文数(720h)','広告ROAS(%)','CVR(%)','KW-実績額','KW-クリック数','KW-広告売上','KW-注文数','商品CPC分-実績額','商品CPC分-クリック数','商品CPC分-広告売上','商品CPC分-注文数',
+    'CPA','KW-CPC','KW-CVR(%)','KW-CPA','商品CPC分-CPC','商品CPC分-CVR(%)','商品CPC分-CPA','KW内訳(KWレポート取込)'], r02);
+
+  // ---- 03 商品別・日別・総売上（既存の列。広告側が未取得の日は空欄）----
+  const r03 = [];
+  codes.forEach(c => { days.forEach(d => { const o = rec(c, d); const hasSale = !!((dsAll[c] || {})[d]); if (!hasSale && !(o.ad && o.has)) return; const p = P(c);
+    r03.push([d, wd(d), c, p.num, p.name, o.saOk ? o.tot : null, o.saOk ? o.tod : null, o.saOk ? o.tun : null, o.ad ? o.sa : null, (o.saOk && o.ad) ? Math.max(0, o.tot - o.sa) : null, o.ad ? o.sp : null, (o.saOk && o.ad) ? R(o.tot, o.sp, 100) : null, o.saOk ? 'あり' : 'なし', o.ad ? 'あり' : 'なし']); }); });
+  add('03_商品別_日別_総売上.csv', ['日付','曜日','商品管理番号','商品番号','商品名','総売上(広告+SEO)','注文件数','個数','広告売上(720h)','SEO売上(推定)','実績額','売上ROAS(%)','売上データ取込','広告データ取込'], r03);
+
+  // ---- 04 KW別・日別（既存＋CPA）----
+  { const f = keep['04_KW別_日別.csv']; const lines = f.text.replace(/^﻿/, '').replace(/\r\n$/, '').split('\r\n');
+    const rowsK = kwRows.filter(r => inR(r.date)).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || String(a.itemCode).localeCompare(String(b.itemCode)) || String(a.kw).localeCompare(String(b.kw)));
+    const text = '﻿' + lines[0] + ',CPA\r\n' + lines.slice(1).map((l, i) => { const r = rowsK[i] || {}; const v = R(r.spend || 0, r.orders || 0); return l + ',' + (v == null ? '' : v); }).join('\r\n') + (lines.length > 1 ? '\r\n' : '');
+    files.push({ name:'04_KW別_日別.csv', text }); counts['04_KW別_日別.csv'] = lines.length - 1; }
+
+  // ---- 05 ショップ全体・日別（商品の合計から計算）／06 月別（05を期間内で再集計）----
+  const dayAgg = {}; days.forEach(d => { const a = Z(); codes.forEach(c => acc(a, rec(c, d))); if (!adLoaded.has(d)) a.adDays = 0; else a.adDays = 1; if (!(adLoaded.has(d) && kwLoaded.has(d))) a.kwDays = 0; else a.kwDays = 1; a.saDays = saLoaded.has(d) ? 1 : 0; dayAgg[d] = a; });
+  add('05_ショップ全体_日別.csv', ['日付','曜日'].concat(MET_H).concat(['広告データ取込','KWデータ取込','売上データ取込']),
+    days.filter(d => adLoaded.has(d) || saLoaded.has(d)).map(d => [d, wd(d)].concat(met(dayAgg[d])).concat([adLoaded.has(d) ? 'あり' : 'なし', kwLoaded.has(d) ? 'あり' : 'なし', saLoaded.has(d) ? 'あり' : 'なし'])));
+  const months = [...new Set(days.map(d => d.slice(0,7)))];
+  const mSum = (ym, maxDay) => { const a = Z(); let n = 0; days.forEach(d => { if (d.slice(0,7) !== ym) return; if (maxDay && +d.slice(8,10) > maxDay) return; const x = dayAgg[d]; n++; ['adDays','kwDays','saDays','sp','cl','imp','sa','od','spK','clK','saK','odK','tot','tod','tun'].forEach(k => a[k] += x[k]); }); a.n = n; return a; };
+  add('06_ショップ全体_月別.csv', ['月','期間内の日数','広告データの日数','KWデータの日数','売上データの日数'].concat(MET_H),
+    months.map(ym => { const a = mSum(ym); return [ym, a.n, a.adDays, a.kwDays, a.saDays].concat(met(a)); }));
+
+  // ---- 07 商品別・月別サマリー（全商品×全月。既存の列＋KW/商品CPC分のクリック・注文・CVR・CPC・CPA）----
+  const prodMonth = (c, ym, maxDay) => { const a = Z(); days.forEach(d => { if (d.slice(0,7) !== ym) return; if (maxDay && +d.slice(8,10) > maxDay) return; acc(a, rec(c, d)); }); return a; };
+  const r07 = [], cache07 = {};
+  months.forEach(ym => codes.forEach(c => { const a = prodMonth(c, ym); cache07[c + '|' + ym] = a; const p = P(c); const s20 = Math.max(0, a.sp - a.spK), a20 = Math.max(0, a.sa - a.saK), c20 = Math.max(0, a.cl - a.clK), o20 = Math.max(0, a.od - a.odK);
+    const ad = a.adDays > 0, kw = a.kwDays > 0, sa = a.saDays > 0; const A = v => ad ? v : null, K = v => (ad && kw) ? v : null, S = v => sa ? v : null;
+    r07.push([ym, c, p.num, p.name, p.st, A(a.sp), A(a.cl), A(a.sa), A(a.od), A(R(a.sa, a.sp, 100)), A(R(a.od, a.cl, 100)), S(a.tot), S(a.tod), (sa && ad) ? Math.max(0, a.tot - a.sa) : null, (sa && ad) ? R(a.tot, a.sp, 100) : null, K(a.spK), K(a.saK), K(R(a.saK, a.spK, 100)), K(s20), K(a20), K(R(a20, s20, 100)),
+      A(R(a.sp, a.cl)), A(R(a.sp, a.od)), K(a.clK), K(a.odK), K(R(a.odK, a.clK, 100)), K(R(a.spK, a.clK)), K(R(a.spK, a.odK)), K(c20), K(o20), K(R(o20, c20, 100)), K(R(s20, c20)), K(R(s20, o20)), S(a.tun), a.adDays, a.kwDays, a.saDays]); }));
+  add('07_商品別_月別サマリー.csv', ['月','商品管理番号','商品番号','商品名','区分(現在)','実績額','クリック数','広告売上(720h)','広告注文数(720h)','広告ROAS(%)','CVR(%)','総売上(広告+SEO)','総注文件数','SEO売上(推定)','売上ROAS(%)','KW-実績額','KW-広告売上','KW-ROAS(%)','商品CPC分-実績額','商品CPC分-広告売上','商品CPC分-ROAS(%)',
+    'CPC','CPA','KW-クリック数','KW-注文数','KW-CVR(%)','KW-CPC','KW-CPA','商品CPC分-クリック数','商品CPC分-注文数','商品CPC分-CVR(%)','商品CPC分-CPC','商品CPC分-CPA','総個数','広告データの日数','KWデータの日数','売上データの日数'], r07);
+
+  // ---- 08〜14 既存のまま ----
+  base.files.forEach(f => { if (/^(08|09|10|11|12|13|14)_/.test(f.name)){ files.push(f); counts[f.name] = base.counts[f.name]; } });
+
+  // ---- 15 検証：商品の合計 と ショップ全体レポート（全-日別データ）の比較 ----
+  const shopRep = {}; (dailyRows || []).forEach(r => { if (!r.isPeriod){ const d = _axDateOfDailyRow(r); if (inR(d)) shopRep[d] = r; } });
+  const r15 = days.filter(d => adLoaded.has(d) || shopRep[d]).map(d => { const a = dayAgg[d], s = shopRep[d];
+    const dif = (x, y) => (x == null || y == null) ? null : Math.round((x - y) * 100) / 100;
+    const sp = adLoaded.has(d) ? a.sp : null, sa = adLoaded.has(d) ? a.sa : null, cl = adLoaded.has(d) ? a.cl : null, spK = (adLoaded.has(d) && kwLoaded.has(d)) ? a.spK : null;
+    const ssp = s ? s.spend : null, ssa = s ? s.sales : null, scl = s ? s.cl : null, sspK = s ? s.spendKw : null;
+    const dSp = (sp != null && ssp != null) && Math.abs(sp - ssp) > 1, dSa = (sa != null && ssa != null) && Math.abs(sa - ssa) > 1, dCl = (cl != null && scl != null) && Math.abs(cl - scl) > 1;
+    const ok = (sp == null || ssp == null) ? '比較不可' : (!dSp && !dSa && !dCl) ? '一致' : '差あり：' + [dSp ? '実績額' : '', dCl ? 'クリック数' : '', dSa ? '広告売上' : ''].filter(Boolean).join('・');
+    return [d, sp, ssp, dif(sp, ssp), sa, ssa, dif(sa, ssa), cl, scl, dif(cl, scl), spK, sspK, dif(spK, sspK), ok]; });
+  add('15_検証_商品合計とショップ全体.csv', ['日付','実績額(商品合計)','実績額(ショップ全体レポート)','差','広告売上(商品合計)','広告売上(ショップ全体レポート)','差','クリック数(商品合計)','クリック数(ショップ全体レポート)','差','KW-実績額(商品合計)','KW-実績額(ショップ全体レポート)','差','判定'], r15);
+
+  // ---- 16/17 同日数比較（各月の1〜N日だけ。N＝終了日の日。終了日が月末ならまるまる1か月）----
+  const endD = _axD(to); const lastOfMonth = new Date(endD.getFullYear(), endD.getMonth() + 1, 0).getDate(); const N = (endD.getDate() >= lastOfMonth) ? 0 : endD.getDate();
+  const nLbl = N ? ('1〜' + N + '日') : '月全体';
+  add('16_同日数比較_ショップ全体_月別.csv', ['月','対象の日','期間内の日数','広告データの日数','KWデータの日数','売上データの日数'].concat(MET_H),
+    months.map(ym => { const a = mSum(ym, N); return [ym, nLbl, a.n, a.adDays, a.kwDays, a.saDays].concat(met(a)); }));
+  const r17 = []; months.forEach(ym => codes.forEach(c => { const a = N ? prodMonth(c, ym, N) : cache07[c + '|' + ym]; const p = P(c); r17.push([ym, nLbl, c, p.num, p.name, p.st].concat(met(a)).concat([a.adDays, a.kwDays, a.saDays])); }));
+  add('17_同日数比較_商品別_月別.csv', ['月','対象の日','商品管理番号','商品番号','商品名','区分(現在)'].concat(MET_H).concat(['広告データの日数','KWデータの日数','売上データの日数']), r17);
+
+  // 収録期間（指定期間のうち実際にデータがある日）
+  const have = days.filter(d => adLoaded.has(d) || saLoaded.has(d) || kwLoaded.has(d));
+  const cov = { ad:[...adLoaded].filter(inR).sort(), kw:[...kwLoaded].filter(inR).sort(), sa:[...saLoaded].filter(inR).sort() };
+  const order = n => parseInt(n, 10) || 0; files.sort((a, b) => order(a.name) - order(b.name));
+  return { files, counts, have, cov, N, nLbl, mismatch: r15.filter(r => /^差あり/.test(r[13])).length, mismatchSpend: r15.filter(r => /^差あり.*実績額/.test(r[13])).length };
+}
+function _axReadmeV2(from, to, b, rg){
+  const now = new Date(); const ts = _axYmd(now) + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const span = a => a.length ? (a[0] + ' 〜 ' + a[a.length - 1] + '（' + a.length + '日）') : 'なし';
+  const L = [];
+  L.push('# ADcheck 分析用データ【拡張版】（楽天RPP広告・売上）', '');
+  L.push('- 対象ショップ：' + _axShopName() + '（' + _axShopId() + '）');
+  L.push('- 指定期間：' + from + ' 〜 ' + to);
+  L.push('- 実際の収録期間：広告 ' + span(b.cov.ad) + '／KW ' + span(b.cov.kw) + '／総売上 ' + span(b.cov.sa));
+  L.push('- 最終データ日（ADcheck全体）：' + (rg.mx || '-') + '　※直近の日の広告売上・注文数（720時間計測）や総売上は、後日更新される可能性があります');
+  L.push('- 出力日時：' + ts + '　ツール：ADcheck ' + ((document.querySelector('.build-date') || {}).textContent || ''));
+  L.push('- 対象商品：全商品（引退済み・広告実績ゼロの商品も含む。上位で切っていません）', '');
+  L.push('## ファイル一覧', '', '| ファイル | 行数 | 中身 |', '|---|---:|---|');
+  const D = {
+    '01_商品マスタ.csv':'全商品。商品管理番号が突合キー。区分コード・最初/最後のデータ日つき',
+    '02_商品別_日別_広告.csv':'商品×日のRPP実績（広告データがある行のみ）。KW広告と商品CPC広告（多くは20円）の内訳と、CPC・CVR・CPA',
+    '03_商品別_日別_総売上.csv':'商品×日の総売上と広告売上。SEO売上は推定値',
+    '04_KW別_日別.csv':'商品×キーワード×日のRPP実績（クリックがあったKWのみ）',
+    '05_ショップ全体_日別.csv':'商品の合計から作ったショップ全体の日別（総売上・広告・KW/商品CPC内訳）',
+    '06_ショップ全体_月別.csv':'05を指定期間の中だけで月別に再集計（期間の端の月は期間内の日だけ）',
+    '07_商品別_月別サマリー.csv':'全商品×月。KW/商品CPC分のクリック・注文・CVR・CPC・CPAつき（横断比較用）',
+    '08_登録KW_現在.csv':'今登録しているKWと目安CPC（最新の取込時点）',
+    '09_変更記録.csv':'商品ページ等の変更日（LP・サムネ・タイトル・売り方）と全体の出来事',
+    '10_カレンダー_イベント.csv':'セール等の期間',
+    '11_在庫切れ_日別件数.csv':'在庫切れ商品数の推移',
+    '12_在庫切れ_現在.csv':'今在庫切れの商品',
+    '13_CA調整_商品.csv':'クーポンアドバンス（商品）。取り込んだCSVのまま・期間で絞り込みなし',
+    '14_CA調整_KW.csv':'クーポンアドバンス（KW）。取り込んだCSVのまま・期間で絞り込みなし',
+    '15_検証_商品合計とショップ全体.csv':'日別に「商品の合計」と「ショップ全体レポート」の実績額・広告売上・クリック数を比較',
+    '16_同日数比較_ショップ全体_月別.csv':'各月の ' + b.nLbl + ' だけを集計したショップ全体（同じ日数で前月・前年と比べる用）',
+    '17_同日数比較_商品別_月別.csv':'各月の ' + b.nLbl + ' だけを集計した全商品×月',
+  };
+  b.files.forEach(f => L.push('| ' + f.name + ' | ' + (b.counts[f.name] || 0).toLocaleString() + ' | ' + (D[f.name] || '') + ' |'));
+  L.push('', '## 計算式（月別などの率・単価は、日別の率の平均ではなく合計から計算）', '');
+  L.push('- ROAS(%)＝広告売上÷実績額×100　／　CVR(%)＝注文数÷クリック数×100　／　CPA＝実績額÷注文数　／　CPC＝実績額÷クリック数');
+  L.push('- 売上ROAS(%)＝総売上÷実績額×100　／　SEO売上(推定)＝総売上−広告売上');
+  L.push('- KW-〇〇＝登録キーワード経由。商品CPC分-〇〇＝それ以外（商品CPC＝主に20円入札。02の「商品CPC(入札)」が実際の入札額）＝全体−KW');
+  L.push('', '## 用語と注意点', '');
+  L.push('- **実績額**＝RPP広告費（円）。**広告売上・広告注文数**＝RPPの720時間（30日）計測。');
+  L.push('- **SEO売上(推定)**は「総売上−広告売上」で出した推定値で、自然検索経由の売上を直接測ったものではない（広告売上の30日計測と総売上の日付のずれも含む）。');
+  L.push('- **表示回数(推定)**＝クリック数とCTRからの逆算。');
+  L.push('- **04_KW別_日別**：楽天のKWレポートはクリックが1回以上あったKWしか載らない。行が無い日はクリック0で、広告停止とは限らない。');
+  L.push('- **登録KWの履歴**：ADcheckは「今の登録KW（08）」しか持っていない。過去の入札CPC・登録/解除の履歴は無いので出力していない（現在値で代用もしていない）。04の「現在も登録中」は今の状態。04の「CPC実績」はその日の実際の1クリック単価。');
+  L.push('- **区分**＝ADcheckでの商品の分類（現在の値）。');
+  L.push('', '## 欠損データの扱い（未取得と実績0を区別）', '');
+  L.push('- その日のレポートを取り込んでいない（未取得）→ **空欄**。取り込み済みでその商品に実績が無い → **0**。');
+  L.push('- 「広告データ取込／KWデータ取込／売上データ取込」の列と、「〇〇データの日数」の列で、どの日が取得済みか分かる。');
+  L.push('- 02は広告データがある行だけ。取込済みの日に行が無い商品は、その日の広告実績0。');
+  L.push('- 日付はYYYY-MM-DD、金額は円、％は数値（350＝350%）。商品管理番号は文字列として扱う（先頭の0を消さないこと）。');
+  L.push('', '## 整合性チェック', '');
+  L.push('- 15で、商品の合計とショップ全体レポートの実績額・広告売上・クリック数を日ごとに比較。「差あり」の日は ' + b.mismatch + ' 日（うち実績額に差がある日 ' + b.mismatchSpend + ' 日）。');
+  L.push('- 広告売上だけの差は、720時間計測の売上が「商品別レポート」と「ショップ全体レポート」を取り込んだ時期の違いで増えている可能性が高い（実績額・クリック数が一致していれば集計漏れではない）。');
+  L.push('- 総売上は商品ごとの売上データ（Item_SalesList）しか無いので、05/06のショップ全体の総売上は商品の合計そのもの。');
+  L.push('', '## 同じ日数での比較', '');
+  L.push('- 16/17は各月の ' + b.nLbl + ' だけを集計している（例：2025年10月1〜20日 と 2026年10月1〜20日）。日別データ（02・03・05）からも任意の日数で比べられる。');
+  L.push('', '## 分析の頼み方の例', '');
+  L.push('- 「07で、月別のKW-CVR・KW-CPA・KW-ROASの推移を全商品で出し、KW-CVRの低下率が大きい商品を挙げて」');
+  L.push('- 「CPA悪化を CPC上昇 と CVR低下 に分解して、どちらが主因か商品ごとに判定して（CPA＝CPC÷CVR）」');
+  L.push('- 「16で、前年同月の同じ日数と比べて、総売上・SEO売上(推定)・広告売上・実績額の変化と、広告費を引いた後の推定利益を出して」');
+  return L.join('\n') + '\n';
+}
+async function _axDownloadV2(){
+  const from = document.getElementById('axFrom').value, to = document.getElementById('axTo').value, msg = document.getElementById('axMsg'), btn = document.getElementById('axBtn2');
+  if (!from || !to || from > to){ msg.style.color = '#c62828'; msg.textContent = '期間を正しく指定してください。'; return; }
+  if (typeof JSZip === 'undefined'){ msg.style.color = '#c62828'; msg.textContent = 'ZIPの部品が読み込めていません。ページを再読み込みしてください。'; return; }
+  btn.disabled = true; const o = btn.textContent; btn.textContent = '作成中…'; msg.style.color = 'var(--text3)'; msg.textContent = '';
+  await new Promise(r => setTimeout(r, 30));
+  try{
+    const rg = _axRange();
+    const b = _axBuildV2(from, to);
+    const dir = 'ADcheck_分析用_' + _axShopId() + '_' + from.replace(/-/g,'') + '-' + to.replace(/-/g,'');
+    const zip = new JSZip();
+    zip.file(dir + '/00_README.md', _axReadmeV2(from, to, b, rg));
+    b.files.forEach(f => zip.file(dir + '/' + f.name, f.text));
+    const blob = await zip.generateAsync({ type:'blob', compression:'DEFLATE', compressionOptions:{ level:6 } });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = dir + '.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    msg.style.color = '#0f766e'; msg.textContent = '✅【拡張版】' + dir + '.zip（' + (blob.size / 1024 / 1024).toFixed(1) + 'MB）を保存しました' + (b.mismatch ? ('　※商品合計とショップ全体で' + (b.mismatchSpend ? '実績額に差がある日：' + b.mismatchSpend + '日' : '広告売上だけ差がある日：' + b.mismatch + '日（720時間計測の取込時期の違い）') + '。15で確認できます') : '');
+  }catch(e){ console.error('[ADcheck] 分析用データ（拡張版）作成エラー', e); msg.style.color = '#c62828'; msg.textContent = '作成に失敗しました：' + (e && e.message || e); }
   btn.disabled = false; btn.textContent = o;
 }
 
@@ -18477,6 +18689,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             <button data-p="ty" onclick="_axPreset('ty')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">今年(1月〜)</button>
             <button data-p="fy" onclick="_axPreset('fy')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">今期(5月〜)</button>
             <button data-p="365" onclick="_axPreset('365')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">直近1年</button>
+            <button data-p="2510" onclick="_axPreset('2510')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">2025/10〜</button>
             <button data-p="all" onclick="_axPreset('all')" style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer">全期間</button>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
@@ -18491,10 +18704,18 @@ window.addEventListener('DOMContentLoaded', async () => {
         <b>入るもの（CSV＋説明書 README）</b>：商品マスタ／商品別・日別の広告と総売上／KW別・日別／ショップ全体の日別・月別／商品別・月別サマリー／登録KW／変更記録／カレンダー／在庫切れ／CA調整<br>
         ZIPをそのままGPTに渡して「README を読んでから分析して」と頼むと、列の意味が伝わります。
       </div>
-      <div style="margin-top:16px">
-        <button id="axBtn" onclick="_axDownload()" style="font-size:14px;font-weight:800;padding:9px 22px;border-radius:8px;border:none;background:#0f766e;color:#fff;cursor:pointer;white-space:nowrap">⬇ ZIPをダウンロード</button>
-        <div id="axMsg" style="font-size:12px;font-weight:700;margin-top:8px;word-break:break-all"></div>
+      <!-- ★v1.1461★ 標準版と拡張版（GPTの指示書に合わせた版）の2つ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
+        <div style="border:1px solid var(--border);border-radius:9px;padding:10px 12px">
+          <button id="axBtn" onclick="_axDownload()" style="width:100%;font-size:13px;font-weight:800;padding:9px 10px;border-radius:7px;border:none;background:#0f766e;color:#fff;cursor:pointer;white-space:nowrap">⬇ 標準版ZIP</button>
+          <div style="font-size:10.5px;color:var(--text2);margin-top:6px;line-height:1.55">今までの形（01〜14）</div>
+        </div>
+        <div style="border:1px solid #7c3aed;border-radius:9px;padding:10px 12px;background:#faf5ff">
+          <button id="axBtn2" onclick="_axDownloadV2()" style="width:100%;font-size:13px;font-weight:800;padding:9px 10px;border-radius:7px;border:none;background:#7c3aed;color:#fff;cursor:pointer;white-space:nowrap">⬇ 拡張版ZIP（GPT指示書）</button>
+          <div style="font-size:10.5px;color:var(--text2);margin-top:6px;line-height:1.55">KW／商品CPC分のクリック・注文・CVR・CPC・CPA、未取得と0の区別、整合性チェック(15)、同日数比較(16・17)つき</div>
+        </div>
       </div>
+      <div id="axMsg" style="font-size:12px;font-weight:700;margin-top:10px;word-break:break-all"></div>
     </div>
   </div>
 </div>
