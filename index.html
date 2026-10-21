@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1446</span>
+    <span class="build-date">v1.1447</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12348,13 +12348,13 @@ function renderKwTrend(resetScroll){
   const monthRowsUpTo = (rs, ym, upto) => rs.filter(r => r.date.slice(0,7) === ym && r.date <= upto);
   const vals = points.map(p => {
     if (!p.rows.length || !p.last) return { has:false, p };
-    let sp = 0, sa = 0, od = 0, cl = 0; p.rows.forEach(r => { sp += r.spend || 0; sa += r.sales || 0; od += r.orders || 0; cl += r.cl || 0; });
+    let sp = 0, sa = 0, od = 0, cl = 0, imp = 0; p.rows.forEach(r => { sp += r.spend || 0; sa += r.sales || 0; od += r.orders || 0; cl += r.cl || 0; if ((r.ctr || 0) > 0 && (r.cl || 0) > 0) imp += r.cl * 100 / r.ctr; });   // imp は KW-全体データと同じ計算（クリック÷CTR）
     const vol = _kwiPredVol(monthRowsUpTo(kwAll, p.ym, p.last), p.last);
     let tot = 0; Object.keys(byKw).forEach(k => { const rr = monthRowsUpTo(byKw[k], p.ym, p.last); if (rr.length) tot += _kwiPredVol(rr, p.last); });
     const mcl = monthRowsUpTo(kwAll, p.ym, p.last).reduce((a, r) => a + (r.cl || 0), 0);
     const cv = _kwiCarry(kwAll, p.last);
     const gui = (snapGui && p.last === latestAll) || (snapGui && _kwtGrain === 'month' && p.ym === latestAll.slice(0,7)) ? snapGui : cv.gui;
-    return { has:true, p, sp, sa, od, cl, vol, share: tot > 0 ? vol / tot * 100 : 0, mcl, r3: _kwiRecent3(kwAll, p.last), gui: gui > 0 ? gui : null, act: cv.act > 0 ? cv.act : null };
+    return { has:true, p, sp, sa, od, cl, ctr: imp > 0 ? cl / imp * 100 : null, vol, share: tot > 0 ? vol / tot * 100 : 0, mcl, r3: _kwiRecent3(kwAll, p.last), gui: gui > 0 ? gui : null, act: cv.act > 0 ? cv.act : null };
   });
   // 入札額・目安CPCは「前の値を引き継ぐ」階段。データの無い日も、それまでの値のまま
   let ca = null, cg = null; const actS = [], guiS = [];
@@ -12386,10 +12386,11 @@ function renderKwTrend(resetScroll){
   let tbl = '<table style="width:100%;border-collapse:separate;border-spacing:0"><thead><tr>'
     + '<th style="' + TH + ';text-align:left;background:#eef2ff">' + (_kwtGrain === 'day' ? '日付' : '月') + '</th>'
     + '<th style="' + TH + ';background:#e6f4ea">KWvol</th><th style="' + TH + ';background:#e6f4ea">KW割合</th>'
-    + '<th style="' + TH + ';background:#fcf2d8">実績額</th><th style="' + TH + ';background:#fcf2d8">売上</th>'
-    + '<th style="' + TH + ';background:#fbe4ec">CVR</th><th style="' + TH + ';background:#fbe4ec">ROAS</th>'
-    + '<th style="' + TH + ';background:#e4eefb">月クリック合計</th><th style="' + TH + ';background:#e4eefb">直近3日クリック</th>'
+    // ★v1.1447★ 列順：KW割合 → 目安・入札 → クリック数・CTR → 実績額・注文数・売上 → CVR・ROAS（月クリック合計・直近3日クリックは廃止）
     + '<th style="' + TH + ';background:#ede4fb;color:#7c3aed">目安</th><th style="' + TH + ';background:#dcefca;color:#00897B">入札</th>'
+    + '<th style="' + TH + ';background:#e4eefb">クリック数</th><th style="' + TH + ';background:#e4eefb">CTR</th>'
+    + '<th style="' + TH + ';background:#fcf2d8">実績額</th><th style="' + TH + ';background:#fcf2d8">注文数</th><th style="' + TH + ';background:#fcf2d8">売上</th>'
+    + '<th style="' + TH + ';background:#fbe4ec">CVR</th><th style="' + TH + ';background:#fbe4ec">ROAS</th>'
     + '</tr></thead><tbody>';
   for (let i = vals.length - 1; i >= 0; i--){
     const v = vals[i], p = v.p;
@@ -12398,25 +12399,26 @@ function renderKwTrend(resetScroll){
     const chg = chgSet.has(i); const chgInfo = chg ? bidChg.find(c => c.i === i) : null;
     tbl += '<tr' + (chg ? ' title="この' + (_kwtGrain === 'day' ? '日' : '月') + 'に入札額が ¥' + chgInfo.from + ' → ¥' + chgInfo.to + ' に変わりました"' : '') + '>'
       + '<td style="' + TD + ';' + monEdge + 'text-align:left;font-family:inherit;font-weight:700;color:' + dcol + '">' + p.tlabel + '</td>';
-    if (!v.has){ tbl += ('<td style="' + TD + ';' + monEdge + '">' + dash + '</td>').repeat(10) + '</tr>'; continue; }
+    if (!v.has){ tbl += ('<td style="' + TD + ';' + monEdge + '">' + dash + '</td>').repeat(11) + '</tr>'; continue; }
     const roas = v.sp > 0 ? Math.round(v.sa / v.sp * 100) : null;
     tbl += '<td style="' + TD + ';' + monEdge + 'color:#555">' + Math.round(v.vol).toLocaleString() + '</td>'
       + '<td style="' + TD + ';' + monEdge + 'color:#555">' + v.share.toFixed(2) + '%</td>'
+      + '<td style="' + TD + ';' + monEdge + 'background:#f6f0fd">' + (v.gui ? v.gui.toLocaleString() : dash) + '</td>'
+      + '<td style="' + TD + ';' + monEdge + 'background:#eef7e8">' + (v.act ? v.act.toLocaleString() : dash) + '</td>'
+      + '<td style="' + TD + ';' + monEdge + '">' + v.cl.toLocaleString() + '</td>'
+      + '<td style="' + TD + ';' + monEdge + '">' + (v.ctr != null ? v.ctr.toFixed(2) + '%' : dash) + '</td>'
       + '<td style="' + TD + ';' + monEdge + 'font-weight:800">' + (v.sp ? Math.round(v.sp).toLocaleString() : dash) + '</td>'
+      + '<td style="' + TD + ';' + monEdge + '">' + (v.od ? v.od.toLocaleString() : dash) + '</td>'
       + '<td style="' + TD + ';' + monEdge + 'font-weight:800">' + (v.sa ? Math.round(v.sa).toLocaleString() : dash) + '</td>'
       + '<td style="' + TD + ';' + monEdge + '">' + (v.cl > 0 ? (v.od / v.cl * 100).toFixed(2) + '%' : dash) + '</td>'
-      + '<td style="' + TD + ';' + monEdge + 'font-weight:800;color:' + (roas == null ? 'var(--text3)' : roasCol(roas)) + '">' + (roas == null ? '—' : roas.toLocaleString() + '%') + '</td>'
-      + '<td style="' + TD + ';' + monEdge + '">' + v.mcl.toLocaleString() + '</td>'
-      + '<td style="' + TD + ';' + monEdge + '">' + v.r3.toLocaleString() + '</td>'
-      + '<td style="' + TD + ';' + monEdge + 'background:#f6f0fd">' + (v.gui ? v.gui.toLocaleString() : dash) + '</td>'
-      + '<td style="' + TD + ';' + monEdge + 'background:#eef7e8">' + (v.act ? v.act.toLocaleString() : dash) + '</td></tr>';
+      + '<td style="' + TD + ';' + monEdge + 'font-weight:800;color:' + (roas == null ? 'var(--text3)' : roasCol(roas)) + '">' + (roas == null ? '—' : roas.toLocaleString() + '%') + '</td></tr>';
   }
   tbl += '</tbody></table>';
   const st = bodyEl.scrollTop;
   const zeroNote = kwAll.length ? '' : '<div style="font-size:12px;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 12px;margin-bottom:8px">このKWは登録済みですが、まだ表示（インプレッション）がないためデータがありません。' + (snapGui ? '　登録中の目安CPC：¥' + snapGui : '') + '</div>';
   bodyEl.innerHTML = ctl + zeroNote + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">' + tg + '</div>'
     + '<div style="position:relative;height:430px;margin-bottom:14px"><canvas id="kwTrendCanvas"></canvas></div>'
-    + '<div style="font-size:13px;font-weight:700;color:var(--text2);margin:4px 0 6px">📋 ' + (_kwtGrain === 'day' ? '日別' : '月別') + 'データ <span style="font-size:11px;font-weight:400;color:var(--text3)">（列は商品-当日データと同じ。日別は「その日時点」、月別は「その月の最終日時点」の値）</span></div>'
+    + '<div style="font-size:13px;font-weight:700;color:var(--text2);margin:4px 0 6px">📋 ' + (_kwtGrain === 'day' ? '日別' : '月別') + 'データ <span style="font-size:11px;font-weight:400;color:var(--text3)">（KWvol・KW割合・目安・入札は 日別＝その日時点、月別＝その月の最終日時点。クリック数〜ROAS は 日別＝その日、月別＝その月の合計）</span></div>'
     + '<div style="border:1px solid var(--border);border-radius:8px">' + tbl + '</div>';
   bodyEl.scrollTop = resetScroll ? 0 : st;
   // ---- グラフ ----
