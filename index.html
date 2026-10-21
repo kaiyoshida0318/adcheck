@@ -50,11 +50,8 @@ body { font-family: 'Noto Sans JP', sans-serif; font-size: 13px; background: var
 .stock-siren { animation: stockSiren 1.1s ease-in-out infinite; }
 @keyframes stockSiren { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.22); opacity: .65; } }
 /* ヘッダーの在庫チェックボタン：在庫切れありのとき点滅させる */
-/* ★v1.1449★ 当日データのKW名：文字はダブルクリックでコピー／右の「推移」バッジで KW-個別推移へ */
-.kwt-kw { cursor: copy; border-radius: 3px; transition: background .2s; }
-.kwt-kw:hover { background: #f1f5f9; }
-.kwt-kw-copied { background: #dcfce7 !important; }
-.kwt-badge { display: inline-block; margin-left: 5px; padding: 0 5px; font-size: 10px; font-weight: 700; line-height: 15px; color: #7c3aed; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 4px; cursor: pointer; vertical-align: 1px; user-select: none; -webkit-user-select: none; white-space: nowrap; }
+/* ★v1.1452★ 当日データのKW名の右端 ↗ で KW-個別推移へ */
+.kwt-badge { float: right; margin-left: 10px; padding: 0 5px; font-size: 11px; font-weight: 700; line-height: 15px; color: #7c3aed; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 4px; cursor: pointer; vertical-align: 1px; user-select: none; -webkit-user-select: none; white-space: nowrap; }
 .kwt-badge:hover { background: #7c3aed; color: #fff; border-color: #7c3aed; }
 #stockCheckBtn.stock-alarm, #dailyGapBtn { animation: stockBtnAlarm 1.3s ease-in-out infinite; }   /* ★v1.1436★ 日別データ欠けも同じ光り方 */
 @keyframes stockBtnAlarm {
@@ -595,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1449</span>
+    <span class="build-date">v1.1452</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -9743,20 +9740,11 @@ function onKwBasicMonth(v){ _kwBasicMonth = v; _renderKwBasicTable(); }
 // ===== KW個別データ タブ =====
 const _KWINDIV_SAVED_KEY='adcheck_kwindiv_saved';
 let _kwIndivCode=null, _kwIndivPeriod='daily', _kwIndivCharts=[];
-// ★v1.1449★ 商品-当日データのKW名：文字はダブルクリックでコピー、右の「推移」バッジで KW-個別推移（日別）を開く
-const _kwtLink=(code,kw)=>'<span class="kwt-kw" title="ダブルクリックでコピー" ondblclick="_kwCopy(this,event)">'+_kwEsc(kw)+'</span>'
-  +'<span class="kwt-badge" title="KW-個別推移（日別）を開く" data-code="'+_kwEsc(code)+'" data-kw="'+_kwEsc(kw)+'" onclick="event.stopPropagation();openKwTrend(this.dataset.code,this.dataset.kw)">推移↗</span>';
-function _kwCopy(el,ev){
-  try{ if(ev){ ev.stopPropagation(); } }catch(e){}
-  var t=(el.textContent||'').trim(); if(!t) return;
-  var done=function(){ try{ var sel=window.getSelection&&window.getSelection(); if(sel) sel.removeAllRanges(); }catch(e){}
-    var r=el.getBoundingClientRect(); var d=document.createElement('div'); d.textContent='✅ コピーしました：'+t;
-    d.style.cssText='position:fixed;z-index:99999;left:'+Math.round(r.left)+'px;top:'+Math.round(r.top-30)+'px;background:#1f2937;color:#fff;font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.25);max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-    document.body.appendChild(d); setTimeout(function(){ d.remove(); },1300);
-    el.classList.add('kwt-kw-copied'); setTimeout(function(){ el.classList.remove('kwt-kw-copied'); },900); };
-  var fb=function(){ try{ var ta=document.createElement('textarea'); ta.value=t; ta.style.cssText='position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done(); }catch(e){} };
-  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done,fb); } else fb(); }catch(e){ fb(); }
-}
+// ★v1.1452★ 商品-当日データのKW名はふつうの文字（選択して Ctrl+C でコピー）。KW-個別推移へは右端の ↗ から
+//   ブラウザのダブルクリックは日本語だと単語の途中までしか選ばれないので、KW名全体が一度に選ばれるようにだけしておく（user-select:all）
+const _kwtLink=(code,kw)=>'<span style="user-select:all;-webkit-user-select:all">'+_kwEsc(kw)+'</span>';
+// ★v1.1450★ 飛ぶボタンは矢印だけ。「注視」バッジがあるときはその右に置く
+const _kwtBadge=(code,kw)=>'<span class="kwt-badge" title="KW-個別推移（日別）を開く" data-code="'+_kwEsc(code)+'" data-kw="'+_kwEsc(kw)+'" onclick="event.stopPropagation();openKwTrend(this.dataset.code,this.dataset.kw)">↗</span>';
 const _kwEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 function _kwIndivSavedGet(){ try{ return JSON.parse(localStorage.getItem(_KWINDIV_SAVED_KEY)||'[]')||[]; }catch(e){ return []; } }
 function _kwIndivSavedSet(a){ try{ localStorage.setItem(_KWINDIV_SAVED_KEY, JSON.stringify(a)); }catch(e){} }
@@ -10806,7 +10794,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
       +'</tr></thead><tbody>';
     _rowKws.forEach(kw=>{ if(_pastSet[kw]){ var _bx='□'; var _Tg=_T+';background:#fafafa'; var _ag=_pastAgg[kw]||{}; var _ul=function(t){ return (t==null||t==='')?('<span style="color:#bbb">'+_bx+'</span>'):('<span style="text-decoration:underline;color:#555">'+t+'</span>'); };
       _h+='<tr>'
-        +'<td style="'+_Tg+';font-weight:700;text-align:left;font-size:12px;color:#888">'+_kwtLink(code,kw)+_wchBadge(kw)+'</td>'
+        +'<td style="'+_Tg+';font-weight:700;text-align:left;font-size:12px;color:#888">'+_kwtLink(code,kw)+_wchBadge(kw)+_kwtBadge(code,kw)+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#666">'+_n2(_kwVol[kw])+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px">'+_ul(_ag.sp?Math.round(_ag.sp).toLocaleString():null)+'</td>'
@@ -10826,7 +10814,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
         var _zme=(typeof _zeroMecpc!=='undefined')?_zeroMecpc[kw]:null; // 目安CPC(登録済みKWスナップショット)
         var _zk=_zeroImpKind(_zme); // 'zeroImpBlack'(46+) / 'zeroImpRed'(45-)
         _h+='<tr>'
-          +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwtLink(code,kw)+_wchBadge(kw)+'</td>'
+          +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwtLink(code,kw)+_wchBadge(kw)+_kwtBadge(code,kw)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+_n2(_zv)+'</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">0.00%</td>'
           +'<td style="'+_T+';font-size:11px;background:#fff">—</td>'
@@ -10848,7 +10836,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
       const _kvDisp=_mmv?_mmv.kwvol:_kwVol[kw]; const _kvRed=_mmv?false:_volRed[kw];
       const _cvrTxt=_cl>0?(_od/_cl*100).toFixed(2)+'%':'\u2014'; const _roasTxt=_sp>0?(Math.round(_sa/_sp*100).toLocaleString()+'%'):'\u2014';
       _h+='<tr>'
-        +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwtLink(code,kw)+_wchBadge(kw)+'</td>'
+        +'<td style="'+_T+';background:#fff;font-weight:700;text-align:left;font-size:12px">'+_kwtLink(code,kw)+_wchBadge(kw)+_kwtBadge(code,kw)+'</td>'
         +'<td style="'+_T+';background:#fff;font-size:11px;color:'+(_kvRed?'#1e8449;font-weight:700':'#555')+'">'+(_kvRed?('?_'+_n2(_kvDisp)+'_?'):_n2(_kvDisp))+'</td>'
         +'<td style="'+_T+';background:#fff;font-size:11px;color:#555">'+sh+'%</td>'
         +'<td style="'+_T+';font-size:11px;background:#fff">'+(_sp?Math.round(_sp).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+(_sa?Math.round(_sa).toLocaleString():'\u2014')+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+_cvrTxt+'</td>'+'<td style="'+_T+';font-size:11px;background:#fff">'+_roasTxt+'</td>'
