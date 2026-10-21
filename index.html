@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1452</span>
+    <span class="build-date">v1.1453</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -10724,7 +10724,8 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
   }catch(e){} })();
   var _effGui=function(kw,fallback){ var v=_snapGuiMap[kw]; return (v!=null && v>0) ? v : fallback; };
   let hasFix=false, hasFixX=false, hasYellow=false, _redCount=0, _probSpend=0;
-  kws.forEach((kw)=>{ const dv=_kwiCarry(byKw[kw],_latest); dv.gui=_effGui(kw,dv.gui); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; hasFixX=true; _probSpend+=(_kwSpend[kw]||0); } else if(a===g){ _redCount++; hasFix=true; _probSpend+=(_kwSpend[kw]||0); } else if(st>=3){ _redCount++; _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasFix=true; } else if(g>=100){ _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasYellow=true; } } });
+  const _snapHas=Object.keys(_snapGuiMap).length>0;   // ★v1.1453★ 登録KWから削除済みのKWは「修正あり」等の判定に数えない
+  kws.forEach((kw)=>{ if(_snapHas && !Object.prototype.hasOwnProperty.call(_snapGuiMap,kw)) return; const dv=_kwiCarry(byKw[kw],_latest); dv.gui=_effGui(kw,dv.gui); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; hasFixX=true; _probSpend+=(_kwSpend[kw]||0); } else if(a===g){ _redCount++; hasFix=true; _probSpend+=(_kwSpend[kw]||0); } else if(st>=3){ _redCount++; _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasFix=true; } else if(g>=100){ _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasYellow=true; } } });
   let _pastKws=[], _pastSet={}, _pastAgg={}, _rowKws=kws.slice();
   if(daily){
     const _allRows=kwRows.filter(r=>r.itemCode===code);
@@ -10753,6 +10754,12 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
       // 1) スナップショットにあるKW＝出稿中 → 停止(過去KW)判定を解除
       Object.keys(_pastSet).forEach(function(kw){ if(_setKw[kw]){ delete _pastSet[kw]; } });
       _pastKws=_pastKws.filter(function(kw){ return !_setKw[kw]; });
+      // 1b) ★v1.1453★ 今月データはあるが、登録KWに無いKW＝削除済み → すぐ停止（うすい字）扱い
+      //     （以前は「最後のクリックから3日以上」たたないと停止にならず、数日前に消したKWが濃い字のまま残っていた）
+      Object.keys(byKw).forEach(function(kw){ if(_setKw[kw] || _pastSet[kw]) return;
+        _pastSet[kw]=1; var rs0=byKw[kw]; var _lym=rs0.reduce(function(m,r){return r.ym>m?r.ym:m;},''); var _lr=rs0.filter(function(r){return r.ym===_lym;});
+        var _sp=0,_sa=0,_od=0,_cl=0; _lr.forEach(function(r){_sp+=(r.spend||0);_sa+=(r.sales||0);_od+=(r.orders||0);_cl+=(r.cl||0);});
+        _pastAgg[kw]={sp:_sp,sa:_sa,cvr:(_cl>0?(_od/_cl*100).toFixed(2)+'%':null),roas:(_sp>0?Math.round(_sa/_sp*100).toLocaleString()+'%':null),lym:_lym}; });
       // 2) 今月0impressionだが登録中のKW → 濃字「実績0」行として追加（目安CPCで黒■/赤■を区別）
       var _zeroKws=[];
       _snapKws.forEach(function(kw){ if(!byKw[kw]){ _zeroSet[kw]=1; _zeroMecpc[kw]=_snap[kw]; if(_kwVol[kw]==null) _kwVol[kw]=0; _zeroKws.push(kw); } });
