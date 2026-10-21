@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1447</span>
+    <span class="build-date">v1.1448</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12392,13 +12392,29 @@ function renderKwTrend(resetScroll){
     + '<th style="' + TH + ';background:#fcf2d8">実績額</th><th style="' + TH + ';background:#fcf2d8">注文数</th><th style="' + TH + ';background:#fcf2d8">売上</th>'
     + '<th style="' + TH + ';background:#fbe4ec">CVR</th><th style="' + TH + ';background:#fbe4ec">ROAS</th>'
     + '</tr></thead><tbody>';
+  // ★v1.1448★ KWレポートに行が無い日（＝このKWのクリック0回）は空白にせず、0 と「前の目安・入札」をうすく出す
+  //   対象：このKWが一度でも出た後で、かつ（最後に出た日以前 か 今も登録中のKW）の日。初出稿より前・登録から外れた後は従来どおり「—」
+  const kwFirst = kwAll.reduce((m, r) => (!m || r.date < m) ? r.date : m, ''), kwLast = kwAll.reduce((m, r) => r.date > m ? r.date : m, '');
+  let kwReg = false; try{ const sn = _snapKwMap(_currentKwSnap && _currentKwSnap.byCode && _currentKwSnap.byCode[code]); kwReg = !!(sn && Object.prototype.hasOwnProperty.call(sn, kw)); }catch(e){}
+  const isZero = (i) => { const v = vals[i]; if (v.has) return false; const pt = v.p; const d = pt.last || pt.key || ''; if (!d || !kwFirst || d < kwFirst) return false; return (d <= kwLast) || kwReg; };
+  const zeroTitle = _kwtGrain === 'day' ? 'この日はこのKWのクリックが0回でした（楽天のKWレポートはクリックがあったKWしか載らないため）。目安・入札は前の値' : 'この月はこのKWのクリックが0回でした。目安・入札は前の値';
   for (let i = vals.length - 1; i >= 0; i--){
     const v = vals[i], p = v.p;
+    const zero = isZero(i);
     const dcol = p.wd === 0 ? '#c62828' : p.wd === 6 ? '#1565c0' : 'var(--text)';
     const monEdge = (_kwtGrain === 'day' && i > 0 && points[i-1].ym !== p.ym) ? 'border-bottom:2px solid #cbd5e1;' : '';
     const chg = chgSet.has(i); const chgInfo = chg ? bidChg.find(c => c.i === i) : null;
-    tbl += '<tr' + (chg ? ' title="この' + (_kwtGrain === 'day' ? '日' : '月') + 'に入札額が ¥' + chgInfo.from + ' → ¥' + chgInfo.to + ' に変わりました"' : '') + '>'
-      + '<td style="' + TD + ';' + monEdge + 'text-align:left;font-family:inherit;font-weight:700;color:' + dcol + '">' + p.tlabel + '</td>';
+    tbl += '<tr' + (zero ? ' title="' + zeroTitle + '" style="background:#fafafa"' : chg ? ' title="この' + (_kwtGrain === 'day' ? '日' : '月') + 'に入札額が ¥' + chgInfo.from + ' → ¥' + chgInfo.to + ' に変わりました"' : '') + '>'
+      + '<td style="' + TD + ';' + monEdge + 'text-align:left;font-family:inherit;font-weight:700;color:' + dcol + (zero ? ';opacity:.6' : '') + '">' + p.tlabel + (zero ? '<span style="margin-left:6px;font-size:10px;font-weight:700;color:#94a3b8;border:1px solid #cbd5e1;border-radius:4px;padding:0 4px;opacity:1">0クリック</span>' : '') + '</td>';
+    if (zero){
+      const Z = 'color:#a0aec0;';
+      const zc = t => '<td style="' + TD + ';' + monEdge + Z + '">' + t + '</td>';
+      tbl += zc(dash) + zc(dash)
+        + '<td style="' + TD + ';' + monEdge + Z + 'background:#f9f6fd">' + (guiS[i] ? guiS[i].toLocaleString() : dash) + '</td>'
+        + '<td style="' + TD + ';' + monEdge + Z + 'background:#f4f9f0">' + (actS[i] ? actS[i].toLocaleString() : dash) + '</td>'
+        + zc('0') + zc(dash) + zc('0') + zc('0') + zc('0') + zc(dash) + zc(dash) + '</tr>';
+      continue;
+    }
     if (!v.has){ tbl += ('<td style="' + TD + ';' + monEdge + '">' + dash + '</td>').repeat(11) + '</tr>'; continue; }
     const roas = v.sp > 0 ? Math.round(v.sa / v.sp * 100) : null;
     tbl += '<td style="' + TD + ';' + monEdge + 'color:#555">' + Math.round(v.vol).toLocaleString() + '</td>'
