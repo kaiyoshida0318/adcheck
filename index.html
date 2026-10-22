@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1469</span>
+    <span class="build-date">v1.1472</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6220,7 +6220,7 @@ function _renderTable(mode, rows) {
 
   let html = `<table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:auto">
     <thead><tr style="background:var(--surface2);position:sticky;top:0;z-index:3">
-      <th style="padding:8px 6px;${_igS(dateLabel,'left')}font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:4;background:var(--surface2)">${dateLabel}</th>
+      <th style="padding:8px 6px;${_igS(dateLabel,'left')}font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:4;background:var(--surface2)">${dateLabel}${(mode === 'monthly' && typeof _monthlyDayCut !== 'undefined' && _monthlyDayCut) ? '<br><span style="display:inline-block;margin-top:3px;background:#0f766e;color:#fff;font-size:10px;font-weight:800;text-transform:none;letter-spacing:0;padding:1px 6px;border-radius:4px">1〜' + _monthlyDayCut + '日</span>' : ''}</th>
       ${HEADS.map((h,i) => `<th style="padding:8px 6px;${_igS(h,'right')}font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:3;background:${HBG[i]}">${h}</th>`).join('')}
     </tr></thead><tbody>`;
 
@@ -6311,7 +6311,7 @@ function _renderTable(mode, rows) {
     const _hlL = _hasLog ? ('border-left:2px dashed '+_clColor+';') : '';
     const _hlR = _hasLog ? ('border-right:2px dashed '+_clColor+';') : '';
     html += `<tr class="mrow-main" data-ym="${_ymKey}" style="${_pct?'':'border-bottom:1px solid var(--border);'}${r._grpTop ? 'border-top:3px solid var(--text2);' : ''}">
-      <td ${_pct?'rowspan="2" ':''}${_hasLog?`title="${_clTitle}" `:''}style="padding:7px 6px;${_igS(dateLabel,'left')}font-weight:600;white-space:nowrap;font-size:11px;${_pct?'vertical-align:middle;':''}${_hlTop}${_hlBot}${_hlL}">${r.label}${_hasLog?('<div style="margin-top:3px;text-align:right">'+_clBadges+'</div>'):''}</td>
+      <td ${_pct?'rowspan="2" ':''}${_hasLog?`title="${_clTitle}" `:''}style="padding:7px 6px;${_igS(dateLabel,'left')}font-weight:600;white-space:nowrap;font-size:11px;${_pct?'vertical-align:middle;':''}${(mode === 'monthly' && typeof _monthlyDayCut !== 'undefined' && _monthlyDayCut) ? 'background:#e6f4f1;color:#0f766e;' : ''}${_hlTop}${_hlBot}${_hlL}">${r.label}${_hasLog?('<div style="margin-top:3px;text-align:right">'+_clBadges+'</div>'):''}</td>
       ${cells.map((c,i) => { const _rr=(_rdR&&_rdR[i]!=null)?_rdR[i]:null; const _rpos=_rr!=null?'position:relative;padding-bottom:13px;':''; const _rspan=_rr!=null?`<span style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_rr)};font-weight:700;line-height:1">${_rr}%</span>`:''; return `<td style="padding:7px 6px;${_igS(HEADS[i],'right')}font-family:'DM Mono',monospace;white-space:nowrap;background:${BG[i]};${_rpos}${_hlTop}${_pct?'':_hlBot}${i===cells.length-1?_hlR:''}">${c}${_rspan}</td>`; }).join('')}
     </tr>`;
     if (_pct) {
@@ -6518,7 +6518,7 @@ function _renderMonthlyTable(rows){
   if (_monthlyDayCut){
     // 日別データ（ショップ全体）を各月1〜N日だけで月別に集計し直す
     const dr = (dailyRows || []).filter(r => !r.isPeriod && /^\d{8}$/.test(String(r.code)) && +String(r.code).slice(6,8) <= _monthlyDayCut);
-    rows = _aggregateDailyToMonthly(dr).map(r => Object.assign({}, r, { label: r.label + '（1〜' + _monthlyDayCut + '日）' }));
+    rows = _aggregateDailyToMonthly(dr);   // ★v1.1470★ 月名の後ろに（1〜N日）は付けない（横スクロールが出るため）。見出しの「月」の下に出す
   }
   let data;
   if (_monthlyTableMode === 'yoy') { data = _monthlyYoyOrder(rows); }
