@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1461</span>
+    <span class="build-date">v1.1462</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12402,7 +12402,8 @@ function renderKwTrend(resetScroll){
   // ★v1.1440★ 月別は入札額のボタンなし
   const tg = KWT_SERIES.filter(s => !(_kwtGrain === 'month' && s.k === 'act')).map(s => { const on = !_kwtHidden.has(s.k); return '<button onclick="_kwtToggle(\'' + s.k + '\')" style="font-size:12px;font-weight:700;padding:5px 13px;border-radius:7px;cursor:pointer;border:2px solid ' + s.col + ';background:' + (on ? s.col : 'transparent') + ';color:' + (on ? '#fff' : 'var(--text3)') + ';' + (on ? '' : 'text-decoration:line-through;opacity:.55;') + '">● ' + s.label + '</button>'; }).join('');
   // 表
-  const TH = 'padding:7px 10px;font-size:11px;font-weight:700;color:#444;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2;text-align:right';
+  // ★v1.1462★ 見出しは右側の枠の上端（上の余白12pxぶん上）にぴったり固定。top:0 だと余白のすき間から下の行が透けて見えていた
+  const TH = 'padding:7px 10px;font-size:11px;font-weight:700;color:#444;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:-12px;z-index:2;text-align:right';
   const TD = 'padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:right;font-family:\'DM Mono\',monospace';
   const dash = '<span style="color:var(--text3)">—</span>';
   const roasCol = r => r >= 500 ? 'var(--green)' : r >= 300 ? 'var(--amber)' : r > 0 ? 'var(--danger)' : 'var(--text3)';   // 商品-売上データの rc() と同じ基準
