@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1462</span>
+    <span class="build-date">v1.1464</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12220,6 +12220,7 @@ function renderKwDetail(){
 }
 // ===== ★v1.1439★ KW-個別推移 モーダル（KWを選んで、そのKWの日別／月別をグラフと表で見る。Amacheck の推移モーダルが手本） =====
 let _kwtCode = null, _kwtKw = null, _kwtGrain = 'day', _kwtSpan = '30', _kwtMonth = '', _kwtMSpan = 'cal', _kwtChart = null;
+let _kwtRFrom = '', _kwtRTo = '';   // ★v1.1463★ 日別の期間（月〜月）。_kwtSpan==='range' のとき使う
 const _kwtHidden = new Set();
 const KWT_SERIES = [
   { k:'sales', label:'広告売上', col:'#2563eb' },
@@ -12244,7 +12245,7 @@ function _pmGo(to){
 }
 function openKwTrend(code, kw){
   document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
-  _kwtCode = code; _kwtGrain = 'day'; _kwtSpan = '30'; _kwtMonth = ''; _kwtAutoSet = false;
+  _kwtCode = code; _kwtGrain = 'day'; _kwtSpan = '30'; _kwtMonth = ''; _kwtRFrom = ''; _kwtRTo = ''; _kwtAutoSet = false;
   const c = productCache[code] || {};
   const name = c.manualName || c.name || code, num = c.itemNumber || code, img = c.manualImg || c.img || null;
   document.getElementById('kwTrendName').textContent = name;
@@ -12260,8 +12261,8 @@ let _kwtAutoSet = false;
 function _kwtAutoMonth(kws){
   if (_kwtGrain !== 'day') return;
   const o = (kws || _kwtKwList(_kwtCode)).find(x => x.kw === _kwtKw);
-  if (o && !o.live && o.lastD){ _kwtMonth = o.lastD.slice(0,7); _kwtSpan = 'month'; _kwtAutoSet = true; }
-  else if (_kwtAutoSet){ _kwtMonth = ''; _kwtSpan = '30'; _kwtAutoSet = false; }
+  if (o && !o.live && o.lastD){ _kwtRFrom = _kwtRTo = o.lastD.slice(0,7); _kwtSpan = 'range'; _kwtAutoSet = true; }
+  else if (_kwtAutoSet){ _kwtRFrom = _kwtRTo = ''; _kwtSpan = '30'; _kwtAutoSet = false; }
 }
 function closeKwTrend(){
   const m = document.getElementById('kwTrendModal'); if (m) m.style.display = 'none';
@@ -12275,6 +12276,10 @@ function _kwtSel(kw){ _kwtKw = kw; _kwtAutoMonth(); renderKwTrend(true); }
 function _kwtSetGrain(g){ _kwtGrain = g; renderKwTrend(); }
 function _kwtSetSpan(s){ _kwtSpan = s; _kwtAutoSet = false; renderKwTrend(); }
 function _kwtSetMonth(m){ _kwtMonth = m; _kwtSpan = 'month'; _kwtAutoSet = false; renderKwTrend(); }   // Amacheck と同じく、月を選んだら「今月」
+// ★v1.1463★ 日別：期間を月〜月で選ぶ（選ぶと 30日／先月-今月／今月 は外れる）
+function _kwtSetRange(which, v, el){ try{ const ss = el.parentNode.querySelectorAll('select'); _kwtRFrom = ss[0].value; _kwtRTo = ss[1].value; }catch(e){ if (which === 'from') _kwtRFrom = v; else _kwtRTo = v; }
+  if (_kwtRFrom > _kwtRTo){ if (which === 'from') _kwtRTo = _kwtRFrom; else _kwtRFrom = _kwtRTo; }
+  _kwtSpan = 'range'; _kwtAutoSet = false; renderKwTrend(); }
 function _kwtSetMEnd(m){ _kwtMonth = m; _kwtAutoSet = false; renderKwTrend(); }   // ★v1.1456★ 月別：表示の最終月
 function _kwtSetMSpan(s){ _kwtMSpan = s; renderKwTrend(); }
 function _kwtToggle(k){ if (_kwtHidden.has(k)) _kwtHidden.delete(k); else _kwtHidden.add(k); renderKwTrend(); }
@@ -12339,15 +12344,25 @@ function renderKwTrend(resetScroll){
   const months = [...new Set(allRows.map(r => r.date.slice(0,7)))].sort();
   if (!_kwtMonth || months.indexOf(_kwtMonth) < 0) _kwtMonth = months[months.length - 1];
   let points = [];   // { key, label, rows:その期間のこのKWの行, last:その期間の最終日（KW割合・目安・入札の基準日）, ym }
+  let dayMonths = [], rangeFrom = '', rangeTo = '';
   if (_kwtGrain === 'day'){
-    const mEnd = _kwtS(new Date(+_kwtMonth.slice(0,4), +_kwtMonth.slice(5,7), 0));
     // ★v1.1454★ 日別の終わりは「この商品の最終データ日」ではなく「全体の最新日」まで（KWクリック0の日が続いても最新日まで表示）
     const gLatest = kwRows.reduce((m, r) => r.date > m ? r.date : m, ''); const axisEnd = gLatest > latestAll ? gLatest : latestAll;
-    const end = mEnd < axisEnd ? mEnd : axisEnd;
-    let start;
-    if (_kwtSpan === '30'){ const d = _kwtD(end); d.setDate(d.getDate() - 29); start = _kwtS(d); }
-    else if (_kwtSpan === '2m'){ start = _kwtYmAdd(_kwtMonth, -1) + '-01'; }
-    else { start = _kwtMonth + '-01'; }
+    // ★v1.1463★ 30日／先月-今月／今月 は最新の月が基準。月〜月を選んだときはその期間
+    const baseM = axisEnd.slice(0,7);
+    for (let m = months[0]; m && m <= baseM; m = _kwtYmAdd(m, 1)) dayMonths.push(m);
+    let start, end;
+    if (_kwtSpan === 'range' && _kwtRFrom && _kwtRTo){
+      const f = dayMonths.indexOf(_kwtRFrom) >= 0 ? _kwtRFrom : dayMonths[0], t = dayMonths.indexOf(_kwtRTo) >= 0 ? _kwtRTo : baseM;
+      start = (f <= t ? f : t) + '-01'; const tm = f <= t ? t : f; const mEnd = _kwtS(new Date(+tm.slice(0,4), +tm.slice(5,7), 0)); end = mEnd < axisEnd ? mEnd : axisEnd;
+    } else {
+      if (_kwtSpan === 'range') _kwtSpan = '30';
+      end = axisEnd;
+      if (_kwtSpan === '30'){ const d = _kwtD(end); d.setDate(d.getDate() - 29); start = _kwtS(d); }
+      else if (_kwtSpan === '2m'){ start = _kwtYmAdd(baseM, -1) + '-01'; }
+      else { start = baseM + '-01'; }
+    }
+    rangeFrom = start.slice(0,7); rangeTo = end.slice(0,7);
     for (let d = _kwtD(start); _kwtS(d) <= end; d.setDate(d.getDate() + 1)){
       const ds = _kwtS(d), wd = d.getDay();
       points.push({ key: ds, label: (d.getMonth()+1) + '/' + d.getDate(), tlabel: ds.slice(5).replace('-','/') + '(' + '日月火水木金土'[wd] + ')', wd, rows: kwAll.filter(r => r.date === ds), last: ds, ym: ds.slice(0,7) });
@@ -12387,8 +12402,11 @@ function renderKwTrend(resetScroll){
   let ctl = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
     + '<div style="display:flex;gap:4px">' + BTN(_kwtGrain === 'day', '日別', "_kwtSetGrain('day')") + BTN(_kwtGrain === 'month', '月別', "_kwtSetGrain('month')") + '</div>';
   if (_kwtGrain === 'day'){
-    ctl += '<select onchange="_kwtSetMonth(this.value)" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;min-width:120px">'
-      + months.slice().reverse().map(m => '<option value="' + m + '"' + (m === _kwtMonth ? ' selected' : '') + '>' + m.replace('-','/') + '</option>').join('') + '</select>'
+    // ★v1.1463★ 月のドロップダウンはやめて、今月の右に「月 〜 月」の期間を選ぶ2つのドロップダウン
+    const SEL = (which, val) => '<select onchange="_kwtSetRange(\'' + which + '\', this.value, this)" style="font-size:13px;padding:6px 10px;border:1px solid ' + (_kwtSpan === 'range' ? '#7c3aed' : 'var(--border2)') + ';border-radius:6px;background:' + (_kwtSpan === 'range' ? '#f5f3ff' : 'var(--surface)') + ';color:var(--text);cursor:pointer;font-weight:' + (_kwtSpan === 'range' ? '700' : '400') + '">'
+      + dayMonths.slice().reverse().map(m => '<option value="' + m + '"' + (m === val ? ' selected' : '') + '>' + m.replace('-','/') + '</option>').join('') + '</select>';
+    // ★v1.1464★ 期間のドロップダウンは「月別」のすぐ右、その右に 30日／先月-今月／今月
+    ctl += '<div style="display:flex;align-items:center;gap:6px" title="見たい期間を月で選ぶ">' + SEL('from', rangeFrom) + '<span style="color:var(--text3);font-weight:700">〜</span>' + SEL('to', rangeTo) + '</div>'
       + '<div style="display:flex;gap:4px">' + BTN(_kwtSpan === '30', '30日', "_kwtSetSpan('30')") + BTN(_kwtSpan === '2m', '先月-今月', "_kwtSetSpan('2m')") + BTN(_kwtSpan === 'month', '今月', "_kwtSetSpan('month')") + '</div>';
   } else {
     ctl += '<select onchange="_kwtSetMEnd(this.value)" title="この月までを表示" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;min-width:120px">'
@@ -12474,7 +12492,8 @@ function renderKwTrend(resetScroll){
   const H = k => _kwtHidden.has(k) || (_kwtGrain === 'month' && k === 'act');   // ★v1.1440★ 月別では入札額の線・札を出さない
   if (!H('sales')) ds.push({ type:'bar', label:'広告売上', data:sales, backgroundColor:'#2563ebcc', yAxisID:'y', order:3 });
   if (!H('spend')) ds.push({ type:'bar', label:'実績額', data:spend, backgroundColor:'#dc2626cc', yAxisID:'y', order:3 });
-  if (!H('roas'))  ds.push({ type:'line', label:'広告ROAS', data:roasS, borderColor:'#1D9E75', backgroundColor:'#1D9E75', borderWidth:2.6, tension:0.3, pointRadius:3, pointHoverRadius:6, spanGaps:true, yAxisID:'y1', order:1 });
+  const _long = labels.length > 62;   // ★v1.1463★ 長い期間は点を消して線を細く（見やすさ）
+  if (!H('roas'))  ds.push({ type:'line', label:'広告ROAS', data:roasS, borderColor:'#1D9E75', backgroundColor:'#1D9E75', borderWidth:_long ? 1.6 : 2.6, tension:_long ? 0.15 : 0.3, pointRadius:_long ? 0 : 3, pointHoverRadius:5, spanGaps:true, yAxisID:'y1', order:1 });
   if (!H('act'))   ds.push({ type:'line', label:'入札額', data:actS, borderColor:'#00897B', backgroundColor:'#00897B', borderWidth:2.4, stepped:'before', pointRadius:0, pointHoverRadius:4, spanGaps:true, yAxisID:'y2', order:0 });
   if (!H('gui'))   ds.push({ type:'line', label:'目安CPC', data:guiS, borderColor:'#7c3aed', backgroundColor:'#7c3aed', borderWidth:2.2, borderDash:[6,3], stepped:'before', pointRadius:0, pointHoverRadius:4, spanGaps:true, yAxisID:'y2', order:0 });
   // 入札額・目安CPC の専用目盛り（右端）：最小−余白×2〜最大＋余白 を5円単位に
