@@ -592,7 +592,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1476</span>
+    <span class="build-date">v1.1477</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -6951,9 +6951,15 @@ function _ingestCurrentKw(text, fname){
   var ci=head.indexOf('\u5546\u54C1\u7BA1\u7406\u756A\u53F7'); var ki=head.indexOf('\u30AD\u30FC\u30EF\u30FC\u30C9'); var mi=head.indexOf('\u76EE\u5B89CPC');
   if(ci<0||ki<0) return false; // \u60F3\u5B9A\u30D8\u30C3\u30C0\u3067\u306A\u3044
   var byCode={}; // {code: {kw: \u76EE\u5B89CPC(number)}}
-  for(var i=1;i<rows.length;i++){ var r=rows[i]; if(!r) continue; if(r.length<=ci || r.length<=ki) continue; var code=String(r[ci]||'').trim(); var kw=String(r[ki]||'').trim(); if(!code||!kw) continue; var me = mi>=0 ? (parseFloat(String(r[mi]||'').replace(/[^0-9.]/g,''))||0) : 0; if(!byCode[code]) byCode[code]={}; if(byCode[code][kw]==null) byCode[code][kw]=me; }
+  var bi=head.indexOf('キーワードCPC');   // ★v1.1477★ 設定中の入札額も保存する
+  var bidByCode={};
+  for(var i=1;i<rows.length;i++){ var r=rows[i]; if(!r) continue; if(r.length<=ci || r.length<=ki) continue; var code=String(r[ci]||'').trim(); var kw=String(r[ki]||'').trim(); if(!code||!kw) continue; var me = mi>=0 ? (parseFloat(String(r[mi]||'').replace(/[^0-9.]/g,''))||0) : 0; if(!byCode[code]) byCode[code]={}; if(byCode[code][kw]==null) byCode[code][kw]=me;
+    if(bi>=0){ var bd=parseFloat(String(r[bi]||'').replace(/[^0-9.]/g,''))||0; if(bd>0){ if(!bidByCode[code]) bidByCode[code]={}; if(bidByCode[code][kw]==null) bidByCode[code][kw]=bd; } } }
   var date=_calFilenameDate(fname) || '';
-  _currentKwSnap={ date:date, byCode:byCode };
+  // ★v1.1477★ 入札額の履歴：取り込むたびに、前回と値が変わったKWだけ {d:取込日, v:入札額} を足していく
+  var hist={}; try{ hist=JSON.parse(JSON.stringify((_currentKwSnap && _currentKwSnap.bidHist) || {})); }catch(e){ hist={}; }
+  Object.keys(bidByCode).forEach(function(c){ Object.keys(bidByCode[c]).forEach(function(k){ var v=bidByCode[c][k]; var a=(hist[c]=hist[c]||{})[k]=(hist[c][k]||[]); var last=a.length?a[a.length-1]:null; if(!last || last.v!==v){ if(last && last.d===date) last.v=v; else a.push({ d:date, v:v }); } }); });
+  _currentKwSnap={ date:date, byCode:byCode, bidByCode:bidByCode, bidHist:hist };
   _saveCurrentKwLocal();
   return true;
 }
@@ -6963,6 +6969,8 @@ function _snapKwMap(raw){
   if(Array.isArray(raw)){ var o={}; raw.forEach(function(k){ o[k]=null; }); return o; } // \u65E7\u5F62\u5F0F\u306F\u76EE\u5B89\u4E0D\u660E(null)
   return raw;
 }
+// ★v1.1477★ 登録KWファイルの「キーワードCPC」＝今設定している入札額（無ければ null）
+function _kwBidNow(code, kw){ try{ var m=_currentKwSnap && _currentKwSnap.bidByCode && _currentKwSnap.bidByCode[code]; var v=m ? m[kw] : null; return (v!=null && v>0) ? v : null; }catch(e){ return null; } }
 // \u76EE\u5B89CPC\u304B\u3089 \u25A0 \u306E\u8272\u7A2E\u5225\u3092\u6C7A\u5B9A\uFF0846\u5186\u4EE5\u4E0A=\u8D64 / 46\u5186\u672A\u6E80(=45\u5186\u4EE5\u4E0B)=\u9ED2 / \u4E0D\u660E=\u8D64\uFF09
 function _zeroImpKind(mecpc){ return (mecpc!=null && mecpc<=45) ? 'zeroImpBlack' : 'zeroImpRed'; }
 // ★v1.1446★ 他のファイルと同時に保存すると GitHub が 409（SHA不一致）等を返すことがあるので、ほかの保存と同じく自動リトライ（最大5回）
@@ -10061,7 +10069,7 @@ function renderKwIndiv(){
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">0</td>'
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">0</td>'
           +'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+((_zme!=null&&_zme>0)?_n2(_zme):'—')+'</td>'
-          +'<td style="'+_T+';background:#d9edca;font-size:11px">—</td>'
+          +'<td style="'+_T+';background:#d9edca;font-size:11px">'+(function(){ var b=_kwBidNow(code,kw); return b?Math.round(b).toLocaleString():'—'; })()+'</td>'   // ★v1.1477★ 今の入札額
           +'<td style="'+_T+';background:#fff">'+_taiouMarkGlyph(_zk)+'</td>'
           +(function(){ var vals={kwvol:_zv,share:0,spend:0,sales:0,cvr:null,roas:null,mclick:0,recent3:0,gui:(_zme!=null?_zme:null),act:null}; var _ru=_taiouFor(_zk,vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
           +'</tr>';
@@ -10628,6 +10636,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
     kws.forEach(function(kw){
       const rs=byKw[kw];
       const dv=_kwiCarry(rs,monthLast);
+      if(!_monthMode && !dv.has){ const _b=_kwBidNow(code,kw); if(_b) dv.act=_b; }   // ★v1.1477★ 最新日にクリックが無いKWは今の入札額
       const streak=_kwiNoClickStreak(rs,monthLast);
       const r3=_kwiRecent3(rs,monthLast);
       let sp=0,sa=0,od=0,cl=0; rs.forEach(function(r){sp+=(r.spend||0);sa+=(r.sales||0);od+=(r.orders||0);cl+=(r.cl||0);});
@@ -10641,7 +10650,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
         var _gYm2=_gL2?(_gL2.slice(0,4)+_gL2.slice(5,7)):'';
         if(ym===_gYm2){
           Object.keys(_snap).forEach(function(kw){ if(byKw[kw]) return; var _me=_snap[kw];
-            rows.push({code:code,img:img,name:name,kw:kw,date:monthLast,kwvol:(volMap[kw]||0),share:0,spend:0,sales:0,cvr:null,roas:null,salesRoas:prodRoas,prodSpend:_pSp,mclick:0,recent3:0,gui:(_me!=null?_me:null),act:null,streak:0,kind:_zeroImpKind(_me),zero:true,mecpc:_me});
+            rows.push({code:code,img:img,name:name,kw:kw,date:monthLast,kwvol:(volMap[kw]||0),share:0,spend:0,sales:0,cvr:null,roas:null,salesRoas:prodRoas,prodSpend:_pSp,mclick:0,recent3:0,gui:(_me!=null?_me:null),act:_kwBidNow(code,kw),streak:0,kind:_zeroImpKind(_me),zero:true,mecpc:_me});
           });
         }
       }
@@ -10661,7 +10670,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
       w.forEach(function(kw){
         if(_seenW[code+'||'+kw]) return; _seenW[code+'||'+kw]=1;
         var me=(snap&&snap[kw]!=null)?snap[kw]:null;
-        rows.push({code:code,img:img,name:name,kw:kw,date:'',kwvol:0,share:0,spend:0,sales:0,cvr:null,roas:null,salesRoas:null,prodSpend:0,mclick:0,recent3:0,gui:(me!=null?me:null),act:null,streak:0,kind:_zeroImpKind(me),zero:true,mecpc:me});
+        rows.push({code:code,img:img,name:name,kw:kw,date:'',kwvol:0,share:0,spend:0,sales:0,cvr:null,roas:null,salesRoas:null,prodSpend:0,mclick:0,recent3:0,gui:(me!=null?me:null),act:_kwBidNow(code,kw),streak:0,kind:_zeroImpKind(me),zero:true,mecpc:me});
       });
     });
   }
@@ -10762,7 +10771,9 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
   var _effGui=function(kw,fallback){ var v=_snapGuiMap[kw]; return (v!=null && v>0) ? v : fallback; };
   let hasFix=false, hasFixX=false, hasYellow=false, _redCount=0, _probSpend=0;
   const _snapHas=Object.keys(_snapGuiMap).length>0;   // ★v1.1453★ 登録KWから削除済みのKWは「修正あり」等の判定に数えない
-  kws.forEach((kw)=>{ if(_snapHas && !Object.prototype.hasOwnProperty.call(_snapGuiMap,kw)) return; const dv=_kwiCarry(byKw[kw],_latest); dv.gui=_effGui(kw,dv.gui); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; hasFixX=true; _probSpend+=(_kwSpend[kw]||0); } else if(a===g){ _redCount++; hasFix=true; _probSpend+=(_kwSpend[kw]||0); } else if(st>=3){ _redCount++; _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasFix=true; } else if(g>=100){ _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasYellow=true; } } });
+  // ★v1.1477★ 最新日にクリックが無いKWは、入札＝登録KWファイルの今の入札額（クリック0の日は入札の変更がレポートに出ないため）
+  const _effAct=function(kw,dv){ if(_snapHas && !monthMode && dv && !dv.has){ const b=_kwBidNow(code,kw); if(b) dv.act=b; } return dv; };
+  kws.forEach((kw)=>{ if(_snapHas && !Object.prototype.hasOwnProperty.call(_snapGuiMap,kw)) return; const dv=_effAct(kw,_kwiCarry(byKw[kw],_latest)); dv.gui=_effGui(kw,dv.gui); const st=_kwiNoClickStreak(byKw[kw],_latest); const a=dv.act, g=dv.gui; const valid=(a!=null&&g!=null&&a>0&&g>0); const isD40=(a===40&&g===40); const share=_totVol>0?(_kwVol[kw]/_totVol*100):0; if(valid&&!isD40){ if(a>g){ _redCount++; hasFix=true; hasFixX=true; _probSpend+=(_kwSpend[kw]||0); } else if(a===g){ _redCount++; hasFix=true; _probSpend+=(_kwSpend[kw]||0); } else if(st>=3){ _redCount++; _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasFix=true; } else if(g>=100){ _probSpend+=(_kwSpend[kw]||0); if(share>=10) hasYellow=true; } } });
   let _pastKws=[], _pastSet={}, _pastAgg={}, _rowKws=kws.slice();
   if(daily){
     const _allRows=kwRows.filter(r=>r.itemCode===code);
@@ -10869,12 +10880,12 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
           +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">0</td>'
           +(function(){ var pc=_prevCpcOf(kw); var bg=pc!=null?'#fbe7cf':'#fff'; return '<td style="'+_T+';font-size:11px;color:#333;background:'+bg+'">'+(pc!=null?Math.round(pc).toLocaleString():'—')+'</td>'; })()
           +'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+((_zme!=null&&_zme>0)?_n2(_zme):'—')+'</td>'
-          +'<td style="'+_T+';background:#d9edca;font-size:11px">—</td>'
+          +'<td style="'+_T+';background:#d9edca;font-size:11px">'+(function(){ var b=_kwBidNow(code,kw); return b?Math.round(b).toLocaleString():'—'; })()+'</td>'   // ★v1.1477★ 今の入札額
           +'<td style="'+_T+';background:#fff">'+_taiouMarkGlyph(_zk)+'</td>'
           +(function(){ var vals={kwvol:_zv,share:0,spend:0,sales:0,cvr:null,roas:null,mclick:0,recent3:0,gui:(_zme!=null?_zme:null),act:null}; var _ru=_taiouFor(_zk,vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
           +'</tr>'; return; }
       const _mmv=monthMode?_pm(kw):null;
-      const sh=_mmv?_mmv.share.toFixed(2):(_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'); const dv=_kwiCarry(byKw[kw],_latest); dv.gui=_effGui(kw,dv.gui);
+      const sh=_mmv?_mmv.share.toFixed(2):(_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'); const dv=_effAct(kw,_kwiCarry(byKw[kw],_latest)); dv.gui=_effGui(kw,dv.gui);
       let _sp=0,_sa=0,_od=0,_cl=0; if(_mmv){ _sp=_mmv.sp;_sa=_mmv.sa;_od=_mmv.od;_cl=_mmv.cl; } else { byKw[kw].forEach(function(r){ _sp+=(r.spend||0);_sa+=(r.sales||0);_od+=(r.orders||0);_cl+=(r.cl||0); }); }
       const _mcl=_mmv?_mmv.cl:byKw[kw].reduce((a,r)=>a+(r.cl||0),0); const _r3=_mmv?_mmv.r3:_kwiRecent3(byKw[kw],_latest);
       const _kvDisp=_mmv?_mmv.kwvol:_kwVol[kw]; const _kvRed=_mmv?false:_volRed[kw];
@@ -12428,7 +12439,9 @@ function renderKwTrend(resetScroll){
   });
   // 入札額・目安CPCは「前の値を引き継ぐ」階段。データの無い日も、それまでの値のまま
   let ca = null, cg = null; const actS = [], guiS = [];
-  points.forEach((p, i) => { const v = vals[i]; if (v.has){ if (v.act) ca = v.act; if (v.gui) cg = v.gui; } else { const cv = p.last ? _kwiCarry(kwAll, p.last) : null; if (cv && cv.act > 0 && ca == null && kwAll.some(r => r.date <= p.last)) ca = cv.act; if (cv && cv.gui > 0 && cg == null && kwAll.some(r => r.date <= p.last)) cg = cv.gui; } if (snapGui && i === points.length - 1 && _kwtGrain === 'day' && p.last && p.last.slice(0,7) === latestAll.slice(0,7) && p.last >= latestAll) cg = snapGui;   // ★v1.1454★ 最新日は登録KWの目安CPC
+  // ★v1.1477★ 最後のクリックより後の日（＝クリック0が続いている日）の入札は、登録KWファイルの今の入札額
+  const _bidNow = _kwBidNow(code, kw); const _kwLastClick = kwAll.reduce((m, r) => r.date > m ? r.date : m, '');
+  points.forEach((p, i) => { const v = vals[i]; if (v.has){ if (v.act) ca = v.act; if (v.gui) cg = v.gui; } else { if (_bidNow && p.last && p.last > _kwLastClick && (_kwtGrain === 'day' || p.ym >= latestAll.slice(0,7))) ca = _bidNow; const cv = p.last ? _kwiCarry(kwAll, p.last) : null; if (cv && cv.act > 0 && ca == null && kwAll.some(r => r.date <= p.last)) ca = cv.act; if (cv && cv.gui > 0 && cg == null && kwAll.some(r => r.date <= p.last)) cg = cv.gui; } if (snapGui && i === points.length - 1 && _kwtGrain === 'day' && p.last && p.last.slice(0,7) === latestAll.slice(0,7) && p.last >= latestAll) cg = snapGui;   // ★v1.1454★ 最新日は登録KWの目安CPC
     actS.push(ca); guiS.push(cg); });
   const bidChg = []; for (let i = 1; i < actS.length; i++){ if (actS[i] != null && actS[i-1] != null && actS[i] !== actS[i-1]) bidChg.push({ i, from: actS[i-1], to: actS[i] }); }
   const chgSet = new Set(bidChg.map(c => c.i));
