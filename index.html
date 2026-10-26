@@ -593,7 +593,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1484</span>
+    <span class="build-date">v1.1485</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -13048,11 +13048,11 @@ function renderRenewalGraph(){
   const cut = (_renewalGraphPeriod !== 'daily' && sel && sel.value === 'cut' && typeof _monthlyLatestCut === 'function') ? _monthlyLatestCut() : 0;
   _renDayCutNow = cut;
   try{ _renderRenewalGraphCore(); } finally { _renDayCutNow = 0; }
-  // 月途中の帯（グラフの上）とドロップダウンの見た目
+  // 月途中の帯（グラフの上）とドロップダウンの見た目 ★v1.1485★ 帯の太さは「SEO売上」ボタンと v1.1481 の帯の中間（約39px）
   let bn = document.getElementById('renDayBanner');
   if (!bn){ const anchor = document.getElementById('renewalMetricToggles'); if (anchor){ bn = document.createElement('div'); bn.id = 'renDayBanner'; anchor.parentNode.insertBefore(bn, anchor); } }
-  if (bn){ bn.style.cssText = cut ? 'display:flex;align-items:center;gap:12px;margin:2px 24px 8px;padding:9px 16px;background:#0f766e;color:#fff;font-size:15px;font-weight:800;letter-spacing:.3px;border-radius:6px' : 'display:none';
-    bn.innerHTML = cut ? ('<span style="background:#fff;color:#0f766e;border-radius:5px;padding:2px 10px;font-size:14px">月途中</span>グラフも表も、各月 1〜' + cut + '日 だけの合計です（月全体の数字ではありません）<button onclick="_renBackFull()" style="margin-left:auto;font-size:13px;font-weight:800;padding:5px 14px;border-radius:6px;border:1.5px solid #fff;background:transparent;color:#fff;cursor:pointer">月全体に戻す</button>') : ''; }
+  if (bn){ bn.style.cssText = cut ? 'display:flex;align-items:center;gap:10px;margin:2px 24px 8px;padding:7px 14px;background:#0f766e;color:#fff;font-size:14px;font-weight:800;letter-spacing:.3px;border-radius:6px' : 'display:none';
+    bn.innerHTML = cut ? ('<span style="background:#fff;color:#0f766e;border-radius:5px;padding:1px 9px;font-size:13px">月途中</span>グラフも表も、各月 1〜' + cut + '日 だけの合計です（月全体の数字ではありません）<button onclick="_renBackFull()" style="margin-left:auto;font-size:12px;font-weight:800;padding:3px 12px;border-radius:6px;border:1.5px solid #fff;background:transparent;color:#fff;cursor:pointer">月全体に戻す</button>') : ''; }
   if (sel){ const on = !!cut; sel.style.borderColor = on ? '#0f766e' : ''; sel.style.color = on ? '#0f766e' : ''; sel.style.fontWeight = on ? '700' : ''; sel.style.background = on ? '#f0fdfa' : ''; }
 }
 function _renBackFull(){ const sel = document.getElementById('renewalGraphDayMonth'); if (sel){ const o = [...sel.options].find(x => x.value !== 'cut'); if (o) sel.value = o.value; } renderRenewalGraph(); }
