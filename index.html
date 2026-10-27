@@ -55,6 +55,8 @@ body { font-family: 'Noto Sans JP', sans-serif; font-size: 13px; background: var
 .kwt-badge:hover { background: #7c3aed; color: #fff; border-color: #7c3aed; }
 #renewalGraphTable.ren-cut tbody td:first-child { background: #e6f4f1 !important; color: #0f766e; font-weight: 700; }   /* ★v1.1480★ 月途中のときの月の列 */
 /* ★v1.1490★ KW-個別推移の表：入札額を変えた日（月）の行を緑の点線枠で囲む。月の境目の行は、下の線は月の境目の太線を優先 */
+/* ★v1.1492★ 全体情報の表：見出しをモーダル本体のスクロールで止める（tr の sticky は効かないので th ごとに付ける）。背景は th 側の色があればそちら */
+#renewalGraphTable thead th { position: sticky; top: 0; z-index: 2; background-color: var(--surface2); }
 tr.kwt-bidchg > td { border-top: 2px dashed #00897B !important; }
 tr.kwt-bidchg:not(.kwt-monedge) > td { border-bottom: 2px dashed #00897B !important; }
 tr.kwt-bidchg > td:first-child { border-left: 2px dashed #00897B !important; }
@@ -598,7 +600,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1491</span>
+    <span class="build-date">v1.1492</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -13126,7 +13128,7 @@ function renderRenewalGraph(){
   // 月途中の帯（グラフの上）とドロップダウンの見た目 ★v1.1485★ 帯の太さは「SEO売上」ボタンと v1.1481 の帯の中間（約39px）
   let bn = document.getElementById('renDayBanner');
   if (!bn){ const anchor = document.getElementById('renewalMetricToggles'); if (anchor){ bn = document.createElement('div'); bn.id = 'renDayBanner'; anchor.parentNode.insertBefore(bn, anchor); } }
-  if (bn){ bn.style.cssText = cut ? 'display:flex;align-items:center;gap:10px;margin:2px 24px 8px;padding:7px 14px;background:#0f766e;color:#fff;font-size:14px;font-weight:800;letter-spacing:.3px;border-radius:6px' : 'display:none';
+  if (bn){ bn.style.cssText = cut ? 'display:flex;align-items:center;gap:10px;margin:2px 0 8px;padding:7px 14px;background:#0f766e;color:#fff;font-size:14px;font-weight:800;letter-spacing:.3px;border-radius:6px' : 'display:none';
     bn.innerHTML = cut ? ('<span style="background:#fff;color:#0f766e;border-radius:5px;padding:1px 9px;font-size:13px">月途中</span>グラフも表も、各月 1〜' + cut + '日 だけの合計です（月全体の数字ではありません）<button onclick="_renBackFull()" style="margin-left:auto;font-size:12px;font-weight:800;padding:3px 12px;border-radius:6px;border:1.5px solid #fff;background:transparent;color:#fff;cursor:pointer">月全体に戻す</button>') : ''; }
   if (sel){ const on = !!cut; sel.style.borderColor = on ? '#0f766e' : ''; sel.style.color = on ? '#0f766e' : ''; sel.style.fontWeight = on ? '700' : ''; sel.style.background = on ? '#f0fdfa' : ''; }
 }
@@ -18580,33 +18582,36 @@ window.addEventListener('DOMContentLoaded', async () => {
         </div>
       </div>
     </div>
-    <div style="padding:8px 24px 4px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <div style="display:flex;gap:4px">
-        <button id="renewalGraphPeriodDaily" onclick="_setRenewalGraphPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
-        <button id="renewalGraphPeriodMonth" onclick="_setRenewalGraphPeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
+    <div id="renewalScrollBody" style="padding:0 24px 14px;flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;overflow-y:auto;overflow-x:auto">
+      <!-- ★v1.1492★ 日別／月別などの操作の行と、SEO売上・広告売上・売上ROAS の行は、スクロールする側に入れた（固定するのは商品名の行まで。KW-個別推移と同じ） -->
+      <div id="renewalCtlWrap" style="flex:0 0 auto;margin-bottom:-14px">
+      <div style="padding:8px 0 4px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;gap:4px">
+          <button id="renewalGraphPeriodDaily" onclick="_setRenewalGraphPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
+          <button id="renewalGraphPeriodMonth" onclick="_setRenewalGraphPeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
+        </div>
+        <!-- ★v1.1482★ 月を選ぶドロップダウンは「月別」ボタンのすぐ右 -->
+        <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 6px;width:auto;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
+        <div id="renewalGraphFYBtns" style="display:flex;gap:4px"><button id="renewalGraphFYCal" onclick="setRenewalFYStart(1)" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="renewalGraphFYFiscal" onclick="setRenewalFYStart(5)" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">5月始まり</button><button id="renewalGraphView2yBtn" onclick="setRenewal2y()" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">2年横並び</button></div>
+        <div id="renewalGraphDayPresets" style="display:none;gap:4px"><button id="renewalDP60" onclick="setRenewalDayPreset('60')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">30日</button><button id="renewalDP2M" onclick="setRenewalDayPreset('2month')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">先月-今月</button><button id="renewalDPTM" onclick="setRenewalDayPreset('thismonth')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">今月</button></div>
+        <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
+          <option value="all">売上＆ROAS</option>
+          <option value="seoad">SEO売上＆広告売上比率</option>
+          <option value="sales">両方-売上</option>
+          <option value="spend">広告-実績額</option>
+          <option value="roas">広告-ROAS</option>
+          <option value="cvr">広告-CVR</option>
+          <option value="ctr">広告-CTR＆クリック数</option>
+          <option value="orders">広告-個数</option>
+          <option value="cpc">平均単価</option>
+        </select>
+        <button id="renewalGraphCollapseBtn" onclick="_toggleRenewalGraphCollapse()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">グラフを隠す</button>
+        <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較 ／ 平均単価 = 売上 ÷ 売上件数</span>
+            <button onclick="_openIgColPanel()" style="margin-left:auto;font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button>
       </div>
-      <!-- ★v1.1482★ 月を選ぶドロップダウンは「月別」ボタンのすぐ右 -->
-      <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 6px;width:auto;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
-      <div id="renewalGraphFYBtns" style="display:flex;gap:4px"><button id="renewalGraphFYCal" onclick="setRenewalFYStart(1)" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="renewalGraphFYFiscal" onclick="setRenewalFYStart(5)" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">5月始まり</button><button id="renewalGraphView2yBtn" onclick="setRenewal2y()" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">2年横並び</button></div>
-      <div id="renewalGraphDayPresets" style="display:none;gap:4px"><button id="renewalDP60" onclick="setRenewalDayPreset('60')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">30日</button><button id="renewalDP2M" onclick="setRenewalDayPreset('2month')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">先月-今月</button><button id="renewalDPTM" onclick="setRenewalDayPreset('thismonth')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">今月</button></div>
-      <select id="renewalGraphMetric" onchange="renderRenewalGraph()" style="font-size:13px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
-        <option value="all">売上＆ROAS</option>
-        <option value="seoad">SEO売上＆広告売上比率</option>
-        <option value="sales">両方-売上</option>
-        <option value="spend">広告-実績額</option>
-        <option value="roas">広告-ROAS</option>
-        <option value="cvr">広告-CVR</option>
-        <option value="ctr">広告-CTR＆クリック数</option>
-        <option value="orders">広告-個数</option>
-        <option value="cpc">平均単価</option>
-      </select>
-      <button id="renewalGraphCollapseBtn" onclick="_toggleRenewalGraphCollapse()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">グラフを隠す</button>
-      <span style="font-size:10px;color:var(--text3)">※ オレンジ縦線 = 変更記録の起点 ／ 「全体」は各指標を0〜100%に正規化して比較 ／ 平均単価 = 売上 ÷ 売上件数</span>
-          <button onclick="_openIgColPanel()" style="margin-left:auto;font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button>
-    </div>
-    <!-- 全体モード時の指標ON/OFFボタン -->
-    <div id="renewalMetricToggles" style="display:none;padding:0 24px 2px;flex-wrap:wrap;gap:6px"></div>
-    <div style="padding:0 24px 14px;flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;overflow-y:auto;overflow-x:hidden">
+      <!-- 全体モード時の指標ON/OFFボタン -->
+      <div id="renewalMetricToggles" style="display:none;padding:0 0 2px;flex-wrap:wrap;gap:6px"></div>
+      </div>
       <div id="renewalGraphArea" style="position:relative;flex:0 0 auto;width:100%;min-height:0;display:flex;flex-direction:column">
         <div id="renewalYearToggles" style="display:none;flex-wrap:wrap;gap:5px;justify-content:flex-end;padding-bottom:6px"></div>
         <div style="position:relative;height:400px">
@@ -18617,7 +18622,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       <!-- データ表（グラフと同じ期間切替に連動） -->
       <div id="renewalGraphTableWrap" style="width:100%;flex:0 0 auto;display:flex;flex-direction:column;border-top:1px solid var(--border);padding-top:14px">
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:10px">📋 <span id="renewalTablePeriodLabel">月別</span><span id="renTblModeBtns" style="display:none;gap:0"><button id="renTblNormal" onclick="setRenTblYoy(false)">通常</button><button id="renTblYoyB" onclick="setRenTblYoy(true)">前年同月比</button></span></div>
-        <div id="renewalGraphTableScroll" style="overflow-x:auto;overflow-y:auto;border:1px solid var(--border);border-radius:8px;min-height:120px;max-height:600px">
+        <!-- ★v1.1492★ 表だけのスクロール（最大600px）をやめた。モーダル本体のスクロールに一本化して、表の見出しが商品名の行の真下で止まるようにする（KW-個別推移と同じ動き） -->
+        <div id="renewalGraphTableScroll" style="border:1px solid var(--border);border-radius:8px;min-height:120px">
           <table id="renewalGraphTable" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"></table>
         </div>
       </div>
