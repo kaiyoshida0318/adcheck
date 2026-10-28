@@ -600,7 +600,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1492</span>
+    <span class="build-date">v1.1493</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12572,7 +12572,8 @@ function renderKwTrend(resetScroll){
     const chg = chgSet.has(i); const chgInfo = chg ? bidChg.find(c => c.i === i) : null;
     /* ★v1.1490★ 入札額を変えた行は緑の点線枠（class kwt-bidchg）。0クリックの日でも、登録KWの入札額が変わっていれば枠を出す */
     const _rowTitle = [zero ? zeroTitle : '', chg ? 'この' + (_kwtGrain === 'day' ? '日' : '月') + 'に入札額が ¥' + chgInfo.from + ' → ¥' + chgInfo.to + ' に変わりました' : ''].filter(Boolean).join('／');
-    tbl += '<tr class="' + (chg ? 'kwt-bidchg' : '') + (monEdge ? ' kwt-monedge' : '') + '"' + (_rowTitle ? ' title="' + _rowTitle + '"' : '') + (zero ? ' style="background:#fafafa"' : '') + '>'
+    /* ★v1.1493★ 月別では点線枠を出さない（マウスを乗せたときの説明は残す） */
+    tbl += '<tr class="' + ((chg && _kwtGrain === 'day') ? 'kwt-bidchg' : '') + (monEdge ? ' kwt-monedge' : '') + '"' + (_rowTitle ? ' title="' + _rowTitle + '"' : '') + (zero ? ' style="background:#fafafa"' : '') + '>'
       + '<td style="' + TD + ';' + monEdge + 'text-align:left;font-family:inherit;font-weight:700;color:' + dcol + (zero ? ';opacity:.6' : '') + '">' + p.tlabel + (zero ? '<span style="margin-left:6px;font-size:10px;font-weight:700;color:#94a3b8;border:1px solid #cbd5e1;border-radius:4px;padding:0 4px;opacity:1">0クリック</span>' : '') + '</td>';
     if (zero){
       const Z = 'color:#a0aec0;';
@@ -12607,7 +12608,7 @@ function renderKwTrend(resetScroll){
   bodyEl.innerHTML = kwHead + ctl + zeroNote + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">' + tg + '</div>'
     + '<div style="position:relative;height:430px;margin-bottom:14px"><canvas id="kwTrendCanvas"></canvas></div>'
     + '<div style="font-size:13px;font-weight:700;color:var(--text2);margin:4px 0 6px">📋 ' + (_kwtGrain === 'day' ? '日別' : '月別') + 'データ <span style="font-size:11px;font-weight:400;color:var(--text3)">（KWvol・KW割合・目安・入札は 日別＝その日時点、月別＝その月の最終日時点。クリック数〜ROAS は 日別＝その日、月別＝その月の合計）</span>'
-    + (bidChg.length ? '<span style="margin-left:10px;font-size:11px;font-weight:700;color:#00897B;white-space:nowrap"><span style="display:inline-block;border:2px dashed #00897B;border-radius:3px;padding:0 5px;margin-right:4px">点線枠</span>＝入札額を変えた' + (_kwtGrain === 'day' ? '日' : '月') + '</span>' : '') + '</div>'
+    + ((bidChg.length && _kwtGrain === 'day') ? '<span style="margin-left:10px;font-size:11px;font-weight:700;color:#00897B;white-space:nowrap"><span style="display:inline-block;border:2px dashed #00897B;border-radius:3px;padding:0 5px;margin-right:4px">点線枠</span>＝入札額を変えた' + (_kwtGrain === 'day' ? '日' : '月') + '</span>' : '') + '</div>'
     + '<div style="border:1px solid var(--border);border-radius:8px">' + tbl + '</div>';
   bodyEl.scrollTop = resetScroll ? 0 : st;
   // ---- グラフ ----
