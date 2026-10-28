@@ -150,6 +150,29 @@ header + * { margin-top: 4px; }
 .ch.sort-asc::after { content: " ↑"; }
 .ch.sort-desc { color: var(--red); }
 .ch.sort-desc::after { content: " ↓"; }
+/* ★v1.1494★ 2段の見出し（商品番号／商品管理番号、初回販売日／リニューアル登録日）。上下それぞれが並べ替えボタン */
+.ch.ch-stack { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 5px 8px; cursor: default; letter-spacing: 0; }
+.ch.ch-stack:hover { color: var(--text3); }
+.ch-sub { display: block; cursor: pointer; white-space: nowrap; line-height: 1.2; }
+.ch-sub:hover { color: var(--text); }
+.ch-sub .ss-ic { font-style: normal; margin-left: 3px; opacity: .55; }
+.ch-sub .ss-ic::after { content: "⇅"; }
+.ch-sub.sort-asc, .ch-sub.sort-desc { color: var(--red); }
+.ch-sub.sort-asc .ss-ic, .ch-sub.sort-desc .ss-ic { opacity: 1; }
+.ch-sub.sort-asc .ss-ic::after { content: "↑"; }
+.ch-sub.sort-desc .ss-ic::after { content: "↓"; }
+.kwh-sub { cursor: pointer; white-space: nowrap; line-height: 1.25; }
+.kwh-sub + .kwh-sub { margin-top: 4px; }
+.kwh-sub:hover { color: var(--text); }
+.kwh-sub .ss-ic { font-style: normal; margin-left: 3px; opacity: .55; }
+.kwh-sub .ss-ic::after { content: "⇅"; }
+.kwh-sub.sort-asc, .kwh-sub.sort-desc { color: var(--red); }
+.kwh-sub.sort-asc .ss-ic, .kwh-sub.sort-desc .ss-ic { opacity: 1; }
+.kwh-sub.sort-asc .ss-ic::after { content: "↑"; }
+.kwh-sub.sort-desc .ss-ic::after { content: "↓"; }
+.idd-stack { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 6px 8px; min-width: 0; overflow: hidden; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text2); user-select: text; cursor: text; }
+.idd-stack > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; line-height: 1.25; }
+.idd-stack > div.idd-sub { color: var(--text3); }
 .page-btns { display: none; }
 .pagination { display: none; }
 
@@ -600,7 +623,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1493</span>
+    <span class="build-date">v1.1494</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -748,8 +771,9 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
             <div id="colWidthPanelBody"></div>
           </div>
           <div class="col-header with-status" style="position:sticky;top:48px;z-index:25;background:#f8f9fa">
-            <div class="ch" id="ch-itemnum" onclick="sortBy('itemnum')" style="cursor:pointer">商品番号</div>
-            <div class="ch" id="ch-itemid" onclick="sortBy('itemid')" style="cursor:pointer">商品管理番号</div>
+            <!-- ★v1.1494★ 1列目＝商品番号／商品管理番号、2列目＝初回販売日／リニューアル登録日（上下それぞれクリックで並べ替え） -->
+            <div class="ch ch-stack" id="ch-ids"><span class="ch-sub" id="ch-itemnum" onclick="sortBy('itemnum')" title="商品番号で並べ替え">商品番号<i class="ss-ic"></i></span><span class="ch-sub" id="ch-itemid" onclick="sortBy('itemid')" title="商品管理番号で並べ替え">商品管理番号<i class="ss-ic"></i></span></div>
+            <div class="ch ch-stack" id="ch-dates"><span class="ch-sub" id="ch-firstsale" onclick="sortBy('firstsale')" title="初回販売日（売上が最初に立った日）で並べ替え">初回販売日<i class="ss-ic"></i></span><span class="ch-sub" id="ch-renewal" onclick="sortBy('renewal')" title="リニューアル登録日（変更記録の最後の日付）で並べ替え">リニューアル登録日<i class="ss-ic"></i></span></div>
             <div class="ch" id="ch-img" style="border-right:2px solid #c4cad2">商品画像</div>
             <div class="ch" id="ch-name" onclick="sortBy('name')" style="border-right:2px solid #c4cad2">商品名</div>
             <div class="ch r" id="ch-totsales" onclick="sortBy('totsales')" style="cursor:pointer;background:#eef4fb">総売上</div>
@@ -10276,6 +10300,8 @@ function _kwiLegendCard(){ return '<div style="border:1px solid #c9c9c9;border-r
   +'<span style="color:#333;font-weight:900;font-size:14px">&#9632;</span>　出稿してるがインプレッションなし（目安45円以下）'
   +'</div>'; }
 var _kwAllSort='spend';
+var _kwAllSortDir='desc';   // ★v1.1494★ 見出しの並べ替え（商品番号・商品管理番号・初回販売日・リニューアル登録日）の向き
+function _kwAllSortBy(k,w){ if(_kwAllSort===k){ _kwAllSortDir=(_kwAllSortDir==='desc')?'asc':'desc'; } else { _kwAllSort=k; _kwAllSortDir='desc'; } if(w) renderKwWatch(); else renderKwAllData(); }
 var _kwAllExclMaru=true;
 var _kwAllSearch=''; // KW-全体データの検索語（入力時のみ実績0の登録KWも表示）
 var _kwAllPeriod='day'; // 'day'=当日(最新月) / 'month'=前月(満了)
@@ -10285,7 +10311,7 @@ function kwAllSearch(v){ _kwAllSearch=(v!=null?String(v):'').trim(); renderKwAll
 function kwAllSearchClear(){ _kwAllSearch=''; renderKwAllData(); }
 // ── KW-全体データ 項目調整（列の表示ON/OFF・幅）──
 var _KWALLCOLS=[
- {key:'num',label:'商品番号'},{key:'code',label:'商品管理番号'},{key:'prodkw',label:'商品 / KW'},
+ {key:'num',label:'商品番号/商品管理番号'},{key:'code',label:'初回販売日/リニューアル登録日'},{key:'prodkw',label:'商品 / KW'},
  {key:'kwvol',label:'KWvol'},{key:'spend',label:'実績額'},{key:'sales',label:'売上'},
  {key:'salesroas',label:'売上ROAS'},{key:'cvr',label:'CVR'},{key:'roas',label:'ROAS'},
  {key:'share',label:'当商品内で占める割合'},{key:'mclick',label:'月クリック合計'},{key:'recent3',label:'直近3日クリック'},
@@ -10751,7 +10777,15 @@ function _renderKwTable(cfg){ cfg=cfg||{};
     });
   }
   if(_kwAllSearch && !cfg.watchOnly){ var _sq=_kwAllSearch.toLowerCase(); rows=rows.filter(function(o){ var _in=(productCache[o.code]&&productCache[o.code].itemNumber)||''; return (((o.kw||'')+' '+(o.name||'')+' '+(o.code||'')+' '+_in).toLowerCase()).indexOf(_sq)>=0; }); }
+  var _txtSort={itemnum:1,code:1,firstsale:1,renewal:1};
+  if(_txtSort[_key]){
+    /* ★v1.1494★ 見出しの並べ替え。値の無いもの（日付が無い商品など）は向きに関係なくいつも下。同じ値の中は商品ごとにまとめ、実績額の大きい順 */
+    var _kf=function(o){ if(_key==='itemnum') return String((productCache[o.code]&&productCache[o.code].itemNumber)||''); if(_key==='code') return String(o.code||''); if(_key==='firstsale') return _firstSaleDate(o.code); return _renewalDate(o.code); };
+    var _dd=(_kwAllSortDir==='asc')?1:-1;
+    rows.sort(function(a,b){ var x=_kf(a),y=_kf(b); if(x!==y){ if(!x) return 1; if(!y) return -1; return _dd*x.localeCompare(y,'ja',{numeric:true}); } if(a.code!==b.code) return String(a.code).localeCompare(String(b.code)); return (b.spend-a.spend); });
+  } else {
   rows.sort(function(a,b){ var x=a[_key],y=b[_key]; x=(x==null?-1:x); y=(y==null?-1:y); return (y-x)||(b.spend-a.spend); });
+  }
   var _totalSpend=rows.reduce(function(a,o){return a+(o.spend||0);},0);
   var _latestDate=rows.reduce(function(m,o){return (o.date&&o.date>m)?o.date:m;},'');
   function _roasColor(v){ if(v==null) return '#999'; if(v>=800) return '#15803d'; if(v>=600) return '#16a34a'; if(v>=400) return '#555'; if(v>=200) return '#ea580c'; return '#dc2626'; }
@@ -10762,8 +10796,12 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   const _H='padding:7px 8px;text-align:center;font-size:10px;font-weight:700;color:#444;border-bottom:2px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2';
   const _T='padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;font-size:11px';
   let h='<table style="border-collapse:collapse;width:100%;font-family:\'DM Mono\',monospace"><thead><tr>';
-  h+='<th style="'+_H+';background:var(--surface);text-align:left">商品番号</th>';
-  h+='<th style="'+_H+';background:var(--surface);text-align:left">商品管理番号</th>';
+  { /* ★v1.1494★ 2段の見出し。上下それぞれクリックで並べ替え（もう一度で逆順） */
+    var _w=cfg.watchOnly?1:0;
+    var _sh=function(k,lbl,tip){ var on=(_kwAllSort===k); return '<div class="kwh-sub'+(on?(' sort-'+_kwAllSortDir):'')+'" onclick="_kwAllSortBy(\''+k+'\','+_w+')" title="'+tip+'で並べ替え">'+lbl+'<i class="ss-ic"></i></div>'; };
+    h+='<th style="'+_H+';background:var(--surface);text-align:left;padding:5px 8px">'+_sh('itemnum','商品番号','商品番号')+_sh('code','商品管理番号','商品管理番号')+'</th>';
+    h+='<th style="'+_H+';background:var(--surface);text-align:left;padding:5px 8px">'+_sh('firstsale','初回販売日','初回販売日（売上が最初に立った日）')+_sh('renewal','リニューアル登録日','リニューアル登録日（変更記録の最後の日付）')+'</th>';
+  }
   h+='<th style="'+_H+';background:var(--surface);text-align:left">商品 / KW</th>';
   h+='<th style="'+_H+';background:#e6f4ea">KWvol</th>';
   h+='<th style="'+_H+';background:#fcf2d8">実績額<br><span style="font-size:8px;font-weight:600;color:#9a7b1a">ページ内使用金額割合</span></th>';
@@ -10781,8 +10819,8 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   h+='</tr></thead><tbody>';
   rows.forEach(function(o){
     h+='<tr>'
-      +'<td style="'+_T+';text-align:left;font-size:10px;color:var(--text2)">'+_kwEsc((productCache[o.code]&&productCache[o.code].itemNumber)||'')+'</td>'
-      +'<td style="'+_T+';text-align:left;font-size:10px;color:var(--text2)">'+_kwEsc(o.code||'')+'</td>'
+      +'<td style="'+_T+';text-align:left;font-size:10px;color:var(--text2)"><div ondblclick="_selAll(this,event)" style="line-height:1.35">'+_kwEsc((productCache[o.code]&&productCache[o.code].itemNumber)||'')+'</div><div ondblclick="_selAll(this,event)" style="line-height:1.35;color:var(--text3)">'+_kwEsc(o.code||'')+'</div></td>'   /* ★v1.1494★ 商品番号／商品管理番号 */
+      +(function(){ var fs=_firstSaleDate(o.code), rn=_renewalDate(o.code); return '<td style="'+_T+';text-align:left;font-size:10px;color:var(--text2)"><div style="line-height:1.35" title="初回販売日">'+(fs?_ymdSlash(fs):'')+'</div><div style="line-height:1.35;color:var(--text3)" title="リニューアル登録日">'+(rn?_ymdSlash(rn):'')+'</div></td>'; })()   /* ★v1.1494★ 初回販売日／リニューアル登録日 */
       +'<td style="'+_T+';text-align:left;background:var(--surface)">'+'<div style="display:flex;align-items:center;gap:10px;justify-content:space-between">'+'<div style="display:flex;align-items:center;gap:8px;min-width:0">'+'<div onclick="event.stopPropagation();openRenewalGraph(\''+o.code+'\')" title="商品情報を開く（全体情報・KW-全体推移・KW-個別推移・編集）" style="cursor:pointer;flex:none;line-height:0">'+(o.img?'<img loading="lazy" src="'+o.img+'" style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border);flex:none">':'<div style="width:34px;height:34px;flex:none;border:1px dashed var(--border);border-radius:5px"></div>')+'</div>'+'<div style="min-width:0"><div style="font-size:9px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.name)+'</div><div style="font-size:12px;font-weight:700;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.kw)+'</div></div>'+'</div>'+'<div style="display:flex;align-items:center;gap:6px;flex:none">'+(cfg.watchOnly?'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:46px;height:46px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex:none">予測</button>':'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:50px;height:30px;border-radius:5px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">予測</button>')+(cfg.watchOnly?'<button onclick="_kwOpenWatchProd(\''+o.code+'\')" style="width:46px;height:46px;border-radius:8px;border:none;background:#ea580c;color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex:none">詳細</button>':'<button onclick="_kwGoWatchProd(\''+o.code+'\')" style="width:50px;height:30px;border-radius:5px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">詳細</button>')+'</div>'+'</div></td>'
       +'<td style="'+_T+';background:#eef7f0">'+n2(o.kwvol)+'</td>'
       +'<td style="'+_T+';background:#fdf6e3;font-weight:700">'+yfmt(o.spend)+((!cfg.watchOnly&&_totalSpend>0)?'<div style="font-size:9px;font-weight:600;color:#9a7b1a;margin-top:1px;white-space:nowrap">'+_pctFmt(o.spend/_totalSpend*100)+'%</div>':'')+'</td>'
@@ -10805,7 +10843,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   var _maruToggle=cfg.watchOnly?'':('<div style="display:inline-flex;gap:4px;margin-right:12px"><button onclick="_kwAllExclMaru=true; '+_reRender+';" style="'+(_kwAllExclMaru?_onSt:_offSt)+'">◎以外</button><button onclick="_kwAllExclMaru=false; '+_reRender+';" style="'+(_kwAllExclMaru?_offSt:_onSt)+'">◎含み</button></div>');
   var _periodToggle=cfg.watchOnly?'':('<div style="display:inline-flex;gap:4px;align-items:center;margin-right:12px"><span style="font-size:11px;color:var(--text3)">期間</span><button onclick="setKwAllPeriod(\'day\')" style="'+(_kwAllPeriod==='day'?_onSt:_offSt)+'">当月</button><button onclick="setKwAllPeriod(\'month\')" style="'+(_kwAllPeriod==='month'?_onSt:_offSt)+'">前月(満了)</button></div>');
   const opts=[['spend','実績額順'],['sales','売上順'],['kwvol','KWvol順'],['mclick','月クリック順'],['roas','ROAS順'],['cvr','CVR順']];
-  const sortSel='<select onchange="_kwAllSort=this.value; '+_reRender+';" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">'+opts.map(function(p){return '<option value="'+p[0]+'"'+(_kwAllSort===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('')+'</select>';
+  const sortSel='<select onchange="_kwAllSort=this.value; _kwAllSortDir=\'desc\'; '+_reRender+';" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">'+(opts.some(function(p){return p[0]===_kwAllSort;})?'':'<option value="" selected disabled>見出しで並べ替え中</option>')+opts.map(function(p){return '<option value="'+p[0]+'"'+(_kwAllSort===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('')+'</select>';
   var _roasLeg='<div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--text2)"><span style="font-weight:700">ROAS文字色</span>'+[['#15803d','800以上'],['#16a34a','600-800'],['#555','400-600'],['#ea580c','200-400'],['#dc2626','0-200']].map(function(pp){return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="font-weight:800;color:'+pp[0]+'">■</span>'+pp[1]+'</span>';}).join('')+'</div>';
   var _shareLeg='<div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--text2)"><span style="font-weight:700">当商品内割合 文字色</span>'+[['#dc2626','70-100'],['#ea580c','50-70'],['#ca8a04','30-50'],['#555','0-30']].map(function(pp){return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="font-weight:800;color:'+pp[0]+'">■</span>'+pp[1]+'</span>';}).join('')+'</div>';
   var _searchBox=cfg.watchOnly?'':('<div style="display:inline-flex;align-items:center;gap:4px;margin-right:12px"><input type="text" id="kwAllSearchInput" value="'+_kwEsc(_kwAllSearch)+'" placeholder="KW・商品名・商品番号で検索" onkeydown="if(event.key===\'Enter\')kwAllSearch(this.value)" style="width:180px;font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)"><button onclick="kwAllSearch(document.getElementById(\'kwAllSearchInput\').value)" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">検索</button>'+(_kwAllSearch?'<button onclick="kwAllSearchClear()" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">クリア</button>':'')+'</div>');
@@ -14816,7 +14854,7 @@ function renderMonthlySubTab(tab) {
       h = h.replace('top:48px','top:0');
       if (isMarathon) {
         h = h.replace('class="col-header with-status"','class="col-header marathon"');
-        var _gi = h.indexOf('id="ch-itemid"');
+        var _gi = h.indexOf('id="ch-renewal"');   /* ★v1.1494★ ジャンルIDは2列目（初回販売日／リニューアル登録日）の後ろ */
         if (_gi !== -1) { var _ge = h.indexOf('</div>', _gi); if (_ge !== -1) { _ge += 6; h = h.slice(0,_ge) + '<div class="ch" style="text-align:left;font-size:10px;color:var(--text3)">ジャンルID</div>' + h.slice(_ge); } }
         var _ci = h.indexOf('<div class="ch r" id="ch-contrib"');
         if (_ci !== -1) { var _ce = h.indexOf('</div>', _ci); if (_ce !== -1) { h = h.slice(0,_ci) + h.slice(_ce+6); } }
@@ -17249,6 +17287,7 @@ function sortBy(key) {
   } else {
     renderPage();
   }
+  _markIdDateSort();
 }
 
 function updateSortHeaders() {
@@ -17257,6 +17296,47 @@ function updateSortHeaders() {
     if (!el) return;
     el.className = 'ch r' + (_sortKey === k ? (' sort-' + _sortDir) : '');
   });
+  _markIdDateSort();
+}
+
+// ── ★v1.1494★ 初回販売日・リニューアル登録日 ──
+//   初回販売日＝salesRows（注文日の総売上）で、その商品の売上が最初に立った日。
+//   ※salesRows は 2025/02/01 から。その日から売れている商品は 2025/02/01 になる（本当はもっと前のこともある）。
+//   リニューアル登録日＝変更記録（productCache[code].changeLog）の最後の日付。無ければ空。
+var _firstSaleCache = null, _firstSaleSig = '';
+function _firstSaleDate(code){
+  const n = salesRows.length;
+  const sig = n + '|' + (n ? (salesRows[0].date + salesRows[n-1].date) : '');
+  if (!_firstSaleCache || _firstSaleSig !== sig) {
+    _firstSaleCache = {}; _firstSaleSig = sig;
+    for (let i = 0; i < n; i++) {
+      const r = salesRows[i];
+      if (!r || !r.itemCode || !(r.sales > 0) || !r.date) continue;
+      const d = String(r.date).slice(0, 10);
+      const cur = _firstSaleCache[r.itemCode];
+      if (!cur || d < cur) _firstSaleCache[r.itemCode] = d;
+    }
+  }
+  return _firstSaleCache[code] || '';
+}
+function _renewalDate(code){
+  const logs = (productCache[code] && productCache[code].changeLog) || [];
+  let m = '';
+  for (let i = 0; i < logs.length; i++) { const d = logs[i] && logs[i].date ? String(logs[i].date).slice(0, 10) : ''; if (d > m) m = d; }
+  return m;
+}
+function _ymdSlash(d){ return d ? (d.slice(0,4) + '/' + d.slice(5,7) + '/' + d.slice(8,10)) : ''; }
+// 日付で並べ替え（dir：1＝古い順、-1＝新しい順）。日付が無いものは向きに関係なくいつも下
+function _cmpDateBlankLast(fn, a, b, dir){ const x = fn(a), y = fn(b); if (!x && !y) return 0; if (!x) return 1; if (!y) return -1; return dir * x.localeCompare(y); }
+// 2段の見出し（.ch-sub）の並べ替え中の印を、今の並べ替えに合わせる（複製した見出しも含めて全部）
+function _markIdDateSort(){
+  try {
+    const map = { itemnum:'ch-itemnum', itemid:'ch-itemid', firstsale:'ch-firstsale', renewal:'ch-renewal' };
+    document.querySelectorAll('.col-header .ch-sub').forEach(el => {
+      el.classList.remove('sort-asc', 'sort-desc');
+      if (map[_sortKey] && el.id === map[_sortKey]) el.classList.add('sort-' + _sortDir);
+    });
+  } catch(e) {}
 }
 
 // 検索クエリの正規化：全角→半角、小文字化、前後空白除去
@@ -17357,6 +17437,7 @@ function getSorted(ym) {
     const bn = productCache[b.id]?.itemNumber || '';
     return dir * an.localeCompare(bn);
   }
+  if (_sortKey === 'firstsale' || _sortKey === 'renewal') return _cmpDateBlankLast(_sortKey === 'firstsale' ? _firstSaleDate : _renewalDate, a.id, b.id, dir);   // ★v1.1494★ 日付の無い商品はいつも下
     if (_sortKey === 'totsales') {
       const totOf = p => _aggFor(p.id, ym).totSales;
       return dir * (totOf(a) - totOf(b));
@@ -17696,12 +17777,11 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const _caRoasCell = _marathonView ? '' : (() => { const _rd=(_caData&&_caData.roasD!=null)?Math.round(_caData.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px;background:#dcf0e6;border-right:2px solid #a9dabf"><span style="color:${_rdc};font-weight:700">${_rd!=null?_rd+'%':'—'}</span></div>`; })();
   return `<div class="item-row">
     <div class="item-basic${isExp?' expanded':''}${_marathonView?' marathon':' with-status'}"${_ssTabActive?` onclick="_rowClick('${p.id}','${ym}')"`:''}>
-      <div onclick="event.stopPropagation()" ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${cached?.itemNumber||''}（ダブルクリックで選択）">
-        ${cached?.itemNumber || '—'}
+      <div class="idd-stack" onclick="event.stopPropagation()">
+        <div ondblclick="_selectAndCopy(this,event)" title="商品番号 ${cached?.itemNumber||''}（ダブルクリックで選択）">${cached?.itemNumber || '—'}</div>
+        <div class="idd-sub" ondblclick="_selectAndCopy(this,event)" title="商品管理番号 ${p.id}（ダブルクリックで選択）">${p.id}</div>
       </div>
-      <div onclick="event.stopPropagation()" ondblclick="_selectAndCopy(this,event)" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text" title="${p.id}（ダブルクリックで選択）">
-        ${p.id}
-      </div>
+      ${(() => { const _fs=_firstSaleDate(p.id), _rn=_renewalDate(p.id); return `<div class="idd-stack" onclick="event.stopPropagation()"><div title="初回販売日（売上が最初に立った日）">${_fs?_ymdSlash(_fs):''}</div><div class="idd-sub" title="リニューアル登録日（変更記録の最後の日付）">${_rn?_ymdSlash(_rn):''}</div></div>`; })()}
       ${_genreCell}
       <div class="cell-img" style="display:flex;align-items:center;justify-content:center;padding:8px 4px;border-right:2px solid #c4cad2">${imgEl}</div>
       <div class="cell-name" style="display:flex;align-items:center;gap:6px;border-right:2px solid #c4cad2">
@@ -18054,8 +18134,8 @@ function clearAll() {
 }
 
 const COLW_DEFS=[
-  {k:'num',    label:'商品番号',     def:90, al:'left',  row:true, hid:'ch-itemnum'},
-  {k:'code',   label:'商品管理番号', def:110, al:'left',  row:true, hid:'ch-itemid'},
+  {k:'num',    label:'商品番号/管理番号', def:90, al:'left'},   /* ★v1.1494★ 2段（商品番号／商品管理番号）。見出しは2段なので項目名の変更はしない（hid なし） */
+  {k:'dates',  label:'初回販売/リニューアル', def:122, al:'left'},   /* ★v1.1494★ 2段（初回販売日／リニューアル登録日）。旧 'code'（商品管理番号）の列 */
   {k:'img',    label:'商品画像',     def:48, al:'center', row:true, hid:'ch-img'},
   {k:'name',   label:'商品名(最小)', def:130, flex:true, al:'left', row:true, hid:'ch-name'},
   {k:'tot',    label:'総売上',       def:92, al:'right', hid:'ch-totsales'},
@@ -18078,8 +18158,8 @@ const COLW_KEY_MK='adcheck_colw_marathon';
 const COLW_KEY_MK2='adcheck_colw_marke';
 let _colwMode='normal';
 const MK_COLW_DEFS=[
-  {k:'num',    label:'商品番号',     def:90, al:'left',  row:true},
-  {k:'code',   label:'商品管理番号', def:80, al:'left',  row:true},
+  {k:'num',    label:'商品番号/管理番号', def:90, al:'left'},   /* ★v1.1494★ */
+  {k:'dates',  label:'初回販売/リニューアル', def:122, al:'left'},   /* ★v1.1494★ */
   {k:'genre',  label:'ジャンルID',   def:90, al:'left',  row:true},
   {k:'img',    label:'商品画像',     def:48, al:'center',row:true},
   {k:'name',   label:'商品名(最小)', def:130, flex:true, al:'left', row:true},
@@ -18129,8 +18209,8 @@ function _applyColWidths(){
   { const w=k=>_colwValFor(COLW_KEY,COLW_DEFS,k);
     const name='minmax('+w('name')+'px,1fr)';
     const dataCols=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20','gross','caroas'].map(k=>w(k)+'px').join(' ');
-    const ns=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' 28px';
-    const ws=w('num')+'px '+w('code')+'px '+w('img')+'px '+name+' '+dataCols+' '+w('status')+'px '+w('ss')+'px 28px';
+    const ns=w('num')+'px '+w('dates')+'px '+w('img')+'px '+name+' '+dataCols+' 28px';
+    const ws=w('num')+'px '+w('dates')+'px '+w('img')+'px '+name+' '+dataCols+' '+w('status')+'px '+w('ss')+'px 28px';
     css+='.col-header{grid-template-columns:'+ns+' !important}.item-basic{grid-template-columns:'+ns+' !important}.col-header.with-status{grid-template-columns:'+ws+' !important}.item-basic.with-status{grid-template-columns:'+ws+' !important}';
     COLW_DEFS.forEach(function(d,i){
       const n=i+1; const a=_colwAlignFor(COLW_KEY,COLW_DEFS,d.k);
@@ -18145,7 +18225,7 @@ function _applyColWidths(){
   { const w=k=>_colwValFor(COLW_KEY_MK,MK_COLW_DEFS,k);
     const name='minmax('+w('name')+'px,1fr)';
     const mid=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20'].map(k=>w(k)+'px').join(' ');
-    const mk=w('num')+'px '+w('code')+'px '+w('genre')+'px '+w('img')+'px '+name+' '+mid+' '+w('status')+'px '+w('ss')+'px 28px';
+    const mk=w('num')+'px '+w('dates')+'px '+w('genre')+'px '+w('img')+'px '+name+' '+mid+' '+w('status')+'px '+w('ss')+'px 28px';
     css+='.col-header.marathon{grid-template-columns:'+mk+' !important}.item-basic.marathon{grid-template-columns:'+mk+' !important}';
     MK_COLW_DEFS.forEach(function(d,i){
       const n=i+1; const a=_colwAlignFor(COLW_KEY_MK,MK_COLW_DEFS,d.k);
