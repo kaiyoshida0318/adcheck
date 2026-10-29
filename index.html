@@ -373,6 +373,63 @@ header + * { margin-top: 4px; }
 /* ── Drop Zone ── */
 #dropZoneArea.drag-over { border-color: var(--red); background: var(--red-light); }
 
+/* ── ★v1.1501★ 列幅の調整モード（Ycheck の「⇔ 幅」と同じ見た目：オレンジ＝調整中、青＝ロック） ── */
+body.colw-on #products-scroll-area > .col-header > div,
+body.colw-on #subTabListInner > .col-header > div,
+body.colw-on #markeList > .col-header > div { position: relative; }
+body.colw-on #products-scroll-area > .col-header:not(.colw-wrow),
+body.colw-on #subTabListInner > .col-header:not(.colw-wrow),
+body.colw-on #markeList > .col-header:not(.colw-wrow) { box-shadow: inset 0 -2px 0 #f59e0b; }
+.colw-handle { position: absolute; top: 0; bottom: 0; right: -4px; width: 8px; cursor: col-resize; z-index: 6; }
+.colw-handle::after { content: ''; position: absolute; top: 3px; bottom: 3px; left: 3px; width: 2px; border-radius: 1px; background: rgba(245,158,11,.45); }
+.colw-handle:hover::after, .colw-handle.is-resizing::after { background: #f59e0b; top: 0; bottom: 0; }
+body.is-colw-resizing, body.is-colw-resizing * { cursor: col-resize !important; user-select: none !important; }
+.col-header.colw-wrow { position: sticky; bottom: 0; top: auto; z-index: 26; background: #fff7e0 !important; border-top: 2px solid #f59e0b; border-bottom: none; align-items: stretch; box-shadow: 0 -3px 8px rgba(0,0,0,.06); }
+.col-header.colw-wrow > div { background: transparent !important; }
+.colw-td { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; padding: 4px 2px 5px; min-width: 0; overflow: hidden; border-right: 1px dashed #f5c26b; }
+.colw-td-x { border-right: none; }
+.col-header.colw-wrow > .colw-td.is-locked { background: #e0ecff !important; }
+.colw-td .colw-handle { right: -4px; }
+.col-header > div:last-child > .colw-handle { right: 0; }   /* 一番右の列のつまみが表の外にはみ出して横スクロールにならないように */
+.colw-lbl { font-size: 9px; font-weight: 700; color: #92400e; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
+.colw-in { width: calc(100% - 4px); max-width: 56px; font-size: 11px; padding: 2px 3px; border: 1px solid #f59e0b; border-radius: 4px; text-align: right; font-family: 'DM Mono', monospace; color: #1f2937; background: #fff; box-sizing: border-box; -moz-appearance: textfield; }
+.colw-in::-webkit-outer-spin-button, .colw-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.colw-in:disabled { border-color: #93b4f0; background: #f1f6ff; color: #2563eb; }
+.colw-al { display: flex; max-width: 100%; }
+.colw-al button { font-size: 9px; line-height: 1; padding: 2px 3px; border: 1px solid #e5c48a; background: #fff; color: #92400e; cursor: pointer; margin-left: -1px; }
+.colw-al button:first-child { border-radius: 3px 0 0 3px; margin-left: 0; }
+.colw-al button:last-child { border-radius: 0 3px 3px 0; }
+.colw-al button.is-on { background: #f59e0b; border-color: #f59e0b; color: #fff; font-weight: 700; }
+.colw-lock { font-size: 9px; line-height: 1; padding: 2px 5px; border: 1px solid #cbd5e1; border-radius: 3px; background: #fff; color: #64748b; cursor: pointer; white-space: nowrap; max-width: 100%; overflow: hidden; }
+.colw-lock:hover { border-color: #2563eb; color: #2563eb; }
+.colw-lock.is-locked { background: #2563eb; border-color: #2563eb; color: #fff; font-weight: 700; }
+.colw-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 7px 12px; border: 1.5px solid #f59e0b; border-top: none; background: #fff7e0; font-size: 12px; color: #78350f; border-radius: 0 0 8px 8px; }
+.colw-sum b { color: #1f2937; font-family: 'DM Mono', monospace; }
+.colw-sum small { font-size: 10px; color: #a16207; margin-left: 2px; }
+.colw-sum .ws-rest, .colw-sum .ws-rest b { color: #15803d; }
+.colw-sum .ws-over, .colw-sum .ws-over b { color: #dc2626; font-weight: 700; }
+.colw-sum.is-over { border-color: #ef4444; background: #fef2f2; }
+.colw-sum .ws-tip { font-size: 11px; color: #a16207; }
+.colw-done { margin-left: auto; background: #f59e0b; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.colw-done:hover { background: #d97706; }
+.colw-menu { display: none; position: fixed; z-index: 10000; width: 340px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.18); padding: 12px; font-size: 12px; color: #1f2937; }
+.colw-m-head { font-size: 13px; font-weight: 700; }
+.colw-m-head span { display: block; font-size: 10px; font-weight: 400; color: #6b7280; margin-top: 2px; }
+.colw-m-grp { margin-top: 8px; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; }
+.colw-m-grp.is-here { border-color: #f59e0b; background: #fffbeb; }
+.colw-m-title { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.colw-m-title em { font-style: normal; font-size: 9px; font-weight: 700; color: #fff; background: #f59e0b; padding: 1px 6px; border-radius: 8px; }
+.colw-m-chips { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 3px; }
+.colw-chip { font-size: 10px; background: #f1f5f9; color: #475569; padding: 1px 7px; border-radius: 10px; }
+.colw-m-grp.is-here .colw-chip { background: #fde7b0; color: #92400e; }
+.colw-m-main { display: block; width: 100%; margin-top: 7px; padding: 6px 8px; background: #fff; border: 1.5px solid #f59e0b; color: #b45309; font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; }
+.colw-m-main:hover { background: #fff7e0; }
+.colw-m-main.is-on { background: #f59e0b; color: #fff; }
+.colw-m-sec { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #e5e7eb; font-size: 11px; }
+.colw-m-warn { color: #b45309; font-weight: 700; margin-bottom: 4px; }
+.colw-m-link { background: none; border: none; color: #1565C0; text-decoration: underline; font-size: 11px; cursor: pointer; padding: 2px 0; }
+.colw-toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 10001; opacity: 0; transition: opacity .25s; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
+
 /* ── 列グループ色分け ── */
 /* 全体グループ（4〜6列目: 使用金額・売上・ROAS） */
 .col-header > div:nth-child(4),
@@ -628,7 +685,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1500</span>
+    <span class="build-date">v1.1501</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -757,7 +814,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
             <div id="sroasFilterBtns" style="display:flex;gap:3px;align-items:center;margin-left:8px"></div>
             <select class="toolbar-select" id="sortSel" onchange="renderTable()" style="display:none"></select>
             <div class="toolbar-right">
-              <button class="tbtn" onclick="_openColWidthPanel()" style="margin-right:6px">項目調整</button>
+              <button class="tbtn" data-colw-btn onclick="_colwMenuOpen(this,'normal')" title="列の幅を、実際の表を見ながら調整する" style="margin-right:6px">⇔ 項目調整</button>
               <button class="tbtn" onclick="exportCSV()">CSV出力</button>
             </div>
           </div>
@@ -814,7 +871,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
             <select class="toolbar-month" id="markeMonthSel" onchange="renderMarke()"></select>
             <input type="text" class="toolbar-search" id="markeSearch" placeholder="商品名・商品番号で検索..." oninput="renderMarke()">
             <div class="toolbar-right">
-              <button class="tbtn" onclick="_openColWidthPanel('marke')" style="margin-right:6px">項目調整</button>
+              <button class="tbtn" data-colw-btn onclick="_colwMenuOpen(this,'marke')" title="列の幅を、実際の表を見ながら調整する" style="margin-right:6px">⇔ 項目調整</button>
               <button class="tbtn" onclick="exportMarkeCSV()">CSV出力</button>
             </div>
           </div>
@@ -14680,7 +14737,7 @@ function _subTabToolbar(tab, currentYm) {
   const returnBtn = (tab === 'mar-jisshi')
     ? `<button onclick="returnAllJisshiToKouho()" style="padding:7px 16px;border-radius:8px;border:2px solid #7c3aed;background:#f3eefe;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-right:8px;box-shadow:0 2px 4px rgba(124,58,237,0.15);transition:all 0.15s" onmouseover="this.style.background='#e9ddfd';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 8px rgba(124,58,237,0.25)'" onmouseout="this.style.background='#f3eefe';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(124,58,237,0.15)'" title="実施中の商品をすべて実施解除して候補へ戻します（セール終了後の一括解除用）">↩ 実施を一括解除する</button>`
     : '';
-  const colwBtn = (isStatus || isSS || isMarathon) ? '<button onclick="_openColWidthPanel()" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;margin-right:8px">項目調整</button>' : '';
+  const colwBtn = (isStatus || isSS || isMarathon) ? '<button data-colw-btn onclick="_colwMenuOpen(this,\''+(isMarathon?'marathon':'normal')+'\')" title="列の幅を、実際の表を見ながら調整する" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;margin-right:8px">⇔ 項目調整</button>' : '';
   const sroasBtns = isStatus ? '<div id="sroasFilterBtnsSub" style="display:flex;gap:3px;align-items:center;margin-left:8px">'+_sroasFilterBtnsHtml()+'</div>' : '';
   return `<div class="table-toolbar">
     <select class="toolbar-month" id="subTabMonthSel" onchange="renderMonthlySubTab(_currentTab)">${monthOpts}</select>
@@ -18381,12 +18438,12 @@ function _colwUpdateTotal(){
     '<div style="color:var(--text2)">画面幅:'+win+'px  差分:<b style="color:'+diffCol+'">'+diffTxt+'</b></div>';
 }
 function _colwAlign(k){ const o=_colwGet(); const d=_colwDefs().find(x=>x.k===k); return o['a_'+k]||(d&&d.al)||'right'; }
-function _colwSetAlign(k,a){ const o=_colwGet(); o['a_'+k]=a; _colwSet(o); _applyColWidths(); _renderColWidthPanel(); }
-function _colwOnChange(k,v){ v=Math.round(+v)||0; const o=_colwGet(); o[k]=v; _colwSet(o);
+function _colwSetAlign(k,a){ const o=_colwGet(); o['a_'+k]=a; _colwSet(o); _colwTouch(); _applyColWidths(); _renderColWidthPanel(); }
+function _colwOnChange(k,v){ v=Math.round(+v)||0; const o=_colwGet(); o[k]=v; _colwSet(o); _colwTouch();
   const sl=document.getElementById('colw-s-'+k); if(sl && sl.value!==String(v)) sl.value=v;
   const nu=document.getElementById('colw-n-'+k); if(nu && nu.value!==String(v)) nu.value=v;
   _applyColWidths(); _colwUpdateTotal(); }
-function _colwReset(){ try{ localStorage.removeItem(_colwKey()); }catch(e){} if(_colwMode==='normal'){ COLW_DEFS.forEach(function(d){ if(d.hid && _origColLabels[d.k]!=null){ const el=document.getElementById(d.hid); if(el) el.textContent=_origColLabels[d.k]; } }); } _applyColWidths(); _renderColWidthPanel(); }
+function _colwReset(){ try{ localStorage.removeItem(_colwKey()); }catch(e){} _colwTouch(); if(_colwMode==='normal'){ COLW_DEFS.forEach(function(d){ if(d.hid && _origColLabels[d.k]!=null){ const el=document.getElementById(d.hid); if(el) el.textContent=_origColLabels[d.k]; } }); } _applyColWidths(); _renderColWidthPanel(); }
 const COLW_SHARED_FILE='data/colwidth_shared.json';
 async function _colwPublish(){
   if(!confirm('アップロードすると チーム共有の列幅設定が 今のあなたの設定で上書きされます\n全員が反映ボタンでこれを取り込めるようになります\n本当に大丈夫ですか?')) return;
@@ -18397,10 +18454,11 @@ async function _colwPublish(){
     var url='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+COLW_SHARED_FILE;
     var getRes=await fetch(url,{headers,cache:'no-store'});
     var sha=getRes.ok?(await getRes.json()).sha:null;
-    var base64=btoa(unescape(encodeURIComponent(JSON.stringify({normal:_colwGetK(COLW_KEY),marathon:_colwGetK(COLW_KEY_MK),marke:_colwGetK(COLW_KEY_MK2),updatedAt:Date.now()}))));
+    var _at=Date.now(); var base64=btoa(unescape(encodeURIComponent(JSON.stringify({normal:_colwGetK(COLW_KEY),marathon:_colwGetK(COLW_KEY_MK),marke:_colwGetK(COLW_KEY_MK2),updatedAt:_at}))));
     var body={message:'Update shared colwidth',content:base64}; if(sha) body.sha=sha;
     var putRes=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)});
     if(!putRes.ok){ var ee=await putRes.json(); throw new Error(ee.message||putRes.status); }
+    _colwMetaSet({updatedAt:_at,pushedAt:_at,seen:1});
     alert('共有設定にアップロードしました 他の人は反映ボタンで取り込めます');
   }catch(e){ alert('アップロードに失敗しました '+(e&&e.message?e.message:'')); }
 }
@@ -18429,6 +18487,7 @@ function _colwApplyMode(which){
     if((which==='marathon'||which==='all')&&o.marathon){ localStorage.setItem(COLW_KEY_MK, JSON.stringify(o.marathon)); done.push('マラソン'); }
     if((which==='marke'||which==='all')&&o.marke){ localStorage.setItem(COLW_KEY_MK2, JSON.stringify(o.marke)); done.push('マーケ'); }
   }catch(e){}
+  if(done.length){ var _mm=_colwMetaGet(); var _su=+o.updatedAt||Date.now(); _colwMetaSet({updatedAt:_su,pushedAt:Math.max(_su,_mm.pushedAt||0),seen:1}); }
   try{ _applyColLabels(); }catch(e){}
   _applyColWidths();
   _renderColWidthPanel();
@@ -18497,9 +18556,282 @@ const _origColLabels={};
 function _captureOrigLabels(){ COLW_DEFS.forEach(function(d){ if(d.hid){ const el=document.getElementById(d.hid); if(el && _origColLabels[d.k]==null) _origColLabels[d.k]=el.textContent.trim(); } }); }
 function _colCurLabel(k){ const o=_colwGet(); if(o['l_'+k]!=null) return o['l_'+k]; if(_colwMode==='normal' && _origColLabels[k]!=null) return _origColLabels[k]; const d=_colwDefs().find(x=>x.k===k); if(d&&d.hid){ const el=document.getElementById(d.hid); if(el) return el.textContent.trim(); } return d?d.label:''; }
 function _applyColLabels(){ const o=_colwGet(); COLW_DEFS.forEach(function(d){ if(d.hid && o['l_'+d.k]!=null){ const el=document.getElementById(d.hid); if(el) el.textContent=o['l_'+d.k]; } }); }
-function _colLabelOnChange(k,val){ const o=_colwGet(); o['l_'+k]=val; _colwSet(o); if(_colwMode!=='normal') return; const d=COLW_DEFS.find(x=>x.k===k); const el=d&&d.hid?document.getElementById(d.hid):null; if(el) el.textContent=val; }
+function _colLabelOnChange(k,val){ const o=_colwGet(); o['l_'+k]=val; _colwSet(o); _colwTouch(); if(_colwMode!=='normal') return; const d=COLW_DEFS.find(x=>x.k===k); const el=d&&d.hid?document.getElementById(d.hid):null; if(el) el.textContent=val; }
 try{ _captureOrigLabels(); _applyColLabels(); }catch(e){}
 try{ _applyColWidths(); }catch(e){}
+
+// ══════════════════════════════════════════
+// ★v1.1501★ 列幅の調整モード（Ycheck v1.1000 の「⇔ 幅」の作りを、ADcheck の grid の表に合わせて入れたもの）
+//   対象：商品-売上データ／【状態】／SS（売上・状態・SS）、マラソン候補・実施（候補・実施）、商品-マーケデータ（マーケ）
+//   ・「項目調整」→メニューで表（3つのまとまり）を選ぶ →「この表の幅を調整する」で、実際の表の上で直す
+//   ・見出しの境目をドラッグ／一番下の行で数値・寄せ・ロック／表の下の帯で 使える幅・列の合計・はみ出し
+//   ・幅は今までと同じ localStorage（adcheck_colw / _marathon / _marke）に入れる。ロックは 'lk_列キー'
+//   ・モードを終えたときに1回だけ GitHub（data/colwidth_shared.json）へ反映。起動時に共有のほうが新しければ取り込む
+//   ・商品名の列だけは「残りを全部もらう列」（数値は最小の幅）。狭めた列の空きは商品名の列に入る（右は空かない）
+// ══════════════════════════════════════════
+const COLW_GROUPS = {
+  normal:   { label:'売上・状態・SS', key:COLW_KEY,     defs:COLW_DEFS,     extra:28, tab:'products',  screens:['商品-売上データ','【状態】の各タブ','SS 3・6・9・12月'] },
+  marathon: { label:'候補・実施',     key:COLW_KEY_MK,  defs:MK_COLW_DEFS,  extra:28, tab:'mar-kouho', screens:['マラソン 候補','実施'] },
+  marke:    { label:'マーケ',         key:COLW_KEY_MK2, defs:MK2_COLW_DEFS, extra:0,  tab:'marke',     screens:['商品-マーケデータ'] }
+};
+const COLW_MIN = 24, COLW_MIN_NAME = 80, COLW_MAX = 600;
+let _colwOn = false, _colwOnMode = null, _colwDirty = false, _colwMO = null, _colwSyncRaf = 0, _colwSwallowClick = 0, _colwSortToastAt = 0, _colwRz = null;
+const _COLW_META_KEY = 'adcheck_colw_meta';   /* { updatedAt: このPCで最後に変えた時刻, pushedAt: GitHubへ反映した時刻, seen: 1 } */
+function _colwMetaGet(){ try{ return JSON.parse(localStorage.getItem(_COLW_META_KEY)) || {}; }catch(e){ return {}; } }
+function _colwMetaSet(m){ try{ localStorage.setItem(_COLW_META_KEY, JSON.stringify(m)); }catch(e){} }
+function _colwTouch(){ const m = _colwMetaGet(); m.updatedAt = Date.now(); m.seen = 1; _colwMetaSet(m); }
+function _colwUnpushed(){ const m = _colwMetaGet(); return (m.updatedAt || 0) > (m.pushedAt || 0); }
+function _colwMinOf(k){ return k === 'name' ? COLW_MIN_NAME : COLW_MIN; }
+function _colwLocked(mode, k){ return !!_colwGetK(COLW_GROUPS[mode].key)['lk_' + k]; }
+function _colwLbl(d){ return d.label.replace('(最小)', ''); }
+/* いま見えている表（3つのまとまりのどれかの見出し） */
+function _colwCurHeader(){
+  const hs = Array.from(document.querySelectorAll('.tab-panel.active #products-scroll-area > .col-header, .tab-panel.active #subTabListInner > .col-header, .tab-panel.active #markeList > .col-header')).filter(h => h.offsetParent !== null && !h.classList.contains('colw-wrow'));
+  return hs[0] || null;
+}
+function _colwModeOfHeader(h){ if (!h) return null; if (h.classList.contains('marke')) return 'marke'; if (h.classList.contains('marathon')) return 'marathon'; return 'normal'; }
+/* 見出しに実際に出ている列（区分・SS の無い表では、その2列を数えない） */
+function _colwActiveDefs(mode, h){ const g = COLW_GROUPS[mode]; if (mode === 'normal' && h && !h.classList.contains('with-status')) return g.defs.filter(d => !d.ws); return g.defs; }
+function _colwScrollBox(el){ let p = el ? el.parentElement : null; while (p && p !== document.body){ const cs = getComputedStyle(p); if (/(auto|scroll)/.test(cs.overflowY) || /(auto|scroll)/.test(cs.overflowX)) return p; p = p.parentElement; } return null; }
+function _colwWidths(mode){ const g = COLW_GROUPS[mode]; const w = {}; g.defs.forEach(d => { w[d.k] = Math.round(_colwValFor(g.key, g.defs, d.k)); }); return w; }
+function _colwTotal(mode, w, defs){ return defs.reduce((a, d) => a + (w[d.k] || 0), 0) + COLW_GROUPS[mode].extra; }
+function _colwSave(mode, patch){ const g = COLW_GROUPS[mode]; const o = _colwGetK(g.key); Object.keys(patch).forEach(k => { if (patch[k] == null) delete o[k]; else o[k] = patch[k]; }); try{ localStorage.setItem(g.key, JSON.stringify(o)); }catch(e){} _colwTouch(); _colwDirty = true; _applyColWidths(); }
+
+/* 広げるとき：横スクロールが出ないよう、足りない分はロックしていない他の列から均等にもらう（Ycheck の _colPlanWiden と同じ考え方） */
+function _colwPlanWiden(mode, defs, k, want, avail, w0){
+  const w = Object.assign({}, w0); const cur = w[k];
+  if (want <= cur) return {};
+  let over = _colwTotal(mode, Object.assign({}, w, { [k]: want }), defs) - avail;
+  if (over <= 0) return {};
+  over = Math.min(over, want - cur);   /* もともとはみ出していた分までは、他からもらわない */
+  const others = {};
+  for (let round = 0; round < 10 && over > 0; round++){
+    const can = defs.map(d => d.k).filter(x => x !== k && !_colwLocked(mode, x) && w[x] > _colwMinOf(x));
+    if (!can.length) break;
+    const each = Math.ceil(over / can.length);
+    can.forEach(x => { if (over <= 0) return; const take = Math.min(each, w[x] - _colwMinOf(x), over); w[x] -= take; over -= take; others[x] = w[x]; });
+  }
+  return others;
+}
+
+/* ---- メニュー（「項目調整」を押したとき） ---- */
+function _colwMenuOpen(btn, modeHint){
+  let m = document.getElementById('colwMenu');
+  if (m && m.style.display === 'block' && m._btn === btn){ m.style.display = 'none'; return; }
+  if (!m){ m = document.createElement('div'); m.id = 'colwMenu'; m.className = 'colw-menu'; document.body.appendChild(m); }
+  m._btn = btn;
+  const hereMode = _colwModeOfHeader(_colwCurHeader()) || modeHint || 'normal';
+  let h = '<div class="colw-m-head">幅を調整する表を選ぶ<span>同じ列の画面は、まとめて同じ幅になります</span></div>';
+  Object.keys(COLW_GROUPS).forEach(md => {
+    const g = COLW_GROUPS[md]; const here = md === hereMode; const on = _colwOn && _colwOnMode === md;
+    h += '<div class="colw-m-grp' + (here ? ' is-here' : '') + '">'
+      + '<div class="colw-m-title">' + g.label + (here ? '<em>いまの画面</em>' : '') + '</div>'
+      + '<div class="colw-m-chips">' + g.screens.map(s => '<span class="colw-chip">' + s + '</span>').join('') + '</div>'
+      + (on ? '<button type="button" class="colw-m-main is-on" onclick="_colwMenuClose();_colwAdj(false)">✓ 幅調整を終える（GitHubへ反映）</button>'
+            : '<button type="button" class="colw-m-main" onclick="_colwMenuClose();_colwStart(\'' + md + '\')">⇔ この表の幅を調整する' + (here ? '' : '（画面を移ります）') + '</button>')
+      + '</div>';
+  });
+  h += '<div class="colw-m-sec">'
+    + (_colwUnpushed() ? '<div class="colw-m-warn">このPCの幅は、まだGitHubに反映されていません <button type="button" class="colw-m-link" onclick="_colwMenuClose();_colwPushNow()">今すぐ反映</button></div>' : '')
+    + '<button type="button" class="colw-m-link" onclick="_colwMenuClose();_openColWidthPanel(\'' + hereMode + '\')">見出し名を変える・共有の取り込み（詳細パネル）</button></div>';
+  m.innerHTML = h; m.style.display = 'block';
+  const r = btn.getBoundingClientRect(); const mw = 340;
+  m.style.left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8)) + 'px'; m.style.top = (r.bottom + 4) + 'px';
+}
+function _colwMenuClose(){ const m = document.getElementById('colwMenu'); if (m) m.style.display = 'none'; }
+document.addEventListener('mousedown', e => { const m = document.getElementById('colwMenu'); if (m && m.style.display === 'block' && !m.contains(e.target) && !(e.target.closest && e.target.closest('[data-colw-btn]'))) m.style.display = 'none'; }, true);
+
+/* 表を選んで調整を始める（いまの画面がそのまとまりでなければ、そのまとまりの画面へ移る） */
+function _colwStart(mode){
+  if (_colwOn && _colwOnMode !== mode) _colwAdj(false);
+  const here = _colwModeOfHeader(_colwCurHeader());
+  if (here !== mode){ try{ switchTab(COLW_GROUPS[mode].tab); }catch(e){} }
+  let tries = 0;
+  const go = () => { const h = _colwCurHeader(); if (_colwModeOfHeader(h) === mode || tries > 20){ _colwAdj(true, mode); return; } tries++; setTimeout(go, 150); };
+  go();
+}
+function _colwAdj(on, mode){
+  if (on){
+    const h = _colwCurHeader(); const md = mode || _colwModeOfHeader(h);
+    if (!h || _colwModeOfHeader(h) !== md){ _colwToast('幅を調整できる表がこの画面にありません（データを読み込んでから）'); return; }
+    _colwOn = true; _colwOnMode = md; _colwDirty = false;
+    document.body.classList.add('colw-on');
+    if (!_colwMO){ _colwMO = new MutationObserver(() => { if (!_colwOn || _colwSyncRaf) return; _colwSyncRaf = requestAnimationFrame(() => { _colwSyncRaf = 0; _colwSync(); }); }); }
+    _colwMO.observe(document.body, { childList:true, subtree:true });
+    _colwSync();
+    try{ const sm = document.querySelector('.colw-sum'); if (sm){ const r = sm.getBoundingClientRect(); if (r.bottom > window.innerHeight) window.scrollBy({ top: r.bottom - window.innerHeight + 12, behavior: 'smooth' }); } }catch(e){}   /* 表の下の帯が画面の外なら、見えるところまで少しだけ下げる */
+  } else {
+    if (!_colwOn) return;
+    _colwOn = false; document.body.classList.remove('colw-on');
+    if (_colwMO) _colwMO.disconnect();
+    document.querySelectorAll('.colw-wrow, .colw-sum, .colw-handle').forEach(e => e.remove());
+    if (_colwDirty){ _colwDirty = false; _colwPushNow(); }
+    _colwOnMode = null;
+  }
+}
+/* つまみ・一番下の行・帯を、いま見えている表に付ける（表が描き直されたら付け直す） */
+function _colwSync(){
+  if (!_colwOn) return;
+  const h = _colwCurHeader(); const md = _colwModeOfHeader(h);
+  if (!h || md !== _colwOnMode){ document.querySelectorAll('.colw-wrow, .colw-sum').forEach(e => e.remove()); return; }   /* 別のまとまりの画面に移ったら出さない（モードは続く） */
+  const g = COLW_GROUPS[md]; const defs = _colwActiveDefs(md, h); const box = _colwScrollBox(h); if (!box) return;
+  document.querySelectorAll('.colw-wrow, .colw-sum').forEach(e => { if (e.parentElement !== box && e.previousElementSibling !== box) e.remove(); });
+  const cells = Array.from(h.children);
+  cells.forEach((c, i) => { if (i < defs.length && !c.querySelector(':scope > .colw-handle')){ const d = document.createElement('div'); d.className = 'colw-handle'; d.dataset.ci = i; d.title = _colwLbl(defs[i]) + '：ドラッグで幅を変える／ダブルクリックで元の幅'; c.appendChild(d); } });
+  /* 一番下の行 */
+  let row = box.querySelector(':scope > .colw-wrow');
+  const cls = h.className.replace(/\s*colw-wrow/g, '').replace(/\s*sort-(asc|desc)/g, '') + ' colw-wrow';
+  if (!row){ row = document.createElement('div'); box.appendChild(row); }
+  if (row.className !== cls) row.className = cls;
+  if (box.lastElementChild !== row) box.appendChild(row);
+  const w = _colwWidths(md); const o = _colwGetK(g.key);
+  const sig = md + ':' + cells.length + ':' + defs.length;
+  if (row.dataset.sig !== sig){
+    row.dataset.sig = sig;
+    let html = '';
+    for (let i = 0; i < cells.length; i++){
+      const d = defs[i];
+      if (!d){ html += '<div class="colw-td colw-td-x"></div>'; continue; }
+      html += '<div class="colw-td" data-ci="' + i + '"><div class="colw-handle" data-ci="' + i + '"></div>'
+        + '<div class="colw-lbl" title="' + d.label + '">' + _colwLbl(d) + '</div>'
+        + '<input type="number" class="colw-in" data-ci="' + i + '" min="' + _colwMinOf(d.k) + '" max="' + COLW_MAX + '" title="' + _colwLbl(d) + ' の幅（px）。打って Enter">'
+        + '<div class="colw-al">' + [['left','左'],['center','中'],['right','右']].map(a => '<button type="button" data-ci="' + i + '" data-al="' + a[0] + '" title="' + a[1] + '寄せ">' + a[1] + '</button>').join('') + '</div>'
+        + '<button type="button" class="colw-lock" data-ci="' + i + '"></button></div>';
+    }
+    row.innerHTML = html;
+  }
+  Array.from(row.children).forEach((td, i) => {
+    const d = defs[i]; if (!d) return;
+    const lk = !!o['lk_' + d.k]; td.classList.toggle('is-locked', lk);
+    const inp = td.querySelector('.colw-in'); if (inp && document.activeElement !== inp){ if (inp.value !== String(w[d.k])) inp.value = w[d.k]; inp.disabled = lk; }
+    const al = o['a_' + d.k] || d.al || 'right';
+    td.querySelectorAll('.colw-al button').forEach(b => b.classList.toggle('is-on', b.dataset.al === al));
+    const lb = td.querySelector('.colw-lock');
+    if (lb){ const t = lk ? 'ロック中' : 'ロック'; if (lb.textContent !== t) lb.textContent = t; lb.classList.toggle('is-locked', lk); lb.title = lk ? 'この列の幅をロック中（押すと解除）' : '押すと、この幅でロック（他の列を広げても変わらない）'; }
+  });
+  /* 表の下の帯 */
+  let sum = box.nextElementSibling;
+  if (!sum || !sum.classList.contains('colw-sum')){ sum = document.createElement('div'); sum.className = 'colw-sum'; box.parentNode.insertBefore(sum, box.nextSibling); }
+  const avail = box.clientWidth; const total = _colwTotal(md, w, defs); const over = total - avail;
+  const nameIdx = defs.findIndex(d => d.k === 'name'); const nameCell = cells[nameIdx]; const nameW = nameCell ? Math.round(nameCell.getBoundingClientRect().width) : 0;
+  const lockN = defs.filter(d => o['lk_' + d.k]).length;
+  const sh = '<span class="ws-mode">調整中：<b>' + g.label + '</b><small>（' + g.screens.join('・') + '）</small></span>'
+    + '<span>使える幅 <b>' + avail.toLocaleString() + 'px</b></span><span>列の合計 <b>' + total.toLocaleString() + 'px</b></span>'
+    + (over > 0 ? '<span class="ws-over">はみ出し <b>' + over.toLocaleString() + 'px</b>（横スクロールになります）</span>' : '<span class="ws-rest">商品名の列 <b>' + nameW.toLocaleString() + 'px</b>（空きはここに入ります）</span>')
+    + '<span>ロック中 <b>' + lockN + '</b> / ' + defs.length + '列</span>'
+    + '<span class="ws-tip">見出しの境目をドラッグ／下の行に数字</span>'
+    + '<button type="button" class="colw-done" onclick="_colwAdj(false)">✓ 幅調整を終える（GitHubへ反映）</button>';
+  if (sum._h !== sh){ sum._h = sh; sum.innerHTML = sh; }
+  sum.classList.toggle('is-over', over > 0);
+}
+window.addEventListener('resize', () => { if (_colwOn) _colwSync(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') _colwMenuClose();
+  const inp = e.target.closest && e.target.closest('.colw-in'); if (inp && e.key === 'Enter'){ e.preventDefault(); inp.blur(); }
+});
+
+/* ---- ドラッグ ---- */
+document.addEventListener('mousedown', e => {
+  const hd = e.target.closest && e.target.closest('.colw-handle'); if (!hd || !_colwOn) return;
+  e.preventDefault(); e.stopPropagation();
+  const md = _colwOnMode; const h = _colwCurHeader(); const defs = _colwActiveDefs(md, h); const d = defs[+hd.dataset.ci]; if (!d) return;
+  if (_colwLocked(md, d.k)){ _colwToast('「' + _colwLbl(d) + '」は幅をロック中です（下の行のロックを押すと解除）'); return; }
+  const box = _colwScrollBox(h);
+  _colwRz = { md, defs, k: d.k, x: e.clientX, w0: _colwWidths(md), o0: _colwGetK(COLW_GROUPS[md].key), avail: box ? box.clientWidth : 99999, moved: false, hd };
+  hd.classList.add('is-resizing'); document.body.classList.add('is-colw-resizing');
+}, true);
+document.addEventListener('mousemove', e => {
+  if (!_colwRz) return;
+  const D = _colwRz; const dx = e.clientX - D.x; if (Math.abs(dx) > 1) D.moved = true;
+  const want = Math.max(_colwMinOf(D.k), Math.min(COLW_MAX, Math.round(D.w0[D.k] + dx)));
+  const others = _colwPlanWiden(D.md, D.defs, D.k, want, D.avail, D.w0);
+  const o = Object.assign({}, D.o0, others); o[D.k] = want;   /* 毎回ドラッグ開始時の状態から計算（戻せば元どおり） */
+  try{ localStorage.setItem(COLW_GROUPS[D.md].key, JSON.stringify(o)); }catch(_e){}
+  _applyColWidths();
+  if (!_colwSyncRaf) _colwSyncRaf = requestAnimationFrame(() => { _colwSyncRaf = 0; _colwSync(); });
+});
+document.addEventListener('mouseup', () => {
+  if (!_colwRz) return;
+  const D = _colwRz; _colwRz = null;
+  try{ D.hd.classList.remove('is-resizing'); }catch(e){} document.body.classList.remove('is-colw-resizing');
+  if (D.moved){ _colwTouch(); _colwDirty = true; }
+  _colwSwallowClick = Date.now() + 300;
+  _colwSync();
+});
+/* ダブルクリック：その列を元の幅（初期値）に戻す */
+document.addEventListener('dblclick', e => {
+  const hd = e.target.closest && e.target.closest('.colw-handle'); if (!hd || !_colwOn) return;
+  e.preventDefault(); e.stopPropagation();
+  const md = _colwOnMode; const d = _colwActiveDefs(md, _colwCurHeader())[+hd.dataset.ci]; if (!d || _colwLocked(md, d.k)) return;
+  _colwSave(md, { [d.k]: null }); _colwSync();
+}, true);
+/* 一番下の行：数値（打った数字どおり。他の列からはもらわない）・寄せ・ロック */
+document.addEventListener('change', e => {
+  const inp = e.target.closest && e.target.closest('.colw-in'); if (!inp || !_colwOn) return;
+  const md = _colwOnMode; const d = _colwActiveDefs(md, _colwCurHeader())[+inp.dataset.ci]; if (!d) return;
+  const v = Math.max(_colwMinOf(d.k), Math.min(COLW_MAX, Math.round(+inp.value || 0)));
+  _colwSave(md, { [d.k]: v }); inp.value = v; _colwSync();
+});
+document.addEventListener('click', e => {
+  if (!_colwOn) return;
+  const t = e.target; if (!t.closest) return;
+  const al = t.closest('.colw-wrow .colw-al button');
+  if (al){ e.preventDefault(); e.stopPropagation(); const md = _colwOnMode; const d = _colwActiveDefs(md, _colwCurHeader())[+al.dataset.ci]; if (d){ _colwSave(md, { ['a_' + d.k]: al.dataset.al }); _colwSync(); } return; }
+  const lb = t.closest('.colw-wrow .colw-lock');
+  if (lb){ e.preventDefault(); e.stopPropagation(); const md = _colwOnMode; const d = _colwActiveDefs(md, _colwCurHeader())[+lb.dataset.ci]; if (d){ const lk = _colwLocked(md, d.k); const patch = { ['lk_' + d.k]: lk ? null : true }; if (!lk) patch[d.k] = _colwWidths(md)[d.k]; _colwSave(md, patch); _colwSync(); } return; }
+  /* 調整中は見出しを押しても並べ替えしない（ドラッグの直後のクリックも止める） */
+  if (t.closest('.col-header') && !t.closest('.colw-wrow')){
+    e.preventDefault(); e.stopPropagation();
+    if (!t.closest('.colw-handle') && Date.now() > _colwSwallowClick && Date.now() - _colwSortToastAt > 4000){ _colwSortToastAt = Date.now(); _colwToast('幅の調整中は、見出しを押しても並べ替えしません'); }
+  }
+}, true);
+function _colwToast(msg){ let t = document.getElementById('colwToast'); if (!t){ t = document.createElement('div'); t.id = 'colwToast'; t.className = 'colw-toast'; document.body.appendChild(t); } t.textContent = msg; t.style.opacity = '1'; clearTimeout(t._tm); t._tm = setTimeout(() => { t.style.opacity = '0'; }, 2800); }
+
+/* ---- GitHub へ反映（モードを終えたとき1回だけ）・起動時に取り込む ---- */
+async function _colwPushNow(){
+  const pat = localStorage.getItem('github_pat');
+  if (!pat){ _colwToast('GitHub PAT が未設定なので、この幅はこのPCだけに保存しました'); return false; }
+  const at = _colwMetaGet().updatedAt || Date.now();
+  const url = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + COLW_SHARED_FILE;
+  const headers = { 'Authorization':'token ' + pat, 'Accept':'application/vnd.github.v3+json', 'Content-Type':'application/json' };
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify({ normal:_colwGetK(COLW_KEY), marathon:_colwGetK(COLW_KEY_MK), marke:_colwGetK(COLW_KEY_MK2), updatedAt: at }))));
+  for (let i = 0; i < 3; i++){
+    try{
+      const gr = await fetch(url + '?t=' + Date.now(), { headers, cache:'no-store' }); const sha = gr.ok ? (await gr.json()).sha : null;
+      const body = { message:'Update shared colwidth', content }; if (sha) body.sha = sha;
+      const r = await fetch(url, { method:'PUT', headers, body: JSON.stringify(body) });
+      if (r.ok){ const mm = _colwMetaGet(); mm.pushedAt = at; mm.seen = 1; _colwMetaSet(mm); _colwToast('列の幅を GitHub に反映しました（他のPCでも同じ幅になります）'); return true; }
+    }catch(e){}
+    await new Promise(res => setTimeout(res, 700 + i * 600));
+  }
+  _colwToast('GitHub への反映に失敗しました（このPCには保存済み。「項目調整」の「今すぐ反映」でやり直せます）');
+  return false;
+}
+async function _colwAutoAdopt(){
+  let obj = null;
+  try{
+    const pat = localStorage.getItem('github_pat'); const hh = { 'Accept':'application/vnd.github.v3.raw' }; if (pat) hh['Authorization'] = 'token ' + pat;
+    const r = await fetch('https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + COLW_SHARED_FILE + '?t=' + Date.now(), { headers:hh, cache:'no-store' });
+    if (r.ok) obj = JSON.parse(await r.text());
+  }catch(e){}
+  if (!obj){ try{ const rr = await fetch('https://raw.githubusercontent.com/' + GH_OWNER + '/' + GH_REPO + '/main/' + COLW_SHARED_FILE + '?t=' + Date.now(), { cache:'no-store' }); if (rr.ok) obj = JSON.parse(await rr.text()); }catch(e){} }
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
+  if (!('normal' in obj) && !('marathon' in obj) && !('marke' in obj)) obj = { normal: obj };
+  const m = _colwMetaGet(); const su = +obj.updatedAt || 0;
+  const hasLocal = !!(localStorage.getItem(COLW_KEY) || localStorage.getItem(COLW_KEY_MK) || localStorage.getItem(COLW_KEY_MK2));
+  const adopt = () => {
+    try{ if (obj.normal) localStorage.setItem(COLW_KEY, JSON.stringify(obj.normal)); if (obj.marathon) localStorage.setItem(COLW_KEY_MK, JSON.stringify(obj.marathon)); if (obj.marke) localStorage.setItem(COLW_KEY_MK2, JSON.stringify(obj.marke)); }catch(e){}
+    _colwMetaSet({ updatedAt: su, pushedAt: su, seen: 1 });
+    try{ _applyColLabels(); }catch(e){} try{ _applyColWidths(); }catch(e){}
+  };
+  if (!m.seen){   /* この仕組みを初めて使うPC：自分の幅があれば消さない（どこかのPCで調整して反映すると、次から全PCがそろう） */
+    if (!hasLocal) adopt(); else _colwMetaSet({ updatedAt: 0, pushedAt: 0, seen: 1 });
+    return;
+  }
+  if (su > (m.updatedAt || 0) + 2000 && !_colwOn) adopt();   /* 共有のほうが新しい → 取り込む。このPCのほうが新しい（未反映）なら、そのまま */
+}
+setTimeout(() => { try{ _colwAutoAdopt(); }catch(e){} }, 1500);
+
 
 let _sroasFilter=null;
 const _SROAS_COLORS={g:'#1D9E75',y:'#BA7517',o:'#ED7D31',r:'#A32D2D',n:'var(--text3)'};
