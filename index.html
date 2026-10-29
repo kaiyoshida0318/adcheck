@@ -387,10 +387,15 @@ body.is-colw-resizing, body.is-colw-resizing * { cursor: col-resize !important; 
 .col-header.colw-wrow { position: sticky; bottom: 0; top: auto; z-index: 26; background: #fff7e0 !important; border-top: 2px solid #f59e0b; border-bottom: none; align-items: stretch; box-shadow: 0 -3px 8px rgba(0,0,0,.06); }
 .col-header.colw-wrow > div { background: transparent !important; }
 .colw-td { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; padding: 4px 2px 5px; min-width: 0; overflow: hidden; border-right: 1px dashed #f5c26b; }
-.colw-td-x { border-right: none; }
+.colw-td-x { display: none; }
+/* ★v1.1506★ 表の一番右にあった空の列（28px。中身なし）をなくす。これがあると、画面に何も出ていないのに「はみ出し」になって横スクロールが出ていた */
+.item-basic > .toggle-cell { display: none; }
+#products-scroll-area > .col-header > .ch:last-child:empty, #subTabListInner > .col-header > .ch:last-child:empty { display: none; }
+.colw-fit { background: #fff; color: #dc2626; border: 1.5px solid #ef4444; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.colw-fit:hover { background: #fee2e2; }
 .col-header.colw-wrow > .colw-td.is-locked { background: #e0ecff !important; }
 .colw-td .colw-handle { right: -4px; }
-.col-header > div:last-child > .colw-handle { right: 0; }   /* 一番右の列のつまみが表の外にはみ出して横スクロールにならないように */
+.col-header > div:last-child > .colw-handle, .colw-handle.is-last { right: 0; }   /* 一番右の列のつまみが表の外にはみ出して横スクロールにならないように */
 .colw-lbl { font-size: 9px; font-weight: 700; color: #92400e; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
 .colw-in { width: calc(100% - 4px); max-width: 56px; font-size: 11px; padding: 2px 3px; border: 1px solid #f59e0b; border-radius: 4px; text-align: right; font-family: 'DM Mono', monospace; color: #1f2937; background: #fff; box-sizing: border-box; -moz-appearance: textfield; }
 .colw-in::-webkit-outer-spin-button, .colw-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -679,7 +684,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1505</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1506</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button><button onclick="openAnalysisExport()" title="ADcheckのデータを分析用（GPTなど）にZIPでダウンロード" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #0f766e;background:#f0fdfa;color:#0f766e;cursor:pointer;white-space:nowrap;margin-right:8px">📦 分析用データ</button>
@@ -18357,8 +18362,8 @@ function _applyColWidths(){
   { const w=k=>_colwValFor(COLW_KEY,COLW_DEFS,k);
     const name='minmax('+w('name')+'px,1fr)';
     const dataCols=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20','gross','caroas'].map(k=>w(k)+'px').join(' ');
-    const ns=w('num')+'px '+w('dates')+'px '+w('img')+'px '+name+' '+dataCols+' 28px';
-    const ws=w('num')+'px '+w('dates')+'px '+w('img')+'px '+name+' '+dataCols+' '+w('status')+'px '+w('ss')+'px 28px';
+    const ns=w('num')+'px '+w('dates')+'px '+w('img')+'px '+name+' '+dataCols+' 0px';
+    const ws=w('num')+'px '+w('dates')+'px '+w('img')+'px '+name+' '+dataCols+' '+w('status')+'px '+w('ss')+'px 0px';
     css+='.col-header{grid-template-columns:'+ns+' !important}.item-basic{grid-template-columns:'+ns+' !important}.col-header.with-status{grid-template-columns:'+ws+' !important}.item-basic.with-status{grid-template-columns:'+ws+' !important}';
     COLW_DEFS.forEach(function(d,i){
       const n=i+1; const a=_colwAlignFor(COLW_KEY,COLW_DEFS,d.k);
@@ -18373,7 +18378,7 @@ function _applyColWidths(){
   { const w=k=>_colwValFor(COLW_KEY_MK,MK_COLW_DEFS,k);
     const name='minmax('+w('name')+'px,1fr)';
     const mid=['tot','sroas','seo','adsales','spend','roas','kwspend','kwroas','sp20','roas20'].map(k=>w(k)+'px').join(' ');
-    const mk=w('num')+'px '+w('dates')+'px '+w('genre')+'px '+w('img')+'px '+name+' '+mid+' '+w('status')+'px '+w('ss')+'px 28px';
+    const mk=w('num')+'px '+w('dates')+'px '+w('genre')+'px '+w('img')+'px '+name+' '+mid+' '+w('status')+'px '+w('ss')+'px 0px';
     css+='.col-header.marathon{grid-template-columns:'+mk+' !important}.item-basic.marathon{grid-template-columns:'+mk+' !important}';
     MK_COLW_DEFS.forEach(function(d,i){
       const n=i+1; const a=_colwAlignFor(COLW_KEY_MK,MK_COLW_DEFS,d.k);
@@ -18430,7 +18435,6 @@ function _colwUpdateTotal(){
   const el=document.getElementById('colwTotalReadout'); if(!el) return;
   let total=0;
   _colwDefs().forEach(function(d){ total+=_colwVal(d.k); });
-  if(_colwMode!=='marke') total+=28;
   const win=window.innerWidth||0; const diff=total-win; const over=diff>0;
   const diffTxt=over?('+'+diff+'px はみ出し'):((-diff)+'px 余裕'); const diffCol=over?'#C62828':'#1D9E75';
   const modeLbl=_colwMode==='marathon'?'候補/実施':(_colwMode==='marke'?'マーケ':'売上/状態/SS');
@@ -18570,8 +18574,8 @@ try{ _applyColWidths(); }catch(e){}
 //   ・商品名の列だけは「残りを全部もらう列」（数値は最小の幅）。狭めた列の空きは商品名の列に入る（右は空かない）
 // ══════════════════════════════════════════
 const COLW_GROUPS = {
-  normal:   { label:'売上・状態・SS', key:COLW_KEY,     defs:COLW_DEFS,     extra:28, tab:'products',  screens:['商品-売上データ','【状態】の各タブ','SS 3・6・9・12月'] },
-  marathon: { label:'候補・実施',     key:COLW_KEY_MK,  defs:MK_COLW_DEFS,  extra:28, tab:'mar-kouho', screens:['マラソン 候補','実施'] },
+  normal:   { label:'売上・状態・SS', key:COLW_KEY,     defs:COLW_DEFS,     extra:0,  tab:'products',  screens:['商品-売上データ','【状態】の各タブ','SS 3・6・9・12月'] },
+  marathon: { label:'候補・実施',     key:COLW_KEY_MK,  defs:MK_COLW_DEFS,  extra:0,  tab:'mar-kouho', screens:['マラソン 候補','実施'] },
   marke:    { label:'マーケ',         key:COLW_KEY_MK2, defs:MK2_COLW_DEFS, extra:0,  tab:'marke',     screens:['商品-マーケデータ'] }
 };
 const COLW_MIN = 24, COLW_MIN_NAME = 80, COLW_MAX = 600;
@@ -18708,6 +18712,8 @@ function _colwSync(){
     }
     row.innerHTML = html;
   }
+  const lastI = Math.min(cells.length, defs.length) - 1;   /* ★v1.1506★ 一番右の列のつまみは内側に（表の外にはみ出すと横スクロールになる） */
+  [cells[lastI], row.children[lastI]].forEach(c => { const hd = c && c.querySelector(':scope > .colw-handle'); if (hd && !hd.classList.contains('is-last')) hd.classList.add('is-last'); });
   Array.from(row.children).forEach((td, i) => {
     const d = defs[i]; if (!d) return;
     const lk = !!o['lk_' + d.k]; td.classList.toggle('is-locked', lk);
@@ -18725,13 +18731,30 @@ function _colwSync(){
   const lockN = defs.filter(d => o['lk_' + d.k]).length;
   const sh = '<span class="ws-mode">調整中：<b>' + g.label + '</b><small>（' + g.screens.join('・') + '）</small></span>'
     + '<span>使える幅 <b>' + avail.toLocaleString() + 'px</b></span><span>列の合計 <b>' + total.toLocaleString() + 'px</b></span>'
-    + (over > 0 ? '<span class="ws-over">はみ出し <b>' + over.toLocaleString() + 'px</b>（横スクロールになります）</span>' : '<span class="ws-rest">商品名の列 <b>' + nameW.toLocaleString() + 'px</b>（空きはここに入ります）</span>')
+    + (over > 0 ? '<span class="ws-over">はみ出し <b>' + over.toLocaleString() + 'px</b>（横スクロールになります）</span><button type="button" class="colw-fit" onclick="_colwFitToScreen()" title="ロックしていない列を少しずつ狭めて、横スクロールが出ない幅にする">画面に合わせる</button>' : '<span class="ws-rest">商品名の列 <b>' + nameW.toLocaleString() + 'px</b>（空きはここに入ります）</span>')
     + '<span>ロック中 <b>' + lockN + '</b> / ' + defs.length + '列</span>'
     + '<span class="ws-tip">見出しの境目をドラッグ／下の行に数字</span>'
     + '<button type="button" class="colw-done" onclick="_colwAdj(false)">✓ 幅調整を終える（GitHubへ反映）</button>';
   if (sum._h !== sh){ sum._h = sh; sum.innerHTML = sh; }
   sum.classList.toggle('is-over', over > 0);
   _colwFitHeight(box, sum);
+}
+/* ★v1.1506★ はみ出している分を、ロックしていない列から均等に削って画面に収める（商品名は最小 80px まで） */
+function _colwFitToScreen(){
+  if (!_colwOn) return;
+  const md = _colwOnMode; const h = _colwCurHeader(); const box = _colwScrollBox(h); if (!h || !box) return;
+  const defs = _colwActiveDefs(md, h); const w = _colwWidths(md);
+  let over = _colwTotal(md, w, defs) - box.clientWidth; if (over <= 0) return;
+  const patch = {};
+  for (let round = 0; round < 12 && over > 0; round++){
+    const can = defs.map(d => d.k).filter(x => !_colwLocked(md, x) && w[x] > _colwMinOf(x));
+    if (!can.length) break;
+    const each = Math.ceil(over / can.length);
+    can.forEach(x => { if (over <= 0) return; const take = Math.min(each, w[x] - _colwMinOf(x), over); w[x] -= take; over -= take; patch[x] = w[x]; });
+  }
+  if (Object.keys(patch).length) _colwSave(md, patch);
+  _colwSync();
+  if (over > 0) _colwToast('ロック中の列が多くて、' + over + 'px 収まりませんでした（ロックを外すと収まります）');
 }
 /* ★v1.1504★ 「上部を隠す」を押していなくても、一番下の調整の行と帯（終えるボタン）が画面の中に見えるように、
    調整中だけ表の枠の高さを「画面の下端 − 帯の高さ」までに合わせる（終えたら元の 75vh に戻す） */
