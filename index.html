@@ -628,7 +628,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1498</span>
+    <span class="build-date">v1.1499</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -7783,7 +7783,7 @@ function _setItemDayPresetUI(){
 function setItemGraphDayPreset(p){ _itemGraphDayPreset=p; _setItemDayPresetUI(); _applyItemDayPreset(); renderItemGraph(); }
 
 function setItemGraph2y(){_itemGraphView2y=true;_setItemGraphFYUI();renderItemGraph();}
-function _setRenewalFYUI(){var on='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap',off='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap';var a=document.getElementById('renewalGraphFYCal'),b=document.getElementById('renewalGraphFYFiscal'),c=document.getElementById('renewalGraphView2yBtn');if(a)a.style.cssText=(!_renewalView2y&&_renewalFYStart===1)?on:off;if(b)b.style.cssText=(!_renewalView2y&&_renewalFYStart===5)?on:off;if(c)c.style.cssText=_renewalView2y?on:off;}
+function _setRenewalFYUI(){var on='font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap',off='font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap';var a=document.getElementById('renewalGraphFYCal'),b=document.getElementById('renewalGraphFYFiscal'),c=document.getElementById('renewalGraphView2yBtn');if(a)a.style.cssText=(!_renewalView2y&&_renewalFYStart===1)?on:off;if(b)b.style.cssText=(!_renewalView2y&&_renewalFYStart===5)?on:off;if(c)c.style.cssText=_renewalView2y?on:off;}
 function setRenewalFYStart(m){_renewalFYStart=+m;_renewalView2y=false;_setRenewalFYUI();renderRenewalGraph();}
 function setRenewal2y(){_renewalView2y=true;_setRenewalFYUI();renderRenewalGraph();}
 function _setItemGraphPeriod(period) {
@@ -13065,8 +13065,8 @@ function _setRenewalGraphPeriodBtnUI(period) {
 
 let _renewalDayPreset='60';
 function _setRenewalDayPresetUI(){
-  var on='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap';
-  var off='font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap';
+  var on='font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap';
+  var off='font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap';
   var map={'2month':'renewalDP2M','60':'renewalDP60','thismonth':'renewalDPTM'};
   Object.keys(map).forEach(function(k){ var b=document.getElementById(map[k]); if(b)b.style.cssText=(_renewalDayPreset===k)?on:off; });
 }
@@ -18727,15 +18727,15 @@ window.addEventListener('DOMContentLoaded', async () => {
         </div>
       </div>
       <!-- ★v1.1498★ 期間の操作（日別／月別・月の選択・1月始まり／5月始まり／2年横並び・30日／先月-今月／今月）は商品名の右。KW-全体推移・KW-個別推移と同じ位置 -->
-      <div id="renewalGraphCtl" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:20px">
+      <div id="renewalGraphCtl" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:20px">
         <div style="display:flex;gap:4px">
-          <button id="renewalGraphPeriodDaily" onclick="_setRenewalGraphPeriod('daily')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
-          <button id="renewalGraphPeriodMonth" onclick="_setRenewalGraphPeriod('monthly')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
+          <button id="renewalGraphPeriodDaily" onclick="_setRenewalGraphPeriod('daily')" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">日別</button>
+          <button id="renewalGraphPeriodMonth" onclick="_setRenewalGraphPeriod('monthly')" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
         </div>
         <!-- ★v1.1482★ 月を選ぶドロップダウンは「月別」ボタンのすぐ右 -->
-        <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 6px;width:auto;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
-        <div id="renewalGraphFYBtns" style="display:flex;gap:4px"><button id="renewalGraphFYCal" onclick="setRenewalFYStart(1)" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="renewalGraphFYFiscal" onclick="setRenewalFYStart(5)" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">5月始まり</button><button id="renewalGraphView2yBtn" onclick="setRenewal2y()" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">2年横並び</button></div>
-        <div id="renewalGraphDayPresets" style="display:none;gap:4px"><button id="renewalDP60" onclick="setRenewalDayPreset('60')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">30日</button><button id="renewalDP2M" onclick="setRenewalDayPreset('2month')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">先月-今月</button><button id="renewalDPTM" onclick="setRenewalDayPreset('thismonth')" style="font-size:11px;padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">今月</button></div>
+        <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 10px;width:auto;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
+        <div id="renewalGraphFYBtns" style="display:flex;gap:4px"><button id="renewalGraphFYCal" onclick="setRenewalFYStart(1)" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="renewalGraphFYFiscal" onclick="setRenewalFYStart(5)" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">5月始まり</button><button id="renewalGraphView2yBtn" onclick="setRenewal2y()" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">2年横並び</button></div>
+        <div id="renewalGraphDayPresets" style="display:none;gap:4px"><button id="renewalDP60" onclick="setRenewalDayPreset('60')" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">30日</button><button id="renewalDP2M" onclick="setRenewalDayPreset('2month')" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">先月-今月</button><button id="renewalDPTM" onclick="setRenewalDayPreset('thismonth')" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">今月</button></div>
       </div>
     </div>
     <div id="renewalScrollBody" style="padding:0 24px 14px;flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;overflow-y:auto;overflow-x:auto">
