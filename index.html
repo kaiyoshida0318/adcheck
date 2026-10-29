@@ -679,7 +679,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1502</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1503</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button><button onclick="openAnalysisExport()" title="ADcheckのデータを分析用（GPTなど）にZIPでダウンロード" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #0f766e;background:#f0fdfa;color:#0f766e;cursor:pointer;white-space:nowrap;margin-right:8px">📦 分析用データ</button>
@@ -18635,8 +18635,15 @@ function _colwMenuOpen(btn, modeHint){
     + (_colwUnpushed() ? '<div class="colw-m-warn">このPCの幅は、まだGitHubに反映されていません <button type="button" class="colw-m-link" onclick="_colwMenuClose();_colwPushNow()">今すぐ反映</button></div>' : '')
     + '<button type="button" class="colw-m-link" onclick="_colwMenuClose();_openColWidthPanel(\'' + hereMode + '\')">見出し名を変える・共有の取り込み（詳細パネル）</button></div>';
   m.innerHTML = h; m.style.display = 'block';
-  const r = btn.getBoundingClientRect(); const mw = 340;
-  m.style.left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8)) + 'px'; m.style.top = (r.bottom + 4) + 'px';
+  /* ★v1.1503★ 文字サイズ（A-/A+ の zoom）を変えていると、left/top の数字と画面上の位置がずれて右端に外れていたので、
+     いったん左上に置いて実際の大きさを測り、画面の中に収まる位置を計算して置き直す */
+  m.style.left = '0px'; m.style.top = '0px';
+  const r = btn.getBoundingClientRect(); const r0 = m.getBoundingClientRect();
+  const k = (m.offsetWidth > 0 && r0.width > 0) ? r0.width / m.offsetWidth : 1;
+  const vw = r0.width, vh = r0.height;
+  const vx = Math.max(8, Math.min(r.right - vw, window.innerWidth - vw - 8));
+  let vy = r.bottom + 4; if (vy + vh > window.innerHeight - 8) vy = Math.max(8, Math.min(r.top - vh - 4, window.innerHeight - vh - 8));
+  m.style.left = ((vx - r0.left) / k) + 'px'; m.style.top = ((vy - r0.top) / k) + 'px';
 }
 function _colwMenuClose(){ const m = document.getElementById('colwMenu'); if (m) m.style.display = 'none'; }
 document.addEventListener('mousedown', e => { const m = document.getElementById('colwMenu'); if (m && m.style.display === 'block' && !m.contains(e.target) && !(e.target.closest && e.target.closest('[data-colw-btn]'))) m.style.display = 'none'; }, true);
