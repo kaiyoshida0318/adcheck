@@ -628,7 +628,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
     <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
     <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <span class="build-date">v1.1499</span>
+    <span class="build-date">v1.1500</span>
     <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
       <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
       <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
@@ -12992,6 +12992,7 @@ function openRenewalGraph(code) {
   _renewalHiddenFY.clear(); _renewalHiddenMetric.clear();
   _renewalGraphCode = code;
   _renewalGraphPeriod = 'daily';
+  _renewalDayPreset = '60';   // ★v1.1500★ 開いたときは 日別・30日（KW-全体推移・KW-個別推移と同じ）
   const cached = productCache[code] || {};
   const name = cached.manualName || cached.name || code;
   const num  = cached.itemNumber || code;
@@ -13078,6 +13079,15 @@ function _renewalDayToggleUI(){
   if(period==='daily')_setRenewalDayPresetUI();
 }
 function setRenewalDayPreset(p){ _renewalDayPreset=p; _setRenewalDayPresetUI(); renderRenewalGraph(); }
+// ★v1.1500★ 月のドロップダウンを変えたとき。日別では「月〜月」の期間になり、30日／先月-今月／今月 は外れる（KW-個別推移と同じ）。月別は「この月まで」
+function _renDayRangeChanged(which){
+  if (_renewalGraphPeriod === 'daily'){
+    const f = document.getElementById('renewalGraphDayFrom'), t = document.getElementById('renewalGraphDayMonth');
+    if (f && t && f.value && t.value && f.value > t.value){ if (which === 'from') t.value = f.value; else f.value = t.value; }
+    _renewalDayPreset = 'range'; _setRenewalDayPresetUI();
+  }
+  renderRenewalGraph();
+}
 function _setRenewalGraphPeriod(period) {
   _renewalGraphPeriod = period;
   _setRenewalGraphPeriodBtnUI(period);
@@ -13104,10 +13114,14 @@ function _syncRenewalDayMonth(keepSelection) {
   const _cutN = (_renewalGraphPeriod !== 'daily' && typeof _monthlyLatestCut === 'function') ? _monthlyLatestCut() : 0;
   // ★v1.1483★ 表記：最新月が途中なら「2026年10月(途中)まで」「2026年10月(フル)まで」、ほかの月は「2026年09月まで」
   const _cutOpt = (_cutN && months.length) ? `<option value="cut" title="各月1〜${_cutN}日だけを合計">${months[0].slice(0,4)}年${months[0].slice(5,7)}月(途中)まで</option>` : '';
-  sel.innerHTML = _cutOpt + months.map((m, i) => `<option value="${m}">${m.slice(0,4)}年${m.slice(5,7)}月${_renewalGraphPeriod === 'daily' ? '' : ((i === 0 && _cutOpt) ? '(フル)まで' : 'まで')}</option>`).join('');
+  sel.innerHTML = _cutOpt + months.map((m, i) => `<option value="${m}">${_renewalGraphPeriod === 'daily' ? m.replace('-','/') : (m.slice(0,4) + '年' + m.slice(5,7) + '月' + ((i === 0 && _cutOpt) ? '(フル)まで' : 'まで'))}</option>`).join('');   /* ★v1.1500★ 日別は「2026/09」（KW の2つと同じ表記） */
   // 以前の選択を維持、無ければ最新月（月途中は日別に切り替えたら外れる）
   if (prev && (months.includes(prev) || (prev === 'cut' && _cutOpt))) sel.value = prev;
   else if (months.length) sel.value = months[0];
+  // ★v1.1500★ 日別は「月 〜 月」（左＝から、右＝まで）
+  const _rg = document.getElementById('renewalGraphDayRange'), _fs = document.getElementById('renewalGraphDayFrom');
+  if (_rg) _rg.style.display = _renewalGraphPeriod === 'daily' ? 'inline-flex' : 'none';
+  if (_fs && _renewalGraphPeriod === 'daily'){ const pf = _fs.value; _fs.innerHTML = months.map(m => `<option value="${m}">${m.replace('-','/')}</option>`).join(''); if (pf && months.includes(pf)) _fs.value = pf; else if (months.length) _fs.value = months[0]; }
 }
 
 // 指標セレクトの選択肢を全表示（月別・日別とも全項目使える）
@@ -13233,6 +13247,9 @@ function renderRenewalGraph(){
   if (bn){ bn.style.cssText = cut ? 'display:flex;align-items:center;gap:10px;margin:2px 0 8px;padding:7px 14px;background:#0f766e;color:#fff;font-size:14px;font-weight:800;letter-spacing:.3px;border-radius:6px' : 'display:none';
     bn.innerHTML = cut ? ('<span style="background:#fff;color:#0f766e;border-radius:5px;padding:1px 9px;font-size:13px">月途中</span>グラフも表も、各月 1〜' + cut + '日 だけの合計です（月全体の数字ではありません）<button onclick="_renBackFull()" style="margin-left:auto;font-size:12px;font-weight:800;padding:3px 12px;border-radius:6px;border:1.5px solid #fff;background:transparent;color:#fff;cursor:pointer">月全体に戻す</button>') : ''; }
   if (sel){ const on = !!cut; sel.style.borderColor = on ? '#0f766e' : ''; sel.style.color = on ? '#0f766e' : ''; sel.style.fontWeight = on ? '700' : ''; sel.style.background = on ? '#f0fdfa' : ''; }
+  // ★v1.1500★ 日別で「月〜月」を選んでいるとき
+  if (_renewalGraphPeriod === 'daily'){ const rg = _renewalDayPreset === 'range'; [sel, document.getElementById('renewalGraphDayFrom')].forEach(e => { if (!e) return; e.style.borderColor = rg ? '#f97316' : ''; e.style.background = rg ? '#fff7ed' : ''; e.style.fontWeight = rg ? '700' : ''; e.style.color = ''; }); }
+  else { const f = document.getElementById('renewalGraphDayFrom'); if (f){ f.style.borderColor = ''; f.style.background = ''; f.style.fontWeight = ''; } }
 }
 function _renBackFull(){ const sel = document.getElementById('renewalGraphDayMonth'); if (sel){ const o = [...sel.options].find(x => x.value !== 'cut'); if (o) sel.value = o.value; } renderRenewalGraph(); }
 function _renderRenewalGraphCore() {
@@ -13255,14 +13272,25 @@ function _renderRenewalGraphCore() {
     if (!selMonth) {
       if (allD.length) { _from = allD[0]; _to = allD[allD.length-1]; }
     } else {
-      const y=+selMonth.slice(0,4), mo=+selMonth.slice(5,7);
-      const endOfMonth = _igYmd(new Date(y, mo, 0));
-      const lastData = allD.length?allD[allD.length-1]:endOfMonth;
-      _to = (endOfMonth < lastData) ? endOfMonth : lastData;
+      // ★v1.1500★ KW-全体推移・KW-個別推移と同じ：30日／先月-今月／今月 は最新日が基準。「月〜月」を選んだときはその期間
       const pr = _renewalDayPreset || '60';
-      if (pr==='thismonth') _from = selMonth+'-01';
-      else if (pr==='2month') _from = _igYmd(new Date(y, mo-2, 1));
-      else { const e=new Date(_to+'T00:00:00'); e.setDate(e.getDate()-29); _from=_igYmd(e); }
+      const lastData = allD.length ? allD[allD.length-1] : _igYmd(new Date());
+      if (pr === 'range'){
+        let a = document.getElementById('renewalGraphDayFrom')?.value || selMonth, b = selMonth;
+        if (a > b){ const t = a; a = b; b = t; }
+        const endOfB = _igYmd(new Date(+b.slice(0,4), +b.slice(5,7), 0));
+        _from = a + '-01'; _to = (endOfB < lastData) ? endOfB : lastData;
+      } else {
+        const y=+lastData.slice(0,4), mo=+lastData.slice(5,7);
+        _to = lastData;
+        if (pr==='thismonth') _from = lastData.slice(0,7)+'-01';
+        else if (pr==='2month') _from = _igYmd(new Date(y, mo-2, 1));
+        else { const e=new Date(_to+'T00:00:00'); e.setDate(e.getDate()-29); _from=_igYmd(e); }
+        // 2つのドロップダウンにも、いまの期間を出す
+        const _fs2 = document.getElementById('renewalGraphDayFrom'), _ts2 = document.getElementById('renewalGraphDayMonth');
+        if (_fs2 && [..._fs2.options].some(o => o.value === _from.slice(0,7))) _fs2.value = _from.slice(0,7);
+        if (_ts2 && [..._ts2.options].some(o => o.value === _to.slice(0,7))) _ts2.value = _to.slice(0,7);
+      }
     }
     // 表示期間内のカレンダー日をすべて並べる（データが無い日は0で埋めて連続表示）
     // → リニューアル実施日など、実績が無い日でも軸に載り、変更記録マーカーが表示される
@@ -18733,7 +18761,9 @@ window.addEventListener('DOMContentLoaded', async () => {
           <button id="renewalGraphPeriodMonth" onclick="_setRenewalGraphPeriod('monthly')" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">月別</button>
         </div>
         <!-- ★v1.1482★ 月を選ぶドロップダウンは「月別」ボタンのすぐ右 -->
-        <select id="renewalGraphDayMonth" onchange="renderRenewalGraph()" style="display:none;font-size:13px;padding:6px 10px;width:auto;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
+        <!-- ★v1.1500★ 日別は KW-全体推移・KW-個別推移と同じく「月 〜 月」。月別は右の1つだけ（〜まで） -->
+        <span id="renewalGraphDayRange" style="display:none;align-items:center;gap:6px" title="見たい期間を月で選ぶ"><select id="renewalGraphDayFrom" onchange="_renDayRangeChanged('from')" style="font-size:13px;padding:6px 10px;width:auto;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select><span style="color:var(--text3);font-weight:700">〜</span></span>
+        <select id="renewalGraphDayMonth" onchange="_renDayRangeChanged('to')" style="display:none;font-size:13px;padding:6px 10px;width:auto;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"></select>
         <div id="renewalGraphFYBtns" style="display:flex;gap:4px"><button id="renewalGraphFYCal" onclick="setRenewalFYStart(1)" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">1月始まり</button><button id="renewalGraphFYFiscal" onclick="setRenewalFYStart(5)" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">5月始まり</button><button id="renewalGraphView2yBtn" onclick="setRenewal2y()" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">2年横並び</button></div>
         <div id="renewalGraphDayPresets" style="display:none;gap:4px"><button id="renewalDP60" onclick="setRenewalDayPreset('60')" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid #f97316;background:#f97316;color:#fff;cursor:pointer;white-space:nowrap">30日</button><button id="renewalDP2M" onclick="setRenewalDayPreset('2month')" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">先月-今月</button><button id="renewalDPTM" onclick="setRenewalDayPreset('thismonth')" style="font-size:12px;padding:6px 16px;border-radius:6px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap">今月</button></div>
       </div>
