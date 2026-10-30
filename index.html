@@ -77,6 +77,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .app-name { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
 .app-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
 .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* ★v1.1514★ ヘッダー右側のまとまり・区切り・控えめなボタン */
+.header-right .hg { display: flex; align-items: center; gap: 8px; }
+.header-right .hsep { width: 1px; height: 22px; background: var(--border2); margin: 0 6px; }
+.hbtn-o { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border2); background: var(--surface); color: var(--text2); cursor: pointer; white-space: nowrap; font-family: inherit; }
+.hbtn-o:hover { background: var(--surface2); }
+.hbtn-ic { font-size: 12px; padding: 6px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text3); cursor: pointer; white-space: nowrap; font-family: inherit; }
+.hbtn-ic:hover { background: var(--surface2); color: var(--text2); }
+.header-right .hzoom { opacity: .85; }
 .header-btn { font-size: 12px; padding: 6px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
 .header-btn:hover { background: var(--surface2); border-color: var(--border2); }
 .header-btn.primary { background: var(--red); color: #fff; border-color: var(--red); }
@@ -684,22 +692,32 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1513</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1514</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
-    <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button><button onclick="openAnalysisExport()" title="ADcheckのデータを分析用（GPTなど）にZIPでダウンロード" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #0f766e;background:#f0fdfa;color:#0f766e;cursor:pointer;white-space:nowrap;margin-right:8px">📦 分析用データ</button>
-    <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap;margin-right:10px">🚨 在庫チェック</button>
-    <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
-    <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap;margin-right:10px"></button>
-    <div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
-      <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
-      <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
-      <button onclick="adjustZoom(+0.02)" style="border:none;background:none;cursor:pointer;font-size:15px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を大きく">A+</button>
+    <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（確認メモ・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
+    <div class="hg">
+      <button class="hbtn-o" onclick="openAnalyze()" title="確認メモ（どの画面で何を確認するかの手順書）を別のウィンドウで開く">📝 確認メモ</button>
+      <button class="hbtn-o" onclick="openAnalysisExport()" title="ADcheckのデータを分析用（GPTなど）にZIPでダウンロード">📦 分析用データ</button>
     </div>
-        <button class="header-btn" onclick="openCalendarSettings()">📅 カレンダー設定</button>
-    <button class="header-btn" onclick="openSettingsMenu()">⚙ 設定 ▾</button>
-    <!-- ★v1.1458★「+ 撤退完了反映」ボタンは撤去（機能 openRetireModal はそのまま残す） -->
-    <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
+    <div class="hsep"></div>
+    <div class="hg">
+      <!-- ★v1.1436★ 全-日別データに抜けている日があるときだけ出る（取り込めば自動で消える） -->
+      <button id="dailyGapBtn" onclick="_dailyGapOpen()" style="display:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#b71c1c;color:#fff;cursor:pointer;white-space:nowrap"></button>
+      <button id="stockCheckBtn" onclick="openStockModal()" title="楽天APIで在庫切れ商品（引退済以外）をチェック。押すと結果モーダルを表示" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer;white-space:nowrap">🚨 在庫チェック</button>
+      <!-- ★v1.1458★「+ 撤退完了反映」ボタンは撤去（機能 openRetireModal はそのまま残す） -->
+      <button class="header-btn primary" onclick="openDropZone()">+ レポート追加</button>
+    </div>
+    <div class="hsep"></div>
+    <div class="hg">
+      <div class="hzoom" style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 4px">
+        <button onclick="adjustZoom(-0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を小さく">A-</button>
+        <span id="zoomLabel" style="font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
+        <button onclick="adjustZoom(+0.02)" style="border:none;background:none;cursor:pointer;font-size:15px;font-weight:700;color:var(--text2);padding:2px 6px;border-radius:4px;line-height:1" title="文字を大きく">A+</button>
+      </div>
+      <button class="hbtn-ic" onclick="openCalendarSettings()" title="カレンダー設定">📅</button>
+      <button class="hbtn-ic" onclick="openSettingsMenu()">⚙ 設定 ▾</button>
+    </div>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
   </div>
 </header>
@@ -4566,7 +4584,7 @@ function renderStockAlert(){
   // モーダル一覧・日別テーブルと同じ数え方（_stockKind）にする。要対応＝現役のみ。v1.1346
   const codes = (_stockSoldOut||[]).filter(c => _stockKind(c)==='active');
   let md = '';
-  if(_stockCheckedAt){ try{ const d=new Date(_stockCheckedAt); md = String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); }catch(e){} }
+  if(_stockCheckedAt){ try{ const d=new Date(_stockCheckedAt); md = (d.getMonth()+1)+'/'+d.getDate();   /* ★v1.1514★ 「1030」→「10/30」（件数に見えないように） */ }catch(e){} }
   const set = (bg,fg,bd,txt,tip) => { b.style.background=bg; b.style.color=fg; b.style.borderColor=bd; b.textContent=txt; b.title=tip; };
   b.classList.toggle('stock-alarm', codes.length > 0);
   if(codes.length > 0){
