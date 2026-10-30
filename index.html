@@ -684,7 +684,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1509</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1510</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button><button onclick="openAnalysisExport()" title="ADcheckのデータを分析用（GPTなど）にZIPでダウンロード" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #0f766e;background:#f0fdfa;color:#0f766e;cursor:pointer;white-space:nowrap;margin-right:8px">📦 分析用データ</button>
@@ -7569,6 +7569,17 @@ function _caAgg(ym){
   _caMonthCache[ym]=m; return m;
 }
 function _caFor(code,ym){ if(!ym) return null; const m=_caAgg(ym); return m[code]||null; }
+/* ★v1.1510★ 1日分のCA（クーポンアドバンス）。商品-売上データで日を選んでいるときに使う（以前は日を選んでも月の合計を使っていて、SEO売上が0・売上ROASが低く出ていた） */
+function _caDayAgg(date){
+  const key='d:'+date; if(_caMonthCache[key]) return _caMonthCache[key];
+  if(typeof couponAdvanceRows==='undefined'||!couponAdvanceRows||!couponAdvanceRows.length){ try{_cpaLoad();}catch(e){} }
+  const m={};
+  (couponAdvanceRows||[]).forEach(r=>{ if(!r||r.date!==date) return; let a=m[r.itemCode]||(m[r.itemCode]={spend:0,sales:0,cost:0}); a.spend+=r.spend||0; a.sales+=r.sales||0; if(r.roasD>0&&r.sales>0){const c=r.sales*100/r.roasD-r.spend; if(c>0)a.cost+=c;} });
+  Object.values(m).forEach(a=>{ a.roasD=(a.spend+a.cost)>0?a.sales/(a.spend+a.cost)*100:null; });
+  _caMonthCache[key]=m; return m;
+}
+/* ★v1.1510★ 商品の表（商品-売上データ・【状態】など）用：日を選んでいればその日の分、選んでいなければ月の分（_aggFor と同じ切り替え） */
+function _caForRow(code,ym){ if(_dayMode && _selectedDay) return _caDayAgg(_selectedDay)[code]||null; return _caFor(code,ym); }
 function _caShopAgg(){
   if(typeof couponAdvanceRows==='undefined'||!couponAdvanceRows||!couponAdvanceRows.length){ try{_cpaLoad();}catch(e){} }
   const byDate={}, byYm={};
@@ -17536,7 +17547,7 @@ function getSorted(ym) {
   if (_sroasFilter) {
     products = products.filter(p => {
       const ag = _aggFor(p.id, ym);
-      const _ca = (typeof _caFor==='function') ? _caFor(p.id,ym) : null; const _den = (p.spend||0) + (_ca ? (_ca.spend||0) : 0); const sr = _den>0 ? Math.round(ag.totSales/_den*100) : 0;
+      const _ca = (typeof _caFor==='function') ? _caForRow(p.id,ym) : null; const _den = (p.spend||0) + (_ca ? (_ca.spend||0) : 0); const sr = _den>0 ? Math.round(ag.totSales/_den*100) : 0;
       return _sroasCat(sr) === _sroasFilter;
     });
   }
@@ -17572,12 +17583,12 @@ function getSorted(ym) {
   }
   if (_sortKey === 'contrib') {
     const _ym = _subTabFilter ? _getSubTabMonth() : getSelectedMonth();
-    const caOf = p => { const c=(typeof _caFor==='function')?_caFor(p.id,_ym):null; return c?c.spend:0; };
+    const caOf = p => { const c=(typeof _caFor==='function')?_caForRow(p.id,_ym):null; return c?c.spend:0; };
     return dir * (caOf(a) - caOf(b));
   }
   if (_sortKey === 'caroas') {
     const _ym = _subTabFilter ? _getSubTabMonth() : getSelectedMonth();
-    const rdOf = p => { const c=(typeof _caFor==='function')?_caFor(p.id,_ym):null; return (c&&c.roasD!=null)?c.roasD:-1; };
+    const rdOf = p => { const c=(typeof _caFor==='function')?_caForRow(p.id,_ym):null; return (c&&c.roasD!=null)?c.roasD:-1; };
     return dir * (rdOf(a) - rdOf(b));
   }
   if (_sortKey === 'status') {
@@ -17603,7 +17614,7 @@ function getSorted(ym) {
       return dir * (seoOf(a) - seoOf(b));
     }
     if (_sortKey === 'salesroas') {
-      const srOf = p => { const a2 = _aggFor(p.id, ym); const _ca = (typeof _caFor==='function') ? _caFor(p.id,ym) : null; const _den = (p.spend||0) + (_ca ? (_ca.spend||0) : 0); return _den > 0 ? a2.totSales / _den : 0; };
+      const srOf = p => { const a2 = _aggFor(p.id, ym); const _ca = (typeof _caFor==='function') ? _caForRow(p.id,ym) : null; const _den = (p.spend||0) + (_ca ? (_ca.spend||0) : 0); return _den > 0 ? a2.totSales / _den : 0; };
       return dir * (srOf(a) - srOf(b));
     }
     if (_sortKey === 'sales')  return dir * (a.sales720 - b.sales720);
@@ -17925,7 +17936,7 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
   const shopCode = localStorage.getItem('rakuten_shop_code') || '';
   const itemUrl = p.url || (shopCode ? `https://item.rakuten.co.jp/${shopCode}/${p.id}/` : '');
   const _genreCell = _marathonView ? `<div onclick="event.stopPropagation()" style="padding:8px 10px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;user-select:text;cursor:text">${cached?.genreId||'\u2014'}</div>` : '';
-  const _caData = _marathonView ? null : ((typeof _caFor==='function')?_caFor(p.id,ym):null);
+  const _caData = _marathonView ? null : ((typeof _caFor==='function')?_caForRow(p.id,ym):null);
   const _caSpendCell = _marathonView ? '' : `<div class="cell r mono" style="font-size:11px;background:#dcf0e6;border-right:1px solid #c4e5d3">${_caData&&_caData.spend>0?fmtY(_caData.spend):'<span style="color:var(--text3)">—</span>'}</div>`;
   const _caRoasCell = _marathonView ? '' : (() => { const _rd=(_caData&&_caData.roasD!=null)?Math.round(_caData.roasD):null; const _rdc=_rd==null?'var(--text3)':(_rd>=400?'#15803d':_rd>=200?'#1d4ed8':_rd>=100?'#c2410c':'#dc2626'); return `<div class="cell r mono" style="font-size:11px;background:#dcf0e6;border-right:2px solid #a9dabf"><span style="color:${_rdc};font-weight:700">${_rd!=null?_rd+'%':'—'}</span></div>`; })();
   return `<div class="item-row">
@@ -17962,14 +17973,14 @@ function renderRow(p, maxSpend, ym, totalSpend, avgRoas) {
         ${(() => {
           const totS = _ag.totSales;
           const rppS = _ag.rppSales;
-          const _ca=(typeof _caFor==='function')?_caFor(p.id,ym):null; const _caS=_ca?_ca.sales:0;
+          const _ca=(typeof _caFor==='function')?_caForRow(p.id,ym):null; const _caS=_ca?_ca.sales:0;
           const seo = Math.max(0, totS - rppS - _caS);
           const _adv = (p.sales720 || 0) + _caS; const _base = seo + _adv; const _sp = _base>0?Math.round(seo/_base*100):0;
           return seo > 0 ? `${fmtY(seo)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_sp)};font-weight:700;line-height:1">${_sp}%</span>` : '<span style="color:var(--text3)">—</span>';
         })()}
       </div>
       <div class="cell r mono" style="background:#eef4fb;border-right:2px solid #c9dff0">
-        ${(() => { const _t=_ag.totSales,_r=_ag.rppSales,_caX=(typeof _caFor==='function')?_caFor(p.id,ym):null,_caS=_caX?_caX.sales:0,_seo=Math.max(0,_t-_r-_caS),_adv=(p.sales720||0)+_caS,_base=_seo+_adv; const _ap=_base>0?(100-Math.round(_seo/_base*100)):0; return _adv>0 ? `${fmtY(_adv)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_ap)};font-weight:700;line-height:1">${_ap}%</span>` : '—'; })()}
+        ${(() => { const _t=_ag.totSales,_r=_ag.rppSales,_caX=(typeof _caFor==='function')?_caForRow(p.id,ym):null,_caS=_caX?_caX.sales:0,_seo=Math.max(0,_t-_r-_caS),_adv=(p.sales720||0)+_caS,_base=_seo+_adv; const _ap=_base>0?(100-Math.round(_seo/_base*100)):0; return _adv>0 ? `${fmtY(_adv)}<span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:${_pctBandColor(_ap)};font-weight:700;line-height:1">${_ap}%</span>` : '—'; })()}
       </div>
       <div class="cell r mono" style="background:#d8eecf;border-right:1px solid #c3e0b8">
         <span>${fmtY(p.spend)}</span>
