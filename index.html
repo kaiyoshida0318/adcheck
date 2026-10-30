@@ -28,7 +28,7 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: none; text-size-adjust: none; zoom: 1; }
-body { font-family: 'Noto Sans JP', sans-serif; font-size: 13px; background: var(--bg); color: var(--text); min-height: 100vh; }
+body { font-family: 'Noto Sans JP', sans-serif; font-size: 13px; background: var(--bg); color: var(--text); min-height: calc(100vh / var(--adzoom, 1)); }   /* ★v1.1519★ vh は zoom で拡大されるので割り戻す（100vh のままだと、文字サイズ104%などで全ページが少しはみ出していた） */
 
 /* 「💾 反映」ボタンの未保存パルス */
 @keyframes pulse {
@@ -703,7 +703,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1518</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1519</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（確認メモ・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -2172,6 +2172,7 @@ function _applyZoom() {
   _zoom = Math.round(_zoom * 100) / 100;
   _zoom = Math.max(0.7, Math.min(1.5, _zoom));
   document.documentElement.style.zoom = _zoom;
+  document.documentElement.style.setProperty('--adzoom', String(_zoom));   /* ★v1.1519★ body の min-height 用 */
   // ズーム適用時、CSSのsticky topが実表示と合わなくなる(下に隙間ができる)ため
   // CSS変数経由でtopをズーム倍率で補正する
   // ヘッダー・タブバーの実際の高さを測定(固定値52pxだとズーム時にずれる)
@@ -12204,6 +12205,51 @@ window.addEventListener('resize', _restickRenewalLists);
   const _setTcH = () => { const tc = document.getElementById('topChrome'); document.documentElement.style.setProperty('--tc-h', (tc ? tc.offsetHeight : 0) + 'px'); };
   const ro = new ResizeObserver(() => { _setTcH(); clearTimeout(_t); _t = setTimeout(_restickRenewalLists, 80); });
   const start = () => { const tc = document.getElementById('topChrome'); if (tc) ro.observe(tc); const hd = document.querySelector('header'); if (hd) ro.observe(hd); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+// ★v1.1519★ 上部を固定した（v1.1518）ので、ページが画面より少しだけ長いと、一番下までスクロールしたときに表の上の端が上部の裏に入る。
+// 今のタブでいちばん大きいスクロールの箱（max-height を持つもの）を、はみ出した分だけ縮めて、ページを画面の高さに収める。
+// ・はみ出しが 300px を超えるタブ（全-推移・粗広告利益など、ページ全体をスクロールして読むもの）はさわらない
+// ・元の max-height は data-fit-mh0、こちらが入れた値は data-fit-mh に持つ。ほかの処理が値を変えていたら、そちらを元の値として扱う
+// ・列幅の調整モード中の箱（_colwMh0 がある）はさわらない
+function _fitPageHeight(){
+  try{
+    const de = document.documentElement;
+    const panel = document.querySelector('.tab-panel.active');
+    document.querySelectorAll('[data-fit-mh0]').forEach(el => {
+      if (el.style.maxHeight !== el.dataset.fitMh){ delete el.dataset.fitMh0; delete el.dataset.fitMh; return; }   /* ほかの処理が書き換えた */
+      el.style.maxHeight = el.dataset.fitMh0; delete el.dataset.fitMh0; delete el.dataset.fitMh;   /* いったん元に戻して測り直す */
+    });
+    if (!panel || panel.offsetParent === null) return;
+    let box = null, bh = 0;
+    panel.querySelectorAll('[style*="max-height"]').forEach(e => {
+      if (e.offsetParent === null || e._colwMh0 !== undefined) return;
+      const oy = getComputedStyle(e).overflowY; if (oy !== 'auto' && oy !== 'scroll') return;
+      if (e.clientHeight > bh){ bh = e.clientHeight; box = e; }
+    });
+    if (!box || bh < 240) return;
+    let ov = de.scrollHeight - de.clientHeight;
+    if (ov <= 0 || ov > 300) return;
+    const mh0 = box.style.maxHeight;
+    const cs = getComputedStyle(box);
+    let mh = Math.min(parseFloat(cs.maxHeight) || box.offsetHeight, box.offsetHeight) - ov;
+    for (let i = 0; i < 4 && ov > 0; i++){
+      if (mh < 220){ box.style.maxHeight = mh0; return; }
+      box.style.maxHeight = Math.floor(mh) + 'px';
+      const ov2 = de.scrollHeight - de.clientHeight;
+      if (ov2 >= ov){ box.style.maxHeight = mh0; return; }   /* 縮めてもはみ出しが減らない＝この箱のせいではない */
+      ov = ov2; mh -= Math.max(1, ov);
+    }
+    box.dataset.fitMh0 = mh0; box.dataset.fitMh = box.style.maxHeight;
+  }catch(e){}
+}
+(function(){
+  let _t = null;
+  const req = (ms) => { clearTimeout(_t); _t = setTimeout(_fitPageHeight, ms || 80); };
+  window.addEventListener('resize', () => req(120));
+  document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('#topChrome nav')){ req(80); setTimeout(_fitPageHeight, 600); } }, true);
+  const start = () => { if (typeof ResizeObserver === 'function'){ const ro = new ResizeObserver(() => req(80)); ro.observe(document.body); const tc = document.getElementById('topChrome'); if (tc) ro.observe(tc); } req(400); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
