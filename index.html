@@ -684,7 +684,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1510</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1512</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button><button onclick="openAnalysisExport()" title="ADcheckのデータを分析用（GPTなど）にZIPでダウンロード" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #0f766e;background:#f0fdfa;color:#0f766e;cursor:pointer;white-space:nowrap;margin-right:8px">📦 分析用データ</button>
@@ -2603,6 +2603,53 @@ function _dbgLog(){ _dbgPush('APP', arguments); }
 function openDbgLog(){ try{ if(typeof openSettings==='function') openSettings(); setTimeout(function(){ try{ _dbgRefresh(); var el=document.getElementById('dbgLogArea'); if(el){ el.scrollIntoView({block:'center',behavior:'smooth'}); } }catch(e){} }, 120); }catch(e){} }
 
 // ── GitHub データ永続化 ──
+// ══════════════════════════════════════════
+// ★v1.1512★ グラフの色（AD_CC）。v1.1511 の共通仕様（Ycheck v1.1006）をもとに、見やすさを優先して値を変えたもの
+//   決まりごと：
+//   1. 同じ項目は、どのタブ・どのグラフでも同じ色（グラフの処理では色をじかに書かず、ここから取る）
+//   2. 基本の項目は、はっきりした明るい色（総売上＝青、SEO売上＝紫、広告売上＝オレンジ、実績額＝赤、ROAS＝緑 …）
+//   3. 内訳は、どの項目でも「-KW＝琥珀（kw）」「-20＝水色（p20）」。全体（-KW/-20 の付かないもの）はその項目の色
+//      （同じ色の濃い／薄いにすると、線が何本も並んだときに見分けにくいため）
+//   4. 1本ずつの小さいグラフ（注視分-月別推移）は、内訳でもその項目の色（何のグラフかを色で分ける）
+//   5. 目安CPC＝紫、入札額・CPC＝ティール（KW の表の「目安」「入札」の色と同じ）
+// ══════════════════════════════════════════
+const AD_CC = {
+  // ---- 売上 ----
+  tot:'#2563eb',        // 総売上：青
+  seo:'#a855f7',        // SEO売上：紫
+  ad:'#f97316',         // 広告売上：オレンジ
+  // ---- 費用 ----
+  cost:'#dc2626',       // 実績額：赤（広告売上のオレンジと並んでもにじまないよう、少し深い赤）
+  pr:'#a16207',         // CA（クーポンアドバンス）実績：からし色（2つ目の費用）
+  // ---- 比率・単価 ----
+  roas:'#10b981',       // ROAS（広告売上÷実績額）：緑
+  salesRoas:'#0891b2',  // 売上ROAS（総売上÷実績額）：シアン
+  caRoas:'#a16207',     // 値引後ROAS（CA の ROAS）：CA と同じからし色
+  cvr:'#6366f1',        // CVR：藍
+  ctr:'#ec4899',        // CTR：ピンク
+  clicks:'#0ea5e9',     // クリック数：空色（1本だけのグラフ用。内訳の水色 p20 とは並べない）
+  orders:'#475569',     // 個数（売上件数）：スレート
+  aov:'#c026d3',        // 客単価（平均単価＝売上÷件数）：赤紫
+  bid:'#00897B',        // 入札額・CPC 実績・平均クリック単価：ティール
+  guide:'#7c3aed',      // 目安CPC：紫
+  // ---- 内訳（どの項目でも共通） ----
+  kw:'#f59e0b',         // -KW：琥珀
+  p20:'#38bdf8',        // -20：水色
+  kw40:'#d97706',       // KW の 40円台：琥珀の濃いほう（点線）
+  kw50:'#92400e',       // KW の 50円+：さらに濃い（点線）
+  clicksKw:'#fcd34d',   // クリック数-KW の棒（CTR の線と重ねるので薄く）
+  clicks20:'#7dd3fc',   // クリック数-20 の棒
+  // ---- 目盛り・文字 ----
+  axis:'#64748b', grid:'rgba(0,0,0,0.06)'
+};
+// 全体・-KW・-20 の3本組の色（metric：roas / cvr / ctr / spend / orders、part：all / kw / p20）
+function _ccTri(metric, part){
+  if (part === 'kw') return AD_CC.kw;
+  if (part === 'p20') return AD_CC.p20;
+  return AD_CC[{ roas:'roas', cvr:'cvr', ctr:'ctr', spend:'cost', orders:'orders' }[metric] || 'roas'];
+}
+// 色に透明度を付ける（'#rrggbb' → 'rgba(r,g,b,a)'）
+function _ccA(hex, a){ const n = parseInt(String(hex).slice(1), 16); return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; }
 const GH_OWNER = 'kaiyoshida0318';
 const GH_REPO = 'adcheck';
 
@@ -8161,12 +8208,12 @@ function renderItemGraph() {
     tooltipLabel=ctx=>{const ds=ctx.dataset;const rr=ds._raw?ds._raw[ctx.dataIndex]:ctx.raw;const rs=ds._fmt?ds._fmt(rr):rr;return ' '+ds.label+': '+rs+'\uff08'+ctx.raw+'%\uff09';};
   } else if (metric==='roas'||metric==='cvr'||metric==='ctr') {
     const tri=_renewalTripleValues(metric,labels,dataMap);
-    const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:'#fbbf24'},{key:'kw',label:'ROAS-KW',color:'#f59e0b'},{key:'p20',label:'ROAS20',color:'#38bdf8'}]:(metric==='ctr')?[{key:'all',label:'CTR\u5168\u4f53',color:'#34d399',hide:true},{key:'kw',label:'CTR-KW',color:'#f59e0b'},{key:'p20',label:'CTR20',color:'#38bdf8',hide:true}]:[{key:'all',label:'CVR\u5168\u4f53',color:'#a78bfa'},{key:'kw',label:'CVR(KW)',color:'#f59e0b'},{key:'p20',label:'CVR(20\u5186)',color:'#38bdf8'}];
+    const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:AD_CC.roas},{key:'kw',label:'ROAS-KW',color:AD_CC.kw},{key:'p20',label:'ROAS20',color:AD_CC.p20}]:(metric==='ctr')?[{key:'all',label:'CTR\u5168\u4f53',color:AD_CC.ctr,hide:true},{key:'kw',label:'CTR-KW',color:AD_CC.kw},{key:'p20',label:'CTR20',color:AD_CC.p20,hide:true}]:[{key:'all',label:'CVR\u5168\u4f53',color:AD_CC.cvr},{key:'kw',label:'CVR(KW)',color:AD_CC.kw},{key:'p20',label:'CVR(20\u5186)',color:AD_CC.p20}];
     datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:v=>v+'%',borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,hidden:!!d.hide}));
     yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+ctx.raw+'%';
   } else if (metric==='spend'||metric==='orders') {
-    const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa';
-    const defs=[{key:'all',label:un+'\u5168\u4f53',color:base},{key:'kw',label:un+'-KW',color:'#f59e0b'},{key:'p20',label:un+'-20',color:'#38bdf8'}];
+    const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=_ccTri(metric,'all');
+    const defs=[{key:'all',label:un+'\u5168\u4f53',color:base},{key:'kw',label:un+'-KW',color:_ccTri(metric,'kw')},{key:'p20',label:un+'-20',color:_ccTri(metric,'p20')}];
     datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:uf,borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}));
     yCallback=uf; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+uf(ctx.raw);
   } else if (metric === 'sales') {
@@ -8187,8 +8234,8 @@ function renderItemGraph() {
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
       if (metric==='all'){ series=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas'||s.key==='roasAll'); normalize=true; }
-      else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}]; }
-      else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa'; series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:'#f59e0b',fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:'#38bdf8',fmt:uf,vals:tri.p20}]; }
+      else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:_ccTri(metric,'kw'),fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:_ccTri(metric,'p20'),fmt:v=>v+'%',vals:tri.p20}]; }
+      else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=_ccTri(metric,'all'); series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:_ccTri(metric,'kw'),fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:_ccTri(metric,'p20'),fmt:uf,vals:tri.p20}]; }
       else if (metric==='sales'){ const sa=_itemSalesArrays(labels,dataMap,code); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
       else { const fmt=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).fmt; const lbl=(metric==='ctr')?'CTR-KW':(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).label; series=[{key:'_single',label:lbl,color:(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color,fmt,vals:_renewalRepValue(metric,labels,dataMap,code)}]; }
       const multi=series.length>1; _renewalAllYearMode=multi; _renewalSeries=series; datasets=[];
@@ -8216,7 +8263,7 @@ function _prodSalesArrays(labels, dataMap, code, daily){
   return {tot,seo,kw,p20};
 }
 function _itemSalesArrays(labels, dataMap, code){ return _prodSalesArrays(labels, dataMap, code, _itemGraphPeriod==='daily'); }
-const _ITEM_SALES_DEFS=[{key:'tot',label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8'},{key:'seo',label:'SEO\u58f2\u4e0a',color:'#7c3aed'},{key:'kw',label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa'},{key:'p20',label:'20\u5186\u58f2\u4e0a',color:'#f97316'}];
+const _ITEM_SALES_DEFS=[{key:'tot',label:'\u5168\u4f53\u58f2\u4e0a',color:AD_CC.tot},{key:'seo',label:'SEO\u58f2\u4e0a',color:AD_CC.seo},{key:'kw',label:'KW\u5546\u54c1\u58f2\u4e0a',color:AD_CC.kw},{key:'p20',label:'20\u5186\u58f2\u4e0a',color:AD_CC.p20}];   /* ★v1.1511★ 色は AD_CC */
 function _itemTriple(labels, dataMap, kAll, kKw){ const all=labels.map(l=>dataMap[l]?.[kAll]||0); const kw=labels.map(l=>dataMap[l]?.[kKw]||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i])); return {all,kw,p20}; }
 function _allOverviewSeries(labels, dataMap, code){
   const daily=!!(labels.length && labels[0] && labels[0].length>7);
@@ -8228,13 +8275,13 @@ function _allOverviewSeries(labels, dataMap, code){
   const spend20=labels.map(l=>{const d=dataMap[l]||{};return Math.max(0,(d.spend||0)-(d.spendKw||0));});
   const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); const pf=v=>v+'%';
   return [
-    {key:'tot',      label:'\u7dcf\u58f2\u4e0a',     color:'#1d4ed8', fmt:yf, vals:sa.tot, grp:'a'},
-    {key:'salesRoas',label:'\u7dcf\u58f2\u4e0aROAS', color:'#10b981', fmt:pf, vals:salesRoas, roas:true, grp:'a'},
-    {key:'kw',       label:'\u5546\u54c1\u58f2\u4e0a-KW', color:'#60a5fa', fmt:yf, vals:sa.kw, grp:'b'},
-    {key:'spendKw',  label:'\u5b9f\u7e3e\u984d-KW',  color:'#f59e0b', fmt:yf, vals:spendKw, grp:'b'},
-    {key:'p20',      label:'\u58f2\u4e0a-20\u5186',  color:'#38bdf8', fmt:yf, vals:sa.p20, grp:'c'},
-    {key:'spend20',  label:'\u5b9f\u7e3e\u984d-20\u5186', color:'#fb923c', fmt:yf, vals:spend20, grp:'c'},
-    {key:'roasAll',  label:'ROAS-\u5168\u4f53',      color:'#fbbf24', fmt:pf, vals:roasAll, roas:true, grp:'a'},
+    {key:'tot',      label:'\u7dcf\u58f2\u4e0a',     color:AD_CC.tot, fmt:yf, vals:sa.tot, grp:'a'},
+    {key:'salesRoas',label:'\u7dcf\u58f2\u4e0aROAS', color:AD_CC.salesRoas, fmt:pf, vals:salesRoas, roas:true, grp:'a'},
+    {key:'kw',       label:'\u5546\u54c1\u58f2\u4e0a-KW', color:AD_CC.kw, fmt:yf, vals:sa.kw, grp:'b'},
+    {key:'spendKw',  label:'\u5b9f\u7e3e\u984d-KW',  color:AD_CC.kw, fmt:yf, vals:spendKw, grp:'b'},
+    {key:'p20',      label:'\u58f2\u4e0a-20\u5186',  color:AD_CC.p20, fmt:yf, vals:sa.p20, grp:'c'},
+    {key:'spend20',  label:'\u5b9f\u7e3e\u984d-20\u5186', color:AD_CC.p20, fmt:yf, vals:spend20, grp:'c'},
+    {key:'roasAll',  label:'ROAS-\u5168\u4f53',      color:AD_CC.roas, fmt:pf, vals:roasAll, roas:true, grp:'a'},
   ];
 }
 function _allTableCols(labels, dataMap, code){
@@ -8339,16 +8386,16 @@ function _renderItemRichTable(labels, dataMap, code){
   let cols;
   if (metric==='roas'||metric==='cvr'||metric==='ctr'){
     const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||{}).color||'#888'; const dep=(metric!=='ctr');
-    cols=[{label:M+'\u5168\u4f53',color:base,fmt:pf,vals:tri.all,dep},{label:M+'-KW',color:'#f59e0b',fmt:pf,vals:tri.kw,dep},{label:M+'20',color:'#38bdf8',fmt:pf,vals:tri.p20,dep}];
+    cols=[{label:M+'\u5168\u4f53',color:base,fmt:pf,vals:tri.all,dep},{label:M+'-KW',color:_ccTri(metric,'kw'),fmt:pf,vals:tri.kw,dep},{label:M+'20',color:_ccTri(metric,'p20'),fmt:pf,vals:tri.p20,dep}];
   } else if (metric==='spend'){
     const all=labels.map(l=>dataMap[l]?.spend||0); const kw=labels.map(l=>dataMap[l]?.spendKw||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i]));
-    cols=[{label:'\u5b9f\u7e3e\u984d\u5168\u4f53',color:'#ef4444',fmt:yf,vals:all},{label:'\u5b9f\u7e3e\u984d-KW',color:'#f59e0b',fmt:yf,vals:kw},{label:'\u5b9f\u7e3e\u984d-20',color:'#38bdf8',fmt:yf,vals:p20}];
+    cols=[{label:'\u5b9f\u7e3e\u984d\u5168\u4f53',color:AD_CC.cost,fmt:yf,vals:all},{label:'\u5b9f\u7e3e\u984d-KW',color:AD_CC.kw,fmt:yf,vals:kw},{label:'\u5b9f\u7e3e\u984d-20',color:AD_CC.p20,fmt:yf,vals:p20}];
   } else if (metric==='orders'){
     const all=labels.map(l=>dataMap[l]?.orders||0); const kw=labels.map(l=>dataMap[l]?.ordersKw||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i]));
-    cols=[{label:'\u500b\u6570\u5168\u4f53',color:'#60a5fa',fmt:cf,vals:all},{label:'\u500b\u6570-KW',color:'#f59e0b',fmt:cf,vals:kw},{label:'\u500b\u6570-20',color:'#38bdf8',fmt:cf,vals:p20}];
+    cols=[{label:'\u500b\u6570\u5168\u4f53',color:AD_CC.orders,fmt:cf,vals:all},{label:'\u500b\u6570-KW',color:AD_CC.kw,fmt:cf,vals:kw},{label:'\u500b\u6570-20',color:AD_CC.p20,fmt:cf,vals:p20}];
   } else if (metric==='sales'){
     const sa=_itemSalesArrays(labels,dataMap,code);
-    cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
+    cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:AD_CC.tot,fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:AD_CC.seo,fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:AD_CC.kw,fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:AD_CC.p20,fmt:yf,vals:sa.p20}];
   } else if (metric==='all'){
     cols=_allTableCols(labels,dataMap,code).filter(se=>se.label==='総売上'||se.label==='売上ROAS'||se.label==='全広告ROAS').map(se=>({label:se.label,color:se.color,fmt:se.fmt,vals:se.vals,dep:!!se.roas,colBg:({a:'background:#eef4fb;',b:'background:#fdf0e8;',c:'background:#eff5ec;',d:'background:#fff8e5;'}[se.grp]||'')}));
   } else {
@@ -8899,14 +8946,14 @@ function renderTrend(){
   const gridColor=isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)';
   const textColor=isDark?'#a0aec0':'#718096';
   if(_trendChart){_trendChart.destroy();_trendChart=null;}
-  const bar20={type:'bar', label:'ROAS-20(日別)', data:rows.map(r=>r.dRoas20>0?Math.round(r.dRoas20*10)/10:null), yAxisID:'y', backgroundColor:isDark?'rgba(239,68,68,0.22)':'rgba(239,68,68,0.32)', borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
-  const barKw={type:'bar', label:'ROAS-KW(日別)', data:rows.map(r=>r.dRoasKw>0?Math.round(r.dRoasKw*10)/10:null), yAxisID:'y', backgroundColor:isDark?'rgba(245,158,11,0.22)':'rgba(245,158,11,0.34)', borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
+  const bar20={type:'bar', label:'ROAS-20(日別)', data:rows.map(r=>r.dRoas20>0?Math.round(r.dRoas20*10)/10:null), yAxisID:'y', backgroundColor:_ccA(AD_CC.p20,isDark?0.22:0.34), borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
+  const barKw={type:'bar', label:'ROAS-KW(日別)', data:rows.map(r=>r.dRoasKw>0?Math.round(r.dRoasKw*10)/10:null), yAxisID:'y', backgroundColor:_ccA(AD_CC.kw,isDark?0.22:0.34), borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
   _trendChart=new Chart(canvas,{type:'line',data:{labels,datasets:[
     bar20, barKw,
-    mk('sroas','#3b82f6','売上ROAS'),
-    mk('roas','#10b981','ROAS'),
-    mk('roasKw','#f59e0b','ROAS-KW'),
-    mk('roas20','#ef4444','ROAS-20'),
+    mk('sroas',AD_CC.salesRoas,'売上ROAS'),   /* ★v1.1511★ 色は AD_CC */
+    mk('roas',AD_CC.roas,'ROAS'),
+    mk('roasKw',AD_CC.kw,'ROAS-KW'),
+    mk('roas20',AD_CC.p20,'ROAS-20'),
   ]},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y.toFixed(1)+'%')}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true}}}});
   try{ requestAnimationFrame(function(){ requestAnimationFrame(function(){ try{ if(_trendChart) _trendChart.resize(); }catch(e){} }); }); }catch(e){}
   const fmt=v=>v>0?(Math.round(v*10)/10).toFixed(1)+'%':'<span style="color:var(--text3)">—</span>';
@@ -9115,14 +9162,14 @@ function renderItemTrend(){
   const gridColor=isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)';
   const textColor=isDark?'#a0aec0':'#718096';
   if(_itTrendChart){_itTrendChart.destroy();_itTrendChart=null;}
-  const bar20={type:'bar', label:'ROAS-20(日別)', data:rows.map(r=>r.dRoas20>0?Math.round(r.dRoas20*10)/10:null), yAxisID:'y', backgroundColor:isDark?'rgba(239,68,68,0.22)':'rgba(239,68,68,0.32)', borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
-  const barKw={type:'bar', label:'ROAS-KW(日別)', data:rows.map(r=>r.dRoasKw>0?Math.round(r.dRoasKw*10)/10:null), yAxisID:'y', backgroundColor:isDark?'rgba(245,158,11,0.22)':'rgba(245,158,11,0.34)', borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
+  const bar20={type:'bar', label:'ROAS-20(日別)', data:rows.map(r=>r.dRoas20>0?Math.round(r.dRoas20*10)/10:null), yAxisID:'y', backgroundColor:_ccA(AD_CC.p20,isDark?0.22:0.34), borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
+  const barKw={type:'bar', label:'ROAS-KW(日別)', data:rows.map(r=>r.dRoasKw>0?Math.round(r.dRoasKw*10)/10:null), yAxisID:'y', backgroundColor:_ccA(AD_CC.kw,isDark?0.22:0.34), borderWidth:0, order:10, categoryPercentage:0.8, barPercentage:0.95};
   _itTrendChart=new Chart(canvas,{type:'line',data:{labels,datasets:[
     bar20, barKw,
-    mk('sroas','#3b82f6','売上ROAS'),
-    mk('roas','#10b981','ROAS'),
-    mk('roasKw','#f59e0b','ROAS-KW'),
-    mk('roas20','#ef4444','ROAS-20'),
+    mk('sroas',AD_CC.salesRoas,'売上ROAS'),   /* ★v1.1511★ 色は AD_CC */
+    mk('roas',AD_CC.roas,'ROAS'),
+    mk('roasKw',AD_CC.kw,'ROAS-KW'),
+    mk('roas20',AD_CC.p20,'ROAS-20'),
   ]},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y.toFixed(1)+'%')}}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true}}}});
   try{ requestAnimationFrame(function(){ requestAnimationFrame(function(){ try{ if(_itTrendChart) _itTrendChart.resize(); }catch(e){} }); }); }catch(e){}
   const fmt=v=>v>0?(Math.round(v*10)/10).toFixed(1)+'%':'<span style="color:var(--text3)">—</span>';
@@ -9202,13 +9249,13 @@ function renderGraph() {
   });
 
   const metricConfig = {
-    spend:       { label: '実績額 (¥)',  key: 'spend', color: '#fbbf24', yFmt: v => '¥'+Math.round(v).toLocaleString() },
+    spend:       { label: '実績額 (¥)',  key: 'spend', color: AD_CC.cost, yFmt: v => '¥'+Math.round(v).toLocaleString() },   /* ★v1.1511★ 色は AD_CC */
     spend_ratio: { label: '実績額-割合', key: null,    color: null,      yFmt: v => v.toFixed(1)+'%' },
-    cl:          { label: 'クリック数',  key: 'cl',    color: '#60a5fa', yFmt: v => v.toLocaleString() },
-    roas:        { label: 'ROAS (%)',    key: 'roas',  color: '#34d399', yFmt: v => v.toFixed(1)+'%' },
-    roas5:       { label: 'ROAS (%)',    key: 'roas',  color: '#34d399', yFmt: v => v.toFixed(1)+'%' },
-    cvr:         { label: 'CVR (%)',     key: 'cvr',   color: '#a78bfa', yFmt: v => v.toFixed(2)+'%' },
-    cvr5:        { label: 'CVR (%)',     key: 'cvr',   color: '#a78bfa', yFmt: v => v.toFixed(2)+'%' },
+    cl:          { label: 'クリック数',  key: 'cl',    color: AD_CC.clicks, yFmt: v => v.toLocaleString() },
+    roas:        { label: 'ROAS (%)',    key: 'roas',  color: AD_CC.roas, yFmt: v => v.toFixed(1)+'%' },
+    roas5:       { label: 'ROAS (%)',    key: 'roas',  color: AD_CC.roas, yFmt: v => v.toFixed(1)+'%' },
+    cvr:         { label: 'CVR (%)',     key: 'cvr',   color: AD_CC.cvr, yFmt: v => v.toFixed(2)+'%' },
+    cvr5:        { label: 'CVR (%)',     key: 'cvr',   color: AD_CC.cvr, yFmt: v => v.toFixed(2)+'%' },
   };
   const cfg = metricConfig[metric] || metricConfig.spend;
 
@@ -9243,10 +9290,10 @@ function renderGraph() {
     _chartInstance = new Chart(canvas, {
       type: 'line',
       data: { labels, datasets: [
-        { label: '総売上',  data: dataTot,   borderColor: '#3b82f6', backgroundColor: '#3b82f622', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
-        { label: 'SEO売上', data: dataSeo,   borderColor: '#a855f7', backgroundColor: '#a855f722', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
-        { label: '広告売上', data: dataAdv,  borderColor: '#f97316', backgroundColor: '#f9731622', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
-        { label: '実績額',  data: dataSpend, borderColor: '#ef4444', backgroundColor: '#ef444422', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false, borderDash: [5,3] },
+        { label: '総売上',  data: dataTot,   borderColor: AD_CC.tot, backgroundColor: AD_CC.tot+'22', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },   /* ★v1.1511★ 色は AD_CC */
+        { label: 'SEO売上', data: dataSeo,   borderColor: AD_CC.seo, backgroundColor: AD_CC.seo+'22', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
+        { label: '広告売上', data: dataAdv,  borderColor: AD_CC.ad, backgroundColor: AD_CC.ad+'22', borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: false },
+        { label: '実績額',  data: dataSpend, borderColor: AD_CC.cost, backgroundColor: AD_CC.cost+'22', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false, borderDash: [5,3] },
       ]},
       options: {
         animation: false,
@@ -9297,8 +9344,8 @@ function renderGraph() {
           {
             label: 'KW実績 割合',
             data: dataKw,
-            borderColor: '#60a5fa',
-            backgroundColor: '#60a5fa22',
+            borderColor: AD_CC.kw,
+            backgroundColor: AD_CC.kw+'22',
             borderWidth: 2.5,
             pointRadius: 4,
             pointHoverRadius: 6,
@@ -9308,8 +9355,8 @@ function renderGraph() {
           {
             label: '20円実績 割合',
             data: data20,
-            borderColor: '#f97316',
-            backgroundColor: '#f9731622',
+            borderColor: AD_CC.p20,
+            backgroundColor: AD_CC.p20+'22',
             borderWidth: 2.5,
             pointRadius: 4,
             pointHoverRadius: 6,
@@ -9457,10 +9504,10 @@ function renderGraph() {
       data: {
         labels,
         datasets: [
-          lineDs2('合計',     dataTotal, '#ef4444', { borderWidth: 3 }),
-          lineDs2('KW実績',  dataKw,    '#60a5fa'),
-          lineDs2('20円実績', data20,    '#f97316'),
-          lineDs2('CA実績', dataCA, '#06b6d4'),
+          lineDs2('合計',     dataTotal, AD_CC.cost, { borderWidth: 3 }),   /* ★v1.1511★ 色は AD_CC（CA＝2つ目の費用） */
+          lineDs2('KW実績',  dataKw,    AD_CC.kw),
+          lineDs2('20円実績', data20,    AD_CC.p20),
+          lineDs2('CA実績', dataCA, AD_CC.pr),
         ]
       },
       plugins: [totalLabelPlugin],
@@ -9575,17 +9622,17 @@ function renderGraph() {
       data: {
         labels,
         datasets: isFive ? [
-          lineDs('ROAS■ (全体)',   dataRoas,     '#fbbf24'),
-          lineDs('KW ROAS',        dataRoasKw,   '#60a5fa'),
-          lineDs('KW ROAS 40円台', dataRoasKw40, '#16a34a', { borderDash: [6,3] }),
-          lineDs('KW ROAS 50円+',  dataRoasKw50, '#9333ea', { borderDash: [6,3] }),
-          lineDs('20円 ROAS',      dataRoas20,   '#f97316'),
-          lineDs('値引後ROAS',     dataCArd,     '#06b6d4'),
+          lineDs('ROAS■ (全体)',   dataRoas,     AD_CC.roas),   /* ★v1.1511★ 色は AD_CC。KW の内訳（40円台・50円+）は KW の琥珀の濃いほう */
+          lineDs('KW ROAS',        dataRoasKw,   AD_CC.kw),
+          lineDs('KW ROAS 40円台', dataRoasKw40, AD_CC.kw40, { borderDash: [6,3], borderWidth: 2 }),
+          lineDs('KW ROAS 50円+',  dataRoasKw50, AD_CC.kw50, { borderDash: [2,3], borderWidth: 2 }),
+          lineDs('20円 ROAS',      dataRoas20,   AD_CC.p20),
+          lineDs('値引後ROAS',     dataCArd,     AD_CC.caRoas),
         ] : [
-          lineDs('ROAS■ (全体)',   dataRoas,     '#fbbf24'),
-          lineDs('KW ROAS',        dataRoasKw,   '#60a5fa'),
-          lineDs('20円 ROAS',      dataRoas20,   '#f97316'),
-          lineDs('値引後ROAS',     dataCArd,     '#06b6d4'),
+          lineDs('ROAS■ (全体)',   dataRoas,     AD_CC.roas),
+          lineDs('KW ROAS',        dataRoasKw,   AD_CC.kw),
+          lineDs('20円 ROAS',      dataRoas20,   AD_CC.p20),
+          lineDs('値引後ROAS',     dataCArd,     AD_CC.caRoas),
         ]
       },
       options: {
@@ -9678,15 +9725,15 @@ function renderGraph() {
       data: {
         labels,
         datasets: isFive ? [
-          lineDs('CVR■ (全体)',   dataCvr,     '#a78bfa'),
-          lineDs('KW CVR',        dataCvrKw,   '#60a5fa'),
-          lineDs('KW CVR 40円台', dataCvrKw40, '#16a34a', { borderDash: [6,3] }),
-          lineDs('KW CVR 50円+',  dataCvrKw50, '#9333ea', { borderDash: [6,3] }),
-          lineDs('20円 CVR',      dataCvr20,   '#f97316'),
+          lineDs('CVR■ (全体)',   dataCvr,     AD_CC.cvr),   /* ★v1.1511★ 色は AD_CC */
+          lineDs('KW CVR',        dataCvrKw,   AD_CC.kw),
+          lineDs('KW CVR 40円台', dataCvrKw40, AD_CC.kw40, { borderDash: [6,3], borderWidth: 2 }),
+          lineDs('KW CVR 50円+',  dataCvrKw50, AD_CC.kw50, { borderDash: [2,3], borderWidth: 2 }),
+          lineDs('20円 CVR',      dataCvr20,   AD_CC.p20),
         ] : [
-          lineDs('CVR■ (全体)',   dataCvr,     '#a78bfa'),
-          lineDs('KW CVR',        dataCvrKw,   '#60a5fa'),
-          lineDs('20円 CVR',      dataCvr20,   '#f97316'),
+          lineDs('CVR■ (全体)',   dataCvr,     AD_CC.cvr),
+          lineDs('KW CVR',        dataCvrKw,   AD_CC.kw),
+          lineDs('20円 CVR',      dataCvr20,   AD_CC.p20),
         ]
       },
       options: {
@@ -10328,7 +10375,7 @@ function renderKwIndiv(){
       _tvBody+='<div style="margin:14px 0 5px;font-size:12px;font-weight:700;color:#00897B">'+_kwEsc(kw)+_watchBadge(kw)+'<span style="font-weight:400;font-size:11px;color:var(--text3);margin-left:8px">全体の'+_shT+'%</span></div><div style="overflow-x:auto;margin-bottom:18px"><div style="min-width:'+(_kp.length*38)+'px">'+_thTV+'</div></div>';
     }
     const ctx=document.getElementById('kwIndivC'+_S+ki); if(!ctx||typeof Chart==='undefined') return;
-    _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{type:'bar',label:'目安CPC',data:mcpcArr,backgroundColor:'#9333ea',order:0},{type:'bar',label:'入札単価（CPC実績）',data:cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}));
+    _kwIndivCharts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{type:'bar',label:'目安CPC',data:mcpcArr,backgroundColor:AD_CC.guide,order:0},{type:'bar',label:'入札単価（CPC実績）',data:cpcArr,backgroundColor:AD_CC.bid,order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}));
   });
 }
 var _kwIndivTableMode='fix';
@@ -10571,7 +10618,7 @@ function _kwwmRenderAll(body){
   var METS=(view==='all')?_prodMetsAll:metrics;
   var NM=METS.length;
   var jobs=[]; var gi=0;
-  var CHARTS=(view==='all')?[['saday','売上/1日','#43a047','円'],['seoday','SEO売上/1日','#43a047','円'],['adsaday','広告売上/1日','#43a047','円'],['spday','実績額/1日','#f59e0b','円'],['kwspday','KW実績/1日','#f59e0b','円'],['sp20day','20円実績/1日','#f59e0b','円'],['__empty__'],['kwcpc','KW単価','#ffa726','円'],['cpc20','20円単価','#ffa726','円'],['roas','売上ROAS','#1e88e5','%'],['ctrKWm','CTR/KW','#e53935','%'],['ctr20m','CTR/20','#e53935','%'],['roasAll','ROAS/全体','#1e88e5','%'],['roasKW','ROAS/KW','#1e88e5','%'],['roas20','ROAS/20','#1e88e5','%'],['clday','クリック数/1日','#7e57c2',''],['clkwday','クリック数-KW/1日','#7e57c2',''],['cl20day','クリック数-20/1日','#7e57c2',''],['__empty__'],['cvrKW','CVR/KW','#ec407a','%'],['cvr20','CVR/20','#ec407a','%'],['__empty__'],['cpc','平均クリック単価','#00897b','円'],['kakutanka','客単価','#00897b','円']]:[['spday','実績額/1日','#f59e0b','円'],['saday','売上/1日','#43a047','円'],['cvr','CVR','#ec407a','%'],['roas','ROAS','#1e88e5','%'],['clday','クリック数/1日','#7e57c2',''],['cpc','平均クリック単価','#00897b','円']];
+  var CHARTS=(view==='all')?[['saday','売上/1日',AD_CC.tot,'円'],['seoday','SEO売上/1日',AD_CC.seo,'円'],['adsaday','広告売上/1日',AD_CC.ad,'円'],['spday','実績額/1日',AD_CC.cost,'円'],['kwspday','KW実績/1日',AD_CC.cost,'円'],['sp20day','20円実績/1日',AD_CC.cost,'円'],['__empty__'],['kwcpc','KW単価',AD_CC.bid,'円'],['cpc20','20円単価',AD_CC.bid,'円'],['roas','売上ROAS',AD_CC.salesRoas,'%'],['ctrKWm','CTR/KW',AD_CC.ctr,'%'],['ctr20m','CTR/20',AD_CC.ctr,'%'],['roasAll','ROAS/全体',AD_CC.roas,'%'],['roasKW','ROAS/KW',AD_CC.roas,'%'],['roas20','ROAS/20',AD_CC.roas,'%'],['clday','クリック数/1日',AD_CC.clicks,''],['clkwday','クリック数-KW/1日',AD_CC.clicks,''],['cl20day','クリック数-20/1日',AD_CC.clicks,''],['__empty__'],['cvrKW','CVR/KW',AD_CC.cvr,'%'],['cvr20','CVR/20',AD_CC.cvr,'%'],['__empty__'],['cpc','平均クリック単価',AD_CC.bid,'円'],['kakutanka','客単価',AD_CC.aov,'円']]:[['spday','実績額/1日',AD_CC.cost,'円'],['saday','売上/1日',AD_CC.tot,'円'],['cvr','CVR',AD_CC.cvr,'%'],['roas','ROAS',AD_CC.roas,'%'],['clday','クリック数/1日',AD_CC.clicks,''],['cpc','平均クリック単価',AD_CC.bid,'円']];
   var _ccm2={}; CHARTS.forEach(function(cf){ if(cf[0]!=='__break__') _ccm2[cf[0]]=cf[2]; });
   var h='<div class="kwwm-scroll" style="overflow:auto;max-height:78vh">';
   var _kwAgg={}; kwRows.forEach(function(r){ if(months.indexOf(r.ym)<0) return; if(!_kwAgg[r.itemCode]) _kwAgg[r.itemCode]={}; var _m=_kwAgg[r.itemCode][r.ym]; if(!_m) _m=_kwAgg[r.itemCode][r.ym]={sp:0,sa:0,od:0,cl:0}; _m.sp+=(+r.spend||0); _m.sa+=(+r.sales||0); _m.od+=(+r.orders||0); _m.cl+=(+r.cl||0); });
@@ -10611,7 +10658,7 @@ function _kwwmRenderAll(body){
   body.innerHTML=h; _kwwmStickHeads(body);
   if(typeof Chart!=='undefined'){
     var mkC=function(id,title,data,color,suf,ratioVals,ratioColor){ var cv=document.getElementById(id); if(!cv) return; try{ var cfg={type:'line',data:{labels:months.map(function(m){return (+m.slice(4,6))+'月';}),datasets:[{label:title,data:data,borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,pointHoverRadius:5,pointHitRadius:20,pointBackgroundColor:color,tension:0.25,spanGaps:true,fill:true}]},options:{animation:false,responsive:false,maintainAspectRatio:false,layout:{padding:{bottom:16}},interaction:{mode:'index',intersect:false},hover:{mode:'index',intersect:false},plugins:{legend:{display:false},title:{display:true,text:title,font:{size:11,weight:'700'}},tooltip:{callbacks:{label:function(c){return (c.parsed.y!=null)?(c.parsed.y.toLocaleString()+suf):'-';}}}},scales:{y:{beginAtZero:true,afterFit:function(sc){sc.width=50;},ticks:{font:{size:9},callback:function(v){return v.toLocaleString()+suf;}}},x:{grid:{display:false},ticks:{font:{size:9}}}}}}; if(ratioVals){ cfg.plugins=[{afterDraw:function(ch){ var xa=ch.scales.x, ctx=ch.ctx; ctx.save(); ctx.font='bold 10px sans-serif'; ctx.fillStyle=ratioColor; ctx.textAlign='center'; var yy=ch.height-3; ratioVals.forEach(function(v,ii){ if(v==null) return; ctx.fillText(v+'%', xa.getPixelForTick(ii), yy); }); ctx.restore(); }}]; } var ch=new Chart(cv,cfg); _kwwmCharts.push(ch); }catch(e){} };
-    jobs.forEach(function(job){ CHARTS.forEach(function(cf){ if(cf[0]==='__break__'||cf[0]==='__empty__') return; var _rv=null,_rc=null; var _mk=function(fn,col){ _rc=col; _rv=months.map(function(m){ var mm=job.dm[m]; return mm?fn(mm):null; }); }; if(cf[0]==='kwspday') _mk(function(mm){ var d=(mm.kwsp||0)+(mm.sp20||0); return d>0?Math.round((mm.kwsp||0)/d*100):null; },'#1d4ed8'); else if(cf[0]==='sp20day') _mk(function(mm){ var d=(mm.kwsp||0)+(mm.sp20||0); return d>0?Math.round((mm.sp20||0)/d*100):null; },'#1d4ed8'); else if(cf[0]==='seoday') _mk(function(mm){ var d=(mm.sa||0); return d>0?Math.round((mm.seo||0)/d*100):null; },'#15803d'); else if(cf[0]==='adsaday') _mk(function(mm){ var d=(mm.sa||0); return d>0?Math.round(((mm.kwsa||0)+(mm.sa20||0))/d*100):null; },'#15803d'); mkC(_kwwmIdPfx+'a_'+job.gi+'_'+cf[0], cf[1], series(job.dm,cf[0]), cf[2], cf[3], _rv, _rc); }); });
+    jobs.forEach(function(job){ CHARTS.forEach(function(cf){ if(cf[0]==='__break__'||cf[0]==='__empty__') return; var _rv=null,_rc=null; var _mk=function(fn,col){ _rc=col; _rv=months.map(function(m){ var mm=job.dm[m]; return mm?fn(mm):null; }); }; if(cf[0]==='kwspday') _mk(function(mm){ var d=(mm.kwsp||0)+(mm.sp20||0); return d>0?Math.round((mm.kwsp||0)/d*100):null; },AD_CC.axis); else if(cf[0]==='sp20day') _mk(function(mm){ var d=(mm.kwsp||0)+(mm.sp20||0); return d>0?Math.round((mm.sp20||0)/d*100):null; },AD_CC.axis); else if(cf[0]==='seoday') _mk(function(mm){ var d=(mm.sa||0); return d>0?Math.round((mm.seo||0)/d*100):null; },AD_CC.axis); else if(cf[0]==='adsaday') _mk(function(mm){ var d=(mm.sa||0); return d>0?Math.round(((mm.kwsa||0)+(mm.sa20||0))/d*100):null; },AD_CC.axis); mkC(_kwwmIdPfx+'a_'+job.gi+'_'+cf[0], cf[1], series(job.dm,cf[0]), cf[2], cf[3], _rv, _rc); }); });
   }
 }
 function _renderKwWatchMonthlyTable(){
@@ -10711,8 +10758,8 @@ function _renderKwWatchMonthlyTable(){
   var lbls=months.map(function(m){ return (+m.slice(4,6))+'\u6708'; });
   var chartJobs=[];
   function _kwwmRatio(vals,label,fg,bg){ var o='<div style="margin-top:8px"><div style="font-size:9px;color:var(--text3);margin-bottom:3px">'+label+'</div><div style="display:flex;gap:3px">'; months.forEach(function(m,ix){ var v=vals[ix]; o+='<div style="flex:1;min-width:34px;text-align:center;background:'+bg+';border:1px solid '+fg+';border-radius:4px;padding:2px 1px"><div style="font-size:8px;color:var(--text3)">'+(+m.slice(4,6))+'月</div><div style="font-size:10px;font-weight:700;color:'+fg+'">'+(v!=null?Math.round(v)+'%':'-')+'</div></div>'; }); o+='</div></div>'; return o; }
-  var _defCharts=[['spday','実績額/1日','#f59e0b','円'],['saday','売上/1日','#43a047','円'],['cvr','CVR','#ec407a','%'],['roas','ROAS','#1e88e5','%'],['clday','クリック数/1日','#7e57c2',''],['cpc','平均クリック単価','#00897b','円']];
-  var _prodCharts=[['saday','売上/1日','#43a047','円'],['seoday','SEO売上/1日','#43a047','円'],['adsaday','広告売上/1日','#43a047','円'],['spday','実績額/1日','#f59e0b','円'],['kwspday','KW実績/1日','#f59e0b','円'],['sp20day','20円実績/1日','#f59e0b','円'],['__empty__'],['kwcpc','KW単価','#ffa726','円'],['cpc20','20円単価','#ffa726','円'],['roas','売上ROAS','#1e88e5','%'],['ctrKWm','CTR/KW','#e53935','%'],['ctr20m','CTR/20','#e53935','%'],['roasAll','ROAS/全体','#1e88e5','%'],['roasKW','ROAS/KW','#1e88e5','%'],['roas20','ROAS/20','#1e88e5','%'],['clday','クリック数/1日','#7e57c2',''],['clkwday','クリック数-KW/1日','#7e57c2',''],['cl20day','クリック数-20/1日','#7e57c2',''],['__empty__'],['cvrKW','CVR/KW','#ec407a','%'],['cvr20','CVR/20','#ec407a','%'],['__empty__'],['cpc','平均クリック単価','#00897b','円'],['kakutanka','客単価','#00897b','円']];
+  var _defCharts=[['spday','実績額/1日',AD_CC.cost,'円'],['saday','売上/1日',AD_CC.tot,'円'],['cvr','CVR',AD_CC.cvr,'%'],['roas','ROAS',AD_CC.roas,'%'],['clday','クリック数/1日',AD_CC.clicks,''],['cpc','平均クリック単価',AD_CC.bid,'円']];
+  var _prodCharts=[['saday','売上/1日',AD_CC.tot,'円'],['seoday','SEO売上/1日',AD_CC.seo,'円'],['adsaday','広告売上/1日',AD_CC.ad,'円'],['spday','実績額/1日',AD_CC.cost,'円'],['kwspday','KW実績/1日',AD_CC.cost,'円'],['sp20day','20円実績/1日',AD_CC.cost,'円'],['__empty__'],['kwcpc','KW単価',AD_CC.bid,'円'],['cpc20','20円単価',AD_CC.bid,'円'],['roas','売上ROAS',AD_CC.salesRoas,'%'],['ctrKWm','CTR/KW',AD_CC.ctr,'%'],['ctr20m','CTR/20',AD_CC.ctr,'%'],['roasAll','ROAS/全体',AD_CC.roas,'%'],['roasKW','ROAS/KW',AD_CC.roas,'%'],['roas20','ROAS/20',AD_CC.roas,'%'],['clday','クリック数/1日',AD_CC.clicks,''],['clkwday','クリック数-KW/1日',AD_CC.clicks,''],['cl20day','クリック数-20/1日',AD_CC.clicks,''],['__empty__'],['cvrKW','CVR/KW',AD_CC.cvr,'%'],['cvr20','CVR/20',AD_CC.cvr,'%'],['__empty__'],['cpc','平均クリック単価',AD_CC.bid,'円'],['kakutanka','客単価',AD_CC.aov,'円']];
   function grp(label,dm,isTot,gi,showShare,extras,mets,charts){ mets=mets||metrics; var _hkc=months.some(function(m){ return dm[m]&&dm[m].kwcl!=null; }); mets=mets.filter(function(mt){ return _hkc||['clkw','cl20','clkwday','cl20day'].indexOf(mt[1])<0; }); var nm=mets.length; charts=charts||_defCharts; var _ccm={}; charts.forEach(function(cf){ if(cf[0]!=='__break__') _ccm[cf[0]]=cf[2]; });
     var _akw=0,_a20=0; months.forEach(function(m){ var _mm=dm[m]; if(_mm){ _akw+=(_mm.kwsp||0); _a20+=(_mm.sp20||0); } }); var _adT=_akw+_a20; var _kwPct=_adT>0?Math.round(_akw/_adT*100):null; var _20Pct=_adT>0?Math.round(_a20/_adT*100):null;
     var sh='<div style="margin-top:10px"><div style="font-size:9px;color:var(--text3);margin-bottom:3px">\u5b9f\u7e3e\u984d \u5360\u6709\u7387</div><div style="display:flex;gap:3px">';
@@ -10775,7 +10822,7 @@ function _renderKwWatchMonthlyTable(){
   body.innerHTML=h; _kwwmStickHeads(body);
   if(typeof Chart!=='undefined'){
     var mkC=function(id,title,data,color,suf,ratioVals,ratioColor){ var cv=document.getElementById(id); if(!cv) return; try{ var cfg={type:'line',data:{labels:lbls,datasets:[{label:title,data:data,borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,pointHoverRadius:5,pointHitRadius:20,pointBackgroundColor:color,tension:0.25,spanGaps:true,fill:true}]},options:{animation:false,responsive:false,maintainAspectRatio:false,layout:{padding:{bottom:16}},interaction:{mode:'index',intersect:false},hover:{mode:'index',intersect:false},plugins:{legend:{display:false},title:{display:true,text:title,font:{size:11,weight:'700'}},tooltip:{callbacks:{label:function(c){return (c.parsed.y!=null)?(c.parsed.y.toLocaleString()+suf):'-';}}}},scales:{y:{beginAtZero:true,afterFit:function(sc){sc.width=50;},ticks:{font:{size:9},callback:function(v){return v.toLocaleString()+suf;}}},x:{grid:{display:false},ticks:{font:{size:9}}}}}}; if(ratioVals){ cfg.plugins=[{afterDraw:function(ch){ var xa=ch.scales.x, ctx=ch.ctx; ctx.save(); ctx.font='bold 10px sans-serif'; ctx.fillStyle=ratioColor; ctx.textAlign='center'; var yy=ch.height-3; ratioVals.forEach(function(v,ii){ if(v==null) return; ctx.fillText(v+'%', xa.getPixelForTick(ii), yy); }); ctx.restore(); }}]; } var ch=new Chart(cv,cfg); _kwwmCharts.push(ch); }catch(e){} };
-    chartJobs.forEach(function(job){ job.charts.forEach(function(cf){ if(cf[0]==='__break__'||cf[0]==='__empty__') return; var _rv=null,_rc=null; var _mk=function(fn,col){ _rc=col; _rv=months.map(function(m){ var mm=job.dm[m]; return mm?fn(mm):null; }); }; if(cf[0]==='kwspday') _mk(function(mm){ var d=(mm.kwsp||0)+(mm.sp20||0); return d>0?Math.round((mm.kwsp||0)/d*100):null; },'#1d4ed8'); else if(cf[0]==='sp20day') _mk(function(mm){ var d=(mm.kwsp||0)+(mm.sp20||0); return d>0?Math.round((mm.sp20||0)/d*100):null; },'#1d4ed8'); else if(cf[0]==='seoday') _mk(function(mm){ var d=(mm.sa||0); return d>0?Math.round((mm.seo||0)/d*100):null; },'#15803d'); else if(cf[0]==='adsaday') _mk(function(mm){ var d=(mm.sa||0); return d>0?Math.round(((mm.kwsa||0)+(mm.sa20||0))/d*100):null; },'#15803d'); mkC(_kwwmIdPfx+'_'+job.gi+'_'+cf[0], cf[1], series(job.dm,cf[0]), cf[2], cf[3], _rv, _rc); }); });
+    chartJobs.forEach(function(job){ job.charts.forEach(function(cf){ if(cf[0]==='__break__'||cf[0]==='__empty__') return; var _rv=null,_rc=null; var _mk=function(fn,col){ _rc=col; _rv=months.map(function(m){ var mm=job.dm[m]; return mm?fn(mm):null; }); }; if(cf[0]==='kwspday') _mk(function(mm){ var d=(mm.kwsp||0)+(mm.sp20||0); return d>0?Math.round((mm.kwsp||0)/d*100):null; },AD_CC.axis); else if(cf[0]==='sp20day') _mk(function(mm){ var d=(mm.kwsp||0)+(mm.sp20||0); return d>0?Math.round((mm.sp20||0)/d*100):null; },AD_CC.axis); else if(cf[0]==='seoday') _mk(function(mm){ var d=(mm.sa||0); return d>0?Math.round((mm.seo||0)/d*100):null; },AD_CC.axis); else if(cf[0]==='adsaday') _mk(function(mm){ var d=(mm.sa||0); return d>0?Math.round(((mm.kwsa||0)+(mm.sa20||0))/d*100):null; },AD_CC.axis); mkC(_kwwmIdPfx+'_'+job.gi+'_'+cf[0], cf[1], series(job.dm,cf[0]), cf[2], cf[3], _rv, _rc); }); });
   }
 }
 
@@ -11163,7 +11210,7 @@ function _kwiBuildCharts(code, daily, cont){
   });
   cont.innerHTML=html;
   const cans=cont.querySelectorAll('canvas');
-  series.forEach((sd,i)=>{ const ctx=cans[i]; if(!ctx||typeof Chart==='undefined') return; const ch=new Chart(ctx,{type:'bar',data:{labels:sd.labels,datasets:[{type:'bar',label:'目安CPC',data:sd.mcpcArr,backgroundColor:'#9333ea',order:0},{type:'bar',label:'入札単価（CPC実績）',data:sd.cpcArr,backgroundColor:'#00897B',order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}); _kwTblCharts.push(ch); });
+  series.forEach((sd,i)=>{ const ctx=cans[i]; if(!ctx||typeof Chart==='undefined') return; const ch=new Chart(ctx,{type:'bar',data:{labels:sd.labels,datasets:[{type:'bar',label:'目安CPC',data:sd.mcpcArr,backgroundColor:AD_CC.guide,order:0},{type:'bar',label:'入札単価（CPC実績）',data:sd.cpcArr,backgroundColor:AD_CC.bid,order:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:4,right:0,bottom:0,left:0}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{display:false,beginAtZero:true},x:{grid:{display:false},ticks:{display:false}}}}}); _kwTblCharts.push(ch); });
 }
 function _kwTblToggleLegend(id){ var el=document.getElementById(id); if(el) el.style.display=(el.style.display==='none'||!el.style.display)?'block':'none'; }
 function _kwTblToggleCharts(pfx, idx, btn){
@@ -12500,20 +12547,20 @@ function renderKwDetail(){
     const ctx=document.getElementById(id); if(!ctx||typeof Chart==='undefined') return;
     _kwDetailCharts.push(new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{label:label,data:data,borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:2,tension:0.2,spanGaps:true,fill:true}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:day?16:24}}}}}));
   }
-  mk('kwDetailCpcCanvas','目安CPC',mcpcArr,'#9333ea');
-  mk('kwDetailSpendCanvas','実績額',spendArr,'#f97316');
-  mk('kwDetailSalesCanvas','売上',salesArr,'#2563eb');
+  mk('kwDetailCpcCanvas','目安CPC',mcpcArr,AD_CC.guide);   /* ★v1.1511★ 色は AD_CC */
+  mk('kwDetailSpendCanvas','実績額',spendArr,AD_CC.cost);
+  mk('kwDetailSalesCanvas','売上',salesArr,AD_CC.ad);
 }
 // ===== ★v1.1439★ KW-個別推移 モーダル（KWを選んで、そのKWの日別／月別をグラフと表で見る。Amacheck の推移モーダルが手本） =====
 let _kwtCode = null, _kwtKw = null, _kwtGrain = 'day', _kwtSpan = '30', _kwtMonth = '', _kwtMSpan = 'cal', _kwtChart = null;
 let _kwtRFrom = '', _kwtRTo = '';   // ★v1.1463★ 日別の期間（月〜月）。_kwtSpan==='range' のとき使う
 const _kwtHidden = new Set();
 const KWT_SERIES = [
-  { k:'sales', label:'広告売上', col:'#2563eb' },
-  { k:'spend', label:'実績額',   col:'#dc2626' },
-  { k:'roas',  label:'広告ROAS', col:'#1D9E75' },
-  { k:'act',   label:'入札額',   col:'#00897B' },
-  { k:'gui',   label:'目安CPC',  col:'#7c3aed' },
+  { k:'sales', label:'広告売上', col:AD_CC.ad },   /* ★v1.1511★ 色は AD_CC */
+  { k:'spend', label:'実績額',   col:AD_CC.cost },
+  { k:'roas',  label:'広告ROAS', col:AD_CC.roas },
+  { k:'act',   label:'入札額',   col:AD_CC.bid },
+  { k:'gui',   label:'目安CPC',  col:AD_CC.guide },
 ];
 // 4つのモーダルの行き来（いま開いているモーダルの商品コードを拾って閉じ、行き先を開く）
 function _pmOpenNow(){   // いま画面に出ているモーダル（変数は閉じたあとも残ることがあるので、表示で判定する）
@@ -12714,7 +12761,7 @@ function renderKwTrend(resetScroll){
   let ctl = '';
   const lastPt = points[points.length - 1];
   const partial = _kwtGrain === 'month' && lastPt && lastPt.ym === latestAll.slice(0,7) && latestAll < _kwtS(new Date(+latestAll.slice(0,4), +latestAll.slice(5,7), 0));
-  ctl += '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">※ ' + (_kwtGrain === 'day' ? '階段の線＝<b style="color:#00897B">入札額</b>（当日データの入札）と<b style="color:#7c3aed">目安CPC</b>（右端の目盛り）。札は入札額を変えた日' : '階段の線＝<b style="color:#7c3aed">目安CPC</b>（右端の目盛り）') + '　広告ROAS の色：<span style="color:var(--green)">500%以上</span>・<span style="color:var(--amber)">300〜499%</span>・<span style="color:var(--danger)">299%以下</span>（商品-売上データと同じ）' + (partial ? '　／　' + latestAll.slice(0,7).replace('-','/') + ' は途中の月（' + (+latestAll.slice(8,10)) + '日まで）' : '') + '</div>';
+  ctl += '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">※ ' + (_kwtGrain === 'day' ? '階段の線＝<b style="color:' + AD_CC.bid + '">入札額</b>（当日データの入札）と<b style="color:' + AD_CC.guide + '">目安CPC</b>（右端の目盛り）。札は入札額を変えた日' : '階段の線＝<b style="color:#7c3aed">目安CPC</b>（右端の目盛り）') + '　広告ROAS の色：<span style="color:var(--green)">500%以上</span>・<span style="color:var(--amber)">300〜499%</span>・<span style="color:var(--danger)">299%以下</span>（商品-売上データと同じ）' + (partial ? '　／　' + latestAll.slice(0,7).replace('-','/') + ' は途中の月（' + (+latestAll.slice(8,10)) + '日まで）' : '') + '</div>';
   // ★v1.1440★ 月別は入札額のボタンなし
   const tg = KWT_SERIES.filter(s => !(_kwtGrain === 'month' && s.k === 'act')).map(s => { const on = !_kwtHidden.has(s.k); return '<button onclick="_kwtToggle(\'' + s.k + '\')" style="font-size:12px;font-weight:700;padding:5px 13px;border-radius:7px;cursor:pointer;border:2px solid ' + s.col + ';background:' + (on ? s.col : 'transparent') + ';color:' + (on ? '#fff' : 'var(--text3)') + ';' + (on ? '' : 'text-decoration:line-through;opacity:.55;') + '">● ' + s.label + '</button>'; }).join('');
   // 表
@@ -12792,12 +12839,12 @@ function renderKwTrend(resetScroll){
   const sales = vals.map(v => v.has ? v.sa : null), spend = vals.map(v => v.has ? v.sp : null), roasS = vals.map(v => (v.has && v.sp > 0) ? Math.round(v.sa / v.sp * 1000) / 10 : null);
   const ds = [];
   const H = k => _kwtHidden.has(k) || (_kwtGrain === 'month' && k === 'act');   // ★v1.1440★ 月別では入札額の線・札を出さない
-  if (!H('sales')) ds.push({ type:'bar', label:'広告売上', data:sales, backgroundColor:'#2563ebcc', yAxisID:'y', order:3 });
-  if (!H('spend')) ds.push({ type:'bar', label:'実績額', data:spend, backgroundColor:'#dc2626cc', yAxisID:'y', order:3 });
+  if (!H('sales')) ds.push({ type:'bar', label:'広告売上', data:sales, backgroundColor:AD_CC.ad+'cc', yAxisID:'y', order:3 });
+  if (!H('spend')) ds.push({ type:'bar', label:'実績額', data:spend, backgroundColor:AD_CC.cost+'cc', yAxisID:'y', order:3 });
   const _long = labels.length > 62;   // ★v1.1463★ 長い期間は点を消して線を細く（見やすさ）
-  if (!H('roas'))  ds.push({ type:'line', label:'広告ROAS', data:roasS, borderColor:'#1D9E75', backgroundColor:'#1D9E75', borderWidth:_long ? 1.6 : 2.6, tension:_long ? 0.15 : 0.3, pointRadius:_long ? 0 : 3, pointHoverRadius:5, spanGaps:true, yAxisID:'y1', order:1 });
-  if (!H('act'))   ds.push({ type:'line', label:'入札額', data:actS, borderColor:'#00897B', backgroundColor:'#00897B', borderWidth:2.4, stepped:'before', pointRadius:0, pointHoverRadius:4, spanGaps:true, yAxisID:'y2', order:0 });
-  if (!H('gui'))   ds.push({ type:'line', label:'目安CPC', data:guiS, borderColor:'#7c3aed', backgroundColor:'#7c3aed', borderWidth:2.2, borderDash:[6,3], stepped:'before', pointRadius:0, pointHoverRadius:4, spanGaps:true, yAxisID:'y2', order:0 });
+  if (!H('roas'))  ds.push({ type:'line', label:'広告ROAS', data:roasS, borderColor:AD_CC.roas, backgroundColor:AD_CC.roas, borderWidth:_long ? 1.6 : 2.6, tension:_long ? 0.15 : 0.3, pointRadius:_long ? 0 : 3, pointHoverRadius:5, spanGaps:true, yAxisID:'y1', order:1 });
+  if (!H('act'))   ds.push({ type:'line', label:'入札額', data:actS, borderColor:AD_CC.bid, backgroundColor:AD_CC.bid, borderWidth:2.4, stepped:'before', pointRadius:0, pointHoverRadius:4, spanGaps:true, yAxisID:'y2', order:0 });
+  if (!H('gui'))   ds.push({ type:'line', label:'目安CPC', data:guiS, borderColor:AD_CC.guide, backgroundColor:AD_CC.guide, borderWidth:2.2, borderDash:[6,3], stepped:'before', pointRadius:0, pointHoverRadius:4, spanGaps:true, yAxisID:'y2', order:0 });
   // 入札額・目安CPC の専用目盛り（右端）：最小−余白×2〜最大＋余白 を5円単位に
   const bv = [].concat(H('act') ? [] : actS, H('gui') ? [] : guiS).filter(v => v != null);
   let y2min, y2max; if (bv.length){ const mn = Math.min(...bv), mx = Math.max(...bv), pad = Math.max(5, (mx - mn) * 0.25); y2min = Math.max(0, Math.floor((mn - pad * 2) / 5) * 5); y2max = Math.ceil((mx + pad) / 5) * 5; }
@@ -12816,8 +12863,8 @@ function renderKwTrend(resetScroll){
       for (let k = 0; k < 2; k++) { cands.push(up ? yc + 5 + k * (h + 3) : yc - h - 5 - k * (h + 3)); }
       const y = cands.find(yy => yy >= A.top && yy + h <= A.bottom && !hit(x, yy, w, h)); if (y == null) return;
       placed.push({ x, y, w, h });
-      c.fillStyle = '#fff'; c.strokeStyle = '#00897B'; c.lineWidth = 1.2; c.beginPath(); if (c.roundRect) c.roundRect(x, y, w, h, 4); else c.rect(x, y, w, h); c.fill(); c.stroke();
-      c.fillStyle = '#00897B'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(t, x + w / 2, y + h / 2 + 0.5);
+      c.fillStyle = '#fff'; c.strokeStyle = AD_CC.bid; c.lineWidth = 1.2; c.beginPath(); if (c.roundRect) c.roundRect(x, y, w, h, 4); else c.rect(x, y, w, h); c.fill(); c.stroke();
+      c.fillStyle = AD_CC.bid; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(t, x + w / 2, y + h / 2 + 0.5);
     }); c.restore(); } };
   _kwtChart = new Chart(ctx, { data:{ labels, datasets:ds }, plugins:[bidLabels], options:{
     responsive:true, maintainAspectRatio:false, animation:false, interaction:{ mode:'index', intersect:false },
@@ -12825,8 +12872,8 @@ function renderKwTrend(resetScroll){
     scales:{
       x:{ grid:{ color:'rgba(0,0,0,0.06)' }, ticks:{ color:'#718096', font:{ size:11 }, maxRotation:0, autoSkip:true } },
       y:{ position:'left', beginAtZero:true, grid:{ color:'rgba(0,0,0,0.06)' }, ticks:{ color:'#718096', font:{ size:11 }, callback:v => '¥' + Number(v).toLocaleString() }, display:!(H('sales') && H('spend')) && vals.some(v => v.has && (v.sa > 0 || v.sp > 0)) },
-      y1:{ position:'right', beginAtZero:true, suggestedMax:600, grid:{ drawOnChartArea:false }, ticks:{ color:'#1D9E75', font:{ size:11 }, callback:v => v + '%' }, display:!H('roas') },
-      y2:{ position:'right', min:y2min, max:y2max, grid:{ drawOnChartArea:false }, ticks:{ color:(H('act') ? '#7c3aed' : '#00897B'), font:{ size:11 }, callback:v => '¥' + v }, title:{ display:true, text:(H('act') ? '目安CPC' : '入札・目安'), color:(H('act') ? '#7c3aed' : '#00897B'), font:{ size:11, weight:'700' } }, display:bv.length > 0 },
+      y1:{ position:'right', beginAtZero:true, suggestedMax:600, grid:{ drawOnChartArea:false }, ticks:{ color:AD_CC.roas, font:{ size:11 }, callback:v => v + '%' }, display:!H('roas') },
+      y2:{ position:'right', min:y2min, max:y2max, grid:{ drawOnChartArea:false }, ticks:{ color:(H('act') ? AD_CC.guide : AD_CC.bid), font:{ size:11 }, callback:v => '¥' + v }, title:{ display:true, text:(H('act') ? '目安CPC' : '入札・目安'), color:(H('act') ? AD_CC.guide : AD_CC.bid), font:{ size:11, weight:'700' } }, display:bv.length > 0 },
     } } });
 }
 
@@ -13206,13 +13253,13 @@ function _syncRenewalMetricOptions() {
 
 // 各指標の定義（CTR/平均単価含む）。値配列を返すヘルパ付き
 const _RENEWAL_METRICS = {
-  roas:    { label: 'ROAS',          color: '#fbbf24', unit: '%', fmt: v => v + '%' },
-  cvr:     { label: 'CVR',           color: '#a78bfa', unit: '%', fmt: v => v + '%' },
-  ctr:     { label: 'CTR',           color: '#34d399', unit: '%', fmt: v => v + '%' },
-  totsales:{ label: '売上総額',       color: '#3b82f6', unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },
-  orders:  { label: '個数(売上件数)', color: '#60a5fa', unit: '件', fmt: v => v + '件' },
-  cpc:     { label: '平均単価',       color: '#f97316', unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },
-  spend:   { label: '実績額',         color: '#ef4444', unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },
+  roas:    { label: 'ROAS',          color: AD_CC.roas, unit: '%', fmt: v => v + '%' },   /* ★v1.1511★ 色は AD_CC */
+  cvr:     { label: 'CVR',           color: AD_CC.cvr, unit: '%', fmt: v => v + '%' },
+  ctr:     { label: 'CTR',           color: AD_CC.ctr, unit: '%', fmt: v => v + '%' },
+  totsales:{ label: '売上総額',       color: AD_CC.tot, unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },
+  orders:  { label: '個数(売上件数)', color: AD_CC.orders, unit: '件', fmt: v => v + '件' },
+  cpc:     { label: '平均単価',       color: AD_CC.aov, unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },   /* 平均単価＝売上÷件数（客単価） */
+  spend:   { label: '実績額',         color: AD_CC.cost, unit: '円', fmt: v => '¥' + Math.round(v).toLocaleString() },
 };
 
 // 現在の期間で表示する指標キー配列を返す。
@@ -13428,24 +13475,24 @@ function _renderRenewalGraphCore() {
     const _sroas=_sa.tot.map((tv,i)=>_spend[i]>0?Math.round(_sa.tot[i]/_spend[i]*10000)/100:0);
     const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); const pf=v=>v+'%';
     datasets=[
-      {type:'bar',label:'SEO\u58f2\u4e0a',data:_sa.seo,_fmt:yf,backgroundColor:'#7c3aed',borderColor:'#7c3aed',yAxisID:'y',stack:'sales',order:1},
-      {type:'bar',label:'\u5e83\u544a\u58f2\u4e0a',data:_ad,_fmt:yf,backgroundColor:'#f97316',borderColor:'#f97316',yAxisID:'y',stack:'sales',order:1},
-      {type:'line',label:'\u58f2\u4e0aROAS',data:_sroas,_fmt:pf,borderColor:'#10b981',backgroundColor:'#10b98122',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,yAxisID:'y1',order:0},
+      {type:'bar',label:'SEO\u58f2\u4e0a',data:_sa.seo,_fmt:yf,backgroundColor:AD_CC.seo,borderColor:AD_CC.seo,yAxisID:'y',stack:'sales',order:1},
+      {type:'bar',label:'\u5e83\u544a\u58f2\u4e0a',data:_ad,_fmt:yf,backgroundColor:AD_CC.ad,borderColor:AD_CC.ad,yAxisID:'y',stack:'sales',order:1},
+      {type:'line',label:'\u58f2\u4e0aROAS',data:_sroas,_fmt:pf,borderColor:AD_CC.salesRoas,backgroundColor:AD_CC.salesRoas+'22',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,yAxisID:'y1',order:0},
     ];
     _chartKind='all'; yCallback=yf;
     tooltipLabel=ctx=>' '+ctx.dataset.label+': '+(ctx.dataset._fmt?ctx.dataset._fmt(ctx.raw):ctx.raw);
   } else if (metric==='roas'||metric==='cvr'||metric==='ctr') {
     const tri=_renewalTripleValues(metric,labels,dataMap);
-    const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:'#fbbf24'},{key:'kw',label:'ROAS-KW',color:'#f59e0b'},{key:'p20',label:'ROAS20',color:'#38bdf8'}]:(metric==='ctr')?[{key:'all',label:'CTR\u5168\u4f53',color:'#34d399',hide:true},{key:'kw',label:'CTR-KW',color:'#f59e0b'},{key:'p20',label:'CTR20',color:'#38bdf8',hide:true}]:[{key:'all',label:'CVR\u5168\u4f53',color:'#a78bfa'},{key:'kw',label:'CVR(KW)',color:'#f59e0b'},{key:'p20',label:'CVR(20\u5186)',color:'#38bdf8'}];
+    const defs=(metric==='roas')?[{key:'all',label:'ROAS\u5168\u4f53',color:AD_CC.roas},{key:'kw',label:'ROAS-KW',color:AD_CC.kw},{key:'p20',label:'ROAS20',color:AD_CC.p20}]:(metric==='ctr')?[{key:'all',label:'CTR\u5168\u4f53',color:AD_CC.ctr,hide:true},{key:'kw',label:'CTR-KW',color:AD_CC.kw},{key:'p20',label:'CTR20',color:AD_CC.p20,hide:true}]:[{key:'all',label:'CVR\u5168\u4f53',color:AD_CC.cvr},{key:'kw',label:'CVR(KW)',color:AD_CC.kw},{key:'p20',label:'CVR(20\u5186)',color:AD_CC.p20}];
     datasets=defs.map(d=>({label:d.label,data:tri[d.key],_fmt:v=>v+'%',borderColor:d.color,backgroundColor:d.color+'22',borderWidth:2.3,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false,hidden:!!d.hide,yAxisID:'y',order:0}));
     yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+(ctx.dataset._fmt?ctx.dataset._fmt(ctx.raw):ctx.raw+'%');
     // ★v1.1460★ CTR＆クリック数：KWと20円のクリック数を積み上げ棒（右の目盛り）で重ねる
     if (metric==='ctr'){ const ck=_renewalClicks(labels,dataMap); const cf=v=>Math.round(v).toLocaleString()+'回';
-      datasets.push({type:'bar',label:'クリック-KW',data:ck.kw,_fmt:cf,backgroundColor:'#fcd34dcc',borderColor:'#f59e0b',borderWidth:0,yAxisID:'y1',stack:'cl',order:2});
-      datasets.push({type:'bar',label:'クリック-20',data:ck.p20,_fmt:cf,backgroundColor:'#7dd3fccc',borderColor:'#0ea5e9',borderWidth:0,yAxisID:'y1',stack:'cl',order:2}); _chartKind='ctrcl'; }
+      datasets.push({type:'bar',label:'クリック-KW',data:ck.kw,_fmt:cf,backgroundColor:AD_CC.clicksKw+'cc',borderColor:AD_CC.clicksKw,borderWidth:0,yAxisID:'y1',stack:'cl',order:2});
+      datasets.push({type:'bar',label:'クリック-20',data:ck.p20,_fmt:cf,backgroundColor:AD_CC.clicks20+'cc',borderColor:AD_CC.clicks20,borderWidth:0,yAxisID:'y1',stack:'cl',order:2}); _chartKind='ctrcl'; }
   } else if (metric==='spend'||metric==='orders') {
-    const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa';
-    const defs=[{key:'all',label:un+'\u5168\u4f53',color:base},{key:'kw',label:un+'-KW',color:'#f59e0b'},{key:'p20',label:un+'-20',color:'#38bdf8'}];
+    const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=_ccTri(metric,'all');
+    const defs=[{key:'all',label:un+'\u5168\u4f53',color:base},{key:'kw',label:un+'-KW',color:_ccTri(metric,'kw')},{key:'p20',label:un+'-20',color:_ccTri(metric,'p20')}];
     datasets=defs.map(d=>({type:'bar',label:d.label,data:tri[d.key],_fmt:uf,backgroundColor:d.color,borderColor:d.color,yAxisID:'y'})); _chartKind='bar';
     yCallback=uf; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+uf(ctx.raw);
   } else if (metric === 'sales') {
@@ -13455,7 +13502,7 @@ function _renderRenewalGraphCore() {
   } else if (metric === 'seoad') {
     const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const ad=labels.map(l=>(dataMap[l]||{}).sales||0); const pf=v=>v+'%';
     const seoP=sa.tot.map((tv,i)=>tv>0?Math.round(sa.seo[i]/tv*1000)/10:0); const adP=sa.tot.map((tv,i)=>tv>0?Math.round(ad[i]/tv*1000)/10:0);
-    datasets=[{label:'SEO\u58f2\u4e0a\u6bd4\u7387',data:seoP,_fmt:pf,borderColor:'#7c3aed',backgroundColor:'#7c3aed22',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false},{label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',data:adP,_fmt:pf,borderColor:'#10b981',backgroundColor:'#10b98122',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}];
+    datasets=[{label:'SEO\u58f2\u4e0a\u6bd4\u7387',data:seoP,_fmt:pf,borderColor:AD_CC.seo,backgroundColor:AD_CC.seo+'22',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false},{label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',data:adP,_fmt:pf,borderColor:AD_CC.ad,backgroundColor:AD_CC.ad+'22',borderWidth:2.6,pointRadius:3,pointHoverRadius:6,tension:0.3,fill:false}];
     yCallback=v=>v+'%'; tooltipLabel=ctx=>' '+ctx.dataset.label+': '+ctx.raw+'%';
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas; const data=_renewalMetricValues(metric,labels,dataMap,code);
@@ -13473,11 +13520,11 @@ function _renderRenewalGraphCore() {
       yearMode=true; _fyYears=_years; chartLabels=_fmLabels;
       let series, normalize=false;
       if (metric==='all'){ series=_allOverviewSeries(labels,dataMap,code).filter(s=>s.key==='tot'||s.key==='salesRoas'||s.key==='roasAll'); normalize=true; }
-      else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:'#f59e0b',fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:'#38bdf8',fmt:v=>v+'%',vals:tri.p20}];
-        if (metric==='ctr'){ const ck=_renewalClicks(labels,dataMap); const cf=v=>Math.round(v).toLocaleString()+'回'; series.push({key:'clKw',label:'クリック-KW',color:'#b45309',fmt:cf,vals:ck.kw,axis:'y1'},{key:'cl20',label:'クリック-20',color:'#0369a1',fmt:cf,vals:ck.p20,axis:'y1'}); } }   // ★v1.1460★
-      else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=isSp?'#ef4444':'#60a5fa'; series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:'#f59e0b',fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:'#38bdf8',fmt:uf,vals:tri.p20}]; }
+      else if (metric==='roas'||metric==='cvr'||metric==='ctr'){ const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color; series=[{key:'all',label:M+'\u5168\u4f53',color:base,fmt:v=>v+'%',vals:tri.all},{key:'kw',label:M+'-KW',color:_ccTri(metric,'kw'),fmt:v=>v+'%',vals:tri.kw},{key:'p20',label:M+'20',color:_ccTri(metric,'p20'),fmt:v=>v+'%',vals:tri.p20}];
+        if (metric==='ctr'){ const ck=_renewalClicks(labels,dataMap); const cf=v=>Math.round(v).toLocaleString()+'回'; series.push({key:'clKw',label:'クリック-KW',color:AD_CC.clicksKw,fmt:cf,vals:ck.kw,axis:'y1'},{key:'cl20',label:'クリック-20',color:AD_CC.clicks20,fmt:cf,vals:ck.p20,axis:'y1'}); } }   // ★v1.1460★
+      else if (metric==='spend'||metric==='orders'){ const isSp=metric==='spend'; const tri=_itemTriple(labels,dataMap,isSp?'spend':'orders',isSp?'spendKw':'ordersKw'); const uf=isSp?(v=>'\u00a5'+Math.round(v).toLocaleString()):(v=>v+'\u4ef6'); const un=isSp?'\u5b9f\u7e3e\u984d':'\u500b\u6570'; const base=_ccTri(metric,'all'); series=[{key:'all',label:un+'\u5168\u4f53',color:base,fmt:uf,vals:tri.all},{key:'kw',label:un+'-KW',color:_ccTri(metric,'kw'),fmt:uf,vals:tri.kw},{key:'p20',label:un+'-20',color:_ccTri(metric,'p20'),fmt:uf,vals:tri.p20}]; }
       else if (metric==='sales'){ const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily'); const yf=v=>'\u00a5'+Math.round(v).toLocaleString(); series=_ITEM_SALES_DEFS.map(d=>({key:d.key,label:d.label,color:d.color,fmt:yf,vals:sa[d.key]})); }
-      else if (metric==='seoad'){ const sa=_prodSalesArrays(labels,dataMap,code,false); const ad=labels.map(l=>(dataMap[l]||{}).sales||0); const pf=v=>v+'%'; const seoP=sa.tot.map((tv,i)=>tv>0?Math.round(sa.seo[i]/tv*1000)/10:0); const adP=sa.tot.map((tv,i)=>tv>0?Math.round(ad[i]/tv*1000)/10:0); series=[{key:'seoP',label:'SEO\u58f2\u4e0a\u6bd4\u7387',color:'#7c3aed',fmt:pf,vals:seoP},{key:'adP',label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',color:'#10b981',fmt:pf,vals:adP}]; }
+      else if (metric==='seoad'){ const sa=_prodSalesArrays(labels,dataMap,code,false); const ad=labels.map(l=>(dataMap[l]||{}).sales||0); const pf=v=>v+'%'; const seoP=sa.tot.map((tv,i)=>tv>0?Math.round(sa.seo[i]/tv*1000)/10:0); const adP=sa.tot.map((tv,i)=>tv>0?Math.round(ad[i]/tv*1000)/10:0); series=[{key:'seoP',label:'SEO\u58f2\u4e0a\u6bd4\u7387',color:AD_CC.seo,fmt:pf,vals:seoP},{key:'adP',label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',color:AD_CC.ad,fmt:pf,vals:adP}]; }
       else { const fmt=(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).fmt; const lbl=(metric==='ctr')?'CTR-KW':(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).label; series=[{key:'_single',label:lbl,color:(_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas).color,fmt,vals:_renewalRepValue(metric,labels,dataMap,code)}]; }
       const multi=series.length>1; _renewalAllYearMode=multi; _renewalSeries=series; datasets=[];
       series.forEach(se=>{ let pv=se.vals; if(normalize){const nz=se.vals.filter(v=>v>0).slice().sort((a,b)=>a-b); let mid=0; if(nz.length){const m=Math.floor(nz.length/2); mid=nz.length%2?nz[m]:(nz[m-1]+nz[m])/2;} pv=se.vals.map(v=>mid>0?Math.round(v/mid*50*10)/10:0);} _years.forEach((fy,yi)=>{ const rec=_years.length-1-yi; const arr=new Array(12).fill(null),arrR=new Array(12).fill(null); labels.forEach((ym,idx)=>{ if(_fyOf(ym)!==fy)return; const fmi=_fmiOf(ym); arr[fmi]=pv[idx]; arrR[fmi]=se.vals[idx]; }); const color=se.color; datasets.push({yAxisID:se.axis||'y',label:multi?(se.label+' '+fy):(fy+'\u5e74'),data:arr,_raw:arrR,_fmt:se.fmt,_mk:se.key,_fy:fy,borderColor:color,backgroundColor:color+'22',borderDash:_RENEWAL_FY_DASH[rec%_RENEWAL_FY_DASH.length],borderWidth:rec===0?(multi?2.4:2.6):(multi?1.6:1.9),pointRadius:multi?2.5:3,pointHoverRadius:multi?5:6,tension:0.3,fill:false,spanGaps:true,hidden:_renewalHiddenMetric.has(se.key)||_renewalHiddenFY.has(fy)}); }); });
@@ -13488,7 +13535,7 @@ function _renderRenewalGraphCore() {
   const _baseType=(!yearMode&&(_chartKind==='bar'||_chartKind==='all'))?'bar':'line';
   const _isAll=(!yearMode&&_chartKind==='all');
   const _scales={x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}},stacked:_isAll},y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11},callback:yCallback},beginAtZero:true,stacked:_isAll,position:'left'}};
-  if(_isAll){ _scales.y1={position:'right',grid:{drawOnChartArea:false},ticks:{color:textColor,font:{size:11},callback:v=>v+'%'},beginAtZero:true}; }
+  if(_isAll){ _scales.y1={position:'right',grid:{drawOnChartArea:false},ticks:{color:AD_CC.salesRoas,font:{size:11},callback:v=>v+'%'},beginAtZero:true}; }   /* ★v1.1511★ 右の目盛りは線（売上ROAS）と同じ色 */
   if(metric==='ctr'){ const _stk=(!yearMode&&_chartKind==='ctrcl'); if(_stk) _scales.x.stacked=true; _scales.y1={position:'right',stacked:_stk,grid:{drawOnChartArea:false},ticks:{color:textColor,font:{size:11},callback:v=>v+'回'},beginAtZero:true,title:{display:true,text:'クリック数',color:textColor,font:{size:11}}}; }   // ★v1.1460★
   _renewalChartInstance = new Chart(canvas,{type:_baseType,data:{labels:chartLabels,datasets},options:{animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:!yearMode&&metric!=='all',position:'top',labels:{color:textColor,font:{size:12},usePointStyle:true}},tooltip:{callbacks:{label:tooltipLabel}}},scales:_scales}});
   if (!yearMode) _drawRenewalChangeLines(_renewalChartInstance, labels, code);
@@ -13562,21 +13609,21 @@ function _renderRenewalTableCore(labels, dataMap, code){
   let cols;
   if (metric==='roas'||metric==='cvr'||metric==='ctr'){
     const tri=_renewalTripleValues(metric,labels,dataMap); const M=metric.toUpperCase(); const base=(_RENEWAL_METRICS[metric]||{}).color||'#888'; const dep=(metric!=='ctr');
-    cols=[{label:M+'\u5168\u4f53',color:base,fmt:pf,vals:tri.all,dep},{label:M+'-KW',color:'#f59e0b',fmt:pf,vals:tri.kw,dep},{label:M+'20',color:'#38bdf8',fmt:pf,vals:tri.p20,dep}];
-    if (metric==='ctr'){ const ck=_renewalClicks(labels,dataMap); const rf=v=>Math.round(v||0).toLocaleString()+'回'; cols.push({label:'クリック-KW',color:'#b45309',fmt:rf,vals:ck.kw},{label:'クリック-20',color:'#0369a1',fmt:rf,vals:ck.p20}); }   // ★v1.1460★
+    cols=[{label:M+'\u5168\u4f53',color:base,fmt:pf,vals:tri.all,dep},{label:M+'-KW',color:_ccTri(metric,'kw'),fmt:pf,vals:tri.kw,dep},{label:M+'20',color:_ccTri(metric,'p20'),fmt:pf,vals:tri.p20,dep}];
+    if (metric==='ctr'){ const ck=_renewalClicks(labels,dataMap); const rf=v=>Math.round(v||0).toLocaleString()+'回'; cols.push({label:'クリック-KW',color:AD_CC.clicksKw,fmt:rf,vals:ck.kw},{label:'クリック-20',color:AD_CC.clicks20,fmt:rf,vals:ck.p20}); }   // ★v1.1460★
   } else if (metric==='spend'){
     const all=labels.map(l=>dataMap[l]?.spend||0); const kw=labels.map(l=>dataMap[l]?.spendKw||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i]));
-    cols=[{label:'\u5b9f\u7e3e\u984d\u5168\u4f53',color:'#ef4444',fmt:yf,vals:all},{label:'\u5b9f\u7e3e\u984d-KW',color:'#f59e0b',fmt:yf,vals:kw},{label:'\u5b9f\u7e3e\u984d-20',color:'#38bdf8',fmt:yf,vals:p20}];
+    cols=[{label:'\u5b9f\u7e3e\u984d\u5168\u4f53',color:AD_CC.cost,fmt:yf,vals:all},{label:'\u5b9f\u7e3e\u984d-KW',color:AD_CC.kw,fmt:yf,vals:kw},{label:'\u5b9f\u7e3e\u984d-20',color:AD_CC.p20,fmt:yf,vals:p20}];
   } else if (metric==='orders'){
     const all=labels.map(l=>dataMap[l]?.orders||0); const kw=labels.map(l=>dataMap[l]?.ordersKw||0); const p20=labels.map((l,i)=>Math.max(0,all[i]-kw[i]));
-    cols=[{label:'\u500b\u6570\u5168\u4f53',color:'#60a5fa',fmt:cf,vals:all},{label:'\u500b\u6570-KW',color:'#f59e0b',fmt:cf,vals:kw},{label:'\u500b\u6570-20',color:'#38bdf8',fmt:cf,vals:p20}];
+    cols=[{label:'\u500b\u6570\u5168\u4f53',color:AD_CC.orders,fmt:cf,vals:all},{label:'\u500b\u6570-KW',color:AD_CC.kw,fmt:cf,vals:kw},{label:'\u500b\u6570-20',color:AD_CC.p20,fmt:cf,vals:p20}];
   } else if (metric==='sales'){
     const sa=_prodSalesArrays(labels,dataMap,code,_renewalGraphPeriod==='daily');
-    cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:'#1d4ed8',fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:'#60a5fa',fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:'#f97316',fmt:yf,vals:sa.p20}];
+    cols=[{label:'\u5168\u4f53\u58f2\u4e0a',color:AD_CC.tot,fmt:yf,vals:sa.tot},{label:'SEO\u58f2\u4e0a',color:AD_CC.seo,fmt:yf,vals:sa.seo},{label:'KW\u5546\u54c1\u58f2\u4e0a',color:AD_CC.kw,fmt:yf,vals:sa.kw},{label:'20\u5186\u58f2\u4e0a',color:AD_CC.p20,fmt:yf,vals:sa.p20}];
   } else if (metric==='seoad'){
     const sa=_prodSalesArrays(labels,dataMap,code,daily); const ad=labels.map(l=>dataMap[l]?.sales||0);
     const seoP=sa.tot.map((tv,i)=>tv>0?Math.round(sa.seo[i]/tv*1000)/10:0); const adP=sa.tot.map((tv,i)=>tv>0?Math.round(ad[i]/tv*1000)/10:0);
-    cols=[{label:'SEO\u58f2\u4e0a',color:'#7c3aed',fmt:yf,vals:sa.seo,dep:true},{label:'SEO\u58f2\u4e0a\u6bd4\u7387',color:'#7c3aed',fmt:pf,vals:seoP,dep:true},{label:'\u5e83\u544a\u58f2\u4e0a',color:'#10b981',fmt:yf,vals:ad,dep:true},{label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',color:'#10b981',fmt:pf,vals:adP,dep:true}];
+    cols=[{label:'SEO\u58f2\u4e0a',color:AD_CC.seo,fmt:yf,vals:sa.seo,dep:true},{label:'SEO\u58f2\u4e0a\u6bd4\u7387',color:AD_CC.seo,fmt:pf,vals:seoP,dep:true},{label:'\u5e83\u544a\u58f2\u4e0a',color:AD_CC.ad,fmt:yf,vals:ad,dep:true},{label:'\u5e83\u544a\u58f2\u4e0a\u6bd4\u7387',color:AD_CC.ad,fmt:pf,vals:adP,dep:true}];
   } else if (metric==='all'){
     const _ac=_allTableCols(labels,dataMap,code); const _pick=lbl=>_ac.find(se=>se.label===lbl);
     const _want=[['売上ROAS','売上ROAS'],['総売上','総売上'],['SEO売上','SEO売上'],['広告売上','広告売上合計']];
