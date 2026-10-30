@@ -684,7 +684,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1508</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1509</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <button onclick="openAnalyze()" style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;border:none;background:#5C6BC0;color:#fff;cursor:pointer;white-space:nowrap;margin-right:8px">分析</button><button onclick="openAnalysisExport()" title="ADcheckのデータを分析用（GPTなど）にZIPでダウンロード" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #0f766e;background:#f0fdfa;color:#0f766e;cursor:pointer;white-space:nowrap;margin-right:8px">📦 分析用データ</button>
@@ -7526,7 +7526,7 @@ function _buildMissingCalMonths(first,last){
   const ly=+last.slice(0,4), lm=+last.slice(5,7); let guard=0;
   while((y<ly||(y===ly&&m<=lm))&&guard<600){ months.push(y+'-'+pad(m)); m++; if(m>12){m=1;y++;} guard++; }
   const keep=sel.value;
-  sel.innerHTML=months.map(ym=>'<option value="'+ym+'">'+ym+'</option>').join('');
+  sel.innerHTML=months.slice().reverse().map(ym=>'<option value="'+ym+'">'+ym+'</option>').join('');   /* ★v1.1509★ 新しい月が上（降順） */
   const def=(keep&&months.indexOf(keep)>=0)?keep:months[months.length-1];
   sel.value=def; box.style.display='block';
   _renderMissingCal(def);
@@ -16363,7 +16363,7 @@ function _calBuildHtml() {
   const set = {}; Object.keys(_calMonthData).forEach(m => set[m] = 1); set[nowYm] = 1;
   _calMonths = Object.keys(set).sort();
   const def = _calDefaultMonth(nowYm);
-  const opts = _calMonths.map(m => {
+  const opts = _calMonths.slice().reverse().map(m => {   /* ★v1.1509★ 新しい月が上（降順） */
     const a = m.split('-');
     return `<option value="${m}"${m === def ? ' selected' : ''}>${a[0]}年${parseInt(a[1], 10)}月</option>`;
   }).join('');
@@ -16983,7 +16983,7 @@ function _updateDayDropdown(){
   const mo = +ym.slice(5,7);
   if (_selectedDay && _selectedDay.slice(0,7)!==ym){ _selectedDay=''; _dayMode=false; }
   let html = '<option value="">日選択</option>';
-  html += days.map(d => {
+  html += days.slice().reverse().map(d => {   /* ★v1.1509★ 新しい日が上（降順） */
     const dn = +d.slice(8,10);
     return `<option value="${d}"${_selectedDay===d?' selected':''}>${mo}/${dn}</option>`;
   }).join('');
