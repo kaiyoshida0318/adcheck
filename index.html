@@ -89,7 +89,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .header-btn:hover { background: var(--surface2); border-color: var(--border2); }
 .header-btn.primary { background: var(--red); color: #fff; border-color: var(--red); }
 .header-btn.primary:hover { background: var(--red-dark); }
-.header-right .header-btn { font-size: 11px; padding: 4px 10px; }   /* ★v1.1516★ ヘッダー右のボタンはタブと同じくらいの大きさに */
+.header-right .header-btn { font-size: 11px; padding: 4px 10px; }
+/* ★v1.1518★ ヘッダー〜【状態】の行まで（#topChrome）を画面の上に固定。画面全体がスクロールするタブ（全-月別データ・全-推移など）でも動かない。
+   z-index はモーダル（.modal-overlay＝200）より下、表の中の部品（〜30）より上 */
+#topChrome { position: sticky; top: 0; z-index: 199; background: #ffffff; }
+/* 画面に貼り付く表の上のツールバー（マラソン候補・SS）は、固定した上部の真下で止める。--tc-h は #topChrome の高さ（JSで測る） */
+#tab-mar-kouho #subTabToolbarWrap, #tab-ss-mar #subTabToolbarWrap, #tab-ss-jun #subTabToolbarWrap, #tab-ss-sep #subTabToolbarWrap, #tab-ss-dec #subTabToolbarWrap { top: var(--tc-h, 0px) !important; }   /* ★v1.1516★ ヘッダー右のボタンはタブと同じくらいの大きさに */
 
 /* 画面が狭い・ズームが大きい時はヘッダーボタンを小さく */
 @media (max-width: 1400px) {
@@ -698,7 +703,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1516</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1518</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（確認メモ・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -721,7 +726,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         <span id="zoomLabel" style="font-size:10px;color:var(--text3);min-width:32px;text-align:center">100%</span>
         <button onclick="adjustZoom(+0.02)" style="border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2);padding:2px 5px;border-radius:4px;line-height:1" title="文字を大きく">A+</button>
       </div>
-      <button class="hbtn-ic" onclick="openCalendarSettings()" title="カレンダー設定">📅</button>
+      <button class="hbtn-ic" onclick="openCalendarSettings()" title="カレンダー設定">📅 カレンダー設定</button>   <!-- ★v1.1517★ 📅だけだとわかりづらいので文字も出す -->
       <button class="hbtn-ic" onclick="openSettingsMenu()">⚙ 設定 ▾</button>
     </div>
     <input type="file" id="addFileInput" class="file-input" accept=".csv,.zip" multiple onchange="handleFiles(event)">
@@ -12195,7 +12200,9 @@ window.addEventListener('resize', _restickRenewalLists);
 (function(){
   if (typeof ResizeObserver !== 'function') return;
   let _t = null;
-  const ro = new ResizeObserver(() => { clearTimeout(_t); _t = setTimeout(_restickRenewalLists, 80); });
+  /* ★v1.1518★ 固定した上部（#topChrome）の高さを CSS 変数 --tc-h に入れる（CSS px。上部を隠したときは0） */
+  const _setTcH = () => { const tc = document.getElementById('topChrome'); document.documentElement.style.setProperty('--tc-h', (tc ? tc.offsetHeight : 0) + 'px'); };
+  const ro = new ResizeObserver(() => { _setTcH(); clearTimeout(_t); _t = setTimeout(_restickRenewalLists, 80); });
   const start = () => { const tc = document.getElementById('topChrome'); if (tc) ro.observe(tc); const hd = document.querySelector('header'); if (hd) ro.observe(hd); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
