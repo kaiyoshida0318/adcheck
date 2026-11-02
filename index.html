@@ -703,13 +703,13 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1521</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1522</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
     <div class="hg">
       <button class="hbtn-o" onclick="openAnalyze()" title="運用チェック（どの画面で何を確認するかの手順書）を別のウィンドウで開く">📝 運用チェック</button>   <!-- ★v1.1521★ 名前を変えた（旧：確認メモ） -->
-      <button class="hbtn-o" onclick="openAnalysisExport()" title="ADcheckのデータを分析用（GPTなど）にZIPでダウンロード">📦 分析用データ</button>
+      <button class="hbtn-o" onclick="openAnalysisExport()" title="ADcheckのデータを分析用（GPTなど）にZIPでダウンロード"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0f766e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M4 17v3h16v-3"/></svg>分析用データ</button>   <!-- ★v1.1522★ アイコンをダウンロードの形に（📦→SVG） -->
     </div>
     <div class="hsep"></div>
     <div class="hg">
@@ -12219,8 +12219,12 @@ window.addEventListener('resize', _restickRenewalLists);
 // ・元の max-height は data-fit-mh0、こちらが入れた値は data-fit-mh に持つ。ほかの処理が値を変えていたら、そちらを元の値として扱う
 // ・列幅の調整モード中の箱（_colwMh0 がある）はさわらない
 function _fitPageHeight(){
+  /* ★v1.1522★ 縮めるだけでなく伸ばしもする：表の下に余白があれば、表の箱を伸ばして画面の一番下まで届かせる。
+     測るのは画面px（documentElement の scrollHeight は画面より小さくならないので、余白は body の実際の高さで測る）。
+     max-height は CSS px なので、文字サイズ（zoom）の倍率 k で割り戻す */
+  const body = document.body, de = document.documentElement;
+  const mh0Body = body.style.minHeight;
   try{
-    const de = document.documentElement;
     const panel = document.querySelector('.tab-panel.active');
     document.querySelectorAll('[data-fit-mh0]').forEach(el => {
       if (el.style.maxHeight !== el.dataset.fitMh){ delete el.dataset.fitMh0; delete el.dataset.fitMh; return; }   /* ほかの処理が書き換えた */
@@ -12233,28 +12237,37 @@ function _fitPageHeight(){
       const oy = getComputedStyle(e).overflowY; if (oy !== 'auto' && oy !== 'scroll') return;
       if (e.clientHeight > bh){ bh = e.clientHeight; box = e; }
     });
-    if (!box || bh < 240) return;
-    let ov = de.scrollHeight - de.clientHeight;
-    if (ov <= 0 || ov > 300) return;
+    if (!box || bh < 200) return;
+    body.style.minHeight = '0px';   /* 中身だけの高さを測るため、一時的に body の最低の高さを外す */
+    /* ＋＝はみ出し、－＝下の余白（どちらも画面px） */
+    const diff = () => { const o = de.scrollHeight - de.clientHeight; if (o > 0) return o; return Math.round(body.getBoundingClientRect().height - window.innerHeight); };
+    const canGrow = () => box.scrollHeight > box.clientHeight + 1;   /* 箱の中身が箱より長い＝伸ばす意味がある */
+    let d = diff();
+    /* ページ全体をスクロールして読むタブ（全-推移など）は、縮めると箱が 220px を切るので下の mh < 220 で元に戻る */
+    if (d === 0 || (d < 0 && !canGrow())) return;   /* ちょうど／表が短くて全部見えている */
+    const k = (box.offsetHeight > 0 && box.getBoundingClientRect().height > 0) ? box.getBoundingClientRect().height / box.offsetHeight : 1;
     const mh0 = box.style.maxHeight;
-    const cs = getComputedStyle(box);
-    let mh = Math.min(parseFloat(cs.maxHeight) || box.offsetHeight, box.offsetHeight) - ov;
-    for (let i = 0; i < 4 && ov > 0; i++){
+    let mh = box.offsetHeight - d / k;
+    for (let i = 0; i < 6; i++){
       if (mh < 220){ box.style.maxHeight = mh0; return; }
       box.style.maxHeight = Math.floor(mh) + 'px';
-      const ov2 = de.scrollHeight - de.clientHeight;
-      if (ov2 >= ov){ box.style.maxHeight = mh0; return; }   /* 縮めてもはみ出しが減らない＝この箱のせいではない */
-      ov = ov2; mh -= Math.max(1, ov);
+      const d2 = diff();
+      if (d2 > 0){ if (d > 0 && d2 >= d){ box.style.maxHeight = mh0; return; } mh -= d2 / k + 0.5; d = d2; continue; }   /* まだはみ出す → 縮める */
+      if (d2 < -1 && canGrow()){ mh -= d2 / k; d = d2; continue; }   /* まだ余白がある → もう少し伸ばす */
+      break;
     }
+    if (diff() > 0){ box.style.maxHeight = mh0; return; }   /* 合わせきれなかったら元に戻す */
     box.dataset.fitMh0 = mh0; box.dataset.fitMh = box.style.maxHeight;
   }catch(e){}
+  finally{ body.style.minHeight = mh0Body; }
 }
 (function(){
   let _t = null;
   const req = (ms) => { clearTimeout(_t); _t = setTimeout(_fitPageHeight, ms || 80); };
   window.addEventListener('resize', () => req(120));
   document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('#topChrome nav')){ req(80); setTimeout(_fitPageHeight, 600); } }, true);
-  const start = () => { if (typeof ResizeObserver === 'function'){ const ro = new ResizeObserver(() => req(80)); ro.observe(document.body); const tc = document.getElementById('topChrome'); if (tc) ro.observe(tc); } req(400); };
+  /* ★v1.1522★ body は最低の高さ（画面の高さ）があるので、短いタブに切り替えても大きさが変わらない。タブの中身（.tab-panel）の大きさも見張る */
+  const start = () => { if (typeof ResizeObserver === 'function'){ const ro = new ResizeObserver(() => req(80)); ro.observe(document.body); const tc = document.getElementById('topChrome'); if (tc) ro.observe(tc); document.querySelectorAll('.tab-panel').forEach(el => ro.observe(el)); } req(400); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
@@ -19358,7 +19371,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 <div id="axModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9300;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this)closeAnalysisExport()">
   <div style="background:var(--surface);border-radius:12px;width:94vw;max-width:620px;box-shadow:0 8px 32px rgba(0,0,0,0.3);margin:auto;overflow:hidden">
     <div style="display:flex;align-items:center;gap:10px;padding:16px 22px;border-bottom:1px solid var(--border)">
-      <div style="font-size:16px;font-weight:800;flex:1">📦 分析用データをダウンロード</div>
+      <div style="font-size:16px;font-weight:800;flex:1"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0f766e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M4 17v3h16v-3"/></svg>分析用データをダウンロード</div>
       <button onclick="closeAnalysisExport()" style="border:none;background:rgba(0,0,0,0.08);cursor:pointer;font-size:15px;color:#333;line-height:1;padding:6px 10px;border-radius:50%">✕</button>
     </div>
     <div style="padding:18px 22px 20px">
