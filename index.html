@@ -703,7 +703,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1526</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1527</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -12620,6 +12620,8 @@ function renderKwDetail(){
   const gLatest=(typeof kwRows!=='undefined')?kwRows.reduce((m,r)=>r.date>m?r.date:m,''):'';
   const axisEnd=gLatest>latestAll?gLatest:latestAll;
   const months=[...new Set(allDates.map(d=>d.slice(0,7)))].sort();
+  /* ★v1.1527★ 月の一覧は全体の最新月まで（その商品のデータがまだ無い当月も選べる・月別に出る） */
+  for(let _m=months[months.length-1]; _m && _m<axisEnd.slice(0,7);){ _m=_kwtYmAdd(_m,1); months.push(_m); }
   if(!_kwtMonth || months.indexOf(_kwtMonth)<0) _kwtMonth=months[months.length-1];
   // 目安CPC：日ごとにKWの目安CPC（0より大きいもの）の平均
   const mcpcByDate={};
@@ -12661,7 +12663,7 @@ function renderKwDetail(){
       let sp=0, sa=0; Object.keys(idd).forEach(d=>{ if(d.slice(0,7)===ym){ sp+=(idd[d].spend||0); sa+=(idd[d].sales||0); } });
       labels.push(ym.replace('-','/')); mcpcArr.push(mn?Math.round(ms/mn):null); spendArr.push(sp); salesArr.push(sa);
     }
-    if(lastM===latestAll.slice(0,7) && latestAll<_kwtS(new Date(+latestAll.slice(0,4),+latestAll.slice(5,7),0))) partial=lastM.replace('-','/')+' は途中の月（'+(+latestAll.slice(8,10))+'日まで）';
+    if(lastM===axisEnd.slice(0,7) && axisEnd<_kwtS(new Date(+axisEnd.slice(0,4),+axisEnd.slice(5,7),0))) partial=lastM.replace('-','/')+' は途中の月（'+(+axisEnd.slice(8,10))+'日まで）';   /* ★v1.1527★ 全体の最新日で判定 */
   }
   if(ctlEl) ctlEl.innerHTML=_kwtCtlHtml(dayMonths, months, rangeFrom, rangeTo);
   const day=_kwtGrain==='day';
@@ -12825,6 +12827,9 @@ function renderKwTrend(resetScroll){
   let snapGui = null; try{ const sn = _snapKwMap(_currentKwSnap && _currentKwSnap.byCode && _currentKwSnap.byCode[code]); const gL = kwRows.reduce((m, r) => r.date > m ? r.date : m, ''); if (sn && _kwSnapUsable(code, latestAll.slice(0,4) + latestAll.slice(5,7)) && sn[kw] > 0) snapGui = sn[kw]; /* ★v1.1523★ */ void gL; }catch(e){}
   // ---- 期間 ----
   const months = [...new Set(allRows.map(r => r.date.slice(0,7)))].sort();
+  /* ★v1.1527★ 「今」＝全体の最新日（その商品のクリックが無くても）。月の一覧はその月まで伸ばす（当月が月別に出る） */
+  const _nowD = (function(){ const g = kwRows.reduce((m, r) => r.date > m ? r.date : m, ''); return g > latestAll ? g : latestAll; })(), _nowM = _nowD.slice(0,7);
+  for (let _m = months[months.length - 1]; _m && _m < _nowM;){ _m = _kwtYmAdd(_m, 1); months.push(_m); }
   if (!_kwtMonth || months.indexOf(_kwtMonth) < 0) _kwtMonth = months[months.length - 1];
   let points = [];   // { key, label, rows:その期間のこのKWの行, last:その期間の最終日（KW割合・目安・入札の基準日）, ym }
   let dayMonths = [], rangeFrom = '', rangeTo = '';
@@ -12858,7 +12863,8 @@ function renderKwTrend(resetScroll){
     else first = _kwtYmAdd(lastM, -23);
     if (first < months[0]) first = months[0];
     for (let ym = first; ym <= lastM; ym = _kwtYmAdd(ym, 1)){
-      const mr = allRows.filter(r => r.date.slice(0,7) === ym); const lastD = mr.reduce((m, r) => r.date > m ? r.date : m, '');
+      const mr = allRows.filter(r => r.date.slice(0,7) === ym); let lastD = mr.reduce((m, r) => r.date > m ? r.date : m, '');
+      if (!lastD){ const _me = _kwtS(new Date(+ym.slice(0,4), +ym.slice(5,7), 0)); lastD = _me < _nowD ? _me : _nowD; }   /* ★v1.1527★ その商品のデータが無い月も、その月の終わり（当月は今日）時点の目安・入札を出す */
       points.push({ key: ym, label: ym.replace('-','/'), tlabel: ym.replace('-','/'), rows: kwAll.filter(r => r.date.slice(0,7) === ym), last: lastD, ym });
     }
   }
@@ -12871,7 +12877,7 @@ function renderKwTrend(resetScroll){
     let tot = 0; Object.keys(byKw).forEach(k => { const rr = monthRowsUpTo(byKw[k], p.ym, p.last); if (rr.length) tot += _kwiPredVol(rr, p.last); });
     const mcl = monthRowsUpTo(kwAll, p.ym, p.last).reduce((a, r) => a + (r.cl || 0), 0);
     const cv = _kwiCarry(kwAll, p.last);
-    const gui = (snapGui && p.last === latestAll) || (snapGui && _kwtGrain === 'month' && p.ym === latestAll.slice(0,7)) ? snapGui : cv.gui;
+    const gui = (snapGui && p.last === _nowD) || (snapGui && _kwtGrain === 'month' && p.ym === _nowM) ? snapGui : cv.gui;   /* ★v1.1527★ 登録KWの今の目安は「今」の点に */
     return { has:true, p, sp, sa, od, cl, ctr: imp > 0 ? cl / imp * 100 : null, vol, share: tot > 0 ? vol / tot * 100 : 0, mcl, r3: _kwiRecent3(kwAll, p.last), gui: gui > 0 ? gui : null, act: cv.act > 0 ? cv.act : null };
   });
   // 入札額・目安CPCは「前の値を引き継ぐ」階段。データの無い日も、それまでの値のまま
@@ -12879,6 +12885,7 @@ function renderKwTrend(resetScroll){
   // ★v1.1477★ 最後のクリックより後の日（＝クリック0が続いている日）の入札は、登録KWファイルの今の入札額
   const _bidNow = _kwBidNow(code, kw); const _kwLastClick = kwAll.reduce((m, r) => r.date > m ? r.date : m, '');
   points.forEach((p, i) => { const v = vals[i]; if (v.has){ if (v.act) ca = v.act; if (v.gui) cg = v.gui; } else { if (p.last && p.last > _kwLastClick && (_kwtGrain === 'day' || p.ym >= latestAll.slice(0,7))){ const _bh = _kwBidAt(code, kw, p.last); if (_bh !== undefined){ if (_bh != null) ca = _bh; } else if (_bidNow) ca = _bidNow; }   /* ★v1.1523★ 入札額の履歴があれば、その日の入札額（変えた日に切り替わる）。履歴を取り始める前の日は、最後のクリックの入札のまま */ const cv = p.last ? _kwiCarry(kwAll, p.last) : null; if (cv && cv.act > 0 && ca == null && kwAll.some(r => r.date <= p.last)) ca = cv.act; if (cv && cv.gui > 0 && cg == null && kwAll.some(r => r.date <= p.last)) cg = cv.gui; } if (snapGui && i === points.length - 1 && _kwtGrain === 'day' && p.last && p.last.slice(0,7) === latestAll.slice(0,7) && p.last >= latestAll) cg = snapGui;   // ★v1.1454★ 最新日は登録KWの目安CPC
+    if (snapGui && (p.last === _nowD || (_kwtGrain === 'month' && p.ym === _nowM))) cg = snapGui;   /* ★v1.1527★ 今の点（クリックが無くても）は登録KWの今の目安 */
     actS.push(ca); guiS.push(cg); });
   const bidChg = []; for (let i = 1; i < actS.length; i++){ if (actS[i] != null && actS[i-1] != null && actS[i] !== actS[i-1]) bidChg.push({ i, from: actS[i-1], to: actS[i] }); }
   const chgSet = new Set(bidChg.map(c => c.i));
@@ -12887,7 +12894,7 @@ function renderKwTrend(resetScroll){
   { const _ce = document.getElementById('kwTrendCtl'); if (_ce) _ce.innerHTML = _kwtCtlHtml(dayMonths, months, rangeFrom, rangeTo); }
   let ctl = '';
   const lastPt = points[points.length - 1];
-  const partial = _kwtGrain === 'month' && lastPt && lastPt.ym === latestAll.slice(0,7) && latestAll < _kwtS(new Date(+latestAll.slice(0,4), +latestAll.slice(5,7), 0));
+  const partial = _kwtGrain === 'month' && lastPt && lastPt.ym === _nowM && _nowD < _kwtS(new Date(+_nowD.slice(0,4), +_nowD.slice(5,7), 0));   /* ★v1.1527★ */
   ctl += '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">※ ' + (_kwtGrain === 'day' ? '階段の線＝<b style="color:' + AD_CC.bid + '">入札額</b>（当日データの入札）と<b style="color:' + AD_CC.guide + '">目安CPC</b>（右端の目盛り）。札は入札額を変えた日' : '階段の線＝<b style="color:#7c3aed">目安CPC</b>（右端の目盛り）') + '　広告ROAS の色：<span style="color:var(--green)">500%以上</span>・<span style="color:var(--amber)">300〜499%</span>・<span style="color:var(--danger)">299%以下</span>（商品-売上データと同じ）' + (partial ? '　／　' + latestAll.slice(0,7).replace('-','/') + ' は途中の月（' + (+latestAll.slice(8,10)) + '日まで）' : '') + '</div>';
   // ★v1.1440★ 月別は入札額のボタンなし
   const tg = KWT_SERIES.filter(s => !(_kwtGrain === 'month' && s.k === 'act')).map(s => { const on = !_kwtHidden.has(s.k); return '<button onclick="_kwtToggle(\'' + s.k + '\')" style="font-size:12px;font-weight:700;padding:5px 13px;border-radius:7px;cursor:pointer;border:2px solid ' + s.col + ';background:' + (on ? s.col : 'transparent') + ';color:' + (on ? '#fff' : 'var(--text3)') + ';' + (on ? '' : 'text-decoration:line-through;opacity:.55;') + '">● ' + s.label + '</button>'; }).join('');
