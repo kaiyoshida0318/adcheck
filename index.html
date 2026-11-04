@@ -703,7 +703,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1524</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1525</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -1261,7 +1261,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
             <span style="font-size:12px;color:var(--text3)">〜</span>
             <input type="date" id="dailyDateTo" autocomplete="off" class="toolbar-month" onchange="renderDailyFiltered()" style="font-size:12px;padding:4px 8px">
           </div>
-          <div class="toolbar-right"><button onclick="_openIgColPanel()" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button></div>
+          <div class="toolbar-right"><!-- ★v1.1525★ 全-月別データと同じ「比率表記」（各日の下にSEO売上比率・売上金額■比率・実績額-KW比率・実績額-20比率） --><div style="display:flex;gap:4px"><button id="dpmOn" onclick="setDailyPctMode(!_dailyPctMode)" style="font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:var(--surface2);color:var(--text3);">比率表記</button><button id="dpmOff" onclick="setDailyPctMode(false)" style="display:none"></button></div><button onclick="_openIgColPanel()" style="font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button></div>
         </div>
         <div id="daily-col-header"></div>
         <div id="daily-table-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh"></div>
@@ -6539,7 +6539,7 @@ function _renderTable(mode, rows) {
       _fmtRoasCell(r.roas20, r.roas20,  vRoas20),
     ];
     const cells = _COLORD.map(i=>_cells0[i]);
-    const _pct = (mode === 'monthly' && _monthlyPctMode);
+    const _pct = (mode === 'monthly' && _monthlyPctMode) || (mode === 'daily' && _dailyPctMode);   /* ★v1.1525★ 全-日別データでも比率表記 */
     const _clNotes = _clKeys[_rowClKey(r)] || null;
     const _hasLog = !!_clNotes && (typeof _clShow==='undefined'||_clShow);
     const _clColor = (_hasLog && _clNotes[0] && _clNotes[0].color) ? _clNotes[0].color : '#f97316';
@@ -6575,6 +6575,7 @@ function _renderTable(mode, rows) {
   if (tableWrap) tableWrap.innerHTML = html;
   { const _rw=document.getElementById('monthly-ratio-wrap'); if(_rw){ _rw.style.display='none'; _rw.innerHTML=''; } }
   if (runStatus) runStatus.textContent = `${rows.length}件`;
+  if (mode === 'daily') { try{ _setDailyPctUI(); }catch(e){} }   /* ★v1.1525★ 比率表記ボタンの見た目 */
 }
 
 // 全-月別データ：その月のSEO売上トップ10商品を計算
@@ -6716,6 +6717,10 @@ function _setMonthlyPctUI(){
   const off='border:1px solid var(--border);background:var(--surface2);color:var(--text3);';
   _tgPaint(document.getElementById('mpmOn'), document.getElementById('mpmOff'), _monthlyPctMode, '#16a34a', '比率表記');
 }
+/* ★v1.1525★ 全-日別データの比率表記（全-月別データとは別にON/OFF。どちらも読み込み直すとOFF） */
+let _dailyPctMode = false;
+function _setDailyPctUI(){ _tgPaint(document.getElementById('dpmOn'), document.getElementById('dpmOff'), _dailyPctMode, '#16a34a', '比率表記'); }
+function setDailyPctMode(b){ _dailyPctMode=!!b; _setDailyPctUI(); renderDailyFiltered(); }
 function setMonthlyPctMode(b){ _monthlyPctMode=!!b; _setMonthlyPctUI(); if(!b){ const _w=document.getElementById('monthly-ratio-wrap'); if(_w){ _w.style.display='none'; _w.innerHTML=''; } } _renderMonthlyTable(_monthlyLastRows||[]); }
 // 月別データの構成比(％)テーブル
 function _renderMonthlyRatio(rows, getTot){
