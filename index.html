@@ -703,7 +703,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1525</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1526</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -15998,6 +15998,18 @@ function toggleTopChrome(){
   // ★v1.1387★ 上部の表示/非表示でリストの位置が変わるので、リストの高さを測り直す（下端が画面外に出てスクロールできなくなるのを防ぐ）
   if (typeof _restickRenewalLists === 'function') _restickRenewalLists();
 }
+// ★v1.1526★ 一括オープンで開く商品-売上データの月。データ（DB）の最新日が 1〜14日なら前月、15日〜月末ならその月（'YYYY-MM'）。
+//   例：最新が 11/3 → 10月、11/15 → 11月。前月のデータが無いときはその月
+function _autoProductsMonth(){
+  try{
+    const ds = getAllDates(); if (!ds.length) return '';
+    const L = ds[ds.length - 1], ym = L.slice(0, 7);
+    if (+L.slice(8, 10) >= 15) return ym;
+    let y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 1; if (m < 1){ m = 12; y--; }
+    const prev = y + '-' + String(m).padStart(2, '0');
+    return getMonths().includes(prev) ? prev : ym;
+  }catch(e){ return ''; }
+}
 // 当日の広告調整で使う必要ページを新しいタブで一括オープン
 function _openDailyWorkPages() {
   const base = location.origin + location.pathname;
@@ -16009,7 +16021,7 @@ function _openDailyWorkPages() {
     'https://www.rakuten.co.jp/?l-id=pc_header_logo',      // 楽天市場
     'https://ad.rms.rakuten.co.jp/rpp/reports',            // RMS-パフォーマンスレポート
     'https://datatool.rms.rakuten.co.jp/realtime/item',    // RMS-商品別売上
-    base + '?tab=products' + shopQ,                        // ADcheck-商品-売上データ
+    base + '?tab=products' + shopQ + (_autoProductsMonth() ? '&ym=' + _autoProductsMonth() : ''),   // ADcheck-商品-売上データ（★v1.1526★ 月は _autoProductsMonth：1〜14日のデータまで＝前月、15日のデータが入ったら＝当月）
     base + '?tab=roas-trend' + shopQ                       // ADcheck-粗広告利益-直近4ヶ月
   ];
   let blocked = 0;
@@ -19228,6 +19240,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     const _wp = _sp.get('wp');
     if (_wp) { _kwIndivCode = _wp; switchTab('kw-watch-prod'); }
     else switchTab(_initTab || 'monthly');
+    // ★v1.1526★ ?ym=YYYY-MM があれば、商品-売上データの月をその月にする（一括オープン用）
+    try{ const _ym = _sp.get('ym'); const _ms = document.getElementById('monthSel'); if (_ym && _ms && [..._ms.options].some(o => o.value === _ym) && _ms.value !== _ym){ _ms.value = _ym; _onMonthChange(); } }catch(e){}
   }
 });
 </script>
