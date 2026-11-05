@@ -703,7 +703,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1534</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1535</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -13543,6 +13543,12 @@ function renderRenewalGraph(){
   else { const f = document.getElementById('renewalGraphDayFrom'); if (f){ f.style.borderColor = ''; f.style.background = ''; f.style.fontWeight = ''; } }
 }
 function _renBackFull(){ const sel = document.getElementById('renewalGraphDayMonth'); if (sel){ const o = [...sel.options].find(x => x.value !== 'cut'); if (o) sel.value = o.value; } renderRenewalGraph(); }
+/* ★v1.1535★ 全体情報の月別の表の上の「月全体／月途中」。月途中＝ドロップダウンの「(途中)まで」（各月1〜N日だけ）を選ぶのと同じ */
+function _renSetDayMode(same){
+  const sel = document.getElementById('renewalGraphDayMonth'); if (!sel) return;
+  if (same){ if (![...sel.options].some(o => o.value === 'cut')) return; sel.value = 'cut'; renderRenewalGraph(); }
+  else if (sel.value === 'cut') _renBackFull();
+}
 function _renderRenewalGraphCore() {
   const canvas = document.getElementById('renewalGraphCanvas');
   const empty  = document.getElementById('renewalGraphEmpty');
@@ -13804,6 +13810,12 @@ function _renderRenewalTableCore(labels, dataMap, code){
     cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
   }
   const _rtb=document.getElementById('renTblModeBtns'); if(_rtb){ _rtb.style.display=daily?'none':'flex'; const _n=document.getElementById('renTblNormal'),_y=document.getElementById('renTblYoyB'); if(_n)_n.style.cssText=_tblBtnStyle(!_renTblYoy)+'border-radius:5px 0 0 5px;'; if(_y)_y.style.cssText=_tblBtnStyle(_renTblYoy)+'border-radius:0 5px 5px 0;margin-left:-1px;'; }   /* ★v1.1480★ くっつけてペアに */
+  { const _rdb = document.getElementById('renTblDayBtns'); const _cn = (typeof _monthlyLatestCut === 'function') ? _monthlyLatestCut() : 0;   /* ★v1.1535★ 月全体／月途中（全-月別データと同じ青緑） */
+    if (_rdb){ _rdb.style.display = (!daily && _cn) ? 'flex' : 'none';
+      const _st = on => 'font-size:11px;padding:3px 9px;cursor:pointer;white-space:nowrap;border:1px solid ' + (on ? '#0f766e' : 'var(--border)') + ';background:' + (on ? '#0f766e' : 'var(--surface2)') + ';color:' + (on ? '#fff' : 'var(--text3)') + ';';
+      const _f = document.getElementById('renTblDayFull'), _sm = document.getElementById('renTblDaySame'), _isCut = !!_renDayCutNow;
+      if (_f) _f.style.cssText = _st(!_isCut) + 'border-radius:5px 0 0 5px;';
+      if (_sm){ _sm.style.cssText = _st(_isCut) + 'border-radius:0 5px 5px 0;margin-left:-1px;'; _sm.textContent = '月途中（1〜' + _cn + '日）'; _sm.title = '今月が' + _cn + '日までなので、過去の月も1〜' + _cn + '日だけを合計して比べる（グラフも同じ）'; } } }
   if(!daily && _renTblYoy){ wrap.innerHTML=_richYoyTableHTML(labels,cols); return; }
   const totSalesArr=_renewalMetricValues('totsales',labels,dataMap,code);
   const order=labels.map((_,i)=>i).reverse();
@@ -19425,7 +19437,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <div id="renewalGraphEmpty" style="display:none;text-align:center;padding:50px;color:var(--text3);font-size:13px">この商品のデータがありません。</div>
       <!-- データ表（グラフと同じ期間切替に連動） -->
       <div id="renewalGraphTableWrap" style="width:100%;flex:0 0 auto;display:flex;flex-direction:column;border-top:1px solid var(--border);padding-top:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:10px">📋 <span id="renewalTablePeriodLabel">月別</span><span id="renTblModeBtns" style="display:none;gap:0"><button id="renTblNormal" onclick="setRenTblYoy(false)">通常</button><button id="renTblYoyB" onclick="setRenTblYoy(true)">前年同月比</button></span></div>
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:10px">📋 <span id="renewalTablePeriodLabel">月別</span><span id="renTblModeBtns" style="display:none;gap:0"><button id="renTblNormal" onclick="setRenTblYoy(false)">通常</button><button id="renTblYoyB" onclick="setRenTblYoy(true)">前年同月比</button></span><span id="renTblDayBtns" style="display:none;gap:0"><button id="renTblDayFull" onclick="_renSetDayMode(false)">月全体</button><button id="renTblDaySame" onclick="_renSetDayMode(true)">月途中</button></span><!-- ★v1.1535★ 月全体／月途中（グラフ上のドロップダウンの「(途中)まで」と同じ切り替え。グラフと表が連動） --></div>
         <!-- ★v1.1492★ 表だけのスクロール（最大600px）をやめた。モーダル本体のスクロールに一本化して、表の見出しが商品名の行の真下で止まるようにする（KW-個別推移と同じ動き） -->
         <div id="renewalGraphTableScroll" style="border:1px solid var(--border);border-radius:8px;min-height:120px">
           <table id="renewalGraphTable" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"></table>
