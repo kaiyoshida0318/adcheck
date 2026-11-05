@@ -703,7 +703,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1531</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1533</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -11052,6 +11052,26 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   if(!cfg.watchOnly){ try{ _applyKwColStyle(); }catch(e){} }
 }
 
+// ★v1.1533★ KW-個別推移の固定したKW名の行に出す「判定｜対応」。商品-当日データと同じものを出すため、同じ処理（_buildKwTableBlock）で
+//   その商品の表を作り、そのKWの行の最後の2マス（判定・対応）をそのまま持ってくる。表に無いKWは何も出さない
+function _kwtJudgeHtml(code, kw){
+  try{
+    const blk = _buildKwTableBlock(code, true, 0, 'kwtj', false); if (!blk || !blk.html) return '';
+    const tmp = document.createElement('div'); tmp.innerHTML = blk.html;
+    const tr = [...tmp.querySelectorAll('tr')].find(t => { const td = t.querySelector('td'); const sp = td && td.querySelector('span'); return sp && sp.textContent === kw; });
+    if (!tr) return '';
+    const tds = tr.querySelectorAll('td'); if (tds.length < 2) return '';
+    const mk = tds[tds.length - 2], ac = tds[tds.length - 1];
+    const acTxt = (ac.textContent || '').trim();
+    const acSty = 'color:' + (ac.style.color || 'var(--text)') + ';font-weight:' + (ac.style.fontWeight || '400');
+    const lab = 'font-size:10px;font-weight:700;color:var(--text3);flex-shrink:0';
+    return '<span style="margin-left:auto;display:flex;align-items:center;gap:8px;min-width:0;max-width:62%;padding:3px 12px;border:1px solid var(--border);border-radius:8px;background:#fafafa">'
+      + '<span style="' + lab + '">判定</span><span style="display:inline-flex;align-items:center;flex-shrink:0;font-size:14px">' + mk.innerHTML + '</span>'
+      + '<span style="width:1px;align-self:stretch;background:var(--border2);flex-shrink:0"></span>'
+      + '<span style="' + lab + '">対応</span><span title="' + _kwEsc(acTxt) + '" style="font-size:12px;' + acSty + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">' + (acTxt ? _kwEsc(acTxt) : '<span style="color:var(--text3)">—</span>') + '</span>'
+      + '</span>';
+  }catch(e){ return ''; }
+}
 function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
   // 注視分-KW一覧でチェックしたKWには「注視」バッジを付ける
   const _wchBadge=(kw)=>(typeof _isWatched==='function'&&_isWatched(code,kw))?'<span contenteditable="false" style="user-select:none;-webkit-user-select:none;-moz-user-select:none;display:inline-block;font-size:9px;font-weight:700;color:#fff;background:#dc2626;border-radius:3px;padding:0 4px;margin-left:4px;vertical-align:middle">注視</span>':'';
@@ -12902,7 +12922,7 @@ function renderKwTrend(resetScroll){
   const tg = KWT_SERIES.filter(s => !(_kwtGrain === 'month' && s.k === 'act')).map(s => { const on = !_kwtHidden.has(s.k); return '<button onclick="_kwtToggle(\'' + s.k + '\')" style="font-size:12px;font-weight:700;padding:5px 13px;border-radius:7px;cursor:pointer;border:2px solid ' + s.col + ';background:' + (on ? s.col : 'transparent') + ';color:' + (on ? '#fff' : 'var(--text3)') + ';' + (on ? '' : 'text-decoration:line-through;opacity:.55;') + '">● ' + s.label + '</button>'; }).join('');
   // 表
   // ★v1.1462★ 見出しは右側の枠の上端（上の余白12pxぶん上）にぴったり固定。top:0 だと余白のすき間から下の行が透けて見えていた
-  const TH = 'padding:7px 10px;font-size:11px;font-weight:700;color:#444;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:-12px;z-index:2;text-align:right';
+  const TH = 'padding:7px 10px;font-size:11px;font-weight:700;color:#444;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:calc(var(--kwth, 0px) - 12px);z-index:2;text-align:right';   /* ★v1.1532★ 固定したKW名の行（高さ --kwth）のすぐ下に貼り付く */
   const TD = 'padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:right;font-family:\'DM Mono\',monospace';
   const dash = '<span style="color:var(--text3)">—</span>';
   const roasCol = r => r >= 500 ? 'var(--green)' : r >= 300 ? 'var(--amber)' : r > 0 ? 'var(--danger)' : 'var(--text3)';   // 商品-売上データの rc() と同じ基準
@@ -12959,14 +12979,15 @@ function renderKwTrend(resetScroll){
   const st = bodyEl.scrollTop;
   const zeroNote = kwAll.length ? '' : '<div style="font-size:12px;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 12px;margin-bottom:8px">このKWは登録中ですが、まだ一度もクリックがないためデータがありません（KWレポートはクリックがあったKWしか載りません）。' + (snapGui ? '　登録中の目安CPC：¥' + snapGui : '') + '</div>';
   // ★v1.1455★ 選択中のKWは右上ではなく左上に大きく。ダブルクリックでKW全体が選択される（そのまま Ctrl+C でコピー）
-  const kwHead = '<div style="display:flex;align-items:baseline;gap:10px;margin:0 0 10px;padding:0 0 8px;border-bottom:1px solid var(--border)">'
+  const kwHead = '<div id="kwTrendHead" style="display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:0 0 8px;border-bottom:1px solid var(--border);position:sticky;top:-12px;z-index:5;background:var(--surface)">'   /* ★v1.1532★ 選択中のKW名は、下にスクロールしても上に固定 */
     + '<span style="font-size:11px;font-weight:700;color:#7c3aed;background:#f3e8ff;border:1px solid #c4b5fd;border-radius:4px;padding:1px 6px;user-select:none;-webkit-user-select:none;flex-shrink:0">KW</span>'
-    + '<span ondblclick="_selAll(this,event)" title="ダブルクリックで全体を選択" style="font-size:20px;font-weight:800;color:var(--text);word-break:break-all">' + esc(kw) + '</span></div>';
+    + '<span ondblclick="_selAll(this,event)" title="ダブルクリックで全体を選択" style="font-size:20px;font-weight:800;color:var(--text);word-break:break-all">' + esc(kw) + '</span>' + _kwtJudgeHtml(code, kw) + '</div>';   /* ★v1.1533★ 右に「判定｜対応」（商品-当日データと同じもの） */
   bodyEl.innerHTML = kwHead + ctl + zeroNote + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">' + tg + '</div>'
     + '<div style="position:relative;height:430px;margin-bottom:14px"><canvas id="kwTrendCanvas"></canvas></div>'
     + '<div style="font-size:13px;font-weight:700;color:var(--text2);margin:4px 0 6px">📋 ' + (_kwtGrain === 'day' ? '日別' : '月別') + 'データ <span style="font-size:11px;font-weight:400;color:var(--text3)">（KWvol・KW割合・目安・入札は 日別＝その日時点、月別＝その月の最終日時点。クリック数〜ROAS は 日別＝その日、月別＝その月の合計）</span>'
     + ((bidChg.length && _kwtGrain === 'day') ? '<span style="margin-left:10px;font-size:11px;font-weight:700;color:#00897B;white-space:nowrap"><span style="display:inline-block;border:2px dashed #00897B;border-radius:3px;padding:0 5px;margin-right:4px">点線枠</span>＝入札額を変えた' + (_kwtGrain === 'day' ? '日' : '月') + '</span>' : '') + '</div>'
     + '<div style="border:1px solid var(--border);border-radius:8px">' + tbl + '</div>';
+  { const _kh = document.getElementById('kwTrendHead'); bodyEl.style.setProperty('--kwth', (_kh ? _kh.offsetHeight : 0) + 'px'); }   /* ★v1.1532★ 表の見出しを KW名の行の下に */
   bodyEl.scrollTop = resetScroll ? 0 : st;
   // ---- グラフ ----
   try{ if (_kwtChart) _kwtChart.destroy(); }catch(e){} _kwtChart = null;
