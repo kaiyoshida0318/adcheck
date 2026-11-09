@@ -90,6 +90,9 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .header-btn.primary { background: var(--red); color: #fff; border-color: var(--red); }
 .header-btn.primary:hover { background: var(--red-dark); }
 .header-right .header-btn { font-size: 11px; padding: 4px 10px; }
+/* ★v1.1536★ 「+ レポート追加」は青に（赤は在庫切れなどの緊急だけに使う） */
+.header-right .header-btn.primary { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+.header-right .header-btn.primary:hover { background: #1e40af; border-color: #1e40af; }
 /* ★v1.1518★ ヘッダー〜【状態】の行まで（#topChrome）を画面の上に固定。画面全体がスクロールするタブ（全-月別データ・全-推移など）でも動かない。
    z-index はモーダル（.modal-overlay＝200）より下、表の中の部品（〜30）より上 */
 #topChrome { position: sticky; top: 0; z-index: 199; background: #ffffff; }
@@ -703,7 +706,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1535</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1536</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
