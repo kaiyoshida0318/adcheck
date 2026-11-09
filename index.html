@@ -553,6 +553,8 @@ body.cw-on .cw-has-rest { background-image: repeating-linear-gradient(135deg, rg
 .cw-menu .cw-m-link { background: none; border: none; color: #1565C0; text-decoration: underline; font-size: .72rem; cursor: pointer; padding: 2px 0; }
 .cw-menu .cw-m-link:hover { background: none; }
 
+/* ★v1.1541★ 消えたあとも透明なまま残るお知らせ（自動保存しました・保存完了など）が、下にあるボタンのクリックを横取りしないように */
+#ssAutoToast, #globalSaveToast, #globalSaveErrToast { pointer-events: none !important; }
 .colw-toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 10001; opacity: 0; transition: opacity .25s; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
 
 /* ── 列グループ色分け ── */
@@ -807,7 +809,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1540</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1541</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -2469,7 +2471,7 @@ function _saveToast(state){
   try{
     var t=document.getElementById('globalSaveToast');
     if(!t){ t=document.createElement('div'); t.id='globalSaveToast'; document.body.appendChild(t); }
-    var base='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:9px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:100000;transition:opacity .2s;';
+    var base='pointer-events:none;position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:9px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:100000;transition:opacity .2s;';
     clearTimeout(t._tm);
     if(state==='saving'){ t.style.cssText=base+'background:#1565C0;color:#fff;opacity:1'; t.textContent='💾 保存中…'; }
     else if(state==='done'){ t.style.cssText=base+'background:#16a34a;color:#fff;opacity:1'; t.textContent='✅ 保存完了'; t._tm=setTimeout(function(){ t.style.opacity='0'; },1600); }
@@ -3070,7 +3072,7 @@ function _saveErrorToast(msg){
   try{
     var t=document.getElementById('globalSaveErrToast');
     if(!t){ t=document.createElement('div'); t.id='globalSaveErrToast'; document.body.appendChild(t); }
-    t.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:9px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.25);z-index:100001;background:#dc2626;color:#fff;max-width:90vw;text-align:center;opacity:1;transition:opacity .2s';
+    t.style.cssText='pointer-events:none;position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:9px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.25);z-index:100001;background:#dc2626;color:#fff;max-width:90vw;text-align:center;opacity:1;transition:opacity .2s';
     t.textContent='⚠️ 保存に失敗しました。もう一度保存/取り込みしてください'+(msg?('（'+String(msg).slice(0,80)+'）'):'');
     clearTimeout(t._tm); t._tm=setTimeout(function(){ t.style.opacity='0'; },6000);
   }catch(e){}
@@ -14644,7 +14646,7 @@ function _hideApplyButtons(){ document.querySelectorAll('#applyBtnWrap').forEach
 let _ssAutoTimer=null,_ssSaving=false,_ssSynced=false,_ssGen=0;
 function _scheduleSsAutoSave(){ if(_ssAutoTimer)clearTimeout(_ssAutoTimer); _ssAutoTimer=setTimeout(_ssAutoSaveRun,1500); }
 function _ssAutoSaveRun(){ _ssAutoTimer=null; if(!_ssDirty||_ssSaving)return; if(typeof saveProductCacheToGitHub!=='function')return; var lock=document.getElementById('loadingLock'); if(lock&&lock.classList.contains('active'))return; try{ var _ap=document.getElementById('tab-'+(typeof _currentTab!=='undefined'?_currentTab:''))||document; _ap.querySelectorAll('[id^="status-sel-"]').forEach(function(sel){ var c=sel.id.replace('status-sel-',''); if(!productCache[c])productCache[c]={}; productCache[c].status=sel.value; }); var MO=['03','06','09','12']; var sp={}; var cv=new Set(); _ap.querySelectorAll('[id^="ss-btn-"]').forEach(function(b){ var c=b.getAttribute('data-code'),m=b.getAttribute('data-mon'); if(!c||!m)return; if(!sp[c])sp[c]={}; sp[c][m]=(b.getAttribute('data-active')==='1'); cv.add(c); }); cv.forEach(function(c){ if(!productCache[c])productCache[c]={}; var pv=productCache[c].ss||[]; productCache[c].ss=MO.filter(function(m){ if(sp[c]&&m in sp[c])return sp[c][m]; return pv.includes(m); }); }); }catch(e){} _ssSaving=true; var gen=_ssGen; try{saveProductCache();}catch(e){} var pr; try{ pr=saveProductCacheToGitHub(); }catch(e){ _ssSaving=false; return; } Promise.resolve(pr).then(function(){ _ssSaving=false; if(_ssGen!==gen){ _scheduleSsAutoSave(); return; } _ssSynced=true; try{_captureStatusSnapshot();}catch(e){} try{_ssAutoToast();}catch(e){} }).catch(function(e){ _ssSaving=false; console.warn('[ADcheck] SS auto-save failed',e); }); }
-function _ssAutoToast(){ try{ var t=document.getElementById('ssAutoToast'); if(!t){t=document.createElement('div');t.id='ssAutoToast';document.body.appendChild(t);} t.textContent='\u2713 自動保存しました'; t.style.cssText='position:fixed;bottom:20px;right:20px;background:#16a34a;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:99999;opacity:0;transition:opacity .2s'; void t.offsetWidth; t.style.opacity='1'; clearTimeout(t._tm); t._tm=setTimeout(function(){t.style.opacity='0';},1800); }catch(e){} }
+function _ssAutoToast(){ try{ var t=document.getElementById('ssAutoToast'); if(!t){t=document.createElement('div');t.id='ssAutoToast';document.body.appendChild(t);} t.textContent='\u2713 自動保存しました'; t.style.cssText='pointer-events:none;position:fixed;bottom:20px;right:20px;background:#16a34a;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.22);z-index:99999;opacity:0;transition:opacity .2s'; void t.offsetWidth; t.style.opacity='1'; clearTimeout(t._tm); t._tm=setTimeout(function(){t.style.opacity='0';},1800); }catch(e){} }
 function _cancelStatusUpdates(){
   try {
     if (_statusSnapshot){
