@@ -555,6 +555,8 @@ body.cw-on .cw-has-rest { background-image: repeating-linear-gradient(135deg, rg
 
 /* ★v1.1542★ 商品-当日データ：外したKWの理由・復活候補の札と小窓 */
 .kwoff-box { display: inline; }
+.kwt-offwrap { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; }
+.kwt-offwrap .kwoff-chip { margin-left: 4px; }
 .kwoff-chip { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 9px; font-size: 10px; font-weight: 700; line-height: 16px; vertical-align: 1px; cursor: pointer; white-space: nowrap; user-select: none; }
 .kwoff-add { border: 1px dashed #f59e0b; color: #b45309; background: #fffbeb; }
 .kwoff-add:hover { background: #fef3c7; }
@@ -841,7 +843,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1543</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1544</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -11321,6 +11323,7 @@ function _kwtJudgeMap(code){
       const td = t.querySelector('td'); const sp = td && td.querySelector('span'); const tds = t.querySelectorAll('td');
       if (!sp || tds.length < 4) return;
       const mk = tds[tds.length - 2], ac = tds[tds.length - 1];
+      ac.querySelectorAll('.kwoff-box').forEach(x => x.remove());   /* ★v1.1544★ 対応欄の「外した理由」の札は対応の文に混ぜない */
       out[sp.textContent] = { mk: mk.innerHTML, ac: (ac.textContent || '').trim(), col: ac.style.color || '', fw: ac.style.fontWeight || '' };
     });
   }catch(e){}
@@ -13109,7 +13112,9 @@ function renderKwTrend(resetScroll){
       /* ★v1.1534★ KW名の右端に判定の記号。対応の文があれば一番下に1行（色・太さは商品-当日データと同じ。長いときは…、マウスを乗せると全文） */
       + '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:12px;font-weight:700;color:' + (o.live ? 'var(--text)' : 'var(--text3)') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">' + esc(o.kw) + '</span>'
       + (_JM[o.kw] ? '<span style="margin-left:auto;zoom:.8;display:inline-flex;align-items:center;flex-shrink:0">' + _JM[o.kw].mk + '</span>' : '') + '</div>'
-      + '<div style="font-size:' + (o.live ? '11px' : '10px') + ';color:var(--text3);margin-top:' + (o.live ? '2px' : '1px') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + sub + '</div>'
+      + (o.live ? '<div style="font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + sub + '</div>'
+        /* ★v1.1544★ 停止中のKWは、判定の記号の下（右寄せ）に「外した理由・復活候補」の札（商品-当日データと同じもの。押すと理由を選ぶ小窓） */
+        : '<div style="display:flex;align-items:center;flex-wrap:wrap;row-gap:3px;font-size:10px;color:var(--text3);margin-top:1px"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">' + sub + '</span><span class="kwt-offwrap">' + _kwOffCell(code, o.kw) + '</span></div>')
       + (function(){ const j = _JM[o.kw]; if (!j || !j.ac || /^最終出稿/.test(j.ac)) return ''; return '<div title="' + esc(j.ac) + '" style="font-size:10.5px;line-height:1.35;margin-top:3px;color:' + (j.col || 'var(--text2)') + ';font-weight:' + (j.fw && +j.fw >= 600 ? '600' : '400') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(j.ac) + '</div>'; })()
       + '</div>';
   }).join('');
