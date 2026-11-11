@@ -555,7 +555,21 @@ body.cw-on .cw-has-rest { background-image: repeating-linear-gradient(135deg, rg
 
 /* ★v1.1542★ 商品-当日データ：外したKWの理由・復活候補の札と小窓 */
 .kwoff-box { display: inline; }
-.kwt-offwrap { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; }
+.kwt-offwrap { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; row-gap: 3px; }
+/* ★v1.1545★ 停止予定・停止ボタン、KW-個別推移のカードの区切り */
+.kwoff-plan { border: 1px solid #ea580c; color: #fff; background: #f97316; }
+.kwoff-plan:hover { background: #ea580c; }
+.kwstop-btn { display: inline-flex; align-items: center; justify-content: center; gap: 3px; border: 1px solid #d1d5db; color: #6b7280; background: #fff; border-radius: 5px; padding: 0 7px; line-height: 18px; }
+.kwstop-btn:hover { border-color: #f97316; color: #c2410c; background: #fff7ed; }
+.kwstop-ic { display: inline-block; width: 7px; height: 9px; border-left: 2.5px solid currentColor; border-right: 2.5px solid currentColor; box-sizing: border-box; font-style: normal; }
+.kwstop-td .kwoff-chip, .kwstop-box .kwoff-chip:first-child { margin-left: 0; }
+.kwplan-box:not(:empty) { display: block; margin-top: 3px; }
+.kwplan-box .kwoff-chip:first-child { margin-left: 0; }
+.kwt-blk { border-top: 1px solid #ececf1; margin: 6px -9px 0; padding: 5px 9px 0; }
+.kwt-blb { font-size: 9.5px; font-weight: 700; color: #9ca3af; margin-right: 6px; flex-shrink: 0; }
+.kwt-stopwrap { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; row-gap: 3px; }
+.kwt-stopwrap .kwstop-btn { margin-left: 0; }
+.kwt-hdrstop .kwoff-chip:first-child { margin-left: 0; }
 .kwt-offwrap .kwoff-chip { margin-left: 4px; }
 .kwoff-chip { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 9px; font-size: 10px; font-weight: 700; line-height: 16px; vertical-align: 1px; cursor: pointer; white-space: nowrap; user-select: none; }
 .kwoff-add { border: 1px dashed #f59e0b; color: #b45309; background: #fffbeb; }
@@ -843,7 +857,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1544</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1545</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -10225,7 +10239,7 @@ const _kwEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').
 //   保存先：productCache[code].kwOff[kw] = { r:理由キー, m:メモ, rv:復活の時期, at:付けた日 }
 //     rv … 'sale'（次のセール前）／'YYYY-MM'（その月）／'YYYY-MM-DD'（その日）／無し
 //   productCache ごと GitHub に保存されるので、ほかのPCでも同じものが見える
-const _KWOFF_REASONS=[['bad','ROAS低い','ROAS低い'],['cpc','CPC高い','CPC高い'],['mismatch','商品と合わない','商品と合わない'],['budget','予算整理','予算整理'],['season','季節外れ','季節外れ'],['other','その他','その他']];
+const _KWOFF_REASONS=[['bad','ROAS低い','ROAS低い'],['cpc','CPC高い','CPC高い'],['big','ビッグKW（範囲が広すぎる）','ビッグKW'],['mismatch','商品と合わない','商品と合わない'],['budget','予算整理','予算整理'],['season','季節外れ','季節外れ'],['other','その他','その他']];
 function _kwOffGet(code,kw){ var pc=productCache[code]; var o=pc&&pc.kwOff; return (o&&Object.prototype.hasOwnProperty.call(o,kw))?o[kw]:null; }
 function _kwOffRvLabel(rv){
   if(!rv) return '';
@@ -10248,13 +10262,39 @@ function _kwOffChips(code,kw){
 }
 // 対応欄に入れる入れ物（保存したら中身だけ差し替える）
 function _kwOffCell(code,kw){ return '<span class="kwoff-box" data-code="'+_kwEsc(code)+'" data-kw="'+_kwEsc(kw)+'">'+_kwOffChips(code,kw)+'</span>'; }
+/* ★v1.1545★ 出稿中のKWを「止めると決めた」ときに理由を入れる（停止予定）。記録に pl（決めた日）が付く */
+function _kwOffPlanned(code,kw){ var d=_kwOffGet(code,kw); return !!(d&&d.pl); }
+// 停止ボタン／停止予定（mode：'tbl'＝表の「停止」列／'card'＝KW-個別推移の一覧・見出し）
+function _kwStopInner(code,kw,mode){
+  var at=' data-code="'+_kwEsc(code)+'" data-kw="'+_kwEsc(kw)+'" data-live="1"';
+  if(_kwOffPlanned(code,kw)){
+    var d=_kwOffGet(code,kw); var tip='停止予定（'+String(d.pl).replace(/-/g,'/')+' に決定）。押すと理由を直す／停止をやめる';
+    return '<span class="kwoff-chip kwoff-plan"'+at+' title="'+_kwEsc(tip)+'">停止予定</span>'+(mode==='card'?_kwPlanChips(code,kw):'');
+  }
+  return '<span class="kwoff-chip kwstop-btn"'+at+' title="出稿を止めると決めたら押す（理由を入れる）"><i class="kwstop-ic"></i>'+(mode==='card'?'停止':'')+'</span>';
+}
+// 停止予定の理由・復活の札（押すと小窓。出稿中のKW用）
+function _kwPlanChips(code,kw){
+  if(!_kwOffPlanned(code,kw)) return '';
+  var h=_kwOffChips(code,kw); if(/kwoff-add/.test(h)) return '';
+  return h.replace(/class="kwoff-chip /g,'data-live="1" class="kwoff-chip ');
+}
+function _kwOffRender(b){
+  var code=b.dataset.code, kw=b.dataset.kw, k=b.dataset.kind||'off';
+  if(k==='off') b.innerHTML=_kwOffChips(code,kw);
+  else if(k==='stop') b.innerHTML=_kwStopInner(code,kw,b.dataset.mode||'tbl');
+  else if(k==='plan') b.innerHTML=_kwPlanChips(code,kw);
+}
+function _kwStopBox(code,kw,mode){ return '<span class="kwstop-box" data-kind="stop" data-mode="'+mode+'" data-code="'+_kwEsc(code)+'" data-kw="'+_kwEsc(kw)+'">'+_kwStopInner(code,kw,mode)+'</span>'; }
+function _kwPlanBox(code,kw){ return '<span class="kwplan-box" data-kind="plan" data-code="'+_kwEsc(code)+'" data-kw="'+_kwEsc(kw)+'">'+_kwPlanChips(code,kw)+'</span>'; }
 function _kwOffRefresh(code,kw){
-  document.querySelectorAll('.kwoff-box').forEach(function(b){ if(b.dataset.code===code&&b.dataset.kw===kw) b.innerHTML=_kwOffChips(code,kw); });
+  document.querySelectorAll('.kwoff-box,.kwstop-box,.kwplan-box').forEach(function(b){ if(b.dataset.code===code&&b.dataset.kw===kw) _kwOffRender(b); });
 }
 var _kwOffCur=null;
 function _kwOffClose(){ var p=document.getElementById('kwOffPop'); if(p) p.style.display='none'; _kwOffCur=null; }
 function _kwOffOpen(chip){
   var code=chip.dataset.code, kw=chip.dataset.kw; if(!code||kw==null) return;
+  var live=chip.dataset.live==='1';   /* ★v1.1545★ 出稿中のKW（これから止める）から開いたとき */
   var d=_kwOffGet(code,kw)||{};
   var p=document.getElementById('kwOffPop');
   if(!p){ p=document.createElement('div'); p.id='kwOffPop'; p.className='kwoff-pop'; document.body.appendChild(p);
@@ -10273,8 +10313,8 @@ function _kwOffOpen(chip){
   for(var i=0;i<12;i++){ var dt=new Date(now.getFullYear(),now.getMonth()+i,1); var v=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); mOpts+='<option value="'+v+'">'+(dt.getFullYear()!==now.getFullYear()?dt.getFullYear()+'年':'')+(dt.getMonth()+1)+'月</option>'; }
   var rv=d.rv||'', tk=rv==='sale'?'sale':(/^\d{4}-\d{2}-\d{2}$/.test(rv)?'date':(/^\d{4}-\d{2}$/.test(rv)?'month':''));
   p.innerHTML=
-    '<div class="kwoff-hd"><div><div class="kwoff-sub">外したKW</div><div class="kwoff-kw">'+_kwEsc(kw)+'</div></div><span class="kwoff-x" data-kwoff-x title="閉じる">✕</span></div>'
-   +'<div class="kwoff-lb">外した理由</div>'
+    '<div class="kwoff-hd"><div><div class="kwoff-sub">'+(live?'停止するKW（出稿中）':'外したKW')+'</div><div class="kwoff-kw">'+_kwEsc(kw)+'</div></div><span class="kwoff-x" data-kwoff-x title="閉じる">✕</span></div>'
+   +'<div class="kwoff-lb">'+(live?'停止する理由':'外した理由')+'</div>'
    +'<div class="kwoff-opts">'+_KWOFF_REASONS.map(function(x){ return '<span class="kwoff-o'+(d.r===x[0]?' on':'')+'" data-kwoff-r="'+x[0]+'">'+x[1]+'</span>'; }).join('')+'</div>'
    +'<input id="kwOffMemo" class="kwoff-memo" maxlength="200" placeholder="メモ（任意）例：10月 ROAS 180%。メインKWなので様子見で外した" value="'+_kwEsc(d.m||'')+'">'
    +'<label class="kwoff-rvl"><input type="checkbox" id="kwOffRevChk"'+(rv?' checked':'')+'> ↻ 復活候補にする</label>'
@@ -10283,10 +10323,10 @@ function _kwOffOpen(chip){
      +'<span class="kwoff-t'+(tk==='month'?' on':'')+'" data-kwoff-t="month">月を指定 <select id="kwOffMonth">'+mOpts+'</select></span>'
      +'<span class="kwoff-t'+(tk==='date'?' on':'')+'" data-kwoff-t="date">日付を指定 <input type="date" id="kwOffDate"></span>'
    +'</div>'
-   +'<div class="kwoff-ft">'+(_kwOffGet(code,kw)?'<button type="button" class="kwoff-clr" data-kwoff-clear title="理由・メモ・復活の予定をすべて消します">消す</button>':'')+'<button type="button" class="kwoff-sv" data-kwoff-save>保存</button></div>';
+   +'<div class="kwoff-ft">'+(_kwOffGet(code,kw)?'<button type="button" class="kwoff-clr" data-kwoff-clear title="'+(live?'停止予定を取り消し、理由・メモ・復活の予定も消します':'理由・メモ・復活の予定をすべて消します')+'">'+(live?'停止をやめる':'消す')+'</button>':'')+'<button type="button" class="kwoff-sv" data-kwoff-save>'+(live?'停止予定にする':'保存')+'</button></div>';
   if(tk==='month'){ var ms=p.querySelector('#kwOffMonth'); if(![].some.call(ms.options,function(o){return o.value===rv;})) ms.insertAdjacentHTML('afterbegin','<option value="'+rv+'">'+_kwOffRvLabel(rv)+'</option>'); ms.value=rv; }
   if(tk==='date') p.querySelector('#kwOffDate').value=rv;
-  _kwOffCur={code:code,kw:kw};
+  _kwOffCur={code:code,kw:kw,live:live,t:Date.now()};
   _kwOffSyncT();
   // 位置：札の下（画面からはみ出すなら上／左へ）。文字サイズ（zoom）を考えて置く
   p.style.display='block'; p.style.left='0px'; p.style.top='0px';
@@ -10317,10 +10357,12 @@ function _kwOffSave(clear){
       else if(tk==='month') rv=p.querySelector('#kwOffMonth').value||'';
       else if(tk==='date'){ rv=p.querySelector('#kwOffDate').value||''; if(!rv){ alert('日付を選んでください'); return; } }
     }
-    if(!r&&!m&&!rv){ alert('理由・メモ・復活の予定のどれかを入れてください'); return; }
+    var live=!!_kwOffCur.live, old=(pc.kwOff&&pc.kwOff[kw])||null;
+    if(!live&&!r&&!m&&!rv){ alert('理由・メモ・復活の予定のどれかを入れてください'); return; }
     if(!pc.kwOff) pc.kwOff={};
     var td=new Date(); var at=td.getFullYear()+'-'+String(td.getMonth()+1).padStart(2,'0')+'-'+String(td.getDate()).padStart(2,'0');
     var o={at:at}; if(r) o.r=r; if(m) o.m=m; if(rv) o.rv=rv;
+    if(live) o.pl=(old&&old.pl)||at; else if(old&&old.pl) o.pl=old.pl;   /* ★v1.1545★ 停止予定にした日 */
     pc.kwOff[kw]=o;
   }
   _kwOffClose();
@@ -10338,7 +10380,7 @@ document.addEventListener('click',function(e){
 },true);
 document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&_kwOffCur) _kwOffClose(); });
 window.addEventListener('resize',function(){ if(_kwOffCur) _kwOffClose(); });
-document.addEventListener('scroll',function(e){ if(_kwOffCur&&!(e.target&&e.target.closest&&e.target.closest('#kwOffPop'))) _kwOffClose(); },true);
+document.addEventListener('scroll',function(e){ if(_kwOffCur&&Date.now()-(_kwOffCur.t||0)>400&&!(e.target&&e.target.closest&&e.target.closest('#kwOffPop'))) _kwOffClose(); },true);   /* 開いた直後のスクロール（押したときに画面が動いた分）では閉じない */
 function _kwIndivSavedGet(){ try{ return JSON.parse(localStorage.getItem(_KWINDIV_SAVED_KEY)||'[]')||[]; }catch(e){ return []; } }
 function _kwIndivSavedSet(a){ try{ localStorage.setItem(_KWINDIV_SAVED_KEY, JSON.stringify(a)); }catch(e){} }
 const _KWINDIV_SHARED_FILE='data/kwindiv_saved_shared.json';
@@ -11322,9 +11364,10 @@ function _kwtJudgeMap(code){
     tmp.querySelectorAll('tr').forEach(t => {
       const td = t.querySelector('td'); const sp = td && td.querySelector('span'); const tds = t.querySelectorAll('td');
       if (!sp || tds.length < 4) return;
-      const mk = tds[tds.length - 2], ac = tds[tds.length - 1];
-      ac.querySelectorAll('.kwoff-box').forEach(x => x.remove());   /* ★v1.1544★ 対応欄の「外した理由」の札は対応の文に混ぜない */
-      out[sp.textContent] = { mk: mk.innerHTML, ac: (ac.textContent || '').trim(), col: ac.style.color || '', fw: ac.style.fontWeight || '' };
+      const stTd = t.querySelector('td.kwstop-td');   /* ★v1.1545★ 判定と対応の間に「停止」列がある */
+      const mk = stTd ? stTd.previousElementSibling : tds[tds.length - 2], ac = tds[tds.length - 1];
+      ac.querySelectorAll('.kwoff-box,.kwplan-box').forEach(x => x.remove());   /* ★v1.1544★ 対応欄の「外した理由」の札は対応の文に混ぜない */
+      out[sp.textContent] = { mk: mk.innerHTML, ac: (ac.textContent || '').trim(), col: ac.style.color || '', fw: ac.style.fontWeight || '', st: stTd ? stTd.dataset.st : '' };
     });
   }catch(e){}
   return out;
@@ -11338,6 +11381,8 @@ function _kwtJudgeHtml(code, kw, jm){
       + '<span style="' + lab + '">判定</span><span style="display:inline-flex;align-items:center;flex-shrink:0;font-size:14px">' + j.mk + '</span>'
       + '<span style="width:1px;align-self:stretch;background:var(--border2);flex-shrink:0"></span>'
       + '<span style="' + lab + '">対応</span><span title="' + _kwEsc(j.ac) + '" style="font-size:12px;' + acSty + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">' + (j.ac ? _kwEsc(j.ac) : '<span style="color:var(--text3)">—</span>') + '</span>'
+      /* ★v1.1545★ 出稿中のKWは右に「停止」（ボタン／停止予定＋理由） */
+      + (j.st === 'live' ? '<span style="width:1px;align-self:stretch;background:var(--border2);flex-shrink:0"></span><span style="' + lab + '">停止</span><span class="kwt-hdrstop" style="display:inline-flex;align-items:center;flex-shrink:0;white-space:nowrap">' + _kwStopBox(code, kw, 'card') + '</span>' : '')
       + '</span>';
   }catch(e){ return ''; }
 }
@@ -11441,7 +11486,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
       +'<th style="'+_H+';background:#e4eefb">直近3日クリック</th>'
       +'<th style="'+_H+';background:#fbe7cf;color:#c2410c">前月</th>'+'<th style="'+_H+';background:#ede4fb;color:#7c3aed">目安</th>'
       +'<th style="'+_H+';background:#dcefca;color:#00897B">入札</th>'
-      +'<th style="'+_H+'">判定</th>'+'<th style="'+_H+';background:#eef9f0">対応</th>'
+      +'<th style="'+_H+'">判定</th>'+'<th style="'+_H+';background:#fff7ed;color:#c2410c" title="出稿を止めると決めたら押して理由を入れる。止めたKWは「停止済」">停止</th>'+'<th style="'+_H+';background:#eef9f0">対応</th>'   /* ★v1.1545★ 停止列 */
       +'</tr></thead><tbody>';
     _rowKws.forEach(kw=>{ if(_pastSet[kw]){ var _bx='□'; var _Tg=_T+';background:#fafafa'; var _ag=_pastAgg[kw]||{}; var _ul=function(t){ return (t==null||t==='')?('<span style="color:#bbb">'+_bx+'</span>'):('<span style="text-decoration:underline;color:#555">'+t+'</span>'); };
       _h+='<tr>'
@@ -11458,6 +11503,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
+        +'<td class="kwstop-td" data-st="done" style="'+_Tg+';font-size:10px;color:#bbb;white-space:nowrap">停止済</td>'   /* ★v1.1545★ */
         +'<td style="'+_Tg+';font-size:10px;text-align:left;color:#888;white-space:nowrap">'+(_ag.lym?('最終出稿 '+_ag.lym.slice(0,4)+'/'+_ag.lym.slice(4,6)):'')+_kwOffCell(code,kw)+'</td>'   /* ★v1.1542★ 外した理由・復活候補の札 */
         +'</tr>'; return; }
       if(typeof _zeroSet!=='undefined' && _zeroSet[kw]){ // §3: 出稿中だが今月0impression（目安CPCで黒■/赤■を区別）
@@ -11478,7 +11524,8 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
           +'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+((_zme!=null&&_zme>0)?_n2(_zme):'—')+'</td>'
           +'<td style="'+_T+';background:#d9edca;font-size:11px">'+(function(){ var b=_kwBidNow(code,kw); return b?Math.round(b).toLocaleString():'—'; })()+'</td>'   // ★v1.1477★ 今の入札額
           +'<td style="'+_T+';background:#fff">'+_taiouMarkGlyph(_zk)+'</td>'
-          +(function(){ var vals={kwvol:_zv,share:0,spend:0,sales:0,cvr:null,roas:null,mclick:0,recent3:0,gui:(_zme!=null?_zme:null),act:null}; var _ru=_taiouFor(_zk,vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
+          +'<td class="kwstop-td" data-st="live" style="'+_T+';background:#fff">'+_kwStopBox(code,kw,'tbl')+'</td>'   /* ★v1.1545★ */
+          +(function(){ var vals={kwvol:_zv,share:0,spend:0,sales:0,cvr:null,roas:null,mclick:0,recent3:0,gui:(_zme!=null?_zme:null),act:null}; var _ru=_taiouFor(_zk,vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+_kwPlanBox(code,kw)+'</td>'; })()
           +'</tr>'; return; }
       const _mmv=monthMode?_pm(kw):null;
       const sh=_mmv?_mmv.share.toFixed(2):(_totVol>0?(_kwVol[kw]/_totVol*100).toFixed(2):'0.00'); const dv=_effAct(kw,_kwiCarry(byKw[kw],_latest)); dv.gui=_effGui(kw,dv.gui);
@@ -11495,7 +11542,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
         +'<td style="'+_T+';background:#fff;font-size:11px;color:#333">'+_n2(_r3)+'</td>'
         +(function(){ var pc=_mmv?_prev2CpcOf(kw):_prevCpcOf(kw); var bg=pc!=null?'#fbe7cf':'#fff'; return '<td style="'+_T+';font-size:11px;color:#333;background:'+bg+'">'+(pc!=null?Math.round(pc).toLocaleString():'\u2014')+'</td>'; })()+'<td style="'+_T+';background:#e6d6fb;font-size:11px">'+_n2(dv.gui)+'</td>'
         +'<td style="'+_T+';background:#d9edca;font-size:11px">'+_n2(dv.act)+'</td>'
-        +'<td style="'+_T+';background:#fff">'+_kwiMkM(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest))+'</td>'+(function(){ var vals={kwvol:_kvDisp,share:parseFloat(sh),spend:_sp,sales:_sa,cvr:_cl>0?(_od/_cl*100):null,roas:_sp>0?(_sa/_sp*100):null,mclick:_mcl,recent3:_r3,gui:dv.gui,act:dv.act}; var _ru=_taiouFor(_kwiMkKind(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest)),vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+'</td>'; })()
+        +'<td style="'+_T+';background:#fff">'+_kwiMkM(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest))+'</td>'+'<td class="kwstop-td" data-st="live" style="'+_T+';background:#fff">'+_kwStopBox(code,kw,'tbl')+'</td>'+(function(){ var vals={kwvol:_kvDisp,share:parseFloat(sh),spend:_sp,sales:_sa,cvr:_cl>0?(_od/_cl*100):null,roas:_sp>0?(_sa/_sp*100):null,mclick:_mcl,recent3:_r3,gui:dv.gui,act:dv.act}; var _ru=_taiouFor(_kwiMkKind(dv.act,dv.gui,_kwiNoClickStreak(byKw[kw],_latest)),vals); var t=_ru?_ru.text:''; var _sty=_ru?_taiouTextStyle(_ru.color,_ru.weight):''; return '<td style="'+_T+';background:#fff;font-size:11px;text-align:left;white-space:normal;min-width:110px;max-width:240px;'+_sty+'">'+(t?_kwEsc(t):'')+_kwPlanBox(code,kw)+'</td>'; })()
         +'</tr>';
     });
     _h+='</tbody>';
@@ -13112,10 +13159,12 @@ function renderKwTrend(resetScroll){
       /* ★v1.1534★ KW名の右端に判定の記号。対応の文があれば一番下に1行（色・太さは商品-当日データと同じ。長いときは…、マウスを乗せると全文） */
       + '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:12px;font-weight:700;color:' + (o.live ? 'var(--text)' : 'var(--text3)') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">' + esc(o.kw) + '</span>'
       + (_JM[o.kw] ? '<span style="margin-left:auto;zoom:.8;display:inline-flex;align-items:center;flex-shrink:0">' + _JM[o.kw].mk + '</span>' : '') + '</div>'
-      + (o.live ? '<div style="font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + sub + '</div>'
-        /* ★v1.1544★ 停止中のKWは、判定の記号の下（右寄せ）に「外した理由・復活候補」の札（商品-当日データと同じもの。押すと理由を選ぶ小窓） */
-        : '<div style="display:flex;align-items:center;flex-wrap:wrap;row-gap:3px;font-size:10px;color:var(--text3);margin-top:1px"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">' + sub + '</span><span class="kwt-offwrap">' + _kwOffCell(code, o.kw) + '</span></div>')
-      + (function(){ const j = _JM[o.kw]; if (!j || !j.ac || /^最終出稿/.test(j.ac)) return ''; return '<div title="' + esc(j.ac) + '" style="font-size:10.5px;line-height:1.35;margin-top:3px;color:' + (j.col || 'var(--text2)') + ';font-weight:' + (j.fw && +j.fw >= 600 ? '600' : '400') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(j.ac) + '</div>'; })()
+      + '<div style="font-size:' + (o.live ? '11px' : '10px') + ';color:var(--text3);margin-top:' + (o.live ? '2px' : '1px') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + sub + '</div>'
+      /* ★v1.1545★ カードの中を薄い線で区切る：上＝KW・判定・成績／中＝対応／下＝停止（出稿中）。停止中のKWは下の段に理由の札 */
+      + (o.live
+        ? ((function(){ const j = _JM[o.kw]; const ac = (j && j.ac && !/^最終出稿/.test(j.ac)) ? j.ac : ''; return '<div class="kwt-blk" style="display:flex;align-items:baseline;min-width:0"><span class="kwt-blb">対応</span>' + (ac ? '<span title="' + esc(ac) + '" style="font-size:10.5px;line-height:1.35;color:' + ((j && j.col) || 'var(--text2)') + ';font-weight:' + (j && j.fw && +j.fw >= 600 ? '600' : '400') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">' + esc(ac) + '</span>' : '<span style="font-size:10.5px;color:var(--text3)">—</span>') + '</div>'; })()
+          + '<div class="kwt-blk" style="display:flex;align-items:center"><span class="kwt-blb">停止</span><span class="kwt-stopwrap">' + _kwStopBox(code, o.kw, 'card') + '</span></div>')
+        : '<div class="kwt-blk" style="display:flex;align-items:center"><span class="kwt-offwrap">' + _kwOffCell(code, o.kw) + '</span></div>')
       + '</div>';
   }).join('');
   const kw = _kwtKw; const kwAll = allRows.filter(r => (r.kw || '(空)') === kw);
