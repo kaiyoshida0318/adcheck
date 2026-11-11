@@ -553,6 +553,38 @@ body.cw-on .cw-has-rest { background-image: repeating-linear-gradient(135deg, rg
 .cw-menu .cw-m-link { background: none; border: none; color: #1565C0; text-decoration: underline; font-size: .72rem; cursor: pointer; padding: 2px 0; }
 .cw-menu .cw-m-link:hover { background: none; }
 
+/* ★v1.1542★ 商品-当日データ：外したKWの理由・復活候補の札と小窓 */
+.kwoff-box { display: inline; }
+.kwoff-chip { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 9px; font-size: 10px; font-weight: 700; line-height: 16px; vertical-align: 1px; cursor: pointer; white-space: nowrap; user-select: none; }
+.kwoff-add { border: 1px dashed #f59e0b; color: #b45309; background: #fffbeb; }
+.kwoff-add:hover { background: #fef3c7; }
+.kwoff-why { border: 1px solid #d1d5db; color: #6b7280; background: #f3f4f6; }
+.kwoff-why:hover { background: #e5e7eb; }
+.kwoff-rev { border: 1px solid #2563eb; color: #fff; background: #3b82f6; }
+.kwoff-rev:hover { background: #2563eb; }
+.kwoff-pop { position: fixed; display: none; width: 380px; background: #fff; border: 1px solid #d1d5db; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.18); padding: 12px 14px; z-index: 10050; font-size: 12px; color: #374151; text-align: left; white-space: normal; }
+.kwoff-hd { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+.kwoff-sub { font-size: 11px; color: #6b7280; }
+.kwoff-kw { font-size: 14px; font-weight: 700; color: #111827; word-break: break-all; }
+.kwoff-x { cursor: pointer; color: #9ca3af; font-size: 14px; padding: 0 2px; }
+.kwoff-x:hover { color: #374151; }
+.kwoff-lb { font-weight: 700; margin-bottom: 5px; }
+.kwoff-opts { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+.kwoff-o, .kwoff-t { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; cursor: pointer; user-select: none; }
+.kwoff-o { background: #fff; color: #374151; border: 1px solid #d1d5db; }
+.kwoff-o:hover { border-color: #9ca3af; }
+.kwoff-o.on { background: #374151; color: #fff; border-color: #374151; }
+.kwoff-memo { width: 100%; box-sizing: border-box; margin: 2px 0 12px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; }
+.kwoff-rvl { display: flex; align-items: center; gap: 6px; font-weight: 700; color: #1d4ed8; margin-bottom: 6px; cursor: pointer; }
+.kwoff-ts { display: flex; flex-wrap: wrap; gap: 5px; padding-left: 20px; }
+.kwoff-ts.off { opacity: .4; }
+.kwoff-t { background: #fff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.kwoff-t.on { background: #2563eb; color: #fff; border-color: #2563eb; }
+.kwoff-t select, .kwoff-t input[type=date] { font-size: 11px; padding: 0 2px; border: 1px solid #bfdbfe; border-radius: 4px; color: #1d4ed8; background: #fff; }
+.kwoff-ft { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.kwoff-clr { padding: 5px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; font-size: 12px; cursor: pointer; }
+.kwoff-sv { padding: 5px 14px; border: none; border-radius: 6px; background: #2563eb; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }
+.kwoff-sv:hover { background: #1d4ed8; }
 /* ★v1.1541★ 消えたあとも透明なまま残るお知らせ（自動保存しました・保存完了など）が、下にあるボタンのクリックを横取りしないように */
 #ssAutoToast, #globalSaveToast, #globalSaveErrToast { pointer-events: none !important; }
 .colw-toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 10001; opacity: 0; transition: opacity .25s; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
@@ -809,7 +841,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1541</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1542</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -10187,6 +10219,124 @@ function _selAll(el,ev){ try{ if(ev) ev.stopPropagation(); var r=document.create
 // ★v1.1450★ 飛ぶボタンは矢印だけ。「注視」バッジがあるときはその右に置く
 const _kwtBadge=(code,kw)=>'<span class="kwt-badge" title="KW-個別推移（日別）を開く" data-code="'+_kwEsc(code)+'" data-kw="'+_kwEsc(kw)+'" onclick="event.stopPropagation();openKwTrend(this.dataset.code,this.dataset.kw)">↗</span>';
 const _kwEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ★v1.1542★ 商品-当日データ：外した（薄い字の）KWに「外した理由」と「復活候補」を付ける
+//   保存先：productCache[code].kwOff[kw] = { r:理由キー, m:メモ, rv:復活の時期, at:付けた日 }
+//     rv … 'sale'（次のセール前）／'YYYY-MM'（その月）／'YYYY-MM-DD'（その日）／無し
+//   productCache ごと GitHub に保存されるので、ほかのPCでも同じものが見える
+const _KWOFF_REASONS=[['bad','成績不良（ROAS低い）','成績不良'],['cpc','CPC高い','CPC高い'],['mismatch','商品と合わない','商品と合わない'],['budget','予算整理','予算整理'],['season','季節外れ','季節外れ'],['other','その他','その他']];
+function _kwOffGet(code,kw){ var pc=productCache[code]; var o=pc&&pc.kwOff; return (o&&Object.prototype.hasOwnProperty.call(o,kw))?o[kw]:null; }
+function _kwOffRvLabel(rv){
+  if(!rv) return '';
+  if(rv==='sale') return 'セール前';
+  var m=/^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(rv); if(!m) return '';
+  if(m[3]) return (+m[2])+'/'+(+m[3]);
+  var y=new Date().getFullYear(); return (+m[1]!==y?(m[1]+'/'):'')+(+m[2])+'月';
+}
+function _kwOffChips(code,kw){
+  var d=_kwOffGet(code,kw), h='';
+  var at=' data-code="'+_kwEsc(code)+'" data-kw="'+_kwEsc(kw)+'"';
+  if(!d||(!d.r&&!d.rv&&!d.m)) return '<span class="kwoff-chip kwoff-add"'+at+' title="外した理由・復活の予定を付ける">＋理由</span>';
+  var tip=[]; var rl=''; _KWOFF_REASONS.forEach(function(x){ if(x[0]===d.r){ rl=x[2]; tip.push('理由：'+x[1]); } });
+  if(d.m) tip.push('メモ：'+d.m); if(d.rv) tip.push('復活：'+_kwOffRvLabel(d.rv)); if(d.at) tip.push('（'+d.at.replace(/-/g,'/')+' に記入）');
+  var t=' title="'+_kwEsc(tip.join('\n'))+'"';
+  if(rl) h+='<span class="kwoff-chip kwoff-why"'+at+t+'>'+_kwEsc(rl)+(d.m?' ✎':'')+'</span>';
+  else if(d.m) h+='<span class="kwoff-chip kwoff-why"'+at+t+'>メモ ✎</span>';
+  if(d.rv) h+='<span class="kwoff-chip kwoff-rev"'+at+t+'>↻ '+_kwEsc(_kwOffRvLabel(d.rv))+'</span>';
+  return h;
+}
+// 対応欄に入れる入れ物（保存したら中身だけ差し替える）
+function _kwOffCell(code,kw){ return '<span class="kwoff-box" data-code="'+_kwEsc(code)+'" data-kw="'+_kwEsc(kw)+'">'+_kwOffChips(code,kw)+'</span>'; }
+function _kwOffRefresh(code,kw){
+  document.querySelectorAll('.kwoff-box').forEach(function(b){ if(b.dataset.code===code&&b.dataset.kw===kw) b.innerHTML=_kwOffChips(code,kw); });
+}
+var _kwOffCur=null;
+function _kwOffClose(){ var p=document.getElementById('kwOffPop'); if(p) p.style.display='none'; _kwOffCur=null; }
+function _kwOffOpen(chip){
+  var code=chip.dataset.code, kw=chip.dataset.kw; if(!code||kw==null) return;
+  var d=_kwOffGet(code,kw)||{};
+  var p=document.getElementById('kwOffPop');
+  if(!p){ p=document.createElement('div'); p.id='kwOffPop'; p.className='kwoff-pop'; document.body.appendChild(p);
+    p.addEventListener('click',function(e){ e.stopPropagation();
+      var o=e.target.closest('[data-kwoff-r]'); if(o){ var on=o.classList.contains('on'); p.querySelectorAll('[data-kwoff-r]').forEach(function(x){ x.classList.remove('on'); }); if(!on) o.classList.add('on'); return; }
+      var t=e.target.closest('[data-kwoff-t]'); if(t){ var k=t.dataset.kwoffT; p.querySelectorAll('[data-kwoff-t]').forEach(function(x){ x.classList.toggle('on',x===t); }); p.querySelector('#kwOffRevChk').checked=true; _kwOffSyncT(); if(k==='month') p.querySelector('#kwOffMonth').focus(); if(k==='date'){ var di=p.querySelector('#kwOffDate'); di.focus(); try{ di.showPicker&&di.showPicker(); }catch(_e){} } return; }
+      if(e.target.closest('[data-kwoff-save]')){ _kwOffSave(); return; }
+      if(e.target.closest('[data-kwoff-clear]')){ _kwOffSave(true); return; }
+      if(e.target.closest('[data-kwoff-x]')){ _kwOffClose(); return; }
+    });
+    p.addEventListener('change',function(e){ if(e.target.id==='kwOffRevChk') _kwOffSyncT(); if(e.target.id==='kwOffMonth'||e.target.id==='kwOffDate'){ var k=e.target.id==='kwOffMonth'?'month':'date'; p.querySelectorAll('[data-kwoff-t]').forEach(function(x){ x.classList.toggle('on',x.dataset.kwoffT===k); }); p.querySelector('#kwOffRevChk').checked=true; _kwOffSyncT(); } });
+    p.addEventListener('keydown',function(e){ if(e.key==='Escape'){ _kwOffClose(); } if(e.key==='Enter'&&e.target.id==='kwOffMemo'){ e.preventDefault(); _kwOffSave(); } });
+  }
+  // 月の候補：今月から12か月
+  var now=new Date(), mOpts='';
+  for(var i=0;i<12;i++){ var dt=new Date(now.getFullYear(),now.getMonth()+i,1); var v=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); mOpts+='<option value="'+v+'">'+(dt.getFullYear()!==now.getFullYear()?dt.getFullYear()+'年':'')+(dt.getMonth()+1)+'月</option>'; }
+  var rv=d.rv||'', tk=rv==='sale'?'sale':(/^\d{4}-\d{2}-\d{2}$/.test(rv)?'date':(/^\d{4}-\d{2}$/.test(rv)?'month':''));
+  p.innerHTML=
+    '<div class="kwoff-hd"><div><div class="kwoff-sub">外したKW</div><div class="kwoff-kw">'+_kwEsc(kw)+'</div></div><span class="kwoff-x" data-kwoff-x title="閉じる">✕</span></div>'
+   +'<div class="kwoff-lb">外した理由</div>'
+   +'<div class="kwoff-opts">'+_KWOFF_REASONS.map(function(x){ return '<span class="kwoff-o'+(d.r===x[0]?' on':'')+'" data-kwoff-r="'+x[0]+'">'+x[1]+'</span>'; }).join('')+'</div>'
+   +'<input id="kwOffMemo" class="kwoff-memo" maxlength="200" placeholder="メモ（任意）例：10月 ROAS 180%。メインKWなので様子見で外した" value="'+_kwEsc(d.m||'')+'">'
+   +'<label class="kwoff-rvl"><input type="checkbox" id="kwOffRevChk"'+(rv?' checked':'')+'> ↻ 復活候補にする</label>'
+   +'<div class="kwoff-ts">'
+     +'<span class="kwoff-t'+(tk==='sale'||!tk?' on':'')+'" data-kwoff-t="sale">次のセール前</span>'
+     +'<span class="kwoff-t'+(tk==='month'?' on':'')+'" data-kwoff-t="month">月を指定 <select id="kwOffMonth">'+mOpts+'</select></span>'
+     +'<span class="kwoff-t'+(tk==='date'?' on':'')+'" data-kwoff-t="date">日付を指定 <input type="date" id="kwOffDate"></span>'
+   +'</div>'
+   +'<div class="kwoff-ft">'+(_kwOffGet(code,kw)?'<button type="button" class="kwoff-clr" data-kwoff-clear title="理由・メモ・復活の予定をすべて消します">消す</button>':'')+'<button type="button" class="kwoff-sv" data-kwoff-save>保存</button></div>';
+  if(tk==='month'){ var ms=p.querySelector('#kwOffMonth'); if(![].some.call(ms.options,function(o){return o.value===rv;})) ms.insertAdjacentHTML('afterbegin','<option value="'+rv+'">'+_kwOffRvLabel(rv)+'</option>'); ms.value=rv; }
+  if(tk==='date') p.querySelector('#kwOffDate').value=rv;
+  _kwOffCur={code:code,kw:kw};
+  _kwOffSyncT();
+  // 位置：札の下（画面からはみ出すなら上／左へ）。文字サイズ（zoom）を考えて置く
+  p.style.display='block'; p.style.left='0px'; p.style.top='0px';
+  var b=document.body, k=(b.offsetWidth>0)?(b.getBoundingClientRect().width/b.offsetWidth):1; if(!(k>0)) k=1;
+  var r=chip.getBoundingClientRect(), pw=p.getBoundingClientRect().width, ph=p.getBoundingClientRect().height;
+  var vw=window.innerWidth, vh=window.innerHeight;
+  var x=r.right-pw; if(x<8) x=8; if(x+pw>vw-8) x=vw-8-pw;
+  var y=r.bottom+6; if(y+ph>vh-8) y=Math.max(8,r.top-6-ph);
+  p.style.left=(x/k)+'px'; p.style.top=(y/k)+'px';
+}
+function _kwOffSyncT(){
+  var p=document.getElementById('kwOffPop'); if(!p) return;
+  var on=p.querySelector('#kwOffRevChk').checked; p.querySelector('.kwoff-ts').classList.toggle('off',!on);
+}
+function _kwOffSave(clear){
+  if(!_kwOffCur) return; var code=_kwOffCur.code, kw=_kwOffCur.kw;
+  var p=document.getElementById('kwOffPop');
+  if(!productCache[code]) productCache[code]={};
+  var pc=productCache[code];
+  if(clear){ if(pc.kwOff){ delete pc.kwOff[kw]; if(!Object.keys(pc.kwOff).length) delete pc.kwOff; } }
+  else{
+    var ro=p.querySelector('[data-kwoff-r].on'); var r=ro?ro.dataset.kwoffR:'';
+    var m=(p.querySelector('#kwOffMemo').value||'').trim();
+    var rv='';
+    if(p.querySelector('#kwOffRevChk').checked){
+      var t=p.querySelector('[data-kwoff-t].on'); var tk=t?t.dataset.kwoffT:'sale';
+      if(tk==='sale') rv='sale';
+      else if(tk==='month') rv=p.querySelector('#kwOffMonth').value||'';
+      else if(tk==='date'){ rv=p.querySelector('#kwOffDate').value||''; if(!rv){ alert('日付を選んでください'); return; } }
+    }
+    if(!r&&!m&&!rv){ alert('理由・メモ・復活の予定のどれかを入れてください'); return; }
+    if(!pc.kwOff) pc.kwOff={};
+    var td=new Date(); var at=td.getFullYear()+'-'+String(td.getMonth()+1).padStart(2,'0')+'-'+String(td.getDate()).padStart(2,'0');
+    var o={at:at}; if(r) o.r=r; if(m) o.m=m; if(rv) o.rv=rv;
+    pc.kwOff[kw]=o;
+  }
+  _kwOffClose();
+  _kwOffRefresh(code,kw);
+  try{ saveProductCache(); }catch(e){}
+  try{ _saveToast('saving'); }catch(e){}
+  Promise.resolve().then(function(){ return saveProductCacheToGitHub(); })
+    .then(function(){ try{ _saveToast('done'); }catch(e){} })
+    .catch(function(e){ console.warn('[ADcheck] KWの理由の保存に失敗',e); try{ _saveToast('error'); }catch(_e){} });
+}
+document.addEventListener('click',function(e){
+  var c=e.target.closest&&e.target.closest('.kwoff-chip');
+  if(c){ e.stopPropagation(); e.preventDefault(); if(_kwOffCur&&_kwOffCur.code===c.dataset.code&&_kwOffCur.kw===c.dataset.kw){ _kwOffClose(); return; } _kwOffOpen(c); return; }
+  var p=document.getElementById('kwOffPop'); if(p&&p.style.display!=='none'&&!p.contains(e.target)) _kwOffClose();
+},true);
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&_kwOffCur) _kwOffClose(); });
+window.addEventListener('resize',function(){ if(_kwOffCur) _kwOffClose(); });
+document.addEventListener('scroll',function(e){ if(_kwOffCur&&!(e.target&&e.target.closest&&e.target.closest('#kwOffPop'))) _kwOffClose(); },true);
 function _kwIndivSavedGet(){ try{ return JSON.parse(localStorage.getItem(_KWINDIV_SAVED_KEY)||'[]')||[]; }catch(e){ return []; } }
 function _kwIndivSavedSet(a){ try{ localStorage.setItem(_KWINDIV_SAVED_KEY, JSON.stringify(a)); }catch(e){} }
 const _KWINDIV_SHARED_FILE='data/kwindiv_saved_shared.json';
@@ -11305,7 +11455,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode){
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
         +'<td style="'+_Tg+';font-size:11px;color:#bbb">'+_bx+'</td>'
-        +'<td style="'+_Tg+';font-size:10px;text-align:left;color:#888;white-space:nowrap">'+(_ag.lym?('最終出稿 '+_ag.lym.slice(0,4)+'/'+_ag.lym.slice(4,6)):'')+'</td>'
+        +'<td style="'+_Tg+';font-size:10px;text-align:left;color:#888;white-space:nowrap">'+(_ag.lym?('最終出稿 '+_ag.lym.slice(0,4)+'/'+_ag.lym.slice(4,6)):'')+_kwOffCell(code,kw)+'</td>'   /* ★v1.1542★ 外した理由・復活候補の札 */
         +'</tr>'; return; }
       if(typeof _zeroSet!=='undefined' && _zeroSet[kw]){ // §3: 出稿中だが今月0impression（目安CPCで黒■/赤■を区別）
         var _zv=_kwVol[kw]||0;
