@@ -841,7 +841,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1542</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1543</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -10223,7 +10223,7 @@ const _kwEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').
 //   保存先：productCache[code].kwOff[kw] = { r:理由キー, m:メモ, rv:復活の時期, at:付けた日 }
 //     rv … 'sale'（次のセール前）／'YYYY-MM'（その月）／'YYYY-MM-DD'（その日）／無し
 //   productCache ごと GitHub に保存されるので、ほかのPCでも同じものが見える
-const _KWOFF_REASONS=[['bad','成績不良（ROAS低い）','成績不良'],['cpc','CPC高い','CPC高い'],['mismatch','商品と合わない','商品と合わない'],['budget','予算整理','予算整理'],['season','季節外れ','季節外れ'],['other','その他','その他']];
+const _KWOFF_REASONS=[['bad','ROAS低い','ROAS低い'],['cpc','CPC高い','CPC高い'],['mismatch','商品と合わない','商品と合わない'],['budget','予算整理','予算整理'],['season','季節外れ','季節外れ'],['other','その他','その他']];
 function _kwOffGet(code,kw){ var pc=productCache[code]; var o=pc&&pc.kwOff; return (o&&Object.prototype.hasOwnProperty.call(o,kw))?o[kw]:null; }
 function _kwOffRvLabel(rv){
   if(!rv) return '';
