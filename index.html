@@ -634,7 +634,25 @@ body.cw-on .cw-has-rest { background-image: repeating-linear-gradient(135deg, rg
 .yd-tbl tbody tr:hover td { background: #f8fafc; }
 .yd-tbl tr.yt-tile[style*="outline"] { outline-offset: -2px; }
 .yd-tbl td.yd-rk { text-align: right; color: var(--text3); font-size: 11px; padding: 3px 4px; }
-.yd-tbl td.yd-im { padding: 2px; text-align: center; }
+.yd-tbl td.yd-im { padding: 2px; text-align: center; position: relative; overflow: visible; }
+.yd-fbtn { position: absolute; right: -5px; bottom: 1px; z-index: 2; height: 15px; padding: 0 4px; font-size: 9px; line-height: 12px; font-weight: 800; border-radius: 5px; border: 1.5px solid #0f766e; background: #ecfdf5; color: #0f766e; box-shadow: 0 1px 3px rgba(15,118,110,.35); cursor: pointer; }
+.yd-fbtn:hover { background: #0f766e; color: #fff; }
+/* ★v1.1551★ 日別の絞込 */
+.yf-band { display: flex; align-items: center; gap: 10px; padding: 4px 12px 4px 4px; margin-bottom: 10px; background: #ecfdf5; border: 1px solid #0f766e; border-radius: 8px; font-size: 12px; font-weight: 700; color: #0f766e; width: max-content; }
+.yf-band img { width: 34px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); background: #fff; }
+.yf-cd { font-family: 'DM Mono', monospace; color: var(--text3); font-weight: 400; }
+.yf-x { font-size: 11px; padding: 3px 10px; border-radius: 5px; border: 1px solid #0f766e; background: #0f766e; color: #fff; cursor: pointer; font-weight: 700; }
+.yf-x2 { background: #fff; color: #0f766e; }
+.yf-tbl { border-collapse: collapse; table-layout: fixed; font-size: 12.5px; background: var(--surface); }
+.yf-tbl th, .yf-tbl td { border: 1px solid #e5e7eb; padding: 5px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.yf-tbl th { background: #f8fafc; font-size: 10.5px; color: var(--text3); font-weight: 700; }
+.yf-tbl tr.yf-gs td { border-top: 2px solid #cbd5e1; }
+.yf-lb { font-size: 11.5px; font-weight: 800; padding: 2px 9px; border-radius: 5px; }
+.yf-v { text-align: right; font-family: 'DM Mono', monospace; }
+.yf-b { color: var(--text3); }
+.yf-e { text-align: left; }
+.yf-rk { font-weight: 800; font-size: 11.5px; }
+.yf-of { color: var(--text3); font-size: 11px; margin-left: 2px; }
 .yd-tbl td.yd-im img { width: 32px; height: 32px; object-fit: cover; border-radius: 4px; display: block; margin: 0 auto; background: #f3f4f6; }
 .yd-tbl td.yd-cd { font-family: 'DM Mono', monospace; font-size: 11px; color: #0f766e; font-weight: 700; }
 .yd-tbl td.yd-nm { color: var(--text); }
@@ -912,7 +930,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1550</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1551</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -16075,6 +16093,8 @@ function _yoyNavSpy(){
 //   商品をクリックすると選択枠に入り、全部の指標で同じ色が付く（月別と同じ）。全-日別データの日付の「🔍 原因」から開ける。
 let _yoyGrain = (function(){ try{ return localStorage.getItem('adcheck_yoy_grain') === 'day' ? 'day' : 'month'; }catch(e){ return 'month'; } })();
 let _yoyDay = null, _yoyDayCmp = 'avg7', _yoyDayPick = null;
+let _yoyDayFocus = null;   /* ★v1.1551★ 日別の絞込（商品コード） */
+function setYoyDayFocus(code){ _yoyDayFocus = code || null; const a = document.getElementById('yoyTopArea'); if (a){ a.scrollTop = 0; a.scrollLeft = 0; } renderYoyTop(); }
 const YOYDAY_N = 10;
 function setYoyGrain(g){ _yoyGrain = (g === 'day') ? 'day' : 'month'; try{ localStorage.setItem('adcheck_yoy_grain', _yoyGrain); }catch(e){} const a = document.getElementById('yoyTopArea'); if (a){ a.scrollTop = 0; a.scrollLeft = 0; } renderYoy(); }
 function setYoyDay(d){ if (d) _yoyDay = d; const a = document.getElementById('yoyTopArea'); if (a) a.scrollTop = 0; renderYoyTop(); }
@@ -16166,7 +16186,7 @@ function renderYoyTopDay(){
     const pc = productCache[x.code] || {}; const name = pc.manualName || pc.name || x.code; const img = pc.manualImg || pc.img || '';
     return '<tr class="yt-tile" data-code="'+esc(x.code)+'" title="'+esc((pc.itemNumber || x.code) + '　' + name)+'\n（クリックで選択枠に入れる・もう一度で外す／ダブルクリックで詳細）" onclick="_yoyTopPin(\''+esc(x.code)+'\')" ondblclick="openRenewalGraph(\''+esc(x.code)+'\')" onmouseenter="_yoyTopHi(\''+esc(x.code)+'\',true)" onmouseleave="_yoyTopHi(\''+esc(x.code)+'\',false)">'
       + '<td class="yd-rk">'+(i+1)+'</td>'
-      + '<td class="yd-im">'+(img ? '<img src="'+esc(img)+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '')+'</td>'
+      + '<td class="yd-im">'+(img ? '<img src="'+esc(img)+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '')+'<button class="yd-fbtn" onclick="event.stopPropagation();setYoyDayFocus(\''+esc(x.code)+'\')" ondblclick="event.stopPropagation()" title="この商品だけを表示（この日の全部の指標を一覧で見る）">絞込</button></td>'
       + '<td class="yd-cd">'+esc(pc.itemNumber || x.code)+'</td>'
       + '<td class="yd-nm">'+esc(name)+'</td>'
       + '<td class="yd-v">'+fmtV(mt, x.a)+'</td><td class="yd-v yd-b">'+fmtV(mt, x.b)+'</td>'
@@ -16174,7 +16194,7 @@ function renderYoyTopDay(){
       + '<td class="yd-br"><span class="yd-bar"><i style="width:'+Math.max(2, Math.round(Math.abs(x.d) / mx * 100))+'%;background:'+barOf(mt, isDn)+'"></i></span></td></tr>';
   };
   const colHead = mt => '<colgroup><col style="width:26px"><col style="width:40px"><col style="width:150px"><col><col style="width:86px"><col style="width:86px"><col style="width:92px"><col style="width:70px"></colgroup>'
-    + '<thead><tr><th>#</th><th>画像</th><th>商品番号</th><th>商品名</th><th>当日</th><th>'+(BS.avg ? '平均' : '比べる日')+'</th><th>'+(mt.type === 'amt' ? '差' : '全体への影響')+'</th><th></th></tr></thead>';
+    + '<thead><tr><th>#</th><th>画像</th><th>商品番号</th><th>商品名</th><th>当日</th><th>'+(BS.avg ? '平均' : '比べる日')+'</th><th>'+(mt.type === 'amt' ? (BS.avg ? '平均との差' : '比べる日との差') : '店全体への影響')+'</th><th></th></tr></thead>';
   const cmpLbl = BS.avg ? '平均' : _yoyDayLbl(BS.dates[0] || day, false);
   let html = '<div class="yd-info">'
     + '<span><b>' + _yoyDayLbl(day, true) + '</b>' + (_yoyDaySale(day) ? '<span class="yd-sale">' + esc(_yoyDaySale(day)) + '</span>' : '') + ' と <b>' + esc(BS.title) + '</b> を比較</span>'
@@ -16183,6 +16203,7 @@ function renderYoyTopDay(){
     + (!BS.avg && BS.dates[0] && _yoyDaySkip(BS.dates[0]) ? '<span class="yd-skip">比べる日は ' + esc(_yoyDaySkip(BS.dates[0])) + '</span>' : '')
     + (recent ? '<span class="yd-warn" title="広告売上は広告のクリックから720時間（30日）まで計上されるため、直近の日はあとから増えます">⚠ 直近の日は広告売上・ROAS がまだ増える途中（720時間計上）</span>' : '')
     + '</div>';
+  if (_yoyDayFocus){ area.innerHTML = html + _yoyDayFocusHtml(_yoyDayFocus, A, B, R, BS, day, SM, esc, yen); _renderYoyPinUI(); _renderYoyNav(); _fitYoyTopArea(); return; }   /* ★v1.1551★ 絞込 */
   html += '<div class="yd-wrap">';
   const GS = _yoyGroupStarts(SM);
   SM.forEach((mt, mi) => {
@@ -16208,6 +16229,52 @@ function renderYoyTopDay(){
   _renderYoyPinUI();
   _renderYoyNav();
   _fitYoyTopArea();
+}
+// ★v1.1551★ 日別の絞込：その商品の、その日の全部の指標を1行ずつ
+function _yoyDayFocusHtml(code, A, B, R, BS, day, SM, esc, yen){
+  const g = (m, f) => (m[code] && m[code][f]) || 0;
+  const sg = (v, f) => (v > 0 ? '+' : v < 0 ? '−' : '±') + f(Math.abs(v));
+  const pc = productCache[code] || {}; const nm = pc.manualName || pc.name || code; const img = pc.manualImg || pc.img || '';
+  const GS = _yoyGroupStarts(SM);
+  let rows = '';
+  SM.forEach((mt, i) => {
+    const r = R[mt.k];
+    const bd = (mt.g === 'sp') ? null : (mt.type === 'cpa');   // 悪い向き：null＝なし（実績額）／true＝上がると悪い（獲得単価）／false＝下がると悪い
+    const colD = d => (d == null || !d) ? 'var(--text3)' : bd === null ? (d < 0 ? '#475569' : '#b45309') : ((d < 0) !== bd ? '#dc2626' : '#16a34a');
+    let a, b, d, f, fd, imp = 0;
+    if (mt.type === 'amt'){ a = g(A, mt.k); b = g(B, mt.k); d = a - b; f = yen; fd = v => sg(v, x => '¥' + Math.round(x).toLocaleString()); }
+    else {
+      let N, D, k = 100; if (mt.type === 'cpa'){ N = 'sp'; D = 'od'; k = 1; } else { N = mt.num; D = mt.den; }
+      a = g(A, D) > 0 ? g(A, N) / g(A, D) * k : null; b = g(B, D) > 0 ? g(B, N) / g(B, D) * k : null; d = (a != null && b != null) ? a - b : null;
+      f = v => v == null ? (mt.type === 'cpa' ? '注文0' : '—') : (mt.type === 'cpa' ? yen(v) : (mt.type === 'cvr' ? v.toFixed(2) + '%' : Math.round(v).toLocaleString() + '%'));
+      fd = v => mt.type === 'cpa' ? sg(v, x => '¥' + Math.round(x).toLocaleString()) : sg(v, x => (mt.type === 'cvr' ? x.toFixed(2) : x.toFixed(0)) + 'pt');
+      const hit = r.dn.concat(r.up).find(x => x.code === code); imp = hit ? hit.d : 0;
+    }
+    // 店全体への影響
+    let eff = '<span class="yf-of">—</span>';
+    if (mt.type === 'amt'){
+      const share = (r.d && Math.abs(r.d) >= 1) ? d / r.d * 100 : null;
+      if (share != null && isFinite(share) && share > 0.5) eff = '<span style="color:' + colD(d) + ';font-weight:700">店全体の' + (r.d < 0 ? '減少' : '増加') + '分の ' + Math.round(share) + '%</span>';
+    } else if (imp){
+      const good = mt.type === 'cpa' ? imp < 0 : imp > 0;
+      eff = '<span style="color:' + (good ? '#16a34a' : '#dc2626') + ';font-weight:700">店全体を ' + (mt.type === 'cpa' ? '¥' + Math.round(Math.abs(imp)).toLocaleString() : Math.abs(imp).toFixed(mt.type === 'cvr' ? 2 : 1) + 'pt') + (imp < 0 ? ' 下げた' : ' 上げた') + '</span>';
+    }
+    // 影響の大きさの順位
+    const iDn = r.dn.findIndex(x => x.code === code), iUp = r.up.findIndex(x => x.code === code);
+    const rcol = isDn => bd === null ? (isDn ? '#475569' : '#b45309') : (isDn !== bd ? '#dc2626' : '#16a34a');
+    const rank = iDn >= 0 ? '<span class="yf-rk" style="color:' + rcol(true) + '">下げた ' + (iDn + 1) + '位</span><span class="yf-of">／' + r.dn.length + '商品</span>'
+               : iUp >= 0 ? '<span class="yf-rk" style="color:' + rcol(false) + '">上げた ' + (iUp + 1) + '位</span><span class="yf-of">／' + r.up.length + '商品</span>'
+               : '<span class="yf-of">変化なし</span>';
+    rows += '<tr id="yt-blk-' + mt.k + '" data-mk="' + mt.k + '"' + (i && GS.has(mt.k) ? ' class="yf-gs"' : '') + '><td><span class="yf-lb" style="background:' + mt.bg + ';color:' + mt.col + '">' + esc(mt.label) + '</span></td>'
+      + '<td class="yf-v">' + f(a) + '</td><td class="yf-v yf-b">' + f(b) + '</td>'
+      + '<td class="yf-v" style="color:' + colD(d) + ';font-weight:800">' + (d == null ? '—' : fd(d)) + '</td>'
+      + '<td class="yf-e">' + eff + '</td><td>' + rank + '</td></tr>';
+  });
+  const head = '<div class="yf-band">' + (img ? '<img src="' + esc(img) + '" onerror="this.style.display=\'none\'">' : '') + '<span>絞り込み中：</span><span style="color:var(--text)">' + esc(nm) + '</span><span class="yf-cd">' + esc(pc.itemNumber || '') + ' ' + esc(code) + '</span>'
+    + '<button class="yf-x" onclick="setYoyDayFocus(null)">解除して一覧に戻る</button>'
+    + '<button class="yf-x yf-x2" onclick="openRenewalGraph(\'' + esc(code) + '\')" title="商品の詳細（グラフ）を開く">商品の詳細</button></div>';
+  return head + '<table class="yf-tbl"><colgroup><col style="width:150px"><col style="width:120px"><col style="width:120px"><col style="width:130px"><col style="width:210px"><col style="width:200px"></colgroup>'
+    + '<thead><tr><th>指標</th><th>当日 ' + _yoyDayLbl(day, false) + '</th><th>' + (BS.avg ? '直近' + BS.dates.length + '日の平均' : esc(BS.title)) + '</th><th>' + (BS.avg ? '平均との差' : '比べる日との差') + '</th><th>店全体への影響</th><th>影響の大きさの順位</th></tr></thead><tbody>' + rows + '</tbody></table>';
 }
 // 日付の切り替え・比べる相手のボタン
 function _renderYoyDayCtl(){
@@ -16241,7 +16308,7 @@ function _yoyOpenDay(d, ev, noPush){
   if (!noPush) _adcNavPush({ tab:'yoy', kind:'day', v:d });   /* ★v1.1550★ マウスの「戻る」で元の表へ */
   _yoyView = 'top'; try{ localStorage.setItem('adcheck_yoy_view', 'top'); }catch(e){}
   _yoyGrain = 'day'; try{ localStorage.setItem('adcheck_yoy_grain', 'day'); }catch(e){}
-  _yoyDay = d; _yoyDayCmp = 'avg7';
+  _yoyDay = d; _yoyDayCmp = 'avg7'; _yoyDayFocus = null;
   if (typeof _yoyFocusCode !== 'undefined' && _yoyFocusCode){ try{ setYoyTopFocus(null); }catch(e){} }
   switchTab('yoy');
   try{ renderYoy(); }catch(e){}
