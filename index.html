@@ -627,6 +627,20 @@ body.cw-on .cw-has-rest { background-image: repeating-linear-gradient(135deg, rg
 .yd-note { font-size: 11px; color: var(--text3); margin-left: auto; }
 .yd-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .yd-ct { font-size: 12px; font-weight: 800; margin-bottom: 2px; }
+.yd-tbl { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12px; background: var(--surface); }
+.yd-tbl th, .yd-tbl td { border: 1px solid #e5e7eb; padding: 3px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.yd-tbl th { background: #f8fafc; font-size: 10px; color: var(--text3); font-weight: 700; text-align: center; padding: 3px 4px; }
+.yd-tbl tbody tr { cursor: pointer; }
+.yd-tbl tbody tr:hover td { background: #f8fafc; }
+.yd-tbl tr.yt-tile[style*="outline"] { outline-offset: -2px; }
+.yd-tbl td.yd-rk { text-align: right; color: var(--text3); font-size: 11px; padding: 3px 4px; }
+.yd-tbl td.yd-im { padding: 2px; text-align: center; }
+.yd-tbl td.yd-im img { width: 32px; height: 32px; object-fit: cover; border-radius: 4px; display: block; margin: 0 auto; background: #f3f4f6; }
+.yd-tbl td.yd-cd { font-family: 'DM Mono', monospace; font-size: 11px; color: #0f766e; font-weight: 700; }
+.yd-tbl td.yd-nm { color: var(--text); }
+.yd-tbl td.yd-br { padding: 3px 6px; }
+.yd-tbl .yd-bar { display: block; }
+.yd-tbl td.yd-none { text-align: center; color: var(--text3); cursor: default; }
 .yd-row { display: grid; grid-template-columns: 20px minmax(0,1fr) 78px 78px 86px 64px; align-items: center; gap: 6px; padding: 3px 4px; border-top: 1px solid #f1f1f4; border-radius: 4px; cursor: pointer; font-size: 12px; }
 .yd-row.yd-hd { font-size: 10px; color: var(--text3); font-weight: 700; border-top: none; cursor: default; padding-bottom: 1px; }
 .yd-rk { color: var(--text3); font-size: 11px; text-align: right; }
@@ -640,8 +654,8 @@ body.cw-on .cw-has-rest { background-image: repeating-linear-gradient(135deg, rg
 .yd-hd .yd-bar { background: none; }
 .yd-bar i { display: block; height: 100%; border-radius: 4px; }
 .yd-none { color: var(--text3); padding: 8px 4px; font-size: 12px; }
-.yd-go { display: inline-block; margin-left: 6px; padding: 0 6px; border: 1px solid #99d5cc; border-radius: 9px; font-size: 10px; font-weight: 700; line-height: 16px; color: #0f766e; background: #fff; cursor: pointer; vertical-align: 1px; }
-.yd-go:hover { background: #0f766e; color: #fff; border-color: #0f766e; }
+.yd-go { display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; width: 18px; height: 18px; border-radius: 50%; color: #0f766e; cursor: pointer; vertical-align: -4px; opacity: .55; }
+.yd-go:hover { opacity: 1; background: #ccfbf1; }
 /* ★v1.1541★ 消えたあとも透明なまま残るお知らせ（自動保存しました・保存完了など）が、下にあるボタンのクリックを横取りしないように */
 #ssAutoToast, #globalSaveToast, #globalSaveErrToast { pointer-events: none !important; }
 .colw-toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 10001; opacity: 0; transition: opacity .25s; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
@@ -898,7 +912,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1547</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1548</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -16147,16 +16161,20 @@ function renderYoyTopDay(){
   const colOf = (mt, isDn) => neutral(mt) ? (isDn ? '#475569' : '#b45309') : ((isDn ? badDown(mt) : !badDown(mt)) ? '#dc2626' : '#16a34a');
   const barOf = (mt, isDn) => neutral(mt) ? (isDn ? '#94a3b8' : '#fbbf24') : ((isDn ? badDown(mt) : !badDown(mt)) ? '#f87171' : '#4ade80');
   const recent = (() => { const L = _yoyDayList(); const last = L[L.length - 1]; return last && (new Date(last) - new Date(day)) / 864e5 < 3; })();
+  /* ★v1.1548★ 枠付きの表：順位｜画像｜商品番号｜商品名｜当日｜平均｜差｜棒。列の幅は固定で、どの表も縦にそろう（商品名・長い商品番号は末尾を…） */
   const row = (mt, x, i, isDn, mx) => {
-    const pc = productCache[x.code] || {}; const name = pc.manualName || pc.name || x.code;
-    return '<div class="yt-tile yd-row" data-code="'+esc(x.code)+'" title="'+esc(name)+'\n（クリックで選択枠に入れる・もう一度で外す／ダブルクリックで詳細）" onclick="_yoyTopPin(\''+esc(x.code)+'\')" ondblclick="openRenewalGraph(\''+esc(x.code)+'\')" onmouseenter="_yoyTopHi(\''+esc(x.code)+'\',true)" onmouseleave="_yoyTopHi(\''+esc(x.code)+'\',false)">'
-      + '<span class="yd-rk">'+(i+1)+'</span>'
-      + '<span class="yd-nm"><b>'+esc(pc.itemNumber || x.code)+'</b>'+esc(name)+'</span>'
-      + '<span class="yd-v">'+fmtV(mt, x.a)+'</span><span class="yd-v yd-b">'+fmtV(mt, x.b)+'</span>'
-      + '<span class="yd-d" style="color:'+colOf(mt, isDn)+'">'+fmtD(mt, x.d)+'</span>'
-      + '<span class="yd-bar"><i style="width:'+Math.max(2, Math.round(Math.abs(x.d) / mx * 100))+'%;background:'+barOf(mt, isDn)+'"></i></span></div>';
+    const pc = productCache[x.code] || {}; const name = pc.manualName || pc.name || x.code; const img = pc.manualImg || pc.img || '';
+    return '<tr class="yt-tile" data-code="'+esc(x.code)+'" title="'+esc((pc.itemNumber || x.code) + '　' + name)+'\n（クリックで選択枠に入れる・もう一度で外す／ダブルクリックで詳細）" onclick="_yoyTopPin(\''+esc(x.code)+'\')" ondblclick="openRenewalGraph(\''+esc(x.code)+'\')" onmouseenter="_yoyTopHi(\''+esc(x.code)+'\',true)" onmouseleave="_yoyTopHi(\''+esc(x.code)+'\',false)">'
+      + '<td class="yd-rk">'+(i+1)+'</td>'
+      + '<td class="yd-im">'+(img ? '<img src="'+esc(img)+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '')+'</td>'
+      + '<td class="yd-cd">'+esc(pc.itemNumber || x.code)+'</td>'
+      + '<td class="yd-nm">'+esc(name)+'</td>'
+      + '<td class="yd-v">'+fmtV(mt, x.a)+'</td><td class="yd-v yd-b">'+fmtV(mt, x.b)+'</td>'
+      + '<td class="yd-d" style="color:'+colOf(mt, isDn)+'">'+fmtD(mt, x.d)+'</td>'
+      + '<td class="yd-br"><span class="yd-bar"><i style="width:'+Math.max(2, Math.round(Math.abs(x.d) / mx * 100))+'%;background:'+barOf(mt, isDn)+'"></i></span></td></tr>';
   };
-  const colHead = mt => '<div class="yd-row yd-hd"><span class="yd-rk"></span><span class="yd-nm">商品</span><span class="yd-v">当日</span><span class="yd-v">'+(BS.avg ? '平均' : '比べる日')+'</span><span class="yd-d">'+(mt.type === 'amt' ? '差' : '全体への影響')+'</span><span class="yd-bar"></span></div>';
+  const colHead = mt => '<colgroup><col style="width:26px"><col style="width:40px"><col style="width:150px"><col><col style="width:86px"><col style="width:86px"><col style="width:92px"><col style="width:70px"></colgroup>'
+    + '<thead><tr><th>#</th><th>画像</th><th>商品番号</th><th>商品名</th><th>当日</th><th>'+(BS.avg ? '平均' : '比べる日')+'</th><th>'+(mt.type === 'amt' ? '差' : '全体への影響')+'</th><th></th></tr></thead>';
   const cmpLbl = BS.avg ? '平均' : _yoyDayLbl(BS.dates[0] || day, false);
   let html = '<div class="yd-info">'
     + '<span><b>' + _yoyDayLbl(day, true) + '</b>' + (_yoyDaySale(day) ? '<span class="yd-sale">' + esc(_yoyDaySale(day)) + '</span>' : '') + ' と <b>' + esc(BS.title) + '</b> を比較</span>'
@@ -16181,8 +16199,8 @@ function renderYoyTopDay(){
       + '<span class="yd-hv">当日 <b>'+fmtV(mt, r.tA)+'</b><span class="yd-sep">／</span>'+esc(cmpLbl)+' <b>'+fmtV(mt, r.tB)+'</b>'+(dTxt ? '<span class="yd-chg" style="color:'+dCol+'">'+(r.d < 0 ? '▼ ' : r.d > 0 ? '▲ ' : '')+dTxt+'</span>' : '')+'</span>'
       + '<span class="yd-note">'+share+'</span></div>'
       + '<div class="yd-cols">'
-      +   '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, true)+'">▼ 下げた商品</div>'+colHead(mt)+(dn.length ? dn.map((x, i) => row(mt, x, i, true, mx)).join('') : '<div class="yd-none">なし</div>')+'</div>'
-      +   '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, false)+'">▲ 上げた商品</div>'+colHead(mt)+(up.length ? up.map((x, i) => row(mt, x, i, false, mx)).join('') : '<div class="yd-none">なし</div>')+'</div>'
+      +   '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, true)+'">▼ 下げた商品</div><table class="yd-tbl">'+colHead(mt)+'<tbody>'+(dn.length ? dn.map((x, i) => row(mt, x, i, true, mx)).join('') : '<tr><td colspan="8" class="yd-none">なし</td></tr>')+'</tbody></table></div>'
+      +   '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, false)+'">▲ 上げた商品</div><table class="yd-tbl">'+colHead(mt)+'<tbody>'+(up.length ? up.map((x, i) => row(mt, x, i, false, mx)).join('') : '<tr><td colspan="8" class="yd-none">なし</td></tr>')+'</tbody></table></div>'
       + '</div></div>';
   });
   area.innerHTML = html + '</div>';
@@ -16229,7 +16247,7 @@ function _yoyOpenDay(d){
 function _yoyDayLinkHtml(label){
   const m = String(label || '').match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/); if (!m) return '';
   const d = m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
-  return '<span class="yd-go" title="この日の原因を見る（全-比較の日別：どの商品が下げた／上げたか）" onclick="event.stopPropagation();_yoyOpenDay(\''+d+'\')">🔍 原因</span>';
+  return '<span class="yd-go" title="この日の原因を見る（全-比較の日別：どの商品が下げた／上げたか）" onclick="event.stopPropagation();_yoyOpenDay(\''+d+'\')"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6.8" cy="6.8" r="4.8"/><path d="M10.4 10.4L14.5 14.5"/></svg></span>';   /* ★v1.1548★ 虫眼鏡だけ */
 }
 // エクスポート（日別）
 function exportYoyDay(){
