@@ -912,7 +912,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1549</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1550</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -16235,8 +16235,10 @@ function _setYoyGrainUI(){
   }
 }
 // 全-日別データの日付から開く
-function _yoyOpenDay(d){
+function _yoyOpenDay(d, ev, noPush){
   if (!d) return;
+  if (ev && (ev.ctrlKey || ev.metaKey)){ _yoyOpenNewTab('cmpd', d); return; }   /* ★v1.1550★ Ctrl（Mac は⌘）＋クリック＝新しいタブ */
+  if (!noPush) _adcNavPush({ tab:'yoy', kind:'day', v:d });   /* ★v1.1550★ マウスの「戻る」で元の表へ */
   _yoyView = 'top'; try{ localStorage.setItem('adcheck_yoy_view', 'top'); }catch(e){}
   _yoyGrain = 'day'; try{ localStorage.setItem('adcheck_yoy_grain', 'day'); }catch(e){}
   _yoyDay = d; _yoyDayCmp = 'avg7';
@@ -16247,11 +16249,13 @@ function _yoyOpenDay(d){
 function _yoyDayLinkHtml(label){
   const m = String(label || '').match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/); if (!m) return '';
   const d = m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
-  return '<span class="yd-go" title="この日の原因を見る（全-比較の日別：どの商品が下げた／上げたか）" onclick="event.stopPropagation();_yoyOpenDay(\''+d+'\')"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6.8" cy="6.8" r="4.8"/><path d="M10.4 10.4L14.5 14.5"/></svg></span>';   /* ★v1.1548★ 虫眼鏡だけ */
+  return '<span class="yd-go" title="この日の原因を見る（全-比較の日別：どの商品が下げた／上げたか）\nCtrl＋クリックで新しいタブ" onclick="event.stopPropagation();_yoyOpenDay(\''+d+'\',event)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6.8" cy="6.8" r="4.8"/><path d="M10.4 10.4L14.5 14.5"/></svg></span>';   /* ★v1.1548★ 虫眼鏡だけ */
 }
 // ★v1.1549★ 全-月別データの月から開く（寄与度トップ20の月別、その月を選んだ状態）
-function _yoyOpenMonth(ym){
+function _yoyOpenMonth(ym, ev, noPush){
   if (!ym) return;
+  if (ev && (ev.ctrlKey || ev.metaKey)){ _yoyOpenNewTab('cmpm', ym); return; }
+  if (!noPush) _adcNavPush({ tab:'yoy', kind:'month', v:ym });
   _yoyView = 'top'; try{ localStorage.setItem('adcheck_yoy_view', 'top'); }catch(e){}
   _yoyGrain = 'month'; try{ localStorage.setItem('adcheck_yoy_grain', 'month'); }catch(e){}
   if (typeof _yoyFocusCode !== 'undefined' && _yoyFocusCode){ try{ setYoyTopFocus(null); }catch(e){} }
@@ -16263,8 +16267,41 @@ function _yoyOpenMonth(ym){
 function _yoyMonthLinkHtml(label){
   const m = String(label || '').match(/(\d{4})\D(\d{1,2})/); if (!m) return '';
   const ym = m[1] + m[2].padStart(2, '0');
-  return '<span class="yd-go" title="この月の原因を見る（全-比較の寄与度トップ20・月別）" onclick="event.stopPropagation();_yoyOpenMonth(\''+ym+'\')"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6.8" cy="6.8" r="4.8"/><path d="M10.4 10.4L14.5 14.5"/></svg></span>';
+  return '<span class="yd-go" title="この月の原因を見る（全-比較の寄与度トップ20・月別）\nCtrl＋クリックで新しいタブ" onclick="event.stopPropagation();_yoyOpenMonth(\''+ym+'\',event)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6.8" cy="6.8" r="4.8"/><path d="M10.4 10.4L14.5 14.5"/></svg></span>';
 }
+// ★v1.1550★ 新しいタブで全-比較を開く（?tab=yoy&cmpd=日付 ／ &cmpm=年月。ショップも引き継ぐ）
+function _yoyOpenNewTab(key, v){
+  try{
+    let shop = ''; try{ shop = _getSessionShopId() || ''; }catch(e){}
+    const u = location.origin + location.pathname + '?tab=yoy&' + key + '=' + encodeURIComponent(v) + (shop ? '&shop=' + encodeURIComponent(shop) : '');
+    window.open(u, '_blank');
+  }catch(e){ console.warn('[ADcheck] 新しいタブで開けませんでした', e); }
+}
+// ★v1.1550★ ブラウザの「戻る／進む」（マウスの戻るボタン）で、虫眼鏡を押す前の表に戻る
+//   飛ぶ前の画面（タブ・スクロール位置）を今の履歴に書き、飛んだ先を新しい履歴として積む
+function _adcNavSnap(){
+  const st = { tab: _currentTab, sx: window.scrollX, sy: window.scrollY, ws: {} };
+  ['daily-table-wrap','monthly-table-wrap','yoyTopArea'].forEach(id => { const el = document.getElementById(id); if (el && el.offsetParent) st.ws[id] = [el.scrollTop, el.scrollLeft]; });
+  return st;
+}
+function _adcNavPush(to){
+  try{
+    history.replaceState(Object.assign({}, history.state || {}, { adc: Object.assign({ kind:'tab' }, _adcNavSnap()) }), '');
+    history.pushState({ adc: to }, '');
+  }catch(e){}
+}
+window.addEventListener('popstate', function(e){
+  const st = e.state && e.state.adc; if (!st) return;
+  try{
+    if (st.kind === 'day'){ _yoyOpenDay(st.v, null, true); return; }
+    if (st.kind === 'month'){ _yoyOpenMonth(st.v, null, true); return; }
+    if (st.tab){
+      switchTab(st.tab);
+      const restore = () => { try{ Object.keys(st.ws || {}).forEach(id => { const el = document.getElementById(id); if (el){ el.scrollTop = st.ws[id][0]; el.scrollLeft = st.ws[id][1]; } }); window.scrollTo(st.sx || 0, st.sy || 0); }catch(_e){} };
+      restore(); setTimeout(restore, 60); setTimeout(restore, 250);
+    }
+  }catch(err){ console.warn('[ADcheck] 戻る', err); }
+});
 // エクスポート（日別）
 function exportYoyDay(){
   const L = _yoyDayLast; if (!L){ alert('エクスポートできるデータがありません'); return; }
@@ -20686,6 +20723,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     const _wp = _sp.get('wp');
     if (_wp) { _kwIndivCode = _wp; switchTab('kw-watch-prod'); }
     else switchTab(_initTab || 'monthly');
+    // ★v1.1550★ 虫眼鏡の Ctrl＋クリック（新しいタブ）：?cmpd=日付 ／ ?cmpm=年月 で全-比較を開く
+    try{ const _cd = _sp.get('cmpd'), _cm = _sp.get('cmpm'); if (_cd) _yoyOpenDay(_cd, null, true); else if (_cm) _yoyOpenMonth(_cm, null, true); }catch(e){}
     // ★v1.1526★ ?ym=YYYY-MM があれば、商品-売上データの月をその月にする（一括オープン用）
     try{ const _ym = _sp.get('ym'); const _ms = document.getElementById('monthSel'); if (_ym && _ms && [..._ms.options].some(o => o.value === _ym) && _ms.value !== _ym){ _ms.value = _ym; _onMonthChange(); } }catch(e){}
   }
