@@ -1005,7 +1005,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1563</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1564</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -13297,6 +13297,8 @@ function _kwtListToggle(){ _kwtListMin = !_kwtListMin; try{ localStorage.setItem
 function _kwtSel(kw){ _kwtKw = kw; _kwtAutoMonth(); renderKwTrend(true); }
 /* ★v1.1559★ 日別データの「直近30日の平均」「確定30日の平均」スイッチ。ページの中だけで覚える（KWを変えても残る・保存はしない） */
 let _kwtAvgL = false, _kwtAvgS = false;
+let _kwtYoy = false;   /* ★v1.1564★ 月別の［通常｜前年同月比］。前年同月比＝各月を「今年」「前年の同じ月」の2段で出す（保存しない。KWを変えても残る） */
+function _kwtSetYoy(v){ _kwtYoy = !!v; renderKwTrend(); }
 /* ★v1.1562★ KW-個別推移の表のスクロール
    - 表は自分の箱（#kwtTblBox）でスクロールする。箱の高さは「📋 日別データ」の行がKW名の行のすぐ下に来たとき、画面の下までぴったり入る大きさ
    - 表の中でホイールを下に回す：日別データの行がKW名の下に来るまで（＝固定の位置 _kwtLockTop）は全体を動かし、そこからは表だけ動かす
@@ -13448,7 +13450,7 @@ function renderKwTrend(resetScroll){
   }
   // ---- 1点ぶんの数字（商品-当日データの列と同じ計算。日別は「その日時点」、月別は「その月の最終日時点」） ----
   const monthRowsUpTo = (rs, ym, upto) => rs.filter(r => r.date.slice(0,7) === ym && r.date <= upto);
-  const vals = points.map(p => {
+  const _calcVal = p => {   /* ★v1.1564★ 1点ぶんの計算に名前を付けた（前年同月比の前年の行でも同じ計算を使う） */
     if (!p.rows.length || !p.last) return { has:false, p };
     let sp = 0, sa = 0, od = 0, cl = 0, imp = 0; p.rows.forEach(r => { sp += r.spend || 0; sa += r.sales || 0; od += r.orders || 0; cl += r.cl || 0; if ((r.ctr || 0) > 0 && (r.cl || 0) > 0) imp += r.cl * 100 / r.ctr; });   // imp は KW-全体データと同じ計算（クリック÷CTR）
     const vol = _kwiPredVol(monthRowsUpTo(kwAll, p.ym, p.last), p.last);
@@ -13457,7 +13459,8 @@ function renderKwTrend(resetScroll){
     const cv = _kwiCarry(kwAll, p.last);
     const gui = (snapGui && p.last === _nowD) || (snapGui && _kwtGrain === 'month' && p.ym === _nowM) ? snapGui : cv.gui;   /* ★v1.1527★ 登録KWの今の目安は「今」の点に */
     return { has:true, p, sp, sa, od, cl, ctr: imp > 0 ? cl / imp * 100 : null, vol, share: tot > 0 ? vol / tot * 100 : 0, mcl, r3: _kwiRecent3(kwAll, p.last), gui: gui > 0 ? gui : null, act: cv.act > 0 ? cv.act : null };
-  });
+  };
+  const vals = points.map(_calcVal);
   // 入札額・目安CPCは「前の値を引き継ぐ」階段。データの無い日も、それまでの値のまま
   let ca = null, cg = null; const actS = [], guiS = [];
   // ★v1.1477★ 最後のクリックより後の日（＝クリック0が続いている日）の入札は、登録KWファイルの今の入札額
@@ -13482,8 +13485,9 @@ function renderKwTrend(resetScroll){
   const TD = 'padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:right;font-family:\'DM Mono\',monospace';
   const dash = '<span style="color:var(--text3)">—</span>';
   const roasCol = r => r >= 500 ? 'var(--green)' : r >= 300 ? 'var(--amber)' : r > 0 ? 'var(--danger)' : 'var(--text3)';   // 商品-売上データの rc() と同じ基準
+  const _yoy = _kwtGrain === 'month' && _kwtYoy;   /* ★v1.1564★ */
   let tbl = '<table style="width:100%;border-collapse:separate;border-spacing:0"><thead><tr>'
-    + '<th style="' + TH + ';text-align:left;background:#eef2ff">' + (_kwtGrain === 'day' ? '日付' : '月') + '</th>'
+    + '<th' + (_yoy ? ' colspan="2"' : '') + ' style="' + TH + ';text-align:left;background:#eef2ff">' + (_kwtGrain === 'day' ? '日付' : '月') + '</th>'
     + '<th style="' + TH + ';background:#e6f4ea">KWvol</th><th style="' + TH + ';background:#e6f4ea">KW割合</th>'
     // ★v1.1447★ 列順：KW割合 → 目安・入札 → クリック数・CTR → 実績額・注文数・売上 → CVR・ROAS（月クリック合計・直近3日クリックは廃止）
     + '<th style="' + TH + ';background:#ede4fb;color:#7c3aed">目安</th><th style="' + TH + ';background:#dcefca;color:#00897B">入札</th>'
@@ -13529,7 +13533,7 @@ function renderKwTrend(resetScroll){
       if (kwFirst && e >= kwFirst && (e <= kwLast || kwReg)){ const cv = _kwiCarry(kwAll, e); a = cv.act > 0 ? cv.act : null; if (e > _kwLastClick){ const bh = _kwBidAt(code, kw, e); if (bh !== undefined){ if (bh != null) a = bh; } else if (_bidNow) a = _bidNow; } g = (snapGui && e === _nowD) ? snapGui : (cv.gui > 0 ? cv.gui : null); }
       const n0 = v => v ? Math.round(v).toLocaleString() : dash;
       avgRows += '<tr class="kwt-avg xr-' + tk + '" title="' + nm + '（' + _xrYmd(s) + '〜' + _xrYmd(e) + '）の30日の合計。月の行（その月の合計）と同じ大きさで比べられます。KWvol・KW割合はこの30日の数字、目安・入札は ' + _xrYmd(e) + ' 時点。' + XR_TIP[k] + '">'
-        + '<td style="' + TDA + ';text-align:left;font-family:inherit;font-weight:800;color:' + C.t + '">' + nm + ' 合計<span style="font-size:10.5px;font-weight:600;margin-left:8px">' + _xrMd(s) + '〜' + _xrMd(e) + '（30日' + (nd < 30 ? '・データ' + nd + '日' : '') + '）</span></td>'
+        + '<td' + (_yoy ? ' colspan="2"' : '') + ' style="' + TDA + ';text-align:left;font-family:inherit;font-weight:800;color:' + C.t + '">' + nm + ' 合計<span style="font-size:10.5px;font-weight:600;margin-left:8px">' + _xrMd(s) + '〜' + _xrMd(e) + '（30日' + (nd < 30 ? '・データ' + nd + '日' : '') + '）</span></td>'
         + '<td ' + A + '>' + (rr.length ? Math.round(vol).toLocaleString() : dash) + '</td>'
         + '<td ' + A + '>' + (rr.length && tot > 0 ? (vol / tot * 100).toFixed(2) + '%' : dash) + '</td>'
         + '<td ' + A + '>' + (g != null ? Math.round(g).toLocaleString() : dash) + '</td>'
@@ -13559,7 +13563,22 @@ function renderKwTrend(resetScroll){
   });
   tbl += avgRows;
   const zeroTitle = _kwtGrain === 'day' ? 'この日はこのKWのクリックが0回でした（楽天のKWレポートはクリックがあったKWしか載らないため）。目安・入札は前の値' : 'この月はこのKWのクリックが0回でした。目安・入札は前の値';
-  for (let i = vals.length - 1; i >= 0; i--){
+  /* ★v1.1564★ 1行ぶんのセル（月の行・日の行・前年同月比の前年の行で共通。中身は前と同じ） */
+  const _cells = (v, monEdge) => {
+    const roas = v.sp > 0 ? Math.round(v.sa / v.sp * 100) : null;
+    return '<td style="' + TD + ';' + monEdge + 'color:#555">' + Math.round(v.vol).toLocaleString() + '</td>'
+      + '<td style="' + TD + ';' + monEdge + 'color:#555">' + v.share.toFixed(2) + '%</td>'
+      + '<td style="' + TD + ';' + monEdge + 'background:#f6f0fd">' + (v.gui ? v.gui.toLocaleString() : dash) + '</td>'
+      + '<td style="' + TD + ';' + monEdge + 'background:#eef7e8">' + (v.act ? v.act.toLocaleString() : dash) + '</td>'
+      + '<td style="' + TD + ';' + monEdge + '">' + v.cl.toLocaleString() + '</td>'
+      + '<td style="' + TD + ';' + monEdge + '">' + (v.ctr != null ? v.ctr.toFixed(2) + '%' : dash) + '</td>'
+      + '<td style="' + TD + ';' + monEdge + 'font-weight:800">' + (v.sp ? Math.round(v.sp).toLocaleString() : dash) + '</td>'
+      + '<td style="' + TD + ';' + monEdge + '">' + (v.od ? v.od.toLocaleString() : dash) + '</td>'
+      + '<td style="' + TD + ';' + monEdge + 'font-weight:800">' + (v.sa ? Math.round(v.sa).toLocaleString() : dash) + '</td>'
+      + '<td style="' + TD + ';' + monEdge + '">' + (v.cl > 0 ? (v.od / v.cl * 100).toFixed(2) + '%' : dash) + '</td>'
+      + '<td style="' + TD + ';' + monEdge + 'font-weight:800;color:' + (roas == null ? 'var(--text3)' : roasCol(roas)) + '">' + (roas == null ? '—' : roas.toLocaleString() + '%') + '</td>';
+  };
+  const _rowHtml = (i) => { let tbl = '';
     const v = vals[i], p = v.p;
     const zero = isZero(i);
     const dcol = p.wd === 0 ? '#c62828' : p.wd === 6 ? '#1565c0' : 'var(--text)';
@@ -13577,21 +13596,26 @@ function renderKwTrend(resetScroll){
         + '<td style="' + TD + ';' + monEdge + Z + 'background:#f9f6fd">' + (guiS[i] ? guiS[i].toLocaleString() : dash) + '</td>'
         + '<td style="' + TD + ';' + monEdge + Z + 'background:#f4f9f0">' + (actS[i] ? actS[i].toLocaleString() : dash) + '</td>'
         + zc('0') + zc(dash) + zc('0') + zc('0') + zc('0') + zc(dash) + zc(dash) + '</tr>';
-      continue;
+      return tbl;
     }
-    if (!v.has){ tbl += ('<td style="' + TD + ';' + monEdge + '">' + dash + '</td>').repeat(11) + '</tr>'; continue; }
-    const roas = v.sp > 0 ? Math.round(v.sa / v.sp * 100) : null;
-    tbl += '<td style="' + TD + ';' + monEdge + 'color:#555">' + Math.round(v.vol).toLocaleString() + '</td>'
-      + '<td style="' + TD + ';' + monEdge + 'color:#555">' + v.share.toFixed(2) + '%</td>'
-      + '<td style="' + TD + ';' + monEdge + 'background:#f6f0fd">' + (v.gui ? v.gui.toLocaleString() : dash) + '</td>'
-      + '<td style="' + TD + ';' + monEdge + 'background:#eef7e8">' + (v.act ? v.act.toLocaleString() : dash) + '</td>'
-      + '<td style="' + TD + ';' + monEdge + '">' + v.cl.toLocaleString() + '</td>'
-      + '<td style="' + TD + ';' + monEdge + '">' + (v.ctr != null ? v.ctr.toFixed(2) + '%' : dash) + '</td>'
-      + '<td style="' + TD + ';' + monEdge + 'font-weight:800">' + (v.sp ? Math.round(v.sp).toLocaleString() : dash) + '</td>'
-      + '<td style="' + TD + ';' + monEdge + '">' + (v.od ? v.od.toLocaleString() : dash) + '</td>'
-      + '<td style="' + TD + ';' + monEdge + 'font-weight:800">' + (v.sa ? Math.round(v.sa).toLocaleString() : dash) + '</td>'
-      + '<td style="' + TD + ';' + monEdge + '">' + (v.cl > 0 ? (v.od / v.cl * 100).toFixed(2) + '%' : dash) + '</td>'
-      + '<td style="' + TD + ';' + monEdge + 'font-weight:800;color:' + (roas == null ? 'var(--text3)' : roasCol(roas)) + '">' + (roas == null ? '—' : roas.toLocaleString() + '%') + '</td></tr>';
+    if (!v.has){ tbl += ('<td style="' + TD + ';' + monEdge + '">' + dash + '</td>').repeat(11) + '</tr>'; return tbl; }
+    tbl += _cells(v, monEdge) + '</tr>';
+    return tbl; };
+  if (!_yoy){ for (let i = vals.length - 1; i >= 0; i--) tbl += _rowHtml(i); }
+  else {   /* ★v1.1564★ 前年同月比：各月を「今年」「前年の同じ月」の2段に。左に月（2段ぶん）、その右に年。月ごとに地の色を交互に */
+    let g = 0;
+    for (let i = vals.length - 1; i >= 0; i--, g++){
+      const p = points[i], bg = g % 2 === 0 ? '#f3f6fd' : '#fff';
+      const ym0 = _kwtYmAdd(p.ym, -12); const mr0 = allRows.filter(r => r.date.slice(0,7) === ym0); let last0 = mr0.reduce((m, r) => r.date > m ? r.date : m, '');
+      if (!last0){ const me = _kwtS(new Date(+ym0.slice(0,4), +ym0.slice(5,7), 0)); last0 = me < _nowD ? me : _nowD; }
+      const pv = _calcVal({ key: ym0, label: ym0.replace('-','/'), tlabel: ym0.replace('-','/'), rows: kwAll.filter(r => r.date.slice(0,7) === ym0), last: last0, ym: ym0 });
+      const YC = 'text-align:left;font-family:inherit;font-weight:700;color:#64748b;white-space:nowrap';
+      let h = _rowHtml(i).replace(' style="background:#fafafa"', '');
+      h = h.replace(/^(<tr[^>]*)>/, '$1 style="background:' + bg + '">');
+      h = h.replace(/(<tr[^>]*>)<td style="[^"]*">([^<]*)(.*?)<\/td>/, function(m0, tr, lab, rest){ return tr + '<td rowspan="2" style="' + TD + ';text-align:center;font-family:inherit;font-weight:800;color:var(--text);vertical-align:middle;background:' + bg + '">' + (+p.ym.slice(5,7)) + '月</td><td style="' + TD + ';' + YC + '">' + p.ym.slice(0,4) + '年' + rest + '</td>'; });
+      tbl += h;
+      tbl += '<tr style="background:' + bg + '" title="' + ym0.replace('-','/') + '（前年の同じ月）"><td style="' + TD + ';' + YC + '">' + ym0.slice(0,4) + '年</td>' + (pv.has ? _cells(pv, '') : ('<td style="' + TD + '">' + dash + '</td>').repeat(11)) + '</tr>';
+    }
   }
   tbl += '</tbody></table>';
   const st = bodyEl.scrollTop; const _ob = document.getElementById('kwtTblBox'); const stIn = _ob ? _ob.scrollTop : 0;   /* ★v1.1562★ 表の箱の中の位置も残す */
@@ -13603,6 +13627,8 @@ function renderKwTrend(resetScroll){
   bodyEl.innerHTML = kwHead + ctl + zeroNote + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">' + tg + '</div>'
     + '<div style="position:relative;height:430px;margin-bottom:14px"><canvas id="kwTrendCanvas"></canvas></div>'
     + '<div id="kwtDataHead" style="font-size:13px;font-weight:700;color:var(--text2);margin:4px 0 6px;display:flex;align-items:center;flex-wrap:wrap;gap:6px"><span style="margin-right:8px">📋 ' + (_kwtGrain === 'day' ? '日別' : '月別') + 'データ</span>'
+    + (_kwtGrain === 'month' ? (function(){ const B = (lbl, on, v, tip) => '<button type="button" onclick="_kwtSetYoy(' + v + ')" title="' + tip + '" style="font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;' + (on ? 'border:1px solid #3b82f6;background:#3b82f6;color:#fff' : 'border:1px solid var(--border);background:var(--surface2);color:var(--text2)') + '">' + lbl + '</button>';   /* ★v1.1564★ */
+        return '<span style="display:inline-flex;gap:4px;margin-right:8px">' + B('通常', !_kwtYoy, 'false', '月ごとに1行') + B('前年同月比', _kwtYoy, 'true', '月ごとに「今年」と「前年の同じ月」を2段で並べる') + '</span>'; })() : '')
     + [['l', 'l30', _kwtAvgL, 'xr-l'], ['s', 's30', _kwtAvgS, 'xr-s']].map(([tk, k, onv, cls]) => { const r = _xrRange(k).map(_xrYmd).join('〜'), nm = XR_NAME[k];   /* ★v1.1559★ ★v1.1563★ 月別は「合計」 */
         const w = _kwtGrain === 'day' ? '1日あたりの平均' : '30日の合計';
         return _tgSwitchHtml("_kwtAvgTg('" + tk + "')", nm + (_kwtGrain === 'day' ? 'の平均' : 'の合計'), onv, 'ON：表の一番上に' + nm + '（' + r + '）の' + w + 'を表示中。押すと OFF', 'OFF：押すと ON（表の一番上に' + nm + ' ' + r + ' の' + w + 'の行が入る）。' + XR_TIP[k], cls); }).join('')
