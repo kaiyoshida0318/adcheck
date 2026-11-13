@@ -1005,7 +1005,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1561</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1562</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -13297,6 +13297,30 @@ function _kwtListToggle(){ _kwtListMin = !_kwtListMin; try{ localStorage.setItem
 function _kwtSel(kw){ _kwtKw = kw; _kwtAutoMonth(); renderKwTrend(true); }
 /* ★v1.1559★ 日別データの「直近30日の平均」「確定30日の平均」スイッチ。ページの中だけで覚える（KWを変えても残る・保存はしない） */
 let _kwtAvgL = false, _kwtAvgS = false;
+/* ★v1.1562★ KW-個別推移の表のスクロール
+   - 表は自分の箱（#kwtTblBox）でスクロールする。箱の高さは「📋 日別データ」の行がKW名の行のすぐ下に来たとき、画面の下までぴったり入る大きさ
+   - 表の中でホイールを下に回す：日別データの行がKW名の下に来るまで（＝固定の位置 _kwtLockTop）は全体を動かし、そこからは表だけ動かす
+   - 表の中でホイールを上に回す：表だけ動かす。表が一番上まで戻ったら、固定の位置ではそれ以上動かない（固定の位置より上にいるときは全体が動く）
+   - 表の外でホイールを回す：今までどおり全体が動く */
+var _KWT_GAP = 4;
+function _kwtZoom(el){ const h = el.offsetHeight; return h ? (el.getBoundingClientRect().height / h) || 1 : 1; }
+function _kwtLockTop(){ const b = document.getElementById('kwTrendBody'), dh = document.getElementById('kwtDataHead'), kh = document.getElementById('kwTrendHead'); if (!b || !dh) return 0;
+  const k = _kwtZoom(b); const off = (dh.getBoundingClientRect().top - b.getBoundingClientRect().top) / k + b.scrollTop;   /* 日別データの行の、枠の中での位置 */
+  return Math.max(0, Math.round(off - ((kh ? kh.offsetHeight : 0) + _KWT_GAP))); }
+function _kwtFitBox(){ const b = document.getElementById('kwTrendBody'), box = document.getElementById('kwtTblBox'), dh = document.getElementById('kwtDataHead'), kh = document.getElementById('kwTrendHead'); if (!b || !box || !dh) return;
+  const k = _kwtZoom(b); const between = (box.getBoundingClientRect().top - dh.getBoundingClientRect().top) / k;   /* 日別データの行の上から表の箱の上まで */
+  const padB = parseFloat(getComputedStyle(b).paddingBottom) || 0;
+  const h = b.clientHeight - ((kh ? kh.offsetHeight : 0) + _KWT_GAP) - between - padB;
+  box.style.maxHeight = Math.max(220, Math.floor(h)) + 'px';
+  if (!box._kwtWheel){ box._kwtWheel = true; box.addEventListener('wheel', _kwtWheel, { passive:false }); } }
+function _kwtWheel(e){ if (e.ctrlKey) return; const b = document.getElementById('kwTrendBody'), box = e.currentTarget; if (!b) return;
+  let dy = e.deltaY; if (e.deltaMode === 1) dy *= 16; else if (e.deltaMode === 2) dy *= b.clientHeight;
+  if (!dy || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+  const L = Math.min(_kwtLockTop(), b.scrollHeight - b.clientHeight);
+  if (dy > 0 && b.scrollTop < L - 1){ e.preventDefault(); const need = L - b.scrollTop; if (dy <= need) b.scrollTop += dy; else { b.scrollTop = L; box.scrollTop += dy - need; } return; }
+  if (dy < 0 && box.scrollTop <= 0 && b.scrollTop < L - 1){ e.preventDefault(); b.scrollTop += dy; return; }
+  /* それ以外は表の箱がふつうにスクロールする（overscroll-behavior:contain で、端に来ても全体には伝わらない＝日別データの行で止まる） */ }
+window.addEventListener('resize', function(){ const m = document.getElementById('kwTrendModal'); if (m && m.style.display !== 'none') { try{ _kwtFitBox(); }catch(e){} } });
 function _kwtAvgTg(k){ if (k === 'l') _kwtAvgL = !_kwtAvgL; else _kwtAvgS = !_kwtAvgS; renderKwTrend(); }
 function _tgSwitchHtml(onclick, label, on, tipOn, tipOff, cls){
   const e = t => String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
@@ -13454,7 +13478,7 @@ function renderKwTrend(resetScroll){
   const tg = KWT_SERIES.filter(s => !(_kwtGrain === 'month' && s.k === 'act')).map(s => { const on = !_kwtHidden.has(s.k); return '<button onclick="_kwtToggle(\'' + s.k + '\')" style="font-size:12px;font-weight:700;padding:5px 13px;border-radius:7px;cursor:pointer;border:2px solid ' + s.col + ';background:' + (on ? s.col : 'transparent') + ';color:' + (on ? '#fff' : 'var(--text3)') + ';' + (on ? '' : 'text-decoration:line-through;opacity:.55;') + '">● ' + s.label + '</button>'; }).join('');
   // 表
   // ★v1.1462★ 見出しは右側の枠の上端（上の余白12pxぶん上）にぴったり固定。top:0 だと余白のすき間から下の行が透けて見えていた
-  const TH = 'padding:7px 10px;font-size:11px;font-weight:700;color:#444;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:calc(var(--kwth, 0px) - 12px);z-index:2;text-align:right';   /* ★v1.1532★ 固定したKW名の行（高さ --kwth）のすぐ下に貼り付く */
+  const TH = 'padding:7px 10px;font-size:11px;font-weight:700;color:#444;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2;text-align:right';   /* ★v1.1562★ 表は自分の箱（#kwtTblBox）でスクロールするので、見出しは箱の一番上に貼り付く */
   const TD = 'padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:right;font-family:\'DM Mono\',monospace';
   const dash = '<span style="color:var(--text3)">—</span>';
   const roasCol = r => r >= 500 ? 'var(--green)' : r >= 300 ? 'var(--amber)' : r > 0 ? 'var(--danger)' : 'var(--text3)';   // 商品-売上データの rc() と同じ基準
@@ -13548,7 +13572,7 @@ function renderKwTrend(resetScroll){
       + '<td style="' + TD + ';' + monEdge + 'font-weight:800;color:' + (roas == null ? 'var(--text3)' : roasCol(roas)) + '">' + (roas == null ? '—' : roas.toLocaleString() + '%') + '</td></tr>';
   }
   tbl += '</tbody></table>';
-  const st = bodyEl.scrollTop;
+  const st = bodyEl.scrollTop; const _ob = document.getElementById('kwtTblBox'); const stIn = _ob ? _ob.scrollTop : 0;   /* ★v1.1562★ 表の箱の中の位置も残す */
   const zeroNote = kwAll.length ? '' : '<div style="font-size:12px;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 12px;margin-bottom:8px">このKWは登録中ですが、まだ一度もクリックがないためデータがありません（KWレポートはクリックがあったKWしか載りません）。' + (snapGui ? '　登録中の目安CPC：¥' + snapGui : '') + '</div>';
   // ★v1.1455★ 選択中のKWは右上ではなく左上に大きく。ダブルクリックでKW全体が選択される（そのまま Ctrl+C でコピー）
   const kwHead = '<div id="kwTrendHead" style="display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:0 0 8px;border-bottom:1px solid var(--border);position:sticky;top:-12px;z-index:5;background:var(--surface)">'   /* ★v1.1532★ 選択中のKW名は、下にスクロールしても上に固定 */
@@ -13556,17 +13580,17 @@ function renderKwTrend(resetScroll){
     + '<span ondblclick="_selAll(this,event)" title="ダブルクリックで全体を選択" style="font-size:20px;font-weight:800;color:var(--text);word-break:break-all">' + esc(kw) + '</span>' + _kwtJudgeHtml(code, kw, _JM) + '</div>';   /* ★v1.1533★ 右に「判定｜対応」（商品-当日データと同じもの） */
   bodyEl.innerHTML = kwHead + ctl + zeroNote + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">' + tg + '</div>'
     + '<div style="position:relative;height:430px;margin-bottom:14px"><canvas id="kwTrendCanvas"></canvas></div>'
-    + '<div style="font-size:13px;font-weight:700;color:var(--text2);margin:4px 0 6px;display:flex;align-items:center;flex-wrap:wrap;gap:6px"><span style="margin-right:8px">📋 ' + (_kwtGrain === 'day' ? '日別' : '月別') + 'データ</span>'
+    + '<div id="kwtDataHead" style="font-size:13px;font-weight:700;color:var(--text2);margin:4px 0 6px;display:flex;align-items:center;flex-wrap:wrap;gap:6px"><span style="margin-right:8px">📋 ' + (_kwtGrain === 'day' ? '日別' : '月別') + 'データ</span>'
     + (_kwtGrain === 'day' ? [['l', 'l30', _kwtAvgL, 'xr-l'], ['s', 's30', _kwtAvgS, 'xr-s']].map(([tk, k, onv, cls]) => { const r = _xrRange(k).map(_xrYmd).join('〜'), nm = XR_NAME[k];   /* ★v1.1559★ */
         return _tgSwitchHtml("_kwtAvgTg('" + tk + "')", nm + 'の平均', onv, 'ON：表の一番上に' + nm + '（' + r + '）の1日あたりの平均を表示中。押すと OFF', 'OFF：押すと ON（表の一番上に' + nm + ' ' + r + ' の1日あたりの平均の行が入る）。' + XR_TIP[k], cls); }).join('') : '')
     + '<span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:6px">（KWvol・KW割合・目安・入札は 日別＝その日時点、月別＝その月の最終日時点。クリック数〜ROAS は 日別＝その日、月別＝その月の合計）</span>'
     + ((bidChg.length && _kwtGrain === 'day') ? '<span style="margin-left:10px;font-size:11px;font-weight:700;color:#00897B;white-space:nowrap"><span style="display:inline-block;border:2px dashed #00897B;border-radius:3px;padding:0 5px;margin-right:4px">点線枠</span>＝入札額を変えた' + (_kwtGrain === 'day' ? '日' : '月') + '</span>' : '') + '</div>'
-    + '<div style="border:1px solid var(--border);border-radius:8px">' + tbl + '</div>';
+    + '<div id="kwtTblBox" style="border:1px solid var(--border);border-radius:8px;overflow:auto;overscroll-behavior:contain">' + tbl + '</div>';   /* ★v1.1562★ 表だけでスクロールする箱（高さは _kwtFitBox） */
   { const _kh = document.getElementById('kwTrendHead'); bodyEl.style.setProperty('--kwth', (_kh ? _kh.offsetHeight : 0) + 'px');   /* ★v1.1532★ 表の見出しを KW名の行の下に */
     /* ★v1.1559★ 平均の行も列名の下で止める。2行のときは 2px 重ねる（すき間から下の行が透けないように） */
-    const _th = bodyEl.querySelector('table thead'); let _tA = (_kh ? _kh.offsetHeight : 0) - 12 + (_th ? _th.offsetHeight : 0);
+    const _th = bodyEl.querySelector('table thead'); let _tA = (_th ? _th.offsetHeight : 0);   /* ★v1.1562★ 箱の中なので、見出しの高さだけ */
     bodyEl.querySelectorAll('tr.kwt-avg').forEach(tr => { tr.querySelectorAll('td').forEach(c => { c.style.top = _tA + 'px'; }); _tA += tr.offsetHeight - 2; }); }
-  bodyEl.scrollTop = resetScroll ? 0 : st;
+  _kwtFitBox(); bodyEl.scrollTop = resetScroll ? 0 : st; { const _nb = document.getElementById('kwtTblBox'); if (_nb) _nb.scrollTop = resetScroll ? 0 : stIn; }
   // ---- グラフ ----
   try{ if (_kwtChart) _kwtChart.destroy(); }catch(e){} _kwtChart = null;
   const ctx = document.getElementById('kwTrendCanvas'); if (!ctx || typeof Chart === 'undefined') return;
