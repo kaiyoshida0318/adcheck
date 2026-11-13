@@ -689,6 +689,27 @@ img.yf-link:hover { outline: 2px solid #0f766e; }
 .yd-none { color: var(--text3); padding: 8px 4px; font-size: 12px; }
 .yd-go { display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; width: 18px; height: 18px; border-radius: 50%; color: #0f766e; cursor: pointer; vertical-align: -4px; opacity: .55; }
 .yd-go:hover { opacity: 1; background: #ccfbf1; }
+/* ★v1.1557★ 容量・重さ */
+.pf-modal { max-width: 620px; max-height: 88vh; overflow-y: auto; }
+.pf-sub { font-size: 11px; color: var(--text3); margin: 4px 0 6px; }
+.pf-sec { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-top: 10px; background: var(--surface); }
+.pf-st { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+.pf-st b { color: var(--text); font-size: 13px; }
+.pf-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
+.pf-tbl td { padding: 3px 4px; border-top: 1px solid #f1f1f4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-tbl tr:first-child td { border-top: none; }
+.pf-tbl tr.pf-h td { font-size: 10px; color: var(--text3); font-weight: 700; }
+.pf-n { text-align: right; font-family: 'DM Mono', monospace; }
+.pf-f { font-family: 'DM Mono', monospace; font-size: 11px; }
+.pf-bar { display: block; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+.pf-bar i { display: block; height: 100%; background: #94a3b8; border-radius: 4px; }
+.pf-worst td { font-weight: 700; }
+.pf-worst .pf-bar i { background: #f97316; }
+.pf-note { font-size: 11px; color: var(--text3); margin-top: 5px; white-space: normal; }
+.pf-ok { color: #16a34a; font-weight: 700; font-size: 11px; }
+.pf-mid { color: #b45309; font-weight: 700; font-size: 11px; }
+.pf-bad { color: #dc2626; font-weight: 700; font-size: 11px; }
+.pf-btn { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); cursor: pointer; font-weight: 600; }
 /* ★v1.1541★ 消えたあとも透明なまま残るお知らせ（自動保存しました・保存完了など）が、下にあるボタンのクリックを横取りしないように */
 #ssAutoToast, #globalSaveToast, #globalSaveErrToast { pointer-events: none !important; }
 .colw-toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 10001; opacity: 0; transition: opacity .25s; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
@@ -854,6 +875,32 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script>
+/* ★v1.1557★ 容量・重さの記録（設定 →「⏱ 動作診断」）。起動の各段階の時刻と、GitHub から読んだファイルの大きさ・時間を覚えておく */
+window._adcPerf = { marks: [], files: [] };
+function _adcMark(name){ try{ window._adcPerf.marks.push({ name, t: performance.now() }); }catch(e){} }
+(function(){
+  try{
+    const of = window.fetch; if (!of || of.__adcWrapped) return;
+    const nf = function(input, init){
+      const url = (typeof input === 'string') ? input : (input && input.url) || '';
+      const method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      const watch = method === 'GET' && /api\.github\.com\/repos\/[^/]+\/[^/]+\/contents\/|raw\.githubusercontent\.com\//.test(url);
+      if (!watch) return of.apply(this, arguments);
+      const t0 = performance.now();
+      const m = url.match(/\/contents\/([^?]+)|\/(?:main|[0-9a-f]{40})\/([^?]+)/);
+      const rec = { file: m ? decodeURIComponent(m[1] || m[2]) : url, via: /raw\.githubusercontent/.test(url) ? 'raw' : 'api', t0, t1: 0, t2: 0, size: 0, status: 0 };
+      window._adcPerf.files.push(rec);
+      return of.apply(this, arguments).then(res => {
+        rec.t1 = performance.now(); rec.status = res.status;
+        const wrap = k => { const o = res[k]; if (typeof o !== 'function') return; res[k] = function(){ return o.apply(res, arguments).then(v => { rec.t2 = performance.now(); try{ rec.size = (typeof v === 'string') ? v.length : (v && v.byteLength) ? v.byteLength : (k === 'json' ? (+(res.headers.get('content-length')) || 0) : 0); }catch(e){} return v; }); }; };
+        ['text', 'json', 'arrayBuffer'].forEach(wrap);
+        return res;
+      }, err => { rec.t1 = performance.now(); rec.status = -1; throw err; });
+    };
+    nf.__adcWrapped = true; window.fetch = nf;
+  }catch(e){}
+})();
+_adcMark('script');
   /* CSS zoom(html)使用時、Chart.jsのホバー座標がブラウザ差でずれる問題への恒久対策。
      getBoundingClientRect()とclientXは常に同じ座標空間(ズーム適用後の表示px)なので、
      矩形に対する比率でchartの論理座標へ変換し直す。この比率換算はズーム実装に依存せず常に正しい。
@@ -945,7 +992,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1556</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1558</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -2137,6 +2184,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
       <button class="header-btn" onclick="closeSettingsMenu();openSettings()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">⚙ 基礎情報入力</button>
       <button class="header-btn" onclick="closeSettingsMenu();openBulkNameModal()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">📋 商品情報一括更新</button>
+      <button class="header-btn" onclick="closeSettingsMenu();openPerfPanel()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">⏱ 動作診断（重いとき用）</button>
       <button class="header-btn" onclick="closeSettingsMenu();openDbgLog()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">📋 ログ（不具合報告用）</button>
       <button class="header-btn danger-btn" onclick="closeSettingsMenu();confirmClearAll()" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 16px;font-size:14px">🗑 データ削除</button>
     </div>
@@ -16387,6 +16435,100 @@ function _yoyMonthLinkHtml(label){
   const ym = m[1] + m[2].padStart(2, '0');
   return '<span class="yd-go" title="この月の原因を見る（全-比較の寄与度トップ20・月別）\nCtrl＋クリックで新しいタブ" onclick="event.stopPropagation();_yoyOpenMonth(\''+ym+'\',event)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6.8" cy="6.8" r="4.8"/><path d="M10.4 10.4L14.5 14.5"/></svg></span>';
 }
+// ★v1.1557★ 設定 →「⏱ 動作診断」
+function _perfFmtB(n){ if (!(n > 0)) return '—'; if (n >= 1048576) return (n / 1048576).toFixed(1) + 'MB'; if (n >= 1024) return Math.round(n / 1024) + 'KB'; return n + 'B'; }
+function _perfFmtS(ms){ if (!(ms >= 0)) return '—'; return ms >= 1000 ? (ms / 1000).toFixed(1) + '秒' : Math.round(ms) + 'ms'; }
+const _PERF_STEPS = [
+  ['dom',     'ページ本体（ツールのファイル）の読み込み'],
+  ['misc',    '共有の設定'],
+  ['data',    '広告・売上データ本体'],
+  ['analyze', '分析リスト・メモ'],
+  ['cpa',     'クーポン（CA調整）'],
+  ['micol',   '項目名の設定'],
+  ['ittrend', '商品-推移の設定'],
+  ['stock',   '在庫切れの記録'],
+  ['render',  '最初の画面の表示'],
+];
+function _perfSteps(){
+  const M = {}; (window._adcPerf.marks || []).forEach(m => { M[m.name] = m.t; });
+  const nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || null;
+  const dcl = nav ? nav.domContentLoadedEventStart : (M.start || 0);
+  const pts = [['dom', 0, dcl], ['misc', M.start, M.misc], ['data', M.misc, M.data], ['analyze', M.data, M.analyze], ['cpa', M.analyze, M.cpa], ['micol', M.cpa, M.micol], ['ittrend', M.micol, M.ittrend], ['stock', M.ittrend, M.stock], ['render', M.stock, M.render]];
+  return { rows: pts.map(([k, a, b]) => ({ k, label: (_PERF_STEPS.find(s => s[0] === k) || [k, k])[1], ms: (a != null && b != null && b >= a) ? b - a : null })), total: M.render || null };
+}
+function _perfStores(){
+  const sz = v => { try{ return JSON.stringify(v).length; }catch(e){ return 0; } };
+  let idd = 0; try{ Object.keys(itemDailyData || {}).forEach(c => { idd += Object.keys(itemDailyData[c] || {}).length; }); }catch(e){}
+  try{ _cpaLoad(); _cpaLoadKw && _cpaLoadKw(); }catch(e){}
+  const L = [
+    ['KW別の日別データ', (typeof kwRows !== 'undefined' ? kwRows : []).length, '行', sz(typeof kwRows !== 'undefined' ? kwRows : [])],
+    ['商品別の日別データ（広告）', idd, '件', sz(typeof itemDailyData !== 'undefined' ? itemDailyData : {})],
+    ['商品別の売上データ', (typeof salesRows !== 'undefined' ? salesRows : []).length, '行', sz(typeof salesRows !== 'undefined' ? salesRows : [])],
+    ['店全体の日別データ', (typeof dailyRows !== 'undefined' ? dailyRows : []).length, '行', sz(typeof dailyRows !== 'undefined' ? dailyRows : [])],
+    ['クーポン（商品・KW）', ((typeof couponAdvanceRows !== 'undefined' ? couponAdvanceRows : []) || []).length + ((typeof couponAdvanceKwRows !== 'undefined' ? couponAdvanceKwRows : []) || []).length, '行', sz(typeof couponAdvanceRows !== 'undefined' ? couponAdvanceRows : []) + sz(typeof couponAdvanceKwRows !== 'undefined' ? couponAdvanceKwRows : [])],
+    ['商品の情報', Object.keys(typeof productCache !== 'undefined' ? productCache : {}).length, '商品', sz(typeof productCache !== 'undefined' ? productCache : {})],
+  ];
+  return L.sort((a, b) => b[3] - a[3]);
+}
+function _perfLocal(){
+  const out = []; let tot = 0;
+  try{ for (let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); const v = localStorage.getItem(k) || ''; const n = k.length + v.length; tot += n; out.push([k, n]);   /* ブラウザの上限は文字数で数える（約520万文字） */ } }catch(e){}
+  out.sort((a, b) => b[1] - a[1]);
+  return { tot, top: out.slice(0, 6), n: out.length };
+}
+function openPerfPanel(){
+  let m = document.getElementById('perfModal');
+  if (!m){ m = document.createElement('div'); m.id = 'perfModal'; m.className = 'modal-overlay'; m.onclick = e => { if (e.target === m) closePerfPanel(); }; document.body.appendChild(m); }
+  m.innerHTML = '<div class="modal pf-modal"><h3 style="margin:0 0 4px">⏱ 動作診断</h3><div class="pf-sub">計算中…</div></div>';
+  m.classList.add('open');
+  setTimeout(_perfRender, 30);
+}
+function closePerfPanel(){ const m = document.getElementById('perfModal'); if (m) m.classList.remove('open'); }
+function _perfRender(){
+  const m = document.getElementById('perfModal'); if (!m) return;
+  const esc = t => String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const S = _perfSteps(), F = (window._adcPerf.files || []).filter(f => f.t2 || f.t1), D = _perfStores(), LS = _perfLocal();
+  const shop = (() => { try{ return _shopName(_getSessionShopId()) || ''; }catch(e){ return ''; } })();
+  const mem = performance.memory || null;
+  const html = document.documentElement.outerHTML.length;
+  const nodes = document.getElementsByTagName('*').length;
+  // 1. 起動
+  const mx = Math.max(1, ...S.rows.map(r => r.ms || 0));
+  const worst = S.rows.reduce((a, r) => (r.ms || 0) > ((a && a.ms) || 0) ? r : a, null);
+  const lvl = t => t == null ? '' : t < 3000 ? '<span class="pf-ok">軽い</span>' : t < 8000 ? '<span class="pf-mid">ふつう</span>' : '<span class="pf-bad">重い</span>';
+  let h = '<div class="pf-sub">' + esc(shop) + '　このタブを開いたときの記録です（再読み込みすると測り直します）</div>';
+  h += '<div class="pf-sec"><div class="pf-st">起動にかかった時間　<b>' + _perfFmtS(S.total) + '</b> ' + lvl(S.total) + '</div>';
+  h += '<table class="pf-tbl"><colgroup><col style="width:230px"><col style="width:70px"><col></colgroup>' + S.rows.map(r => '<tr' + (worst && r.k === worst.k ? ' class="pf-worst"' : '') + '><td>' + esc(r.label) + '</td><td class="pf-n">' + _perfFmtS(r.ms) + '</td><td><span class="pf-bar"><i style="width:' + Math.max(1, Math.round((r.ms || 0) / mx * 100)) + '%"></i></span></td></tr>').join('') + '</table>';
+  if (worst && worst.ms) h += '<div class="pf-note">いちばん時間がかかっているのは「' + esc(worst.label) + '」です。</div>';
+  h += '</div>';
+  // 2. ファイル
+  const fs = F.slice().sort((a, b) => (b.size || 0) - (a.size || 0));
+  const fTot = fs.reduce((t, f) => t + (f.size || 0), 0);
+  h += '<div class="pf-sec"><div class="pf-st">GitHub から読み込んだファイル　<b>' + fs.length + '件・' + _perfFmtB(fTot) + '</b></div>';
+  h += '<table class="pf-tbl"><colgroup><col><col style="width:80px"><col style="width:80px"></colgroup><tr class="pf-h"><td>ファイル</td><td class="pf-n">大きさ</td><td class="pf-n">時間</td></tr>' + fs.slice(0, 12).map(f => '<tr><td class="pf-f">' + esc(f.file) + (f.status && f.status !== 200 ? ' <span class="pf-mid">(' + f.status + ')</span>' : '') + '</td><td class="pf-n">' + _perfFmtB(f.size) + '</td><td class="pf-n">' + _perfFmtS((f.t2 || f.t1) - f.t0) + '</td></tr>').join('') + '</table>';
+  if (fs.length > 12) h += '<div class="pf-note">ほか ' + (fs.length - 12) + '件（小さいもの）</div>';
+  h += '</div>';
+  // 3. データ量
+  const dTot = D.reduce((t, r) => t + r[3], 0);
+  h += '<div class="pf-sec"><div class="pf-st">ツールの中のデータ　<b>約' + _perfFmtB(dTot) + '</b></div><table class="pf-tbl"><colgroup><col><col style="width:110px"><col style="width:80px"></colgroup>'
+    + D.map(r => '<tr><td>' + esc(r[0]) + '</td><td class="pf-n">' + (+r[1]).toLocaleString() + r[2] + '</td><td class="pf-n">' + _perfFmtB(r[3]) + '</td></tr>').join('') + '</table></div>';
+  // 4. このパソコン
+  const lsMax = 5 * 1048576, lsPct = Math.round(LS.tot / lsMax * 100);   // 文字数（1文字≒1）で5M
+  h += '<div class="pf-sec"><div class="pf-st">このパソコン・このタブ</div><table class="pf-tbl"><colgroup><col><col style="width:260px"></colgroup>'
+    + '<tr><td>ブラウザの保存領域（localStorage）</td><td class="pf-n">' + _perfFmtB(LS.tot) + '／約5MB（' + lsPct + '%）' + (lsPct >= 80 ? ' <span class="pf-bad">残りわずか</span>' : '') + '</td></tr>'
+    + (mem ? '<tr><td>このタブが使っているメモリ</td><td class="pf-n">' + _perfFmtB(mem.usedJSHeapSize) + '／' + _perfFmtB(mem.jsHeapSizeLimit) + '</td></tr>' : '')
+    + '<tr><td>画面の部品の数（今の画面）</td><td class="pf-n">' + nodes.toLocaleString() + '個' + (nodes > 60000 ? ' <span class="pf-mid">多い</span>' : '') + '</td></tr>'
+    + '<tr><td>ツール本体（index.html）</td><td class="pf-n">約' + _perfFmtB(html) + '</td></tr>'
+    + '</table><div class="pf-note">保存領域の大きいもの：' + LS.top.slice(0, 4).map(x => esc(x[0]) + '（' + _perfFmtB(x[1]) + '）').join('、') + '</div></div>';
+  m.innerHTML = '<div class="modal pf-modal"><div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0;flex:1">⏱ 動作診断</h3><button class="pf-btn" onclick="_perfCopy()">📋 コピー（相談用）</button><button class="pf-btn" onclick="_perfRender()">🔄 計り直す</button></div>' + h
+    + '<div style="margin-top:14px;text-align:right"><button class="header-btn" onclick="closePerfPanel()" style="font-size:13px">閉じる</button></div></div>';
+  window._perfLastText = '【ADcheck 動作診断】' + new Date().toLocaleString('ja-JP') + ' ' + shop + ' ' + (document.querySelector('.build-date') || {}).textContent
+    + '\n起動 ' + _perfFmtS(S.total) + '\n' + S.rows.map(r => '  ' + r.label + '：' + _perfFmtS(r.ms)).join('\n')
+    + '\nファイル ' + fs.length + '件 ' + _perfFmtB(fTot) + '\n' + fs.slice(0, 12).map(f => '  ' + f.file + '：' + _perfFmtB(f.size) + '・' + _perfFmtS((f.t2 || f.t1) - f.t0)).join('\n')
+    + '\nデータ\n' + D.map(r => '  ' + r[0] + '：' + (+r[1]).toLocaleString() + r[2] + '・' + _perfFmtB(r[3])).join('\n')
+    + '\n保存領域 ' + _perfFmtB(LS.tot) + '（' + lsPct + '%）' + (mem ? '　メモリ ' + _perfFmtB(mem.usedJSHeapSize) : '') + '　部品 ' + nodes + '個';
+}
+function _perfCopy(){ try{ navigator.clipboard.writeText(window._perfLastText || ''); const b = event && event.target; if (b){ const o = b.textContent; b.textContent = '✓ コピーしました'; setTimeout(() => { b.textContent = o; }, 1500); } }catch(e){} }
 // ★v1.1550★ 新しいタブで全-比較を開く（?tab=yoy&cmpd=日付 ／ &cmpm=年月。ショップも引き継ぐ）
 function _yoyOpenNewTab(key, v){
   try{
@@ -20775,11 +20917,13 @@ function _miscSchedulePublish(){ if(_miscSuppress) return; if(_miscPubTimer) cle
 
 // ── Init ──
 window.addEventListener('DOMContentLoaded', async () => {
+  _adcMark('start');
   const id = localStorage.getItem('rakuten_app_id') || '';
   const ak = localStorage.getItem('rakuten_access_key') || '';
   updateApiStatus(id, ak);
   // 全PC同期: 汎用設定を取得してからUIを描画
   try{ await _miscFetch(); }catch(e){}
+  _adcMark('misc');
   // ショップメニュー初期描画
   _renderShopMenu();
   // ヘッダー高さを測定してCSS変数を更新(ズーム対応)
@@ -20821,13 +20965,19 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
   // GitHubからデータを読み込む（全PCで共有）
   const loaded = await loadFromGitHub();
+  _adcMark('data');
   try{ setTimeout(_checkKwDailySync, 300); }catch(e){}
   try{ await _analyzeFetch(); }catch(e){}
+  _adcMark('analyze');
   try{ await _cpaFetch(); }catch(e){}
+  _adcMark('cpa');
   try{ await _miColFetch(); }catch(e){}
+  _adcMark('micol');
   try{ await _itTrendFetch(); }catch(e){}
+  _adcMark('ittrend');
   // 在庫切れアラート：前回結果を即表示 → 今日まだ未チェックなら自動で全商品チェック（このタブを開いている間に実行）
   try{ await _stockFetch(); }catch(e){}
+  _adcMark('stock');
   try{ setTimeout(function(){
     try{
       // 今日すでにチェック済みなら何もしない（保存済みの結果を表示するだけ）。v1.1346
@@ -20857,6 +21007,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const _wp = _sp.get('wp');
     if (_wp) { _kwIndivCode = _wp; switchTab('kw-watch-prod'); }
     else switchTab(_initTab || 'monthly');
+    _adcMark('render');
     // ★v1.1550★ 虫眼鏡の Ctrl＋クリック（新しいタブ）：?cmpd=日付 ／ ?cmpm=年月 で全-比較を開く
     try{ const _cd = _sp.get('cmpd'), _cm = _sp.get('cmpm'); if (_cd) _yoyOpenDay(_cd, null, true); else if (_cm) _yoyOpenMonth(_cm, null, true); }catch(e){}
     // ★v1.1526★ ?ym=YYYY-MM があれば、商品-売上データの月をその月にする（一括オープン用）
