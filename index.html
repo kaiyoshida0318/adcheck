@@ -945,7 +945,7 @@ nav.tab-sub-row.tab-sub-row-3 { gap: 1px; }
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1555</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1556</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -17438,26 +17438,24 @@ function _calRenderMonth(ym) {
   // ── ⑦：スナップショット（性質が違うので区切って表示） ──
   body += `<tr><td colspan="${nCols}" style="height:9px;border:none;padding:0"></td></tr>`;
   body += sectionRow('#f3e8ff', '#7c3aed', '', '⑦は日別データではなく「取込時点のKW登録状態」。最新1件だけが有効で、古いものは上書きされます');
+  /* ★v1.1556★ ⑦は日付に関係なく、どの月を見ても1つにつなげたセル（1日の列から）に「入っているか」を出す。
+     複数月をまとめて入れても、表示中の月で ⑦ が入っているか分かるように。日ごとの縦線は引かない */
   _CAL_ROWS_SNAP.forEach(row => {
-    const rd = data[row.k] || {};
-    body += `<tr>` + labelCell(row, '#faf5ff', '#7c3aed');
-    for (let d = 1; d <= days; d++) {
-      const cell = rd[d];
-      const ds = ym + '-' + String(d).padStart(2, '0');
-      const isLatest = latestSnap && ds === latestSnap;
-      const hlcol = (d === todayDay) ? 'background:#fdf8ff' : 'background:#faf5ff';
-      let mark = '';
-      if (cell) {
-        const files = (cell.files || []).join(', ');
-        if (isLatest) {
-          mark = `<span title="最新のスナップショット（これが反映されます）&#10;${files}" style="display:inline-block;background:#7c3aed;color:#fff;border-radius:9px;padding:0 5px;font-size:9px;font-weight:800;white-space:nowrap;line-height:15px">最新</span>`;
-        } else {
-          mark = `<span title="より新しいスナップショットがあるため反映されません&#10;${files}" style="color:#c4b5fd;font-size:13px;font-weight:700;text-decoration:line-through">◯</span>`;
-        }
-      }
-      body += `<td style="border:1px solid var(--border);text-align:center;height:26px;${hlcol}">${mark}</td>`;
+    const all = [];   // 今回入れた ⑦ をすべて（月をまたいで）集める
+    Object.keys(_calMonthData).forEach(m => { const rd = (_calMonthData[m] || {})[row.k] || {}; Object.keys(rd).forEach(d => { const ds = m + '-' + String(d).padStart(2, '0'); (rd[d].files || []).forEach(f => all.push({ ds, f })); }); });
+    all.sort((a, b) => a.ds < b.ds ? 1 : a.ds > b.ds ? -1 : 0);
+    let inner;
+    if (!all.length) inner = '<span style="font-size:11px;color:var(--text3)">なし（⑦は任意。入れなくても①〜⑥は取り込めます）</span>';
+    else {
+      const top = all[0], rest = all.length - 1;
+      const md = s => (+s.slice(5, 7)) + '/' + (+s.slice(8, 10));
+      inner = `<span title="${top.f}" style="color:var(--green);font-size:14px;font-weight:700;margin-right:6px">◯</span>`
+        + `<span style="display:inline-block;background:#7c3aed;color:#fff;border-radius:9px;padding:0 7px;font-size:10px;font-weight:800;line-height:16px;margin-right:8px">最新</span>`
+        + `<span style="font-size:11px;color:var(--text)">${md(top.ds)} のファイルを取り込みます</span>`
+        + `<span style="font-size:10px;color:var(--text3);margin-left:8px;font-family:'DM Mono',monospace">${top.f}</span>`
+        + (rest ? `<span title="${all.slice(1).map(x => x.f).join('&#10;')}" style="font-size:10px;color:#a78bfa;margin-left:10px">ほか ${rest}件は古いので反映しません</span>` : '');
     }
-    body += `</tr>`;
+    body += `<tr>` + labelCell(row, '#faf5ff', '#7c3aed') + `<td colspan="${days}" style="border:1px solid var(--border);background:#faf5ff;height:26px;padding:2px 8px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${inner}</td></tr>`;
   });
   grid.innerHTML = `<table style="border-collapse:collapse;font-size:11px;width:100%;table-layout:fixed"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
