@@ -148,6 +148,35 @@ header + * { margin-top: 4px; }
 /* ── Table ── */
 .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);  box-shadow: var(--shadow); }
 .table-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; background: var(--surface); }
+/* ★v1.1566★ 商品-当日データのツールバー（役割ごとのまとまり：表示する商品／探す・並べる／作業 ・ 期間／ROASの列／説明と設定） */
+.kt-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; }
+.kt-sp { flex: 1 1 auto; }
+.kt-seg { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid #e5e7eb; border-radius: 9px; background: #f3f4f6; }
+.kt-lbl { font-size: 10px; font-weight: 700; color: #9ca3af; padding: 0 6px 0 5px; white-space: nowrap; letter-spacing: .03em; }
+.kt-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; line-height: 1.35; padding: 3px 11px; border-radius: 7px; border: 1px solid transparent; background: transparent; color: #374151; cursor: pointer; white-space: nowrap; font-weight: 700; font-family: inherit; }
+.kt-btn:hover { background: #e5e7eb; }
+.kt-btn.on { color: #fff; }
+.kt-btn.on:hover { filter: brightness(1.06); }
+.kt-cnt { display: inline-block; min-width: 18px; padding: 0 6px; border-radius: 9px; background: #e5e7eb; color: #4b5563; font-size: 10.5px; line-height: 16px; text-align: center; font-family: 'DM Mono', monospace; }
+.kt-btn.on .kt-cnt { background: rgba(255,255,255,.28); color: #fff; }
+.kt-in { font-size: 12px; height: 30px; box-sizing: border-box; padding: 0 10px; border: 1px solid #e5e7eb; border-radius: 9px; background: var(--surface); color: var(--text); }
+.kt-in:focus { outline: none; border-color: #94a3b8; }
+.kt-act { display: inline-flex; align-items: center; gap: 6px; height: 30px; box-sizing: border-box; font-size: 11.5px; padding: 0 13px; border-radius: 9px; cursor: pointer; white-space: nowrap; font-weight: 700; font-family: inherit; }
+.kt-act.main { border: 1px solid #4f46e5; background: #4f46e5; color: #fff; }
+.kt-act.main:hover { background: #4338ca; }
+.kt-act.warn { border: 1px solid #fcd34d; background: #fffbeb; color: #b45309; }
+.kt-act.warn:hover { background: #fef3c7; }
+.kt-help { display: inline-flex; align-items: center; gap: 0; padding: 3px; border: 1px solid #e5e7eb; border-radius: 9px; background: var(--surface); }
+.kt-link { font-size: 11px; padding: 4px 9px; border: none; border-radius: 6px; background: transparent; color: var(--text2); cursor: pointer; white-space: nowrap; font-weight: 600; font-family: inherit; }
+.kt-link:hover { background: #f3f4f6; color: var(--text); }
+.kt-link + .kt-link { border-left: 1px solid #eef0f3; border-radius: 0 6px 6px 0; }
+.kt-info { font-size: 11px; color: var(--text3); white-space: nowrap; }
+/* ★v1.1567★ 商品-当日データの マラソン/SS を商品名の行に横1列で（表の横に置くと、列が増えたとき下に落ちるため） */
+.kt-ss { display: inline-flex; align-items: center; gap: 6px; margin-left: 14px; padding: 4px 6px 4px 9px; border: 1px solid #c7cdd8; border-radius: 9px; background: #eef1f6; vertical-align: middle; font-family: 'Noto Sans JP', system-ui, sans-serif; }
+.kt-ss-lbl { font-size: 10px; font-weight: 700; color: #445; white-space: nowrap; }
+.kt-ss-g { display: inline-flex; gap: 3px; }
+.kt-ss-g + .kt-ss-g { padding-left: 6px; border-left: 1px solid #c7cdd8; }
+.kt-ss button { width: auto !important; font-size: 11px !important; padding: 3px 9px !important; border-radius: 6px !important; font-weight: 700; line-height: 1.35; }
 /* ヘッダーが大きくなる場合(ボタン2段化等)を考慮して余裕を持たせる */
 @media (max-width: 1200px) {
   .table-toolbar { top: 80px; }
@@ -1005,7 +1034,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1564</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1567</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -1625,27 +1654,27 @@ _adcMark('script');
   </div>
   <div class="tab-panel" id="tab-kw-indiv-table">
     <div class="table-card">
-      <div class="table-toolbar" style="flex-direction:column;align-items:stretch;gap:7px">
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%">
-          <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
-            <button id="kwIndivModeFix" onclick="setKwIndivTableMode('fix')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #dc2626;background:#dc2626;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">修正あり</button>
-            <button id="kwIndivModeFixX" onclick="setKwIndivTableMode('fixx')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">修正あり（✕）</button>
-            <button id="kwIndivModeYellow" onclick="setKwIndivTableMode('yellow')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">黄色あり</button>
-            <button id="kwIndivModeBasic" onclick="setKwIndivTableMode('basic')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">全体</button>
-            <button id="kwIndivResetConf" onclick="_resetAllConfirmed()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #f59e0b;background:var(--surface2);color:#d97706;cursor:pointer;white-space:nowrap;font-weight:700;margin-left:8px">確認前へ戻す</button>
+      <div class="table-toolbar" style="flex-direction:column;align-items:stretch;gap:6px">   <!-- ★v1.1566★ 役割ごとにまとめた -->
+        <div class="kt-row">
+          <div class="kt-seg" title="どの商品を表に出すか"><span class="kt-lbl">表示</span>
+            <button id="kwIndivModeFix" class="kt-btn" onclick="setKwIndivTableMode('fix')">修正あり</button>
+            <button id="kwIndivModeFixX" class="kt-btn" onclick="setKwIndivTableMode('fixx')">修正あり（✕）</button>
+            <button id="kwIndivModeYellow" class="kt-btn" onclick="setKwIndivTableMode('yellow')">黄色あり</button>
+            <button id="kwIndivModeBasic" class="kt-btn" onclick="setKwIndivTableMode('basic')">全体</button>
           </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:14px;padding-left:14px;border-left:1px solid var(--border)">
-            <button onclick="_openDailyWorkPages()" title="当日の広告調整に使う 楽天市場/RMS/ADcheck の各ページを新しいタブで一括オープン" style="font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid #2563eb;background:#2563eb;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">必要ページ一括オープン</button>
-            <button onclick="_toggleKwFixCond()" style="font-size:11px;padding:5px 11px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">修正あり～黄色ありの意味</button>
-            <button onclick="_toggleKwTableLegend()" style="font-size:11px;padding:5px 11px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">マークの意味</button>
-            <button onclick="_toggleTaiouEditor()" style="font-size:11px;padding:5px 11px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">対応の編集</button>
-          </div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%">
           <span id="kwIndivTableCount" style="font-size:13px;font-weight:700;color:var(--text2)"></span>
-          <input id="kwIndivTableSearch" type="text" placeholder="商品番号/管理番号/商品名で検索" oninput="setKwIndivTableSearch(this.value)" style="font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);width:220px">
-          <select id="kwIndivTableSort" onchange="setKwIndivTableSort(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="problem">問題発生金額順</option><option value="itemno">商品番号順</option><option value="code">商品管理番号順</option></select>
-          <div style="display:inline-flex;gap:4px;border:1px solid #d7dbe0;border-radius:8px;padding:3px;align-items:center"><span style="font-size:10px;color:var(--text3);padding:0 3px">期間</span><button id="kwTblPeriodDay" onclick="setKwTblPeriod('day')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700">当月</button><button id="kwTblPeriodMonth" onclick="setKwTblPeriod('month')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600">前月(満了)</button></div><div id="kwTblXrGrp" title="ROASの列を足して出します（ほかの列は変わりません）" style="display:inline-flex;gap:3px;border:1px solid #e5e7eb;border-radius:9px;padding:3px;align-items:center;background:#f3f4f6"><button id="kwTblXrL30" onclick="_kwTblXrToggle('l30')"></button><button id="kwTblXrS30" onclick="_kwTblXrToggle('s30')"></button></div><span id="kwTblPeriodInfo" style="display:none;font-size:11px;color:var(--text3);white-space:nowrap"></span>
+          <input id="kwIndivTableSearch" class="kt-in" type="text" placeholder="🔍 商品番号/管理番号/商品名で検索" oninput="setKwIndivTableSearch(this.value)" style="width:230px">
+          <select id="kwIndivTableSort" class="kt-in" onchange="setKwIndivTableSort(this.value)" style="cursor:pointer;padding-right:6px"><option value="problem">問題発生金額順</option><option value="itemno">商品番号順</option><option value="code">商品管理番号順</option></select>
+          <span class="kt-sp"></span>
+          <button id="kwIndivResetConf" class="kt-act warn" onclick="_resetAllConfirmed()" title="「確認済」にした商品を、すべて「確認前」に戻す">↺ 確認前へ戻す</button>
+          <button class="kt-act main" onclick="_openDailyWorkPages()" title="当日の広告調整に使う 楽天市場/RMS/ADcheck の各ページを新しいタブで一括オープン">↗ 必要ページ一括オープン</button>
+        </div>
+        <div class="kt-row">
+          <div class="kt-seg" title="表の数字の期間"><span class="kt-lbl">期間</span><button id="kwTblPeriodDay" class="kt-btn" onclick="setKwTblPeriod('day')">当月</button><button id="kwTblPeriodMonth" class="kt-btn" onclick="setKwTblPeriod('month')">前月(満了)</button></div>
+          <div id="kwTblXrGrp" class="kt-seg" title="ROASの列を足して出します（ほかの列は変わりません）"><span class="kt-lbl">ROASの列</span><button id="kwTblXrL30" class="kt-btn" onclick="_kwTblXrToggle('l30')"></button><button id="kwTblXrS30" class="kt-btn" onclick="_kwTblXrToggle('s30')"></button></div>
+          <span id="kwTblPeriodInfo" class="kt-info" style="display:none"></span>
+          <span class="kt-sp"></span>
+          <div class="kt-help"><button class="kt-link" onclick="_toggleKwFixCond()">ⓘ 修正あり～黄色ありの意味</button><button class="kt-link" onclick="_toggleKwTableLegend()">ⓘ マークの意味</button><button class="kt-link" onclick="_toggleTaiouEditor()">✎ 対応の編集</button></div>
         </div>
       </div>
             <div id="kwIndivFixCond" style="display:none;position:fixed;top:296px;right:40px;min-width:430px;width:max-content;max-width:92vw;max-height:70vh;overflow:auto;z-index:300;margin:0;padding:14px 18px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font-size:12px;line-height:1.9;box-shadow:0 10px 34px rgba(0,0,0,.20)">
@@ -10919,11 +10948,11 @@ function _kwTblXrBuild(L){ var out=null; ['l30','s30'].forEach(function(k){ if(!
   for(var i=0;i<kwRows.length;i++){ var w=kwRows[i], d=w.date; for(var j=0;j<ks.length;j++){ var o=out[ks[j]]; if(d<o.s||d>o.e) continue; var mc=o.m[w.itemCode]||(o.m[w.itemCode]={}); var kk=w.kw||'(空)'; var a=mc[kk]||(mc[kk]=[0,0]); a[0]+=(w.spend||0); a[1]+=(w.sales||0); } }
   return out; }
 function setKwTblPeriod(m){ _kwTblPeriodTouched=true; _kwTblPeriodMode=(m==='month')?m:'day';   /* ★v1.1561★ 直近30日／確定30日は期間ではなく「ROASの列」のスイッチに移した */ _setKwTblPeriodUI(); if(typeof renderKwIndivTableAll==='function') renderKwIndivTableAll(); }
-function _setKwTblPeriodUI(){ var d=document.getElementById('kwTblPeriodDay'), m=document.getElementById('kwTblPeriodMonth'); var on='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700'; var off='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600'; if(d){ d.style.cssText=(_kwTblPeriodMode==='day')?on:off; var _L=_xrLastDay(); d.textContent='当月'+(_L?'('+'1日〜'+(+_L.slice(8,10))+'日)':''); d.title=_L?('当月 '+_L.slice(0,4)+'/'+_L.slice(5,7)+'/01〜'+_L.slice(5,7)+'/'+_L.slice(8,10)+'（KWデータの最終日まで）の数字'):''; }   /* ★v1.1561★ 「当日」→「当月(1日〜◯日)」 */ if(m)m.style.cssText=(_kwTblPeriodMode==='month')?on:off;
+function _setKwTblPeriodUI(){ var d=document.getElementById('kwTblPeriodDay'), m=document.getElementById('kwTblPeriodMonth'); var _st=function(el,on){ el.className='kt-btn'+(on?' on':''); el.style.background=on?'#00897B':''; el.style.borderColor=on?'#00897B':''; };   /* ★v1.1566★ */ if(d){ _st(d,_kwTblPeriodMode==='day'); var _L=_xrLastDay(); d.textContent='当月'+(_L?'('+'1日〜'+(+_L.slice(8,10))+'日)':''); d.title=_L?('当月 '+_L.slice(0,4)+'/'+_L.slice(5,7)+'/01〜'+_L.slice(5,7)+'/'+_L.slice(8,10)+'（KWデータの最終日まで）の数字'):''; }   /* ★v1.1561★ 「当日」→「当月(1日〜◯日)」 */ if(m)_st(m,_kwTblPeriodMode==='month');
   /* ★v1.1561★ 直近30日ROAS（青）・確定30日ROAS（紫）のスイッチ。ONはその色の地に白い字と ✓、OFFは ＋。右にONの期間を文字で */
   ['l30','s30'].forEach(function(k){ var b=document.getElementById(k==='l30'?'kwTblXrL30':'kwTblXrS30'); if(!b) return; var C=XR_COL[k], r=_xrRange(k), on=!!_kwTblXr[k];
-    b.style.cssText=on?('font-size:11px;padding:5px 12px;border-radius:7px;border:1px solid '+C.c+';background:'+C.c+';color:#fff;cursor:pointer;white-space:nowrap;font-weight:700'):('font-size:11px;padding:5px 12px;border-radius:7px;border:1px solid transparent;background:transparent;color:#374151;cursor:pointer;white-space:nowrap;font-weight:700');
-    b.innerHTML=(on?'<span style="margin-right:5px">\u2713</span>':'<span style="margin-right:5px;color:#6b7280">\uFF0B</span>')+XR_NAME[k]+'ROAS';
+    b.className='kt-btn'+(on?' on':''); b.style.background=on?C.c:''; b.style.borderColor=on?C.c:'';   /* ★v1.1566★ 「ROASの列」のまとまりの中なので、名前は 直近30日／確定30日 だけ */
+    b.innerHTML=(on?'<span>\u2713</span>':'<span style="color:#9ca3af">\uFF0B</span>')+XR_NAME[k];
     b.title=XR_NAME[k]+'のROASの列を'+(on?'消す':'出す')+'（'+_xrYmd(r[0])+'〜'+_xrYmd(r[1])+'）\n'+XR_TIP[k]; });
   var inf=document.getElementById('kwTblPeriodInfo'); if(inf){ var t=''; ['l30','s30'].forEach(function(k){ if(!_kwTblXr[k]) return; var r=_xrRange(k), C=XR_COL[k]; t+='<span style="margin-right:12px" title="'+XR_TIP[k]+'"><b style="color:'+C.t+'">'+XR_NAME[k]+'</b> '+_xrMd(r[0])+'〜'+_xrMd(r[1])+'</span>'; }); inf.style.display=t?'':'none'; inf.innerHTML=t; }
 }
@@ -11671,7 +11700,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode, xr, xrc){   /* ★
     const _xrcKs=xrc?['l30','s30'].filter(function(k){ return !!xrc[k]; }):[];
     const _xrcTh=function(){ return _xrcKs.map(function(k){ const C=XR_COL[k], o=xrc[k]; return '<th style="'+_H+';background:'+C.bg+';box-shadow:inset 0 -2px 0 '+C.c+';color:#444" title="'+XR_NAME[k]+'：'+_xrYmd(o.s)+'〜'+_xrYmd(o.e)+'\n'+XR_TIP[k]+'">ROAS<div style="font-size:9px;font-weight:700;color:'+C.t+'">'+XR_NAME[k]+'</div></th>'; }).join(''); };
     const _xrcTd=function(kw,gray){ return _xrcKs.map(function(k){ const C=XR_COL[k], a=((xrc[k].m[code]||{})[kw]); const q=_kwTblRoasCell(a?a[0]:0, a?a[1]:0); return '<td style="'+_T+';font-size:11px;background:'+C.bg+';color:'+(gray?(q.w>400?'#888':'#bbb'):q.c)+';font-weight:'+(gray?400:q.w)+'">'+q.t+'</td>'; }).join(''); };
-    const _curLbl=(function(){ const _gL=_kwIdxGet().L; const _cur=!_gL||_gL.slice(0,7)===_latest.slice(0,7); return (_cur?'当月':(+_latest.slice(5,7))+'月')+'(1日〜'+(+_latest.slice(8,10))+'日)'; })();   /* ★v1.1561★ 「11月12日」→「当月(1日〜12日)」（中身は月の1日からの合計なので） */
+    const _curLbl=(function(){ const _gL=_kwIdxGet().L; const _cur=!_gL||_gL.slice(0,7)===_latest.slice(0,7); return (_cur?'当月':(+_latest.slice(5,7))+'月')+'(1日〜'+(+(_cur&&_gL?_gL:_latest).slice(8,10))+'日)'; })();   /* ★v1.1565★ 当月は、その商品の最後のデータの日ではなく、レポートを追加した最新の日（KWデータの最終日）まで。合計はその日まで足しても同じ（後の行が無い） */   /* ★v1.1561★ 「11月12日」→「当月(1日〜12日)」（中身は月の1日からの合計なので） */
     const _hdrLbl=xr?('<span style="color:'+_XC.t+'">'+XR_NAME[xr.k]+'</span><div style="font-size:9px;font-weight:600;color:'+_XC.t+'">'+_xrMd(xr.s)+'〜'+_xrMd(xr.e)+'</div>'):monthMode?('前月'+(_prevYm6?('('+(+_prevYm6.slice(4,6))+'月)'):'')):_curLbl;
     let _h='<thead><tr>'
       +'<th style="'+_H+';background:'+(xr?_XC.bg+';border-bottom:2px solid '+_XC.c+'" title="'+_xrYmd(xr.s)+'〜'+_xrYmd(xr.e)+'　'+XR_TIP[xr.k]:'#eef2ff')+'">'+_hdrLbl+'</th>'
@@ -11756,7 +11785,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode, xr, xrc){   /* ★
   let _hdMeta;
   if(xr){ const _C=XR_COL[xr.k]; _hdMeta='\u3000|\u3000'+_xrYmd(xr.s)+'〜'+_xrYmd(xr.e)+'\u3000|\u3000<span style="color:'+_C.t+';font-weight:700">'+XR_NAME[xr.k]+'</span>'; }   /* ★v1.1559★ */
   else if(monthMode && _monthLast){ let _yy=+_monthLast.slice(0,4), _mm=+_monthLast.slice(5,7)-1; if(_mm<1){_mm=12;_yy--;} _hdMeta='\u3000|\u3000'+_yy+'/'+String(_mm).padStart(2,'0')+'\u3000|\u3000<span style="color:#c2410c;font-weight:700">前月(満了)</span>'; }
-  else if(daily && _monthLast){ const _gL=_kwIdxGet().L; const _cur=!_gL||_gL.slice(0,7)===_monthLast.slice(0,7); _hdMeta='\u3000|\u3000'+_monthLast.slice(0,4)+'/'+_monthLast.slice(5,7)+'/01〜'+_monthLast.slice(5,7)+'/'+_monthLast.slice(8,10)+'\u3000|\u3000<span style="color:#00897B;font-weight:700">'+(_cur?'当月':(+_monthLast.slice(5,7))+'月')+'</span>'; }   /* ★v1.1561★ */
+  else if(daily && _monthLast){ const _gL=_kwIdxGet().L; const _cur=!_gL||_gL.slice(0,7)===_monthLast.slice(0,7); const _mE=(_cur&&_gL)?_gL:_monthLast;   /* ★v1.1565★ 当月はレポートを追加した最新の日まで */ _hdMeta='\u3000|\u3000'+_monthLast.slice(0,4)+'/'+_monthLast.slice(5,7)+'/01〜'+_mE.slice(5,7)+'/'+_mE.slice(8,10)+'\u3000|\u3000<span style="color:#00897B;font-weight:700">'+(_cur?'当月':(+_monthLast.slice(5,7))+'月')+'</span>'; }   /* ★v1.1561★ */
   else { _hdMeta=(_monthLast?('\u3000|\u3000'+_monthLast.slice(0,4)+'/'+_monthLast.slice(5,7)+'/'+_monthLast.slice(8,10)):'')+'\u3000|\u3000'+(daily?'日別':'月別'); }
   // ★v1.1360★ 画像・商品名クリックで商品モーダル（全体情報／KW詳細／編集）を開く。
   //   商品-売上データ と同じ導線をここでも使えるようにする。画像が無い場合もプレースホルダを押せる。
@@ -11764,24 +11793,16 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode, xr, xrc){   /* ★
   const _thumb=_img
     ? ('<img loading="lazy" src="'+_img+'" '+_open+';width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex:none">')
     : ('<div '+_open+';width:46px;height:46px;border-radius:6px;border:1px dashed var(--border);background:var(--surface2);flex:none;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text3)">\u{1F50D}</div>');
-  const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+_thumb+'<div><div '+_open+';font-size:14px;font-weight:700;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:3px">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+'<span style="user-select:all;-webkit-user-select:all">'+_kwEsc(code)+'</span>'+(_itemNo?('\u3000<span style="color:#00897B;font-weight:700">'+_kwEsc(_itemNo)+'</span>'):'')+_hdMeta+'\u3000'+_confBtns+'</div></div></div>';
+  const _head='<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;padding-top:16px;border-top:2px solid var(--border)">'+_thumb+'<div><div '+_open+';font-size:14px;font-weight:700;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:3px">'+_kwEsc(_name)+'</div><div style="font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">'+'<span style="user-select:all;-webkit-user-select:all">'+_kwEsc(code)+'</span>'+(_itemNo?('\u3000<span style="color:#00897B;font-weight:700">'+_kwEsc(_itemNo)+'</span>'):'')+_hdMeta+'\u3000'+_confBtns+_ssInlineBtns(code)+'</div></div></div>';   /* ★v1.1567★ マラソン/SS をここへ */
   const _btn='<button onclick="_kwTblToggleCharts(\''+pfx+'\','+idx+',this)" style="font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #00897B;background:#fff;color:#00897B;cursor:pointer;font-weight:700;margin:2px 0 8px">グラフ・表を表示</button>';
   const _chc='<div id="kwTblCh'+pfx+'_'+idx+'" style="display:none;margin-bottom:10px"></div>';
   const _sscell='<div style="flex:0 0 220px;align-self:flex-start;border:1px solid #b9c0cc;border-radius:8px;background:#eef1f6;padding:8px 10px;box-sizing:border-box"><div style="font-size:10px;color:#445;font-weight:700;margin:0 0 5px;text-align:center">マラソン/SS</div>'+_ssCellBtns(code)+'</div>';
-  const _flex='<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'+_sumHtml+_sscell+'</div>';
+  const _flex='<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'+_sumHtml+'</div>';   /* ★v1.1567★ 表の横の マラソン/SS（_sscell）は商品名の行へ移した */
   return { html:_head+_flex+_btn+_chc, hasFix:hasFix, hasFixX:hasFixX, hasYellow:hasYellow, redCount:_redCount, problemSpend:_probSpend };
 }
-function _setKwIndivTableModeUI(){
-  const on='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
-  const off='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap;font-weight:600';
-  const onY='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #BF8F00;background:#BF8F00;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
-  const onFix='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #dc2626;background:#dc2626;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
-  const onFixX='font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #b91c1c;background:#b91c1c;color:#fff;cursor:pointer;white-space:nowrap;font-weight:700';
-  const b=document.getElementById('kwIndivModeBasic'), f=document.getElementById('kwIndivModeFix'), fx=document.getElementById('kwIndivModeFixX'), y=document.getElementById('kwIndivModeYellow');
-  if(b)b.style.cssText=_kwIndivTableMode==='basic'?on:off;
-  if(f)f.style.cssText=_kwIndivTableMode==='fix'?onFix:off;
-  if(fx)fx.style.cssText=_kwIndivTableMode==='fixx'?onFixX:off;
-  if(y)y.style.cssText=_kwIndivTableMode==='yellow'?onY:off;
+function _setKwIndivTableModeUI(){   /* ★v1.1566★ 見た目は .kt-btn。選んでいるものだけ、その色の地に白い字 */
+  const M=[['kwIndivModeFix','fix','#dc2626'],['kwIndivModeFixX','fixx','#b91c1c'],['kwIndivModeYellow','yellow','#BF8F00'],['kwIndivModeBasic','basic','#00897B']];
+  M.forEach(function(x){ const el=document.getElementById(x[0]); if(!el) return; const on=_kwIndivTableMode===x[1]; el.className='kt-btn'+(on?' on':''); el.style.background=on?x[2]:''; el.style.borderColor=on?x[2]:''; });
 }
 function setKwIndivTableMode(m){ _kwIndivTableMode=m; _setKwIndivTableModeUI(); renderKwIndivTableAll(); }
 function setKwIndivTablePeriod(p){ _kwIndivPeriod=p; _setKwIndivPeriodUI(); renderKwIndivTableAll(); }
@@ -11850,7 +11871,7 @@ function renderKwIndivTableAll(){
   });
   let body=_items.map(function(it){return it.html;}).join(''), shown=_items.length;
   if(cntEl){ cntEl.textContent=''; cntEl.style.display='none'; }
-  var _smc=function(id,base,nn){ var b=document.getElementById(id); if(b) b.textContent=base+' ('+nn+')'; };
+  var _smc=function(id,base,nn){ var b=document.getElementById(id); if(b) b.innerHTML=base+'<span class="kt-cnt">'+nn+'</span>'; };   /* ★v1.1566★ 数は丸いバッジで */
   _smc('kwIndivModeFix','修正あり',_cnt.fix); _smc('kwIndivModeFixX','修正あり（✕）',_cnt.fixx); _smc('kwIndivModeYellow','黄色あり',_cnt.yellow); _smc('kwIndivModeBasic','全体',_cnt.all);
   if(empty){ if(shown){ empty.style.display='none'; } else { empty.style.display='block'; empty.textContent=(kwRows.length? (_q?'「'+(_kwIndivTableSearch||'').trim()+'」に当てはまる商品はありません。':_kwIndivTableMode==='fix'?'修正ありの商品はありません。':_kwIndivTableMode==='fixx'?'✕ありの商品はありません。':_kwIndivTableMode==='yellow'?'黄色ありの商品はありません。':'KWデータがありません。') :'KWデータがありません。'); } }
   if(view) view.innerHTML= shown?body:'';
@@ -15137,6 +15158,9 @@ function _ssCellBtns(code){
     return `<button id="mar-btn-${code}-${k}" data-code="${code}" data-mar="${k}" data-active="${active?'1':'0'}" onclick="_toggleMarathon('${code}','${k}',this)" style="font-size:9px;padding:2px 3px;border-radius:3px;border:1px solid ${active?o.col:'var(--border)'};background:${active?o.col:'var(--surface)'};color:${active?'#fff':'var(--text3)'};cursor:pointer;width:100%;box-sizing:border-box;${k==='sage'?'grid-column:1/-1;':''}white-space:nowrap;text-align:center">${o.lbl}</button>`; };
   return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:100%;box-sizing:border-box">'+rb('kouho')+mb('03')+mb('06')+rb('jisshi')+mb('09')+mb('12')+'</div>';
 }
+/* ★v1.1567★ 横1列の版（商品-当日データの商品名の行で使う）。ボタン（id・押したときの動き）は _ssCellBtns と同じものを並べ替えただけ */
+function _ssInlineBtns(code){ const h=_ssCellBtns(code); const d=document.createElement('div'); d.innerHTML=h; const g=d.firstChild; const b=function(id){ const el=g.querySelector('#'+CSS.escape(id)); return el?el.outerHTML:''; };
+  return '<span class="kt-ss" onclick="event.stopPropagation()"><span class="kt-ss-lbl">マラソン/SS</span><span class="kt-ss-g">'+b('mar-btn-'+code+'-kouho')+b('mar-btn-'+code+'-jisshi')+'</span><span class="kt-ss-g">'+b('ss-btn-'+code+'-03')+b('ss-btn-'+code+'-06')+b('ss-btn-'+code+'-09')+b('ss-btn-'+code+'-12')+'</span></span>'; }
 // 実施/SS を選んでも「候補」ボタンは選択されたままにする（候補を付与＋ボタン見た目を同期）
 function _ensureKouhoSelected(code){
   if(!productCache[code]) productCache[code]={};
