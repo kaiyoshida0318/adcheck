@@ -1071,7 +1071,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1576</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1577</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -11586,7 +11586,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   const yfmt=function(v){ return (v==null)?'\u2014':Math.round(v).toLocaleString(); };
   const _H='padding:7px 8px;text-align:center;font-size:10px;font-weight:700;color:#444;border-bottom:2px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2';
   const _T='padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;font-size:11px';
-  let h='<table style="border-collapse:collapse;width:100%;font-family:\'DM Mono\',monospace"><thead><tr>';
+  let h='<table style="border-collapse:collapse;width:100%;font-family:\'Noto Sans JP\',sans-serif"><thead><tr>';   /* ★v1.1577★ 数字の字体を商品-個別データと同じに（DM Mono → Noto Sans JP） */
   { /* ★v1.1494★ 2段の見出し。上下それぞれクリックで並べ替え（もう一度で逆順） */
     var _w=cfg.watchOnly?1:0;
     var _sh=function(k,lbl,tip){ var on=(_kwAllSort===k); return '<div class="kwh-sub'+(on?(' sort-'+_kwAllSortDir):'')+'" onclick="_kwAllSortBy(\''+k+'\','+_w+')" title="'+tip+'で並べ替え">'+lbl+'<i class="ss-ic"></i></div>'; };
@@ -11633,7 +11633,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
       +'<td style="'+_T+';background:#f5f7ff"><div style="display:flex;align-items:center;justify-content:center;gap:6px">'   /* ★v1.1575★ 目安CP：予測・詳細（前は 商品／KW の右にあった） */
         +'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:50px;height:30px;border-radius:5px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">予測</button>'
         +'<button onclick="'+(cfg.watchOnly?'_kwOpenWatchProd':'_kwGoWatchProd')+'(\''+o.code+'\')" style="width:50px;height:30px;border-radius:5px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">詳細</button></div></td>'
-      +'<td style="'+_T+'">'+(o.zero?_taiouMarkGlyph(o.kind):_kwiMkM(o.act,o.gui,o.streak))+'</td>'
+      +'<td style="'+_T+';font-family:\'DM Mono\',monospace">'+(o.zero?_taiouMarkGlyph(o.kind):_kwiMkM(o.act,o.gui,o.streak))+'</td>'   /* ★v1.1577★ 判定のマークは前の字体のまま（大きさが変わらないように） */
       +'<td style="'+_T+'"><input type="checkbox" data-code="'+_kwEsc(o.code)+'" data-kw="'+_kwEsc(o.kw)+'" onchange="_toggleWatchEl(this)"'+(_isWatched(o.code,o.kw)?' checked':'')+' style="width:16px;height:16px;cursor:pointer"></td>'
       +'</tr>';
   });
