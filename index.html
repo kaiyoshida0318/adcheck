@@ -189,17 +189,24 @@ header + * { margin-top: 4px; }
 .kt-sel:hover { background: #e5e7eb; }
 .kt-sel.on { background: #00897B; border-color: #00897B; color: #fff; }
 .kt-sel option { color: #333; background: #fff; font-weight: 400; }
-.kp-wrap { display: inline-flex; align-items: center; gap: 8px; }
+.kp-wrap { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 /* ★v1.1574★ KW-全体データの期間：「期間｜日別［▾］｜月別［▾］｜［期間指定］」。選んでいるものは紫の地に白い字、ほかは白い地 */
 .kp-lbl { font-size: 12px; font-weight: 700; color: var(--text2); white-space: nowrap; margin-right: 4px; }
 .kp-sub { font-size: 11px; font-weight: 700; color: var(--text3); white-space: nowrap; margin-left: 6px; }
-.kp-sel { height: 32px; box-sizing: border-box; font-size: 12.5px; font-weight: 700; padding: 0 8px 0 12px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; color: var(--text); cursor: pointer; font-family: inherit; }
+.kp-sel { height: 26px; box-sizing: border-box; font-size: 11.5px; font-weight: 700; padding: 0 4px 0 8px; border-radius: 7px; border: 1px solid #d1d5db; background: #fff; color: var(--text); cursor: pointer; font-family: inherit; }
 .kp-sel:hover { border-color: #a78bfa; }
+.kp-sel:not(.on) { width: 84px; }   /* ★v1.1576★ 選んでいないほうは「日を選ぶ」が入る幅だけ */
 .kp-sel.on { background: #7e22ce; border-color: #7e22ce; color: #fff; }
 .kp-sel option { color: #333; background: #fff; font-weight: 400; }
-.kp-btn { height: 32px; box-sizing: border-box; font-size: 12.5px; font-weight: 700; padding: 0 12px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; color: var(--text); cursor: pointer; white-space: nowrap; font-family: inherit; }
+.kp-btn { height: 26px; box-sizing: border-box; font-size: 11.5px; font-weight: 700; padding: 0 10px; border-radius: 7px; border: 1px solid #d1d5db; background: #fff; color: var(--text); cursor: pointer; white-space: nowrap; font-family: inherit; }
 .kp-btn:hover { border-color: #a78bfa; }
 .kp-btn.on { background: #7e22ce; border-color: #7e22ce; color: #fff; }
+/* ★v1.1576★ 期間指定を選んでいる間：オレンジの［期間指定 ✕］＋日付2つ（✕で解除） */
+.kp-rng { display: inline-flex; align-items: center; gap: 6px; height: 26px; box-sizing: border-box; font-size: 11.5px; font-weight: 700; padding: 0 4px 0 10px; border-radius: 7px; background: #ea580c; border: 1px solid #ea580c; color: #fff; white-space: nowrap; }
+.kp-x { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 5px; cursor: pointer; font-size: 13px; line-height: 1; }
+.kp-x:hover { background: rgba(255,255,255,.28); }
+.kp-date { height: 26px; box-sizing: border-box; font-size: 11.5px; font-weight: 700; padding: 0 6px; border: 1px solid #d1d5db; border-radius: 7px; background: #fff; color: var(--text); font-family: inherit; }
+.kp-date:focus { outline: none; border-color: #ea580c; }
 .kt-date { font-size: 11.5px; padding: 2px 4px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; color: var(--text); font-family: inherit; }
 /* ★v1.1567★ 商品-当日データの マラソン/SS を商品名の行に横1列で（表の横に置くと、列が増えたとき下に落ちるため） */
 .kt-ss { display: inline-flex; align-items: center; gap: 6px; margin-left: 14px; padding: 4px 6px 4px 9px; border: 1px solid #c7cdd8; border-radius: 9px; background: #eef1f6; vertical-align: middle; font-family: 'Noto Sans JP', system-ui, sans-serif; }
@@ -1064,7 +1071,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1575</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1576</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -11066,7 +11073,8 @@ function _kwAllXrToggle(k,w){ var X=w?_kwWatchXr:_kwAllXr; X[k]=!X[k]; try{ loca
 function setKwAllPeriod(m){ _kwAllPer.mode='month'; _kwAllPer.ym=''; if(m==='month'){ var L=_xrLastDay(); if(L){ var y=+L.slice(0,4), mo=+L.slice(5,7)-1; if(mo<1){ mo=12; y--; } _kwAllPer.ym=''+y+String(mo).padStart(2,'0'); } } renderKwAllData(); }   /* 前の呼び方（当月／前月）も動くように */
 function _kwAllSetDay(v,w){ if(!v) return; var P=_kpPer(w); P.mode='day'; P.day=v; _kpCloseRange(w); _kpRe(w); }
 function _kwAllSetMonth(v,w){ if(!v) return; var P=_kpPer(w); P.mode='month'; P.ym=v; _kpCloseRange(w); _kpRe(w); }
-function _kwAllRangeBtn(w){ if(w) _kwWatchRangeOpen=!_kwWatchRangeOpen; else _kwAllRangeOpen=!_kwAllRangeOpen; _kpRe(w); }
+function _kwAllRangeBtn(w){ var P=_kpPer(w); if(P.mode==='range') return; var L=window._kpLD||''; P.prev={mode:P.mode,day:P.day,ym:P.ym}; P.mode='range'; P.s=L?_xrAdd(L,-29):''; P.e=L; _kpCloseRange(w); _kpRe(w); }   /* ★v1.1576★ 押すとすぐ期間指定（最初は最新日までの30日） */
+function _kwAllRangeOff(w){ var P=_kpPer(w); var pv=P.prev||{mode:'month'}; P.mode=(pv.mode&&pv.mode!=='range')?pv.mode:'month'; P.day=pv.day||''; P.ym=pv.ym||''; P.prev=null; _kpCloseRange(w); _kpRe(w); }   /* ★v1.1576★ ✕で期間指定をやめて、前の見方に戻す */
 function _kwAllApplyRange(w){ var pf=w?'kwWatch':'kwAll'; var a=document.getElementById(pf+'Rs'), b=document.getElementById(pf+'Re'); if(!a||!b||!a.value||!b.value) return; var x=a.value, y=b.value; if(x>y){ var t=x; x=y; y=t; } var P=_kpPer(w); P.mode='range'; P.s=x; P.e=y; _kpCloseRange(w); _kpRe(w); }
 function _kwAllMonthEnd(ym6){ var d=new Date(+ym6.slice(0,4), +ym6.slice(4,6), 0); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 /* 今の期間を {mode, s, e, ym6, latest, lbl} にする。latest＝期間の終わりがKWデータの最終日（＝今の入札額・今の登録KWを使ってよい） */
@@ -11642,13 +11650,17 @@ function _renderKwTable(cfg){ cfg=cfg||{};
     var _yms=[...new Set(_dates.map(function(d){ return d.slice(0,4)+d.slice(5,7); }))];
     var _dOpt='<option value="" disabled hidden'+(_P.mode!=='day'?' selected':'')+'>日を選ぶ</option>'+_dates.map(function(d,i){ var dt=new Date(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10)); return '<option value="'+d+'"'+(_P.mode==='day'&&_P.s===d?' selected':'')+'>'+(+d.slice(5,7))+'/'+(+d.slice(8,10))+'('+_wd[dt.getDay()]+')'+(i===0?'\u3000最新':'')+'</option>'; }).join('');
     var _mOpt='<option value="" disabled hidden'+(_P.mode!=='month'?' selected':'')+'>月を選ぶ</option>'+_yms.map(function(ym,i){ return '<option value="'+ym+'"'+(_P.mode==='month'&&_P.ym6===ym?' selected':'')+'>'+ym.slice(0,4)+'年'+(+ym.slice(4,6))+'月'+(i===0?'（1日〜'+(+_gLD.slice(8,10))+'日）':'')+'</option>'; }).join('');
-    var _rOn=(_P.mode==='range');
+    var _rOn=(_P.mode==='range'); window._kpLD=_gLD;
     _periodToggle='<div class="kp-wrap" title="表の数字の期間"><span class="kp-lbl">期間</span>'   /* ★v1.1574★ 見た目を変えた（動きは同じ） */
-      +'<span class="kp-sub">日別</span><select class="kp-sel'+(_P.mode==='day'?' on':'')+'" onchange="_kwAllSetDay(this.value,'+_tw+')" title="1日分の数字">'+_dOpt+'</select>'
+      +'<span class="kp-sub" style="margin-left:2px">日別</span><select class="kp-sel'+(_P.mode==='day'?' on':'')+'" onchange="_kwAllSetDay(this.value,'+_tw+')" title="1日分の数字">'+_dOpt+'</select>'
       +'<span class="kp-sub">月別</span><select class="kp-sel'+(_P.mode==='month'?' on':'')+'" onchange="_kwAllSetMonth(this.value,'+_tw+')" title="1か月分の数字（今月は1日〜最新の日）">'+_mOpt+'</select>'
-      +'<button class="kp-btn'+(_rOn?' on':'')+'" style="margin-left:6px" onclick="_kwAllRangeBtn('+_tw+')" title="開始日〜終了日を決めて見る">'+(_rOn?('期間指定 '+_P.lbl):'期間指定')+'</button></div>';
-    if(_tw?_kwWatchRangeOpen:_kwAllRangeOpen){ var _rs=_rOn?_P.s:_xrAdd(_gLD,-29), _re=_rOn?_P.e:_gLD; var _mn=_dates[_dates.length-1]||'';
-      _periodToggle+='<span class="kt-seg" style="background:#fff"><input id="'+(_tw?'kwWatchRs':'kwAllRs')+'" type="date" class="kt-date" value="'+_rs+'" min="'+_mn+'" max="'+_gLD+'"><span style="font-size:11px;color:var(--text3)">〜</span><input id="'+(_tw?'kwWatchRe':'kwAllRe')+'" type="date" class="kt-date" value="'+_re+'" min="'+_mn+'" max="'+_gLD+'"><button class="kt-btn on" style="background:#7e22ce;border-color:#7e22ce" onclick="_kwAllApplyRange('+_tw+')">表示</button></span>'; }
+      +(_rOn
+        ? ('<span class="kp-rng" style="margin-left:4px" title="開始日〜終了日で見ています">期間指定<span class="kp-x" onclick="_kwAllRangeOff('+_tw+')" title="期間指定をやめる">\u2715</span></span>'
+          +'<input id="'+(_tw?'kwWatchRs':'kwAllRs')+'" type="date" class="kp-date" value="'+_P.s+'" min="'+(_dates[_dates.length-1]||'')+'" max="'+_gLD+'" onchange="_kwAllApplyRange('+_tw+')">'
+          +'<span style="font-size:11px;color:var(--text3)">〜</span>'
+          +'<input id="'+(_tw?'kwWatchRe':'kwAllRe')+'" type="date" class="kp-date" value="'+_P.e+'" min="'+(_dates[_dates.length-1]||'')+'" max="'+_gLD+'" onchange="_kwAllApplyRange('+_tw+')">')
+        : ('<button class="kp-btn" style="margin-left:4px" onclick="_kwAllRangeBtn('+_tw+')" title="開始日〜終了日を決めて見る">期間指定</button>'))
+      +'</div>';   /* ★v1.1576★ 期間指定：押すとオレンジの［期間指定 ✕］と日付2つ。日付を変えるとすぐ反映 */
     _periodToggle+='<div class="kt-seg" title="ROASの列を足して出します（ほかの列は変わりません）"><span class="kt-lbl">ROASの列</span>'+['l30','s30'].map(function(k){ var C=XR_COL[k], r=_xrRange(k,_gLD), on=!!(_tw?_kwWatchXr:_kwAllXr)[k]; return '<button class="kt-btn'+(on?' on':'')+'" style="'+(on?'background:'+C.c+';border-color:'+C.c:'')+'" onclick="_kwAllXrToggle(\''+k+'\','+_tw+')" title="'+XR_NAME[k]+'のROASの列を'+(on?'消す':'出す')+'（'+_xrYmd(r[0])+'〜'+_xrYmd(r[1])+'）\n'+XR_TIP[k]+'">'+(on?'<span>\u2713</span>':'<span style="color:#9ca3af">\uFF0B</span>')+XR_NAME[k]+'</button>'; }).join('')+'</div>';
     var _xi=''; ['l30','s30'].forEach(function(k){ if(!(_tw?_kwWatchXr:_kwAllXr)[k]) return; var r=_xrRange(k,_gLD), C=XR_COL[k]; _xi+='<span style="margin-right:10px" title="'+XR_TIP[k]+'"><b style="color:'+C.t+'">'+XR_NAME[k]+'</b> '+_xrMd(r[0])+'〜'+_xrMd(r[1])+'</span>'; });
     if(_xi) _periodToggle+='<span class="kt-info">'+_xi+'</span>';
@@ -11660,9 +11672,9 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   var _sid=_tw?'kwWatchSearchInput':'kwAllSearchInput', _sfn=_tw?'kwWatchSearch':'kwAllSearch';   /* ★v1.1575★ */
   var _searchBox=('<div style="display:inline-flex;align-items:center;gap:4px;margin-right:12px"><input type="text" id="'+_sid+'" value="'+_kwEsc(_srch)+'" placeholder="KW・商品名・商品番号で検索" onkeydown="if(event.key===\'Enter\')'+_sfn+'(this.value)" style="width:180px;font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)"><button onclick="'+_sfn+'(document.getElementById(\''+_sid+'\').value)" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">検索</button>'+(_srch?'<button onclick="'+_sfn+'Clear()" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">クリア</button>':'')+'</div>');
   var _searchNote=_srch?('<span style="font-size:11px;color:#00796b;font-weight:600;margin-left:8px">検索:「'+_kwEsc(_srch)+'」'+(_tw?'':'（実績0の登録KWも表示）')+'</span>'):'';
-  var _countLbl='<div style="font-size:13px;font-weight:700;color:var(--text2);white-space:nowrap">'+(_latestDate?('<span style="color:var(--text3);font-weight:600;margin-right:10px">'+_latestDate.slice(0,4)+'/'+_latestDate.slice(5,7)+'/'+_latestDate.slice(8,10)+'</span>'):'')+'全KW '+rows.length+'件'+_searchNote+'</div>';
-  var _colBtn='<button onclick="_kwtMarkLegend(this)" title="判定のマーク（◯・△・■など）の意味" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600;margin-right:6px">ⓘ マークの意味</button>'   /* ★v1.1575★ */
-    +'<button onclick="_openKwColPanel()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button>';
+  var _countLbl='<div style="font-size:13px;font-weight:700;color:var(--text2);white-space:nowrap">'+(_latestDate?('<span style="color:var(--text3);font-weight:600;margin-right:10px">'+_latestDate.slice(0,4)+'/'+_latestDate.slice(5,7)+'/'+_latestDate.slice(8,10)+'</span>'):'')+_searchNote+'</div>';   /* ★v1.1576★ 「全KW ◯件」は出さない */
+  var _colBtn='<div style="display:inline-flex;align-items:center;gap:6px;flex-shrink:0">'+'<button onclick="_kwtMarkLegend(this)" title="判定のマーク（◯・△・■など）の意味" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">ⓘ マークの意味</button>'   /* ★v1.1575★ */
+    +'<button onclick="_openKwColPanel()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button></div>';   /* ★v1.1576★ マークの意味は項目調整のすぐ左（1つにまとめた） */
   // 1段目：件数＋操作系（期間/検索/◎/並べ替え）を左に、項目調整を右端に
   var _row1, _row2;
   if(true){   /* ★v1.1568★ ★v1.1575★ 注視も同じ並び。1段目：件数・期間・ROASの列（右に項目調整）／2段目：検索・◎・並べ替え（右に色の説明） */
