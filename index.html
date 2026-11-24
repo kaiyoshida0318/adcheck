@@ -1040,7 +1040,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1568</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1569</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -16580,8 +16580,10 @@ function renderYoyTopDay(){
       + '<span class="yd-hv">当日 <b>'+fmtV(mt, r.tA)+'</b><span class="yd-sep">／</span>'+esc(cmpLbl)+' <b>'+fmtV(mt, r.tB)+'</b>'+(dTxt ? '<span class="yd-chg" style="color:'+dCol+'">'+(r.d < 0 ? '▼ ' : r.d > 0 ? '▲ ' : '')+dTxt+'</span>' : '')+'</span>'
       + '<span class="yd-note">'+share+'</span></div>'
       + '<div class="yd-cols">'
-      +   '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, true)+'">▼ 下げた商品</div><table class="yd-tbl">'+colHead(mt)+'<tbody>'+(dn.length ? dn.map((x, i) => row(mt, x, i, true, mx)).join('') : '<tr><td colspan="8" class="yd-none">なし</td></tr>')+'</tbody></table></div>'
-      +   '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, false)+'">▲ 上げた商品</div><table class="yd-tbl">'+colHead(mt)+'<tbody>'+(up.length ? up.map((x, i) => row(mt, x, i, false, mx)).join('') : '<tr><td colspan="8" class="yd-none">なし</td></tr>')+'</tbody></table></div>'
+      + (function(){   /* ★v1.1569★ 実績額（3種類）と獲得単価は、上げた商品を左に（増えたほうを先に見たいので） */
+          const cDn = '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, true)+'">▼ 下げた商品</div><table class="yd-tbl">'+colHead(mt)+'<tbody>'+(dn.length ? dn.map((x, i) => row(mt, x, i, true, mx)).join('') : '<tr><td colspan="8" class="yd-none">なし</td></tr>')+'</tbody></table></div>';
+          const cUp = '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, false)+'">▲ 上げた商品</div><table class="yd-tbl">'+colHead(mt)+'<tbody>'+(up.length ? up.map((x, i) => row(mt, x, i, false, mx)).join('') : '<tr><td colspan="8" class="yd-none">なし</td></tr>')+'</tbody></table></div>';
+          return (mt.g === 'sp' || mt.type === 'cpa') ? cUp + cDn : cDn + cUp; })()
       + '</div></div>';
   });
   area.innerHTML = html + '</div>';
