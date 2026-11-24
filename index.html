@@ -171,6 +171,19 @@ header + * { margin-top: 4px; }
 .kt-link:hover { background: #f3f4f6; color: var(--text); }
 .kt-link + .kt-link { border-left: 1px solid #eef0f3; border-radius: 0 6px 6px 0; }
 .kt-info { font-size: 11px; color: var(--text3); white-space: nowrap; }
+/* ★v1.1570★ 全体情報の表：足した項目の列（見出しに ✕）と、項目を選ぶプルダウン */
+.ix-x { margin-left: 6px; border: none; background: rgba(180,83,9,.12); color: #b45309; font-size: 10px; line-height: 1; padding: 2px 4px; border-radius: 4px; cursor: pointer; vertical-align: 1px; }
+.ix-x:hover { background: #b45309; color: #fff; }
+.ix-pick { position: relative; margin-left: auto; }
+.ix-pbtn { font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 7px; border: 1px solid #f59e0b; background: #fffbeb; color: #b45309; cursor: pointer; white-space: nowrap; font-family: inherit; }
+.ix-pbtn:hover { background: #fef3c7; }
+.ix-pop { display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 240px; padding: 8px 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px rgba(0,0,0,.15); font-weight: 400; }
+.ix-pop.open { display: block; }
+.ix-g { font-size: 10px; font-weight: 700; color: var(--text3); padding: 6px 8px 2px; }
+.ix-it { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 6px; font-size: 12px; color: var(--text); cursor: pointer; white-space: nowrap; }
+.ix-it:hover { background: #f3f4f6; }
+.ix-it input { width: 14px; height: 14px; cursor: pointer; accent-color: #d97706; }
+.kwt-mk-pop { position: fixed; z-index: 9300; min-width: 400px; max-width: 92vw; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 28px rgba(0,0,0,.2); font-size: 12px; line-height: 1.9; }
 /* ★v1.1568★ .kt-seg の中のプルダウン（KW-全体データの 日別／月別） */
 .kt-sel { font-size: 11.5px; font-weight: 700; line-height: 1.35; padding: 3px 4px 3px 8px; border-radius: 7px; border: 1px solid transparent; background: transparent; color: #374151; cursor: pointer; font-family: inherit; }
 .kt-sel:hover { background: #e5e7eb; }
@@ -1040,7 +1053,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1569</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1570</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -13404,6 +13417,17 @@ function _kwtWheel(e){ if (e.ctrlKey) return; const b = document.getElementById(
   if (dy < 0 && box.scrollTop <= 0 && b.scrollTop < L - 1){ e.preventDefault(); b.scrollTop += dy; return; }
   /* それ以外は表の箱がふつうにスクロールする（overscroll-behavior:contain で、端に来ても全体には伝わらない＝日別データの行で止まる） */ }
 window.addEventListener('resize', function(){ const m = document.getElementById('kwTrendModal'); if (m && m.style.display !== 'none') { try{ _kwtFitBox(); }catch(e){} } });
+/* ★v1.1570★ KW-個別推移の「ⓘ マークの意味」。商品-当日データの「マークの意味」と同じ中身を、ボタンの下に出す（もう一度押すか、ほかを押すと閉じる） */
+function _kwtMarkLegend(btn){
+  let p = document.getElementById('kwtMarkPop'); if (p){ p.remove(); return; }
+  const src = document.getElementById('kwIndivTableLegend'); if (!src) return;
+  p = document.createElement('div'); p.id = 'kwtMarkPop'; p.className = 'kwt-mk-pop';
+  const c = src.cloneNode(true); c.removeAttribute('id'); c.style.cssText = ''; const hd = c.firstElementChild; if (hd){ const b = hd.querySelector('span:last-child'); if (b) b.remove(); }
+  p.innerHTML = '<button onclick="document.getElementById(\'kwtMarkPop\').remove()" title="閉じる" style="position:absolute;top:6px;right:8px;border:none;background:none;font-size:16px;cursor:pointer;color:var(--text3)">✕</button>' + c.innerHTML;
+  document.body.appendChild(p);
+  const r = btn.getBoundingClientRect(); p.style.top = Math.round(r.bottom + 6) + 'px'; p.style.right = Math.max(8, Math.round(window.innerWidth - r.right)) + 'px';
+  setTimeout(function(){ document.addEventListener('mousedown', function f(e){ const q = document.getElementById('kwtMarkPop'); if (!q){ document.removeEventListener('mousedown', f); return; } if (q.contains(e.target) || e.target === btn) return; q.remove(); document.removeEventListener('mousedown', f); }); }, 0);
+}
 function _kwtAvgTg(k){ if (k === 'l') _kwtAvgL = !_kwtAvgL; else _kwtAvgS = !_kwtAvgS; renderKwTrend(); }
 function _tgSwitchHtml(onclick, label, on, tipOn, tipOff, cls){
   const e = t => String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
@@ -13704,7 +13728,7 @@ function renderKwTrend(resetScroll){
   // ★v1.1455★ 選択中のKWは右上ではなく左上に大きく。ダブルクリックでKW全体が選択される（そのまま Ctrl+C でコピー）
   const kwHead = '<div id="kwTrendHead" style="display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:0 0 8px;border-bottom:1px solid var(--border);position:sticky;top:-12px;z-index:5;background:var(--surface)">'   /* ★v1.1532★ 選択中のKW名は、下にスクロールしても上に固定 */
     + '<span style="font-size:11px;font-weight:700;color:#7c3aed;background:#f3e8ff;border:1px solid #c4b5fd;border-radius:4px;padding:1px 6px;user-select:none;-webkit-user-select:none;flex-shrink:0">KW</span>'
-    + '<span ondblclick="_selAll(this,event)" title="ダブルクリックで全体を選択" style="font-size:20px;font-weight:800;color:var(--text);word-break:break-all">' + esc(kw) + '</span>' + _kwtJudgeHtml(code, kw, _JM) + '</div>';   /* ★v1.1533★ 右に「判定｜対応」（商品-当日データと同じもの） */
+    + '<span ondblclick="_selAll(this,event)" title="ダブルクリックで全体を選択" style="font-size:20px;font-weight:800;color:var(--text);word-break:break-all">' + esc(kw) + '</span>' + (function(){ const j = _kwtJudgeHtml(code, kw, _JM); return j + '<button type="button" onclick="_kwtMarkLegend(this)" title="判定のマーク（◯・△・■など）の意味" style="' + (j ? '' : 'margin-left:auto;') + 'flex:none;font-size:11px;font-weight:600;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap">ⓘ マークの意味</button>'; })() + '</div>';   /* ★v1.1533★ 右に「判定｜対応」（商品-当日データと同じもの） ★v1.1570★ その右に「マークの意味」 */
   bodyEl.innerHTML = kwHead + ctl + zeroNote + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">' + tg + '</div>'
     + '<div style="position:relative;height:430px;margin-bottom:14px"><canvas id="kwTrendCanvas"></canvas></div>'
     + '<div id="kwtDataHead" style="font-size:13px;font-weight:700;color:var(--text2);margin:4px 0 6px;display:flex;align-items:center;flex-wrap:wrap;gap:6px"><span style="margin-right:8px">📋 ' + (_kwtGrain === 'day' ? '日別' : '月別') + 'データ</span>'
@@ -14488,6 +14512,33 @@ function _toggleRenewalMetric(i) {
 //   _renDayCutNow＝月途中のときの N（月全体なら 0）。renderRenewalGraph の間だけ値が入る
 let _renDayCutNow = 0;
 function _renCutSales(code, ym, cut){ const c = (_getDailySales()[code]) || {}; const a = { totSales:0, totOrders:0 }; Object.keys(c).forEach(d => { if (d.slice(0,7) === ym && +d.slice(8,10) <= cut){ a.totSales += c[d].sales || 0; a.totOrders += c[d].orders || 0; } }); return a; }
+/* ★v1.1570★ 全体情報の表に足せる項目（決まった4列＝売上ROAS・総売上・SEO売上・広告売上 のあとに足す）。
+   src:'all'＝_allTableCols の同じ名前の列／src:'m'＝_RENEWAL_METRICS の指標。選んだものは localStorage adcheck_info_xcols に残す（どの商品でも同じ） */
+const INFO_XCOLS = [
+  { g:'広告全体', k:'adsp',   label:'全広告実績', src:'all', name:'全広告実績' },
+  { g:'広告全体', k:'adroas', label:'全広告ROAS', src:'all', name:'全広告ROAS' },
+  { g:'KW',      k:'kwsa',   label:'KW売上',     src:'all', name:'KW売上' },
+  { g:'KW',      k:'kwsp',   label:'KW実績額',   src:'all', name:'KW実績額' },
+  { g:'KW',      k:'kwroas', label:'KW ROAS',    src:'all', name:'KW ROAS' },
+  { g:'20円',    k:'p20sa',  label:'20売上',     src:'all', name:'20売上' },
+  { g:'20円',    k:'p20sp',  label:'20実績額',   src:'all', name:'20実績額' },
+  { g:'20円',    k:'p20roas',label:'20 ROAS',    src:'all', name:'20 ROAS' },
+  { g:'そのほか', k:'cvr',    label:'CVR',        src:'m',   mk:'cvr' },
+  { g:'そのほか', k:'ctr',    label:'CTR',        src:'m',   mk:'ctr' },
+  { g:'そのほか', k:'orders', label:'個数',       src:'m',   mk:'orders' },
+  { g:'そのほか', k:'aov',    label:'平均単価',   src:'m',   mk:'cpc' },
+];
+let _infoXCols = (function(){ try{ const a = JSON.parse(localStorage.getItem('adcheck_info_xcols') || '[]'); return Array.isArray(a) ? a.filter(k => INFO_XCOLS.some(c => c.k === k)) : []; }catch(e){ return []; } })();
+function _infoXColSet(k, on){ const s0 = new Set(_infoXCols); if (on) s0.add(k); else s0.delete(k); _infoXCols = INFO_XCOLS.map(c => c.k).filter(x => s0.has(x)); try{ localStorage.setItem('adcheck_info_xcols', JSON.stringify(_infoXCols)); }catch(e){} _infoXKeepOpen = !!on || _infoXKeepOpen; try{ renderRenewalGraph(); }catch(e){} }
+let _infoXKeepOpen = false;   /* チェックした直後はプルダウンを開いたままにする（続けて選べるように） */
+function _infoXPop(ev){ if (ev) ev.stopPropagation(); const p = document.getElementById('infoXPop'); if (!p) return; p.classList.toggle('open'); _infoXKeepOpen = p.classList.contains('open'); }
+document.addEventListener('click', function(e){ const p = document.getElementById('infoXPop'); if (!p || !p.classList.contains('open')) return; if (e.target.closest && e.target.closest('.ix-pick')) return; p.classList.remove('open'); _infoXKeepOpen = false; });
+function _infoXPickHtml(){
+  let h = '<span class="ix-pick"><button type="button" class="ix-pbtn" onclick="_infoXPop(event)" title="表に項目を足す（決まった列はそのまま）">＋ 項目を追加' + (_infoXCols.length ? '（' + _infoXCols.length + '）' : '') + ' ▾</button><div id="infoXPop" class="ix-pop' + (_infoXKeepOpen ? ' open' : '') + '" onclick="event.stopPropagation()">';
+  let g0 = '';
+  INFO_XCOLS.forEach(c => { if (c.g !== g0){ h += '<div class="ix-g">' + c.g + '</div>'; g0 = c.g; } const on = _infoXCols.indexOf(c.k) >= 0; h += '<label class="ix-it"><input type="checkbox"' + (on ? ' checked' : '') + ' onchange="_infoXColSet(\'' + c.k + '\', this.checked)">' + c.label + '</label>'; });
+  return h + '</div></span>';
+}
 function _renderRenewalTable(labels, dataMap, code){
   const wrap = document.getElementById('renewalGraphTable'); if (!wrap) return;
   wrap.classList.toggle('ren-cut', !!_renDayCutNow);
@@ -14523,10 +14574,16 @@ function _renderRenewalTableCore(labels, dataMap, code){
     const _ac=_allTableCols(labels,dataMap,code); const _pick=lbl=>_ac.find(se=>se.label===lbl);
     const _want=[['売上ROAS','売上ROAS'],['総売上','総売上'],['SEO売上','SEO売上'],['広告売上','広告売上合計']];
     cols=_want.map(function(w){ const se=_pick(w[1]); return se?{label:w[0],color:se.color,fmt:se.fmt,vals:se.vals,dep:!!se.roas,colBg:'background:#eef4fb;'}:null; }).filter(Boolean);
+    /* ★v1.1570★ プルダウンで選んだ項目を足す（地は薄いオレンジ、見出しに ✕） */
+    _infoXCols.forEach(function(k){ const d=INFO_XCOLS.find(c=>c.k===k); if(!d) return; let c=null;
+      if(d.src==='all'){ const se=_pick(d.name); if(se) c={label:d.label,color:'#92400e',fmt:se.fmt,vals:se.vals,dep:!!se.roas}; }
+      else { const meta=_RENEWAL_METRICS[d.mk]; if(meta) c={label:d.label,color:'#92400e',fmt:meta.fmt,vals:_renewalMetricValues(d.mk,labels,dataMap,code),dep:(d.mk==='cpc')}; }
+      if(c){ c.colBg='background:#fff8ec;'; c.thBg='background:#fdecc8;box-shadow:inset 0 3px 0 #f59e0b;'; c.xk=k; cols.push(c); } });
   } else {
     const meta=_RENEWAL_METRICS[metric]||_RENEWAL_METRICS.roas;
     cols=[{label:meta.label,color:meta.color,fmt:meta.fmt,vals:_renewalMetricValues(metric,labels,dataMap,code),dep:(metric==='totsales'||metric==='cpc')}];
   }
+  { const _xp=document.getElementById('infoXPickWrap'); if(_xp) _xp.innerHTML=(metric==='all')?_infoXPickHtml():''; }   /* ★v1.1570★ */
   const _rtb=document.getElementById('renTblModeBtns'); if(_rtb){ _rtb.style.display=daily?'none':'flex'; const _n=document.getElementById('renTblNormal'),_y=document.getElementById('renTblYoyB'); if(_n)_n.style.cssText=_tblBtnStyle(!_renTblYoy)+'border-radius:5px 0 0 5px;'; if(_y)_y.style.cssText=_tblBtnStyle(_renTblYoy)+'border-radius:0 5px 5px 0;margin-left:-1px;'; }   /* ★v1.1480★ くっつけてペアに */
   { const _rdb = document.getElementById('renTblDayBtns'); const _cn = (typeof _monthlyLatestCut === 'function') ? _monthlyLatestCut() : 0;   /* ★v1.1535★ 月全体／月途中（全-月別データと同じ青緑） */
     if (_rdb){ _rdb.style.display = (!daily && _cn) ? 'flex' : 'none';
@@ -14539,7 +14596,7 @@ function _renderRenewalTableCore(labels, dataMap, code){
   const order=labels.map((_,i)=>i).reverse();
   const chip=l=>{ const _lt=_clTypes(l); const c=_lt.length>1?_clGradient(_lt):_clColor(l); const tl=_clLabel(l); const nt=(l.note||'').trim()||tl; return '<span style="display:inline-block;background:'+c+';color:#fff;font-size:10px;padding:1px 7px;border-radius:4px;margin:1px 2px 1px 0">'+l.date+' '+nt+'</span>'; };
   const _dateLbl=daily?'日付':'月'; const _igO=_igColGet(); const _igS=function(label){ var o=_igO[label]||{}; var a=o.a||'right'; var w=o.w; return 'text-align:'+a+';'+(w>0?('width:'+w+'px;min-width:'+w+'px;max-width:'+w+'px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'):''); }; const _dateSt=(function(){ var o=_igO[_dateLbl]||{}; var a=o.a||'left'; var w=o.w; return 'text-align:'+a+';'+(w>0?('width:'+w+'px;min-width:'+w+'px;max-width:'+w+'px;white-space:nowrap;'):''); })(); _igLastCols=[{label:_dateLbl,defAlign:'left'}].concat(cols.map(function(c){return {label:c.label,defAlign:'right'};}));
-  const head='<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)"><th style="padding:7px 10px;'+_dateSt+'border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">'+(daily?'\u65e5\u4ed8':'\u6708')+(_renDayCutNow?'<br><span style="display:inline-block;margin-top:3px;background:#0f766e;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:4px">1〜'+_renDayCutNow+'日</span>':'')+'</th>'+cols.map(c=>'<th style="padding:7px 10px;'+_igS(c.label)+'border-bottom:2px solid var(--border);font-weight:700;color:'+c.color+';'+(c.colBg||'')+'white-space:nowrap">'+c.label+'</th>').join('')+'<th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">\u5909\u66f4\u8a18\u9332</th></tr></thead>';
+  const head='<thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)"><th style="padding:7px 10px;'+_dateSt+'border-bottom:2px solid var(--border);font-weight:700;color:var(--text2)">'+(daily?'\u65e5\u4ed8':'\u6708')+(_renDayCutNow?'<br><span style="display:inline-block;margin-top:3px;background:#0f766e;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:4px">1〜'+_renDayCutNow+'日</span>':'')+'</th>'+cols.map(c=>'<th style="padding:7px 10px;'+_igS(c.label)+'border-bottom:2px solid var(--border);font-weight:700;color:'+c.color+';'+(c.colBg||'')+(c.thBg||'')+'white-space:nowrap"'+(c.xk?' title="足した項目（✕で消す）"':'')+'>'+c.label+(c.xk?'<button class="ix-x" onclick="event.stopPropagation();_infoXColSet(\''+c.xk+'\',false)" title="この列を消す">✕</button>':'')+'</th>').join('')+'<th style="padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;color:#f97316;border-left:1px solid var(--border)">\u5909\u66f4\u8a18\u9332</th></tr></thead>';
   const rows=order.map(i=>{ const key=labels[i]; const dispKey=daily?key.slice(5).replace('-','/'):key.slice(0,4)+'/'+key.slice(5,7); const hasLog=!!logByKey[key]; const _fc=hasLog?_clColor(logByKey[key][0]||{}):'#f97316'; const fr=hasLog?('border-top:3px dashed '+_fc+';border-bottom:2px dashed '+_fc+';'):''; const noSales=(totSalesArr[i]||0)===0; const cells=cols.map(c=>{ const v=c.vals[i]; const show=(c.dep&&noSales)?'<span style="color:var(--text3)">\u2014</span>':c.fmt(v); return '<td style="padding:6px 10px;'+_igS(c.label)+'font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+(c.colBg||'')+fr+'">'+show+'</td>'; }).join(''); const logCell=hasLog?'<td style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);border-left:1px solid var(--border);'+fr+'border-right:2px dashed '+_fc+';">'+logByKey[key].map(chip).join('')+'</td>':'<td style="padding:6px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)"></td>'; const ks=hasLog?'font-weight:700;color:var(--text)':'color:var(--text)'; return '<tr><td style="padding:6px 10px;'+_dateSt+'font-family:\'DM Mono\',monospace;border-bottom:1px solid var(--border);'+ks+';'+fr+(hasLog?'border-left:2px dashed '+_fc+';':'')+'">'+dispKey+'</td>'+cells+logCell+'</tr>'; }).join('');
   wrap.innerHTML='<table style="border-collapse:collapse;width:100%;font-size:12px">'+head+'<tbody>'+rows+'</tbody></table>';
 }
@@ -21425,7 +21482,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <div id="renewalGraphEmpty" style="display:none;text-align:center;padding:50px;color:var(--text3);font-size:13px">この商品のデータがありません。</div>
       <!-- データ表（グラフと同じ期間切替に連動） -->
       <div id="renewalGraphTableWrap" style="width:100%;flex:0 0 auto;display:flex;flex-direction:column;border-top:1px solid var(--border);padding-top:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:10px">📋 <span id="renewalTablePeriodLabel">月別</span><span id="renTblModeBtns" style="display:none;gap:0"><button id="renTblNormal" onclick="setRenTblYoy(false)">通常</button><button id="renTblYoyB" onclick="setRenTblYoy(true)">前年同月比</button></span><span id="renTblDayBtns" style="display:none;gap:0"><button id="renTblDayFull" onclick="_renSetDayMode(false)">月全体</button><button id="renTblDaySame" onclick="_renSetDayMode(true)">月途中</button></span><!-- ★v1.1535★ 月全体／月途中（グラフ上のドロップダウンの「(途中)まで」と同じ切り替え。グラフと表が連動） --></div>
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:10px">📋 <span id="renewalTablePeriodLabel">月別</span><span id="renTblModeBtns" style="display:none;gap:0"><button id="renTblNormal" onclick="setRenTblYoy(false)">通常</button><button id="renTblYoyB" onclick="setRenTblYoy(true)">前年同月比</button></span><span id="renTblDayBtns" style="display:none;gap:0"><button id="renTblDayFull" onclick="_renSetDayMode(false)">月全体</button><button id="renTblDaySame" onclick="_renSetDayMode(true)">月途中</button></span><!-- ★v1.1535★ 月全体／月途中（グラフ上のドロップダウンの「(途中)まで」と同じ切り替え。グラフと表が連動） --><span id="infoXPickWrap" style="margin-left:auto"></span><!-- ★v1.1570★ 項目を追加 --></div>
         <!-- ★v1.1492★ 表だけのスクロール（最大600px）をやめた。モーダル本体のスクロールに一本化して、表の見出しが商品名の行の真下で止まるようにする（KW-個別推移と同じ動き） -->
         <div id="renewalGraphTableScroll" style="border:1px solid var(--border);border-radius:8px;min-height:120px">
           <table id="renewalGraphTable" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"></table>
