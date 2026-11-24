@@ -1064,7 +1064,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1574</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1575</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -11051,15 +11051,26 @@ var _kwAllPeriod='day'; // （v1.1567まで）'day'=当日(最新月) / 'month'=
 var _kwAllPer={mode:'month', day:'', ym:'', s:'', e:''};
 var _kwAllRangeOpen=false;
 var _kwAllXr=(function(){ try{ var o=JSON.parse(localStorage.getItem('adcheck_kwall_xr_roas')||'{}'); return {l30:!!o.l30, s30:!!o.s30}; }catch(e){ return {l30:false, s30:false}; } })();   /* ★v1.1568★ KW-全体データの「ROASの列」（商品-当日データとは別に覚える） */
-function _kwAllXrToggle(k){ _kwAllXr[k]=!_kwAllXr[k]; try{ localStorage.setItem('adcheck_kwall_xr_roas', JSON.stringify(_kwAllXr)); }catch(e){} renderKwAllData(); }
+/* ★v1.1575★ 注視分-KW一覧にも KW-全体データと同じ仕組み（期間・ROASの列・検索・◎）。設定は別に覚える。w＝1 なら注視のほう */
+var _kwWatchPer={mode:'month', day:'', ym:'', s:'', e:''};
+var _kwWatchRangeOpen=false;
+var _kwWatchXr=(function(){ try{ var o=JSON.parse(localStorage.getItem('adcheck_kwwatch_xr_roas')||'{}'); return {l30:!!o.l30, s30:!!o.s30}; }catch(e){ return {l30:false, s30:false}; } })();
+var _kwWatchExclMaru=false;   /* 注視は最初「◎含み」（注視したKWを隠さない） */
+var _kwWatchSearch='';
+function _kpPer(w){ return w?_kwWatchPer:_kwAllPer; }
+function _kpRe(w){ if(w) renderKwWatch(); else renderKwAllData(); }
+function _kpCloseRange(w){ if(w) _kwWatchRangeOpen=false; else _kwAllRangeOpen=false; }
+function kwWatchSearch(v){ _kwWatchSearch=(v!=null?String(v):'').trim(); renderKwWatch(); }
+function kwWatchSearchClear(){ _kwWatchSearch=''; renderKwWatch(); }
+function _kwAllXrToggle(k,w){ var X=w?_kwWatchXr:_kwAllXr; X[k]=!X[k]; try{ localStorage.setItem(w?'adcheck_kwwatch_xr_roas':'adcheck_kwall_xr_roas', JSON.stringify(X)); }catch(e){} _kpRe(w); }
 function setKwAllPeriod(m){ _kwAllPer.mode='month'; _kwAllPer.ym=''; if(m==='month'){ var L=_xrLastDay(); if(L){ var y=+L.slice(0,4), mo=+L.slice(5,7)-1; if(mo<1){ mo=12; y--; } _kwAllPer.ym=''+y+String(mo).padStart(2,'0'); } } renderKwAllData(); }   /* 前の呼び方（当月／前月）も動くように */
-function _kwAllSetDay(v){ if(!v) return; _kwAllPer.mode='day'; _kwAllPer.day=v; _kwAllRangeOpen=false; renderKwAllData(); }
-function _kwAllSetMonth(v){ if(!v) return; _kwAllPer.mode='month'; _kwAllPer.ym=v; _kwAllRangeOpen=false; renderKwAllData(); }
-function _kwAllRangeBtn(){ _kwAllRangeOpen=!_kwAllRangeOpen; renderKwAllData(); }
-function _kwAllApplyRange(){ var a=document.getElementById('kwAllRs'), b=document.getElementById('kwAllRe'); if(!a||!b||!a.value||!b.value) return; var x=a.value, y=b.value; if(x>y){ var t=x; x=y; y=t; } _kwAllPer.mode='range'; _kwAllPer.s=x; _kwAllPer.e=y; _kwAllRangeOpen=false; renderKwAllData(); }
+function _kwAllSetDay(v,w){ if(!v) return; var P=_kpPer(w); P.mode='day'; P.day=v; _kpCloseRange(w); _kpRe(w); }
+function _kwAllSetMonth(v,w){ if(!v) return; var P=_kpPer(w); P.mode='month'; P.ym=v; _kpCloseRange(w); _kpRe(w); }
+function _kwAllRangeBtn(w){ if(w) _kwWatchRangeOpen=!_kwWatchRangeOpen; else _kwAllRangeOpen=!_kwAllRangeOpen; _kpRe(w); }
+function _kwAllApplyRange(w){ var pf=w?'kwWatch':'kwAll'; var a=document.getElementById(pf+'Rs'), b=document.getElementById(pf+'Re'); if(!a||!b||!a.value||!b.value) return; var x=a.value, y=b.value; if(x>y){ var t=x; x=y; y=t; } var P=_kpPer(w); P.mode='range'; P.s=x; P.e=y; _kpCloseRange(w); _kpRe(w); }
 function _kwAllMonthEnd(ym6){ var d=new Date(+ym6.slice(0,4), +ym6.slice(4,6), 0); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 /* 今の期間を {mode, s, e, ym6, latest, lbl} にする。latest＝期間の終わりがKWデータの最終日（＝今の入札額・今の登録KWを使ってよい） */
-function _kwAllPerResolve(L){ if(!L) return null; var P=_kwAllPer, o={mode:P.mode}, Lym=L.slice(0,4)+L.slice(5,7);
+function _kwAllPerResolve(L,P){ if(!L) return null; P=P||_kwAllPer; var o={mode:P.mode}, Lym=L.slice(0,4)+L.slice(5,7);
   if(P.mode==='day'){ var d=(P.day&&P.day<=L)?P.day:L; o.s=o.e=d; o.ym6=d.slice(0,4)+d.slice(5,7); o.latest=(d===L); o.lbl=(+d.slice(5,7))+'/'+(+d.slice(8,10)); }
   else if(P.mode==='range'){ var s=P.s||L, e=P.e||L; if(e>L) e=L; if(s>e){ var t=s; s=e; e=t; } o.s=s; o.e=e; o.ym6=e.slice(0,4)+e.slice(5,7); o.latest=(e===L); o.lbl=(+s.slice(5,7))+'/'+(+s.slice(8,10))+'〜'+(+e.slice(5,7))+'/'+(+e.slice(8,10)); }
   else { var ym=(P.ym&&P.ym<=Lym)?P.ym:Lym; o.mode='month'; o.ym6=ym; o.s=ym.slice(0,4)+'-'+ym.slice(4,6)+'-01'; var me=_kwAllMonthEnd(ym); o.e=(me<L)?me:L; o.latest=(ym===Lym); o.lbl=(+ym.slice(4,6))+'月'; }
@@ -11072,19 +11083,21 @@ var _KWALLCOLS=[
  {key:'num',label:'商品番号/商品管理番号'},{key:'code',label:'初回販売日/リニュ日'},{key:'prodkw',label:'商品 / KW'},
  {key:'kwvol',label:'KWvol'},{key:'spend',label:'実績額'},{key:'sales',label:'売上'},
  {key:'salesroas',label:'売上ROAS'},{key:'cvr',label:'CVR'},{key:'roas',label:'ROAS'},{key:'roasl30',label:'ROAS 直近30日'},{key:'roass30',label:'ROAS 確定30日'},
- {key:'share',label:'当商品内で占める割合'},{key:'mclick',label:'月クリック合計'},{key:'recent3',label:'直近3日クリック'},
- {key:'gui',label:'目安'},{key:'act',label:'入札'},{key:'mark',label:'判定'},{key:'watch',label:'注視'}
+ {key:'share',label:'当商品内で占める割合'},{key:'mclick',label:'月CP合計'},{key:'recent3',label:'直近3日CP数'},
+ {key:'gui',label:'目安'},{key:'act',label:'入札'},{key:'pred',label:'目安CP（予測・詳細）'},{key:'mark',label:'判定'},{key:'watch',label:'注視'}
 ];
 var _KWCOL_KEY='adcheck_kwallcol';
 function _kwColGet(){ try{ return JSON.parse(localStorage.getItem(_KWCOL_KEY)||'{}')||{}; }catch(e){ return {}; } }
 function _kwColSet(o){ try{ localStorage.setItem(_KWCOL_KEY, JSON.stringify(o)); }catch(e){} }
 function _applyKwColStyle(){
   var o=_kwColGet(); var hid=o.hidden||{}; var wid=o.width||{}; var css='';
-  var _keys=(window._kwAllColKeys&&_kwAllColKeys.length)?_kwAllColKeys:_KWALLCOLS.map(function(c){ return c.key; });   /* ★v1.1568★ 表に出ている列の並びで位置を数える（ROASの30日の列はONのときだけ出る） */
+  /* ★v1.1568★ 表に出ている列の並びで位置を数える（ROASの30日の列はONのときだけ出る）。★v1.1575★ KW-全体データと注視分-KW一覧の両方に同じ設定 */
+  var _by=window._kwColKeysBy||{}; if(!_by['tab-kw-all']&&window._kwAllColKeys) _by['tab-kw-all']=_kwAllColKeys;
+  ['tab-kw-all','tab-mar-watch'].forEach(function(cid){ var _keys=_by[cid]; if(!_keys||!_keys.length) return;
   _KWALLCOLS.forEach(function(c){ var n=_keys.indexOf(c.key)+1; if(!n) return;
-    if(hid[c.key]){ css+='#tab-kw-all thead th:nth-child('+n+'),#tab-kw-all tbody td:nth-child('+n+'){display:none}'; }
-    else if(wid[c.key]>0){ css+='#tab-kw-all thead th:nth-child('+n+'),#tab-kw-all tbody td:nth-child('+n+'){width:'+wid[c.key]+'px;max-width:'+wid[c.key]+'px;overflow:hidden;text-overflow:ellipsis}'; }
-  });
+    if(hid[c.key]){ css+='#'+cid+' thead th:nth-child('+n+'),#'+cid+' tbody td:nth-child('+n+'){display:none}'; }
+    else if(wid[c.key]>0){ css+='#'+cid+' thead th:nth-child('+n+'),#'+cid+' tbody td:nth-child('+n+'){width:'+wid[c.key]+'px;max-width:'+wid[c.key]+'px;overflow:hidden;text-overflow:ellipsis}'; }
+  }); });
   var s=document.getElementById('_kwColStyle'); if(!s){ s=document.createElement('style'); s.id='_kwColStyle'; document.head.appendChild(s); }
   s.textContent=css;
 }
@@ -11476,12 +11489,13 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   var _gYm6=_gLD?(_gLD.slice(0,4)+_gLD.slice(5,7)):'';
   var _prevYm6=''; if(_gYm6){ var _yy=+_gYm6.slice(0,4), _mm=+_gYm6.slice(4,6)-1; if(_mm<1){_mm=12;_yy--;} _prevYm6=''+_yy+String(_mm).padStart(2,'0'); }
   /* ★v1.1568★ 期間（日別／月別／期間指定）。注視のタブ（watchOnly）は今までどおり「その商品の最新の月」 */
-  var _P=cfg.watchOnly?null:_kwAllPerResolve(_gLD);
+  var _tw=cfg.watchOnly?1:0;   /* ★v1.1575★ 注視分-KW一覧も同じ仕組み（設定は別） */
+  var _P=_kwAllPerResolve(_gLD,_kpPer(_tw));
   var _isCur=!_P||_P.latest;   /* 期間の終わりが最新の日か（前の !_monthMode のかわり） */
   var _rng=!!(_P&&_P.mode!=='month');   /* 日別・期間指定 */
   var _salesByCodeRng={}; if(_rng){ salesRows.forEach(function(s2){ if(s2.itemCode&&s2.date>=_P.s&&s2.date<=_P.e) _salesByCodeRng[s2.itemCode]=(_salesByCodeRng[s2.itemCode]||0)+(s2.sales||0); }); }
   var _histFrom=_rng?_xrAdd(_P.e,-59):'';   /* 日別・期間指定の 目安・入札・直近3日クリック・判定 は、期間の終わりまでの60日のデータで見る（期間の中だけだと1日分しかないことがあるため） */
-  var _xrc=cfg.watchOnly?null:_kwTblXrBuild(_gLD,_kwAllXr);   /* ★v1.1568★ ROASの30日の列 */
+  var _xrc=_kwTblXrBuild(_gLD,_tw?_kwWatchXr:_kwAllXr);   /* ★v1.1568★ ROASの30日の列 */
   let rows=[];
   codes.forEach(function(code){
     const prodRows=kwRows.filter(r=>r.itemCode===code);
@@ -11526,7 +11540,8 @@ function _renderKwTable(cfg){ cfg=cfg||{};
     }
   });
   const _key=_kwAllSort;
-  if(_kwAllExclMaru && !cfg.watchOnly){ rows=rows.filter(function(o){ return o.kind!=='maru40'; }); }
+  var _exM=_tw?_kwWatchExclMaru:_kwAllExclMaru, _srch=_tw?_kwWatchSearch:_kwAllSearch;   /* ★v1.1575★ */
+  if(_exM && !cfg.watchOnly){ rows=rows.filter(function(o){ return o.kind!=='maru40'; }); }
   if(cfg.watchOnly){
     rows=rows.filter(function(o){ return _isWatched(o.code,o.kw); });
     // 注視ONだが実績0（kwRowsに無い）KWも行を追加＝注視は必ず一覧に出す
@@ -11542,8 +11557,9 @@ function _renderKwTable(cfg){ cfg=cfg||{};
         rows.push({code:code,img:img,name:name,kw:kw,date:'',kwvol:0,share:0,spend:0,sales:0,cvr:null,roas:null,salesRoas:null,prodSpend:0,mclick:0,recent3:0,gui:(me!=null?me:null),act:_kwBidNow(code,kw),streak:0,kind:_zeroImpKind(me),zero:true,mecpc:me});
       });
     });
+    if(_exM){ rows=rows.filter(function(o){ return o.kind!=='maru40'; }); }   /* ★v1.1575★ 注視の ◎以外 */
   }
-  if(_kwAllSearch && !cfg.watchOnly){ var _sq=_kwAllSearch.toLowerCase(); rows=rows.filter(function(o){ var _in=(productCache[o.code]&&productCache[o.code].itemNumber)||''; return (((o.kw||'')+' '+(o.name||'')+' '+(o.code||'')+' '+_in).toLowerCase()).indexOf(_sq)>=0; }); }
+  if(_srch){ var _sq=_srch.toLowerCase(); rows=rows.filter(function(o){ var _in=(productCache[o.code]&&productCache[o.code].itemNumber)||''; return (((o.kw||'')+' '+(o.name||'')+' '+(o.code||'')+' '+_in).toLowerCase()).indexOf(_sq)>=0; }); }
   var _txtSort={itemnum:1,code:1,firstsale:1,renewal:1};
   if(_txtSort[_key]){
     /* ★v1.1494★ 見出しの並べ替え。値の無いもの（日付が無い商品など）は向きに関係なくいつも下。同じ値の中は商品ごとにまとめ、実績額の大きい順 */
@@ -11578,32 +11594,37 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   var _xrKs=_xrc?['l30','s30'].filter(function(k){ return !!_xrc[k]; }):[];
   h+='<th style="'+_H+';background:#fbe4ec">ROAS'+(_xrKs.length&&_P?'<div style="font-size:9px;font-weight:600;color:#888">'+_P.lbl+'</div>':'')+'</th>';
   _xrKs.forEach(function(k){ var C=XR_COL[k], o2=_xrc[k]; h+='<th style="'+_H+';background:'+C.bg+';box-shadow:inset 0 -2px 0 '+C.c+'" title="'+XR_NAME[k]+'：'+_xrYmd(o2.s)+'〜'+_xrYmd(o2.e)+'\n'+XR_TIP[k]+'">ROAS<div style="font-size:9px;font-weight:700;color:'+C.t+'">'+XR_NAME[k]+'</div></th>'; });   /* ★v1.1568★ */
-  if(!cfg.watchOnly) h+='<th style="'+_H+';background:#f8dcb8;color:#b45309">当商品内で<br>占める割合</th>';
-  h+='<th style="'+_H+';background:#e4eefb">'+(_rng?'クリック合計':'月クリック合計')+'</th>';
-  window._kwAllColKeys=cfg.watchOnly?window._kwAllColKeys:['num','code','prodkw','kwvol','spend','sales','salesroas','cvr','roas'].concat(_xrKs.map(function(k){ return k==='l30'?'roasl30':'roass30'; })).concat(['share','mclick','recent3','gui','act','mark','watch']);
-  h+='<th style="'+_H+';background:#e4eefb">直近3日クリック</th>';
+  h+='<th style="'+_H+';background:#f8dcb8;color:#b45309">当商品内で<br>占める割合</th>';
+  h+='<th style="'+_H+';background:#e4eefb">'+(_rng?'CP合計':'月CP合計')+'</th>';   /* ★v1.1575★ 名前を変えた */
+  var _ck=['num','code','prodkw','kwvol','spend','sales','salesroas','cvr','roas'].concat(_xrKs.map(function(k){ return k==='l30'?'roasl30':'roass30'; })).concat(['share','mclick','recent3','gui','act','pred','mark','watch']);
+  window._kwColKeysBy=window._kwColKeysBy||{}; window._kwColKeysBy[cfg.containerId]=_ck; if(!cfg.watchOnly) window._kwAllColKeys=_ck;   /* ★v1.1575★ 表ごとの列の並び */
+  h+='<th style="'+_H+';background:#e4eefb">直近3日<br>CP数</th>';
   h+='<th style="'+_H+';background:#ede4fb;color:#7c3aed">目安</th>';
   h+='<th style="'+_H+';background:#dcefca;color:#00897B">入札</th>';
-  h+='<th style="'+_H+';background:var(--surface)">判定</th>';
+  h+='<th style="'+_H+';background:#eef2ff;color:#1d4ed8;width:1%">目安CP</th>';   /* ★v1.1575★ 予測・詳細はここへ */
+  h+='<th style="'+_H+';background:var(--surface)">判定</th>';   /* ★v1.1575★ 判定は注視のすぐ左 */
   h+='<th style="'+_H+';background:var(--surface);color:#dc2626">注視</th>';
   h+='</tr></thead><tbody>';
   rows.forEach(function(o){
     h+='<tr>'
       +'<td style="'+_T+';text-align:left;font-size:10px;color:var(--text2)"><div'+(_kwAllSort==='itemnum'?' class="idd-on"':'')+' ondblclick="_selAll(this,event)" style="line-height:1.35">'+_kwEsc((productCache[o.code]&&productCache[o.code].itemNumber)||'')+'</div><div'+(_kwAllSort==='code'?' class="idd-on"':'')+' ondblclick="_selAll(this,event)" style="line-height:1.35;color:var(--text3)">'+_kwEsc(o.code||'')+'</div></td>'   /* ★v1.1494★ 商品番号／商品管理番号 */
       +(function(){ var fs=_firstSaleDate(o.code), rn=_renewalDate(o.code); return '<td style="'+_T+';text-align:left;font-size:10px;color:var(--text2)"><div class="'+(fs?'':'idd-none')+(_kwAllSort==='firstsale'?' idd-on':'')+'" style="line-height:1.35" title="初回販売日">'+(fs?_ymdSlash(fs):'-')+'</div><div class="'+(rn?'':'idd-none')+(_kwAllSort==='renewal'?' idd-on':'')+'" style="line-height:1.35;color:var(--text3)" title="リニュ日">'+(rn?_ymdSlash(rn):'-')+'</div></td>'; })()   /* ★v1.1494★ 初回販売日／リニュ日 */
-      +'<td style="'+_T+';text-align:left;background:var(--surface)">'+'<div style="display:flex;align-items:center;gap:10px;justify-content:space-between">'+'<div style="display:flex;align-items:center;gap:8px;min-width:0">'+'<div onclick="event.stopPropagation();openRenewalGraph(\''+o.code+'\')" title="商品情報を開く（全体情報・KW-全体推移・KW-個別推移・編集）" style="cursor:pointer;flex:none;line-height:0">'+(o.img?'<img loading="lazy" src="'+o.img+'" style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border);flex:none">':'<div style="width:34px;height:34px;flex:none;border:1px dashed var(--border);border-radius:5px"></div>')+'</div>'+'<div style="min-width:0">'+(cfg.watchOnly?'<div style="font-size:9px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_kwEsc(o.name)+'</div>':'')+/* ★v1.1573★ KW名は2行まで折り返し、それでも入らなければ末尾を…（注視は1行のまま） */ '<div title="'+_kwEsc(o.kw)+'\n'+_kwEsc(o.name)+'" style="font-size:12px;font-weight:700;max-width:180px;overflow:hidden;'+(cfg.watchOnly?'text-overflow:ellipsis;white-space:nowrap':'display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;white-space:normal;overflow-wrap:anywhere;line-height:1.35')+'">'+_kwEsc(o.kw)+'</div></div>'+'</div>'+'<div style="display:flex;align-items:center;gap:6px;flex:none">'+(cfg.watchOnly?'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:46px;height:46px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex:none">予測</button>':'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:50px;height:30px;border-radius:5px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">予測</button>')+(cfg.watchOnly?'<button onclick="_kwOpenWatchProd(\''+o.code+'\')" style="width:46px;height:46px;border-radius:8px;border:none;background:#ea580c;color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex:none">詳細</button>':'<button onclick="_kwGoWatchProd(\''+o.code+'\')" style="width:50px;height:30px;border-radius:5px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">詳細</button>')+'</div>'+'</div></td>'
+      +'<td style="'+_T+';text-align:left;background:var(--surface)">'+'<div style="display:flex;align-items:center;gap:10px;justify-content:space-between">'+'<div style="display:flex;align-items:center;gap:8px;min-width:0">'+'<div onclick="event.stopPropagation();openRenewalGraph(\''+o.code+'\')" title="商品情報を開く（全体情報・KW-全体推移・KW-個別推移・編集）" style="cursor:pointer;flex:none;line-height:0">'+(o.img?'<img loading="lazy" src="'+o.img+'" style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border);flex:none">':'<div style="width:34px;height:34px;flex:none;border:1px dashed var(--border);border-radius:5px"></div>')+'</div>'+'<div style="min-width:0">'+/* ★v1.1573★ KW名は2行まで折り返し、それでも入らなければ末尾を…（★v1.1575★ 注視も） */ '<div title="'+_kwEsc(o.kw)+'\n'+_kwEsc(o.name)+'" style="font-size:12px;font-weight:700;max-width:180px;overflow:hidden;'+'display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;white-space:normal;overflow-wrap:anywhere;line-height:1.35'+'">'+_kwEsc(o.kw)+'</div></div>'+'</div>'+'</div></td>'
       +'<td style="'+_T+';background:#eef7f0">'+n2(o.kwvol)+'</td>'
-      +'<td style="'+_T+';background:#fdf6e3;font-weight:700">'+yfmt(o.spend)+((!cfg.watchOnly&&_totalSpend>0)?'<div style="font-size:9px;font-weight:600;color:#9a7b1a;margin-top:1px;white-space:nowrap">'+_pctFmt(o.spend/_totalSpend*100)+'%</div>':'')+'</td>'
+      +'<td style="'+_T+';background:#fdf6e3;font-weight:700">'+yfmt(o.spend)+((_totalSpend>0)?'<div style="font-size:9px;font-weight:600;color:#9a7b1a;margin-top:1px;white-space:nowrap">'+_pctFmt(o.spend/_totalSpend*100)+'%</div>':'')+'</td>'
       +'<td style="'+_T+';background:#fdf6e3">'+yfmt(o.sales)+'</td>'
       +'<td style="'+_T+';background:#e0f2f1;font-weight:700;color:#333">'+(o.salesRoas!=null?Math.round(o.salesRoas).toLocaleString()+'%':'\u2014')+'</td>'
       +'<td style="'+_T+';background:#fcecf2">'+(o.cvr!=null?o.cvr.toFixed(2)+'%':'\u2014')+'</td>'
       +'<td style="'+_T+';background:#fcecf2;font-weight:700;color:'+_roasColor(o.roas)+'">'+(o.roas!=null?Math.round(o.roas).toLocaleString()+'%':'\u2014')+'</td>'
       +_xrKs.map(function(k){ var a=((_xrc[k].m[o.code]||{})[o.kw]); var v=(a&&a[0]>0)?(a[1]/a[0]*100):null; return '<td style="'+_T+';background:'+XR_COL[k].bg+';font-weight:700;color:'+_roasColor(v)+'">'+(v!=null?Math.round(v).toLocaleString()+'%':'\u2014')+'</td>'; }).join('')   /* ★v1.1568★ */
-      +(cfg.watchOnly?'':(function(){ var sh=(o.prodSpend>0&&o.spend!=null)?(o.spend/o.prodSpend*100):null; return '<td style="'+_T+';background:#fcecd9;font-weight:700;color:'+_shareColor(sh)+'">'+(sh!=null?_pctFmt(sh)+'%':'\u2014')+'</td>'; })())
+      +(function(){ var sh=(o.prodSpend>0&&o.spend!=null)?(o.spend/o.prodSpend*100):null; return '<td style="'+_T+';background:#fcecd9;font-weight:700;color:'+_shareColor(sh)+'">'+(sh!=null?_pctFmt(sh)+'%':'\u2014')+'</td>'; })()
       +'<td style="'+_T+';background:#eef4fc">'+n2(o.mclick)+'</td>'
       +'<td style="'+_T+';background:#eef4fc">'+n2(o.recent3)+'</td>'
       +'<td style="'+_T+';background:#f3ecfd">'+n2(o.gui)+'</td>'
       +'<td style="'+_T+';background:#eaf5dd">'+n2(o.act)+'</td>'
+      +'<td style="'+_T+';background:#f5f7ff"><div style="display:flex;align-items:center;justify-content:center;gap:6px">'   /* ★v1.1575★ 目安CP：予測・詳細（前は 商品／KW の右にあった） */
+        +'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:50px;height:30px;border-radius:5px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">予測</button>'
+        +'<button onclick="'+(cfg.watchOnly?'_kwOpenWatchProd':'_kwGoWatchProd')+'(\''+o.code+'\')" style="width:50px;height:30px;border-radius:5px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">詳細</button></div></td>'
       +'<td style="'+_T+'">'+(o.zero?_taiouMarkGlyph(o.kind):_kwiMkM(o.act,o.gui,o.streak))+'</td>'
       +'<td style="'+_T+'"><input type="checkbox" data-code="'+_kwEsc(o.code)+'" data-kw="'+_kwEsc(o.kw)+'" onchange="_toggleWatchEl(this)"'+(_isWatched(o.code,o.kw)?' checked':'')+' style="width:16px;height:16px;cursor:pointer"></td>'
       +'</tr>';
@@ -11611,10 +11632,11 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   h+='</tbody></table>';
   var _onSt='font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;border:1px solid #00897B;background:#00897B;color:#fff;white-space:nowrap';
   var _offSt='font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text3);white-space:nowrap';
-  var _maruToggle=cfg.watchOnly?'':('<div style="display:inline-flex;gap:4px;margin-right:12px"><button onclick="_kwAllExclMaru=true; '+_reRender+';" style="'+(_kwAllExclMaru?_onSt:_offSt)+'">◎以外</button><button onclick="_kwAllExclMaru=false; '+_reRender+';" style="'+(_kwAllExclMaru?_offSt:_onSt)+'">◎含み</button></div>');
+  var _mv=_tw?'_kwWatchExclMaru':'_kwAllExclMaru';
+  var _maruToggle='<div style="display:inline-flex;gap:4px;margin-right:12px"><button onclick="'+_mv+'=true; '+_reRender+';" style="'+(_exM?_onSt:_offSt)+'">◎以外</button><button onclick="'+_mv+'=false; '+_reRender+';" style="'+(_exM?_offSt:_onSt)+'">◎含み</button></div>';
   /* ★v1.1568★ 期間：［日別 ▾］［月別 ▾］［期間指定］ と ［ROASの列：直近30日・確定30日］ */
   var _periodToggle='';
-  if(!cfg.watchOnly && _P){
+  if(_P){
     var _wd=['日','月','火','水','木','金','土'];
     var _dates=[...new Set(kwRows.map(function(r){ return r.date; }).filter(Boolean))].sort().reverse();
     var _yms=[...new Set(_dates.map(function(d){ return d.slice(0,4)+d.slice(5,7); }))];
@@ -11622,26 +11644,28 @@ function _renderKwTable(cfg){ cfg=cfg||{};
     var _mOpt='<option value="" disabled hidden'+(_P.mode!=='month'?' selected':'')+'>月を選ぶ</option>'+_yms.map(function(ym,i){ return '<option value="'+ym+'"'+(_P.mode==='month'&&_P.ym6===ym?' selected':'')+'>'+ym.slice(0,4)+'年'+(+ym.slice(4,6))+'月'+(i===0?'（1日〜'+(+_gLD.slice(8,10))+'日）':'')+'</option>'; }).join('');
     var _rOn=(_P.mode==='range');
     _periodToggle='<div class="kp-wrap" title="表の数字の期間"><span class="kp-lbl">期間</span>'   /* ★v1.1574★ 見た目を変えた（動きは同じ） */
-      +'<span class="kp-sub">日別</span><select class="kp-sel'+(_P.mode==='day'?' on':'')+'" onchange="_kwAllSetDay(this.value)" title="1日分の数字">'+_dOpt+'</select>'
-      +'<span class="kp-sub">月別</span><select class="kp-sel'+(_P.mode==='month'?' on':'')+'" onchange="_kwAllSetMonth(this.value)" title="1か月分の数字（今月は1日〜最新の日）">'+_mOpt+'</select>'
-      +'<button class="kp-btn'+(_rOn?' on':'')+'" style="margin-left:6px" onclick="_kwAllRangeBtn()" title="開始日〜終了日を決めて見る">'+(_rOn?('期間指定 '+_P.lbl):'期間指定')+'</button></div>';
-    if(_kwAllRangeOpen){ var _rs=_rOn?_P.s:_xrAdd(_gLD,-29), _re=_rOn?_P.e:_gLD; var _mn=_dates[_dates.length-1]||'';
-      _periodToggle+='<span class="kt-seg" style="background:#fff"><input id="kwAllRs" type="date" class="kt-date" value="'+_rs+'" min="'+_mn+'" max="'+_gLD+'"><span style="font-size:11px;color:var(--text3)">〜</span><input id="kwAllRe" type="date" class="kt-date" value="'+_re+'" min="'+_mn+'" max="'+_gLD+'"><button class="kt-btn on" style="background:#7e22ce;border-color:#7e22ce" onclick="_kwAllApplyRange()">表示</button></span>'; }
-    _periodToggle+='<div class="kt-seg" title="ROASの列を足して出します（ほかの列は変わりません）"><span class="kt-lbl">ROASの列</span>'+['l30','s30'].map(function(k){ var C=XR_COL[k], r=_xrRange(k,_gLD), on=!!_kwAllXr[k]; return '<button class="kt-btn'+(on?' on':'')+'" style="'+(on?'background:'+C.c+';border-color:'+C.c:'')+'" onclick="_kwAllXrToggle(\''+k+'\')" title="'+XR_NAME[k]+'のROASの列を'+(on?'消す':'出す')+'（'+_xrYmd(r[0])+'〜'+_xrYmd(r[1])+'）\n'+XR_TIP[k]+'">'+(on?'<span>\u2713</span>':'<span style="color:#9ca3af">\uFF0B</span>')+XR_NAME[k]+'</button>'; }).join('')+'</div>';
-    var _xi=''; ['l30','s30'].forEach(function(k){ if(!_kwAllXr[k]) return; var r=_xrRange(k,_gLD), C=XR_COL[k]; _xi+='<span style="margin-right:10px" title="'+XR_TIP[k]+'"><b style="color:'+C.t+'">'+XR_NAME[k]+'</b> '+_xrMd(r[0])+'〜'+_xrMd(r[1])+'</span>'; });
+      +'<span class="kp-sub">日別</span><select class="kp-sel'+(_P.mode==='day'?' on':'')+'" onchange="_kwAllSetDay(this.value,'+_tw+')" title="1日分の数字">'+_dOpt+'</select>'
+      +'<span class="kp-sub">月別</span><select class="kp-sel'+(_P.mode==='month'?' on':'')+'" onchange="_kwAllSetMonth(this.value,'+_tw+')" title="1か月分の数字（今月は1日〜最新の日）">'+_mOpt+'</select>'
+      +'<button class="kp-btn'+(_rOn?' on':'')+'" style="margin-left:6px" onclick="_kwAllRangeBtn('+_tw+')" title="開始日〜終了日を決めて見る">'+(_rOn?('期間指定 '+_P.lbl):'期間指定')+'</button></div>';
+    if(_tw?_kwWatchRangeOpen:_kwAllRangeOpen){ var _rs=_rOn?_P.s:_xrAdd(_gLD,-29), _re=_rOn?_P.e:_gLD; var _mn=_dates[_dates.length-1]||'';
+      _periodToggle+='<span class="kt-seg" style="background:#fff"><input id="'+(_tw?'kwWatchRs':'kwAllRs')+'" type="date" class="kt-date" value="'+_rs+'" min="'+_mn+'" max="'+_gLD+'"><span style="font-size:11px;color:var(--text3)">〜</span><input id="'+(_tw?'kwWatchRe':'kwAllRe')+'" type="date" class="kt-date" value="'+_re+'" min="'+_mn+'" max="'+_gLD+'"><button class="kt-btn on" style="background:#7e22ce;border-color:#7e22ce" onclick="_kwAllApplyRange('+_tw+')">表示</button></span>'; }
+    _periodToggle+='<div class="kt-seg" title="ROASの列を足して出します（ほかの列は変わりません）"><span class="kt-lbl">ROASの列</span>'+['l30','s30'].map(function(k){ var C=XR_COL[k], r=_xrRange(k,_gLD), on=!!(_tw?_kwWatchXr:_kwAllXr)[k]; return '<button class="kt-btn'+(on?' on':'')+'" style="'+(on?'background:'+C.c+';border-color:'+C.c:'')+'" onclick="_kwAllXrToggle(\''+k+'\','+_tw+')" title="'+XR_NAME[k]+'のROASの列を'+(on?'消す':'出す')+'（'+_xrYmd(r[0])+'〜'+_xrYmd(r[1])+'）\n'+XR_TIP[k]+'">'+(on?'<span>\u2713</span>':'<span style="color:#9ca3af">\uFF0B</span>')+XR_NAME[k]+'</button>'; }).join('')+'</div>';
+    var _xi=''; ['l30','s30'].forEach(function(k){ if(!(_tw?_kwWatchXr:_kwAllXr)[k]) return; var r=_xrRange(k,_gLD), C=XR_COL[k]; _xi+='<span style="margin-right:10px" title="'+XR_TIP[k]+'"><b style="color:'+C.t+'">'+XR_NAME[k]+'</b> '+_xrMd(r[0])+'〜'+_xrMd(r[1])+'</span>'; });
     if(_xi) _periodToggle+='<span class="kt-info">'+_xi+'</span>';
   }
   const opts=[['spend','実績額順'],['sales','売上順'],['kwvol','KWvol順'],['mclick','月クリック順'],['roas','ROAS順'],['cvr','CVR順']];
   const sortSel='<select onchange="_kwAllSort=this.value; _kwAllSortDir=\'desc\'; '+_reRender+';" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">'+(opts.some(function(p){return p[0]===_kwAllSort;})?'':'<option value="" selected disabled>見出しで並べ替え中</option>')+opts.map(function(p){return '<option value="'+p[0]+'"'+(_kwAllSort===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('')+'</select>';
   var _roasLeg='<div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--text2)"><span style="font-weight:700">ROAS文字色</span>'+[['#15803d','800以上'],['#16a34a','600-800'],['#555','400-600'],['#ea580c','200-400'],['#dc2626','0-200']].map(function(pp){return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="font-weight:800;color:'+pp[0]+'">■</span>'+pp[1]+'</span>';}).join('')+'</div>';
   var _shareLeg='<div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--text2)"><span style="font-weight:700">当商品内割合 文字色</span>'+[['#dc2626','70-100'],['#ea580c','50-70'],['#ca8a04','30-50'],['#555','0-30']].map(function(pp){return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="font-weight:800;color:'+pp[0]+'">■</span>'+pp[1]+'</span>';}).join('')+'</div>';
-  var _searchBox=cfg.watchOnly?'':('<div style="display:inline-flex;align-items:center;gap:4px;margin-right:12px"><input type="text" id="kwAllSearchInput" value="'+_kwEsc(_kwAllSearch)+'" placeholder="KW・商品名・商品番号で検索" onkeydown="if(event.key===\'Enter\')kwAllSearch(this.value)" style="width:180px;font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)"><button onclick="kwAllSearch(document.getElementById(\'kwAllSearchInput\').value)" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">検索</button>'+(_kwAllSearch?'<button onclick="kwAllSearchClear()" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">クリア</button>':'')+'</div>');
-  var _searchNote=(_kwAllSearch&&!cfg.watchOnly)?('<span style="font-size:11px;color:#00796b;font-weight:600;margin-left:8px">検索:「'+_kwEsc(_kwAllSearch)+'」（実績0の登録KWも表示）</span>'):'';
+  var _sid=_tw?'kwWatchSearchInput':'kwAllSearchInput', _sfn=_tw?'kwWatchSearch':'kwAllSearch';   /* ★v1.1575★ */
+  var _searchBox=('<div style="display:inline-flex;align-items:center;gap:4px;margin-right:12px"><input type="text" id="'+_sid+'" value="'+_kwEsc(_srch)+'" placeholder="KW・商品名・商品番号で検索" onkeydown="if(event.key===\'Enter\')'+_sfn+'(this.value)" style="width:180px;font-size:12px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)"><button onclick="'+_sfn+'(document.getElementById(\''+_sid+'\').value)" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid #00897B;background:#00897B;color:#fff;cursor:pointer;white-space:nowrap">検索</button>'+(_srch?'<button onclick="'+_sfn+'Clear()" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">クリア</button>':'')+'</div>');
+  var _searchNote=_srch?('<span style="font-size:11px;color:#00796b;font-weight:600;margin-left:8px">検索:「'+_kwEsc(_srch)+'」'+(_tw?'':'（実績0の登録KWも表示）')+'</span>'):'';
   var _countLbl='<div style="font-size:13px;font-weight:700;color:var(--text2);white-space:nowrap">'+(_latestDate?('<span style="color:var(--text3);font-weight:600;margin-right:10px">'+_latestDate.slice(0,4)+'/'+_latestDate.slice(5,7)+'/'+_latestDate.slice(8,10)+'</span>'):'')+'全KW '+rows.length+'件'+_searchNote+'</div>';
-  var _colBtn=cfg.watchOnly?'':'<button onclick="_openKwColPanel()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button>';
+  var _colBtn='<button onclick="_kwtMarkLegend(this)" title="判定のマーク（◯・△・■など）の意味" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600;margin-right:6px">ⓘ マークの意味</button>'   /* ★v1.1575★ */
+    +'<button onclick="_openKwColPanel()" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:600">項目調整</button>';
   // 1段目：件数＋操作系（期間/検索/◎/並べ替え）を左に、項目調整を右端に
   var _row1, _row2;
-  if(!cfg.watchOnly){   /* ★v1.1568★ 1段目：件数・期間・ROASの列（右に項目調整）／2段目：検索・◎・並べ替え（右に色の説明） */
+  if(true){   /* ★v1.1568★ ★v1.1575★ 注視も同じ並び。1段目：件数・期間・ROASの列（右に項目調整）／2段目：検索・◎・並べ替え（右に色の説明） */
     _row1='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+_countLbl+_periodToggle+'</div>'+_colBtn+'</div>';
     _row2='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:0;flex-wrap:wrap">'+_searchBox+_maruToggle+'<span style="font-size:11px;color:var(--text3);margin-right:6px">並べ替え</span>'+sortSel+'</div><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">'+_roasLeg+_shareLeg+'</div></div>';
   } else {
@@ -11651,7 +11675,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   }
   const top='<div style="margin-bottom:10px">'+_row1+_row2+'</div>';
   cont.innerHTML='<div style="padding:10px 14px">'+top+'<div style="max-height:calc(100vh - 240px);overflow:auto;border:1px solid var(--border);border-radius:8px">'+h+'</div></div>';
-  if(!cfg.watchOnly){ try{ _applyKwColStyle(); }catch(e){} }
+  try{ _applyKwColStyle(); }catch(e){}   /* ★v1.1575★ 注視にも */
 }
 
 // ★v1.1533★ KW-個別推移の固定したKW名の行に出す「判定｜対応」。商品-当日データと同じものを出すため、同じ処理（_buildKwTableBlock）で
