@@ -1079,7 +1079,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1584</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1585</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -10756,7 +10756,7 @@ async function _taiouPublishBtn(btn){ if(btn){ btn.disabled=true; btn.textConten
 function _taiouSet(idx,field,val){ if(!_taiouRules[idx]) return; _taiouRules[idx][field]=val; _taiouSave(); }
 function _taiouAddRule(){ _taiouRules.push({mark:'any',conds:[],text:'',color:'black',weight:'normal'}); _taiouSave(); _renderTaiouEditor(); }
 function _taiouDelRule(idx){ var _r=_taiouRules[idx]; if(_r){ if(_r.mark==='zeroImpBlack'){ try{ localStorage.setItem('adcheck_taiou_zeroimpblack_dismissed','1'); }catch(e){} } else if(_r.mark==='zeroImpRed'||_r.mark==='zeroImp'){ try{ localStorage.setItem('adcheck_taiou_zeroimpred_dismissed','1'); }catch(e){} } } _taiouRules.splice(idx,1); _taiouSave(); _renderTaiouEditor(); }
-function _taiouApply(){ if(typeof renderKwIndivTableAll==='function'){ try{renderKwIndivTableAll();}catch(e){} } if(typeof _currentTab!=='undefined' && _currentTab==='kw-indiv' && typeof renderKwIndiv==='function'){ try{renderKwIndiv();}catch(e){} } }
+function _taiouApply(){ if(typeof renderKwIndivTableAll==='function'){ try{renderKwIndivTableAll();}catch(e){} } if(typeof _currentTab!=='undefined' && (_currentTab==='kw-indiv'||_currentTab==='kw-watch-prod') && typeof renderKwIndiv==='function'){ try{renderKwIndiv();}catch(e){} } }   /* ★v1.1585★ 注視分-商品個別も */
 var _taiouMsgT=null;
 function _taiouSortByMark(){ var ord={}; _TAIOU_MARKS.forEach(function(m,i){ ord[m[0]]=i; }); _taiouRules.sort(function(a,b){ var oa=ord[a&&a.mark]; if(oa==null)oa=999; var ob=ord[b&&b.mark]; if(ob==null)ob=999; return oa-ob; }); _taiouSave(); }
 function _taiouApplyBtn(){ _taiouSortByMark(); _renderTaiouEditor(); _taiouApply(); var m=document.getElementById('taiouApplyMsg'); if(m){ m.textContent='\u2713 反映しました'; m.style.opacity='1'; if(_taiouMsgT) clearTimeout(_taiouMsgT); _taiouMsgT=setTimeout(function(){ if(m) m.style.opacity='0'; },2200); } }
@@ -10901,6 +10901,8 @@ function renderKwIndiv(){
         +'</div>';
       const _note='<div style="font-size:11px;color:#888;margin-top:6px"><span style="font-weight:700">?数字?</span>＝データが半数以下で、おおまかな予測の数値です。</div>';
       _sumHtml='<div style="display:flex;gap:20px;align-items:flex-start;margin:0 0 16px;flex-wrap:wrap"><div style="overflow-x:auto"><table style="border-collapse:collapse">'+_h+'</table>'+_note+'</div>'+_leg+'</div>';
+      /* ★v1.1585★ 最新の月を見ているときは、表を 商品-当日データ と同じもの（_buildKwTableBlock）にする。マークの意味は右に残す。下のKW別の棒グラフは今までどおり */
+      try{ const _ms=_kwIndivMonths(code); const _selYm=(document.getElementById('kwIndivMonth'+_S)||{}).value||_ms[0]||''; if(_selYm && _selYm===_ms[0]){ const _bx=_kwTblXrBuild(_kwIdxGet().L); const _blk=_buildKwTableBlock(code,true,0,'kwi'+_S,false,null,_bx); if(_blk){ _sumHtml=_blk.head+'<div style="display:flex;gap:20px;align-items:flex-start;margin:0 0 16px;flex-wrap:wrap">'+_blk.body+_leg+'</div>'; if(hd) hd.innerHTML=''; } } }catch(e){ console.warn('[ADcheck] 商品-当日データの表を作れませんでした', e); }
     }
   }
   { let _calcHtml='<div style="font-weight:700;margin-bottom:6px">KWvol（予測検索vol）の計算式</div><div style="font-size:11px;color:#555;margin-bottom:10px;line-height:1.6">各日の表示回数 ＝ Σ（その日のクリック数 ÷ CTR％ × 100）。<br>データの無い日は「最も近いデータ日」の表示回数で補完。<br>最初のデータ日〜最新データ日（'+( _monthLast? ((+_monthLast.slice(5,7))+'月'+(+_monthLast.slice(8,10))+'日') :'')+'まで）の全日を合計した値が KWvol。</div>';
@@ -11938,7 +11940,7 @@ function _buildKwTableBlock(code, daily, idx, pfx, monthMode, xr, xrc){   /* ★
   const _chc='<div id="kwTblCh'+pfx+'_'+idx+'" style="display:none;margin-bottom:10px"></div>';
   const _sscell='<div style="flex:0 0 220px;align-self:flex-start;border:1px solid #b9c0cc;border-radius:8px;background:#eef1f6;padding:8px 10px;box-sizing:border-box"><div style="font-size:10px;color:#445;font-weight:700;margin:0 0 5px;text-align:center">マラソン/SS</div>'+_ssCellBtns(code)+'</div>';
   const _flex='<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'+_sumHtml+'</div>';   /* ★v1.1567★ 表の横の マラソン/SS（_sscell）は商品名の行へ移した */
-  return { html:_head+_flex+_btn+_chc, hasFix:hasFix, hasFixX:hasFixX, hasYellow:hasYellow, redCount:_redCount, problemSpend:_probSpend };
+  return { html:_head+_flex+_btn+_chc, head:_head, body:_sumHtml, hasFix:hasFix, hasFixX:hasFixX, hasYellow:hasYellow, redCount:_redCount, problemSpend:_probSpend };
 }
 function _setKwIndivTableModeUI(){   /* ★v1.1566★ 見た目は .kt-btn。選んでいるものだけ、その色の地に白い字 */
   const M=[['kwIndivModeFix','fix','#dc2626'],['kwIndivModeFixX','fixx','#b91c1c'],['kwIndivModeYellow','yellow','#BF8F00'],['kwIndivModeBasic','basic','#00897B']];
