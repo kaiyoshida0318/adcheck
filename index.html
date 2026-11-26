@@ -1079,7 +1079,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1580</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1581</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -11490,7 +11490,7 @@ function _renderKwWatchMonthlyTable(){
 }
 
 function _kwGoWatchProd(code){ if(!code) return; _kwIndivCode=code; switchTab('kw-watch-prod'); }
-/* ★v1.1579★ KW-全体データの［詳細］：商品-当日データをその商品だけにして開く。マウスの戻るボタンで KW-全体データ（同じスクロール位置）に戻る */
+/* ★v1.1581★ 注視分-KW一覧の［詳細］も同じ動き。★v1.1579★ KW-全体データの［詳細］：商品-当日データをその商品だけにして開く。マウスの戻るボタンで KW-全体データ（同じスクロール位置）に戻る */
 function _kwTodayShow(code){ _kwIndivTableSearch=code||''; var el=document.getElementById('kwIndivTableSearch'); if(el) el.value=_kwIndivTableSearch; switchTab('kw-indiv-table'); window.scrollTo(0,0); }
 function _kwGoTodayProd(code){ if(!code) return;
   try{ history.replaceState(Object.assign({}, history.state||{}, { adc: Object.assign({ kind:'tab', kwq:_kwIndivTableSearch }, _adcNavSnap()) }), ''); history.pushState({ adc: { kind:'kwtoday', code: code } }, ''); }catch(e){}
@@ -11649,7 +11649,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
       +'<td style="'+_T+';background:#eaf5dd">'+n2(o.act)+'</td>'
       +'<td style="'+_T+';background:#f5f7ff"><div style="display:flex;align-items:center;justify-content:center;gap:4px">'   /* ★v1.1575★ 目安CP：予測・詳細（前は 商品／KW の右にあった） */
         +'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:38px;height:22px;padding:0;border-radius:4px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">予測</button>'
-        +'<button title="'+(cfg.watchOnly?'注視分-商品詳細を新しいタブで開く':'商品-当日データでこの商品を見る（マウスの戻るボタンでこの一覧に戻る）')+'" onclick="'+(cfg.watchOnly?'_kwOpenWatchProd':'_kwGoTodayProd')+'(\''+o.code+'\')" style="width:38px;height:22px;padding:0;border-radius:4px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">詳細</button></div></td>'   /* ★v1.1579★ 予測・詳細を小さく（50×30 → 38×22） */
+        +'<button title="商品-当日データでこの商品を見る（マウスの戻るボタンでこの一覧に戻る）" onclick="_kwGoTodayProd(\''+o.code+'\')" style="width:38px;height:22px;padding:0;border-radius:4px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">詳細</button></div></td>'   /* ★v1.1579★ 予測・詳細を小さく（50×30 → 38×22） */
       +'<td style="'+_T+';font-family:\'DM Mono\',monospace">'+(o.zero?_taiouMarkGlyph(o.kind):_kwiMkM(o.act,o.gui,o.streak))+'</td>'   /* ★v1.1577★ 判定のマークは前の字体のまま（大きさが変わらないように） */
       +'<td style="'+_T+'"><input type="checkbox" data-code="'+_kwEsc(o.code)+'" data-kw="'+_kwEsc(o.kw)+'" onchange="_toggleWatchEl(this)"'+(_isWatched(o.code,o.kw)?' checked':'')+' style="width:16px;height:16px;cursor:pointer"></td>'
       +'</tr>';
@@ -16937,7 +16937,7 @@ function _yoyOpenNewTab(key, v){
 //   飛ぶ前の画面（タブ・スクロール位置）を今の履歴に書き、飛んだ先を新しい履歴として積む
 function _adcNavSnap(){
   const st = { tab: _currentTab, sx: window.scrollX, sy: window.scrollY, ws: {} };
-  ['daily-table-wrap','monthly-table-wrap','yoyTopArea','kwAllBox'].forEach(   /* ★v1.1580★ KW-全体データの表の中のスクロールも覚える */id => { const el = document.getElementById(id); if (el && el.offsetParent) st.ws[id] = [el.scrollTop, el.scrollLeft]; });
+  ['daily-table-wrap','monthly-table-wrap','yoyTopArea','kwAllBox','kwWatchBox'].forEach(   /* ★v1.1580★ KW-全体データの表の中のスクロールも覚える */id => { const el = document.getElementById(id); if (el && el.offsetParent) st.ws[id] = [el.scrollTop, el.scrollLeft]; });
   return st;
 }
 function _adcNavPush(to){
