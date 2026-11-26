@@ -1079,7 +1079,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1583</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1584</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -11100,7 +11100,7 @@ var _KWALLCOLS=[
  {key:'kwvol',label:'KWvol'},{key:'spend',label:'実績額'},{key:'sales',label:'売上'},
  {key:'salesroas',label:'売上ROAS'},{key:'cvr',label:'CVR'},{key:'roas',label:'ROAS'},{key:'roasl30',label:'ROAS 直近30日'},{key:'roass30',label:'ROAS 確定30日'},
  {key:'share',label:'当商品内で占める割合'},{key:'mclick',label:'月CL合計'},{key:'recent3',label:'直近3日CL数'},
- {key:'gui',label:'目安'},{key:'act',label:'入札'},{key:'pred',label:'目安CP（予測・詳細）'},{key:'mark',label:'判定'},{key:'watch',label:'注視'}
+ {key:'gui',label:'目安'},{key:'act',label:'入札'},{key:'pred',label:'確認（予測・詳細）'},{key:'mark',label:'判定'},{key:'watch',label:'注視'}
 ];
 var _KWCOL_KEY='adcheck_kwallcol';
 function _kwColGet(){ try{ return JSON.parse(localStorage.getItem(_KWCOL_KEY)||'{}')||{}; }catch(e){ return {}; } }
@@ -11627,7 +11627,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   h+='<th'+_st('recent3','直近3日CL数')+' style="'+_H+';background:#e4eefb">直近3日<br>CL数'+_si+'</th>';
   h+='<th'+_st('gui','目安')+' style="'+_H+';background:#ede4fb;color:#7c3aed">目安'+_si+'</th>';
   h+='<th'+_st('act','入札')+' style="'+_H+';background:#dcefca;color:#00897B">入札'+_si+'</th>';
-  h+='<th style="'+_H+';background:#eef2ff;color:#1d4ed8;width:1%">目安CP</th>';   /* ★v1.1575★ 予測・詳細はここへ */
+  h+='<th style="'+_H+';background:#eef2ff;color:#1d4ed8;width:1%" title="［予測］目安CPCの予測　［詳細］商品-当日データでこの商品を見る">確認</th>';   /* ★v1.1584★ 見出し 目安CP→確認 */   /* ★v1.1575★ 予測・詳細はここへ */
   h+='<th style="'+_H+';background:var(--surface)">判定</th>';   /* ★v1.1575★ 判定は注視のすぐ左 */
   h+='<th style="'+_H+';background:var(--surface);color:#dc2626">注視</th>';
   h+='</tr></thead><tbody>';
