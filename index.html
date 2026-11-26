@@ -265,6 +265,17 @@ th.kwh-th .ss-ic::after { content: "⇅"; }
 th.kwh-th.sort-asc .ss-ic, th.kwh-th.sort-desc .ss-ic { opacity: 1; color: var(--red); }
 th.kwh-th.sort-asc .ss-ic::after { content: "↑"; }
 th.kwh-th.sort-desc .ss-ic::after { content: "↓"; }
+/* ★v1.1588★ KW-全体データ／注視分-KW一覧：［詳細］で開いた KW-個別推移 を閉じたら、見ていたKWの行を光らせて目印を残す（Amacheck の仕様書 A：一度だけ型）
+   セルに色付きの背景（style 直書き）があるので、背景ではなく内側の影で塗る（影は背景の上・文字の下に描かれる）。左端の紫の帯も影で描くので列の幅は変わらない */
+#tab-kw-all tr.kw-last > td, #tab-mar-watch tr.kw-last > td { box-shadow: inset 0 0 0 9999px #fef9c3; }
+#tab-kw-all tr.kw-last:hover > td, #tab-mar-watch tr.kw-last:hover > td { box-shadow: inset 0 0 0 9999px #fef08a; }
+#tab-kw-all tr.kw-last > td.kw-band, #tab-mar-watch tr.kw-last > td.kw-band { box-shadow: inset 4px 0 0 #7c3aed, inset 0 0 0 9999px #fef9c3; }
+#tab-kw-all tr.kw-last:hover > td.kw-band, #tab-mar-watch tr.kw-last:hover > td.kw-band { box-shadow: inset 4px 0 0 #7c3aed, inset 0 0 0 9999px #fef08a; }
+#tab-kw-all tr.kw-last, #tab-mar-watch tr.kw-last { scroll-margin-top: 64px; }   /* 止まっている見出しの裏に隠れないように */
+#tab-kw-all tr.kw-flash > td, #tab-mar-watch tr.kw-flash > td { animation: kwLastFlash 1.4s ease-out; }
+#tab-kw-all tr.kw-flash > td.kw-band, #tab-mar-watch tr.kw-flash > td.kw-band { animation: kwLastFlashB 1.4s ease-out; }
+@keyframes kwLastFlash { 0%, 35% { box-shadow: inset 0 0 0 9999px #fde047; } 100% { box-shadow: inset 0 0 0 9999px #fef9c3; } }
+@keyframes kwLastFlashB { 0%, 35% { box-shadow: inset 4px 0 0 #7c3aed, inset 0 0 0 9999px #fde047; } 100% { box-shadow: inset 4px 0 0 #7c3aed, inset 0 0 0 9999px #fef9c3; } }
 .idd-stack { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 6px 8px; min-width: 0; overflow: hidden; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text2); user-select: text; cursor: text; }
 .idd-stack > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; line-height: 1.25; }
 .idd-stack > div.idd-sub { color: var(--text3); }
@@ -1079,7 +1090,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1587</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1588</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -11494,6 +11505,22 @@ function _renderKwWatchMonthlyTable(){
 function _kwGoWatchProd(code){ if(!code) return; _kwIndivCode=code; switchTab('kw-watch-prod'); }
 /* ★v1.1581★ 注視分-KW一覧の［詳細］も同じ動き。★v1.1579★ KW-全体データの［詳細］：商品-当日データをその商品だけにして開く。マウスの戻るボタンで KW-全体データ（同じスクロール位置）に戻る */
 function _kwTodayShow(code){ window._kwTodayChartCode=code||''; _kwIndivTableSearch=code||''; var el=document.getElementById('kwIndivTableSearch'); if(el) el.value=_kwIndivTableSearch; switchTab('kw-indiv-table'); window.scrollTo(0,0); }
+/* ★v1.1588★ ［詳細］→ KW-個別推移。閉じたら、そのとき出ていたKWの行を光らせる（一覧のどちらかを w で覚える） */
+function _kwOpenTrendExt(btn, w){ openKwTrend(btn.dataset.code, btn.dataset.kw); window._kwTrendExt = { w: w ? 1 : 0 }; }
+function _kwMarkLast(w, key){
+  var root = document.getElementById(w ? 'tab-mar-watch' : 'tab-kw-all'); if (!root) return;
+  var TIP = 'さっき推移の画面で見ていた行', hit = null;
+  root.querySelectorAll('tbody tr[data-key]').forEach(function(tr){
+    var on = (tr.dataset.key === key);
+    tr.classList.remove('kw-flash'); tr.classList.toggle('kw-last', on);
+    tr.querySelectorAll('td.kw-band').forEach(function(td){ td.classList.remove('kw-band'); });
+    if (on) { hit = tr; tr.title = TIP; } else if (tr.title === TIP) tr.removeAttribute('title');
+  });
+  if (!hit) return;
+  var first = Array.prototype.find.call(hit.children, function(td){ return td.offsetParent !== null; }); if (first) first.classList.add('kw-band');   /* 隠した列があっても、見えている最初の列に紫の帯 */
+  void hit.offsetWidth; hit.classList.add('kw-flash');
+  try { hit.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+}
 function _kwOpenTodayTab(code){ try{ var shop=''; try{ shop=_getSessionShopId()||''; }catch(e){} window.open(location.origin+location.pathname+'?tab=kw-indiv-table&tq='+encodeURIComponent(code)+(shop?'&shop='+encodeURIComponent(shop):''),'_blank'); }catch(e){ console.warn('[ADcheck] 別のタブで開けませんでした', e); } }   /* ★v1.1583★ Ctrl＋クリック（ホイールクリック）で別のタブ */
 function _kwGoTodayProd(code){ if(!code) return; var _ev=window.event; if(_ev&&(_ev.ctrlKey||_ev.metaKey)){ _kwOpenTodayTab(code); return; }
   try{ history.replaceState(Object.assign({}, history.state||{}, { adc: Object.assign({ kind:'tab', kwq:_kwIndivTableSearch }, _adcNavSnap()) }), ''); history.pushState({ adc: { kind:'kwtoday', code: code } }, ''); }catch(e){}
@@ -11634,7 +11661,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
   h+='<th style="'+_H+';background:var(--surface);color:#dc2626">注視</th>';
   h+='</tr></thead><tbody>';
   rows.forEach(function(o){
-    h+='<tr>'
+    h+='<tr data-key="'+_kwEsc(o.code+'|'+o.kw)+'">'   /* ★v1.1588★ 見ていた行を光らせるときの目印（商品管理番号|KW） */
       +'<td style="'+_T+';text-align:left;font-size:10px;color:var(--text2)"><div'+(_kwAllSort==='itemnum'?' class="idd-on"':'')+' ondblclick="_selAll(this,event)" style="line-height:1.35">'+_kwEsc((productCache[o.code]&&productCache[o.code].itemNumber)||'')+'</div><div'+(_kwAllSort==='code'?' class="idd-on"':'')+' ondblclick="_selAll(this,event)" style="line-height:1.35;color:var(--text3)">'+_kwEsc(o.code||'')+'</div></td>'   /* ★v1.1494★ 商品番号／商品管理番号 */
       +(function(){ var fs=_firstSaleDate(o.code), rn=_renewalDate(o.code); return '<td style="'+_T+';text-align:left;font-size:10px;color:var(--text2)"><div class="'+(fs?'':'idd-none')+(_kwAllSort==='firstsale'?' idd-on':'')+'" style="line-height:1.35" title="初回販売日">'+(fs?_ymdSlash(fs):'-')+'</div><div class="'+(rn?'':'idd-none')+(_kwAllSort==='renewal'?' idd-on':'')+'" style="line-height:1.35;color:var(--text3)" title="リニュ日">'+(rn?_ymdSlash(rn):'-')+'</div></td>'; })()   /* ★v1.1494★ 初回販売日／リニュ日 */
       +'<td style="'+_T+';text-align:left;background:var(--surface)">'+'<div style="display:flex;align-items:center;gap:10px;justify-content:space-between">'+'<div style="display:flex;align-items:center;gap:8px;min-width:0">'+'<div onclick="event.stopPropagation();openRenewalGraph(\''+o.code+'\')" title="商品情報を開く（全体情報・KW-全体推移・KW-個別推移・編集）" style="cursor:pointer;flex:none;line-height:0">'+(o.img?'<img loading="lazy" src="'+o.img+'" style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border);flex:none">':'<div style="width:34px;height:34px;flex:none;border:1px dashed var(--border);border-radius:5px"></div>')+'</div>'+'<div style="min-width:0">'+/* ★v1.1573★ KW名は2行まで折り返し、それでも入らなければ末尾を…（★v1.1575★ 注視も） */ '<div title="'+_kwEsc(o.kw)+'\n'+_kwEsc(o.name)+'" style="font-size:12px;font-weight:700;max-width:180px;overflow:hidden;'+'display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;white-space:normal;overflow-wrap:anywhere;line-height:1.35'+'">'+_kwEsc(o.kw)+'</div></div>'+'</div>'+'</div></td>'
@@ -11652,7 +11679,7 @@ function _renderKwTable(cfg){ cfg=cfg||{};
       +'<td style="'+_T+';background:#eaf5dd">'+n2(o.act)+'</td>'
       +'<td style="'+_T+';background:#f5f7ff"><div style="display:flex;align-items:center;justify-content:center;gap:4px">'   /* ★v1.1575★ 目安CP：予測・詳細（前は 商品／KW の右にあった） */
         +'<button'+' data-gui="'+(o.gui!=null?o.gui:0)+'" data-cl="'+(o.mclick||0)+'" data-sales="'+(o.sales||0)+'" data-spend="'+(o.spend||0)+'" data-ps="'+(o.prodSpend||0)+'" data-sr="'+(o.salesRoas!=null?o.salesRoas:0)+'" data-kw="'+_kwEsc(o.kw)+'" data-name="'+_kwEsc(o.name)+'"'+' onclick="_kwPredOpenEl(this)" style="width:38px;height:22px;padding:0;border-radius:4px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">予測</button>'
-        +'<button title="このKWの KW-個別推移 を開く（Ctrlを押しながらで、商品-当日データを別のタブで開く）" data-code="'+_kwEsc(o.code)+'" data-kw="'+_kwEsc(o.kw)+'" onauxclick="if(event.button===1){event.preventDefault();_kwOpenTodayTab(this.dataset.code);}" onclick="if(event.ctrlKey||event.metaKey){_kwOpenTodayTab(this.dataset.code);return;} openKwTrend(this.dataset.code,this.dataset.kw)" style="width:38px;height:22px;padding:0;border-radius:4px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">詳細</button></div></td>'   /* ★v1.1579★ 予測・詳細を小さく（50×30 → 38×22） */
+        +'<button title="このKWの KW-個別推移 を開く（Ctrlを押しながらで、商品-当日データを別のタブで開く）" data-code="'+_kwEsc(o.code)+'" data-kw="'+_kwEsc(o.kw)+'" onauxclick="if(event.button===1){event.preventDefault();_kwOpenTodayTab(this.dataset.code);}" onclick="if(event.ctrlKey||event.metaKey){_kwOpenTodayTab(this.dataset.code);return;} _kwOpenTrendExt(this,'+_tw+')" style="width:38px;height:22px;padding:0;border-radius:4px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:10px;cursor:pointer;flex:none">詳細</button></div></td>'   /* ★v1.1579★ 予測・詳細を小さく（50×30 → 38×22） */
       +'<td style="'+_T+';font-family:\'DM Mono\',monospace">'+(o.zero?_taiouMarkGlyph(o.kind):_kwiMkM(o.act,o.gui,o.streak))+'</td>'   /* ★v1.1577★ 判定のマークは前の字体のまま（大きさが変わらないように） */
       +'<td style="'+_T+'"><input type="checkbox" data-code="'+_kwEsc(o.code)+'" data-kw="'+_kwEsc(o.kw)+'" onchange="_toggleWatchEl(this)"'+(_isWatched(o.code,o.kw)?' checked':'')+' style="width:16px;height:16px;cursor:pointer"></td>'
       +'</tr>';
@@ -13407,7 +13434,7 @@ function _pmOpenNow(){   // いま画面に出ているモーダル（変数は�
 let _pmSwitching = false;   // ★v1.1497★ タブの行き来の最中（KW-全体推移⇔KW-個別推移で期間を引き継ぐ）
 function _pmGo(to){
   const cur = _pmOpenNow(); if (!cur || !cur.c) return; const c = cur.c;
-  try{ cur.close(); }catch(e){}
+  window._pmGoing = true; try{ cur.close(); }catch(e){} window._pmGoing = false;   // ★v1.1588★ タブの行き来で閉じるときは、まだ光らせない
   _pmSwitching = true;
   try{ if (to === 'graph') openRenewalGraph(c); else if (to === 'kwd') openKwDetail(c); else if (to === 'kwt') openKwTrend(c); else if (to === 'edit') openEditModal(c); }catch(e){}
   _pmSwitching = false;
@@ -13433,6 +13460,7 @@ function _kwtCtlHtml(dayMonths, months, rangeFrom, rangeTo){
 }
 function openKwTrend(code, kw){
   document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
+  if (!_pmSwitching) window._kwTrendExt = null;   // ★v1.1588★ ほかの所から開いたときは光らせない（［詳細］から開いたときは、このあとで入れる）
   _kwtCode = code; if (!_pmSwitching) _kwtResetPeriod();   // ★v1.1497★ KW-全体推移から来たときは期間を引き継ぐ
   const c = productCache[code] || {};
   const name = c.manualName || c.name || code, num = c.itemNumber || code, img = c.manualImg || c.img || null;
@@ -13456,6 +13484,7 @@ function closeKwTrend(){
   const m = document.getElementById('kwTrendModal'); if (m) m.style.display = 'none';
   document.documentElement.style.overflow = ''; document.body.style.overflow = '';
   try{ if (_kwtChart) _kwtChart.destroy(); }catch(e){} _kwtChart = null;
+  if (window._kwTrendExt && !window._pmGoing && _kwtCode) { const _ex = window._kwTrendExt; window._kwTrendExt = null; try{ _kwMarkLast(_ex.w, _kwtCode + '|' + (_kwtKw || '')); }catch(e){ console.warn('[ADcheck] 見ていた行を光らせられませんでした', e); } }   // ★v1.1588★
   _kwtCode = null;
 }
 let _kwtListMin = false; try{ _kwtListMin = localStorage.getItem('adcheck_kwt_list_min') === '1'; }catch(e){}
