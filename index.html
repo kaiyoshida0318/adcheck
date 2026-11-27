@@ -1094,7 +1094,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1589</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1590</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -10528,7 +10528,7 @@ function _kwPlanBox(code,kw){ return '<span class="kwplan-box" data-kind="plan" 
 function _kwOffRefresh(code,kw){
   document.querySelectorAll('.kwoff-box,.kwstop-box,.kwplan-box').forEach(function(b){ if(b.dataset.code===code&&b.dataset.kw===kw) _kwOffRender(b); });
 }
-var _kwOffCur=null;
+var _kwOffCur=null, _kwOffUnwatched=false;
 function _kwOffClose(){ var p=document.getElementById('kwOffPop'); if(p) p.style.display='none'; _kwOffCur=null; }
 function _kwOffOpen(chip){
   var code=chip.dataset.code, kw=chip.dataset.kw; if(!code||kw==null) return;
@@ -10579,7 +10579,7 @@ function _kwOffSyncT(){
   var p=document.getElementById('kwOffPop'); if(!p) return;
   var on=p.querySelector('#kwOffRevChk').checked; p.querySelector('.kwoff-ts').classList.toggle('off',!on);
 }
-function _kwOffSave(clear){
+function _kwOffSave(clear){ _kwOffUnwatched=false;
   if(!_kwOffCur) return; var code=_kwOffCur.code, kw=_kwOffCur.kw;
   var p=document.getElementById('kwOffPop');
   if(!productCache[code]) productCache[code]={};
@@ -10602,9 +10602,14 @@ function _kwOffSave(clear){
     var o={at:at}; if(r) o.r=r; if(m) o.m=m; if(rv) o.rv=rv;
     if(live) o.pl=(old&&old.pl)||at; else if(old&&old.pl) o.pl=old.pl;   /* ★v1.1545★ 停止予定にした日 */
     pc.kwOff[kw]=o;
+    /* ★v1.1590★ 広告を停止（停止予定）にしたら、注視も外す */
+    if(live && Array.isArray(pc.watchKws)){ var _wi=pc.watchKws.indexOf(kw); if(_wi>=0){ pc.watchKws.splice(_wi,1); _kwOffUnwatched=true;
+      document.querySelectorAll('input[type=checkbox][data-code][data-kw]').forEach(function(cb){ if(cb.getAttribute('data-code')===code&&cb.getAttribute('data-kw')===kw&&/_toggleWatchEl/.test(cb.getAttribute('onchange')||'')) cb.checked=false; });
+      try{ _updateMarWatchCount(); }catch(e){} } }
   }
   _kwOffClose();
   _kwOffRefresh(code,kw);
+  if(_kwOffUnwatched){ try{ if(_currentTab==='mar-watch') renderKwWatch(); }catch(e){} }   /* ★v1.1590★ 注視分-KW一覧を見ているときは、その行を消す */
   try{ saveProductCache(); }catch(e){}
   try{ _saveToast('saving'); }catch(e){}
   Promise.resolve().then(function(){ return saveProductCacheToGitHub(); })
