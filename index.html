@@ -770,6 +770,10 @@ img.yf-link:hover { outline: 2px solid #0f766e; }
 .yd-tbl td.yd-cd { font-family: 'DM Mono', monospace; font-size: 11px; color: #0f766e; font-weight: 700; }
 .yd-tbl td.yd-nm { color: var(--text); }
 .yd-tbl td.yd-br { padding: 3px 6px; }
+/* ★v1.1589★ 寄与度トップ20（日別）の［詳細］→ 商品-当日データ（当日） */
+.yd-tbl td.yd-ck { padding: 2px; text-align: center; }
+.yd-dt { width: 38px; height: 22px; padding: 0; border-radius: 4px; border: none; background: #ea580c; color: #fff; font-weight: 700; font-size: 10px; cursor: pointer; font-family: inherit; }
+.yd-dt:hover { background: #c2410c; }
 .yd-tbl .yd-bar { display: block; }
 .yd-tbl td.yd-none { text-align: center; color: var(--text3); cursor: default; }
 .yd-row { display: grid; grid-template-columns: 20px minmax(0,1fr) 78px 78px 86px 64px; align-items: center; gap: 6px; padding: 3px 4px; border-top: 1px solid #f1f1f4; border-radius: 4px; cursor: pointer; font-size: 12px; }
@@ -1090,7 +1094,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1588</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1589</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -11504,7 +11508,8 @@ function _renderKwWatchMonthlyTable(){
 
 function _kwGoWatchProd(code){ if(!code) return; _kwIndivCode=code; switchTab('kw-watch-prod'); }
 /* ★v1.1581★ 注視分-KW一覧の［詳細］も同じ動き。★v1.1579★ KW-全体データの［詳細］：商品-当日データをその商品だけにして開く。マウスの戻るボタンで KW-全体データ（同じスクロール位置）に戻る */
-function _kwTodayShow(code){ window._kwTodayChartCode=code||''; _kwIndivTableSearch=code||''; var el=document.getElementById('kwIndivTableSearch'); if(el) el.value=_kwIndivTableSearch; switchTab('kw-indiv-table'); window.scrollTo(0,0); }
+function _kwTodayShow(code, per){ if(per){ _kwTblPeriodMode=per; _kwTblPeriodTouched=true; try{ _setKwTblPeriodUI(); }catch(e){} }   /* ★v1.1589★ per='d1' なら期間を「当日」にして開く */
+  window._kwTodayChartCode=code||''; _kwIndivTableSearch=code||''; var el=document.getElementById('kwIndivTableSearch'); if(el) el.value=_kwIndivTableSearch; switchTab('kw-indiv-table'); window.scrollTo(0,0); }
 /* ★v1.1588★ ［詳細］→ KW-個別推移。閉じたら、そのとき出ていたKWの行を光らせる（一覧のどちらかを w で覚える） */
 function _kwOpenTrendExt(btn, w){ openKwTrend(btn.dataset.code, btn.dataset.kw); window._kwTrendExt = { w: w ? 1 : 0 }; }
 function _kwMarkLast(w, key){
@@ -11521,10 +11526,11 @@ function _kwMarkLast(w, key){
   void hit.offsetWidth; hit.classList.add('kw-flash');
   try { hit.scrollIntoView({ block: 'nearest' }); } catch (e) {}
 }
-function _kwOpenTodayTab(code){ try{ var shop=''; try{ shop=_getSessionShopId()||''; }catch(e){} window.open(location.origin+location.pathname+'?tab=kw-indiv-table&tq='+encodeURIComponent(code)+(shop?'&shop='+encodeURIComponent(shop):''),'_blank'); }catch(e){ console.warn('[ADcheck] 別のタブで開けませんでした', e); } }   /* ★v1.1583★ Ctrl＋クリック（ホイールクリック）で別のタブ */
-function _kwGoTodayProd(code){ if(!code) return; var _ev=window.event; if(_ev&&(_ev.ctrlKey||_ev.metaKey)){ _kwOpenTodayTab(code); return; }
-  try{ history.replaceState(Object.assign({}, history.state||{}, { adc: Object.assign({ kind:'tab', kwq:_kwIndivTableSearch }, _adcNavSnap()) }), ''); history.pushState({ adc: { kind:'kwtoday', code: code } }, ''); }catch(e){}
-  _kwTodayShow(code); }
+function _kwOpenTodayTab(code, per){ try{ var shop=''; try{ shop=_getSessionShopId()||''; }catch(e){} window.open(location.origin+location.pathname+'?tab=kw-indiv-table&tq='+encodeURIComponent(code)+(per?'&tp='+encodeURIComponent(per):'')+(shop?'&shop='+encodeURIComponent(shop):''),'_blank'); }catch(e){ console.warn('[ADcheck] 別のタブで開けませんでした', e); } }   /* ★v1.1583★ Ctrl＋クリック（ホイールクリック）で別のタブ */
+function _kwGoTodayProd(code, per){ if(!code) return; var _ev=window.event; if(_ev&&(_ev.ctrlKey||_ev.metaKey)){ _kwOpenTodayTab(code, per); return; }
+  try{ var _b={ kind:'tab', kwq:_kwIndivTableSearch }; if(per) _b.kwp={ m:_kwTblPeriodMode, t:_kwTblPeriodTouched };   /* ★v1.1589★ 戻ったら、商品-当日データの期間も前に戻す */
+    history.replaceState(Object.assign({}, history.state||{}, { adc: Object.assign(_b, _adcNavSnap()) }), ''); history.pushState({ adc: { kind:'kwtoday', code: code, per: per||'' } }, ''); }catch(e){}
+  _kwTodayShow(code, per); }
 function _kwOpenWatchProd(code){ if(!code) return; try{ var u=location.href.split('?')[0].split('#')[0]+'?tab=kw-watch-prod&wp='+encodeURIComponent(code); window.open(u,'_blank'); }catch(e){ _kwGoWatchProd(code); } }
 function _kwPredClose(){ var m=document.getElementById('kwPredModal'); if(m) m.style.display='none'; }
 function _kwPredOpenEl(el){ var gui=+el.getAttribute('data-gui')||0, cl=+el.getAttribute('data-cl')||0, sales=+el.getAttribute('data-sales')||0, spend=+el.getAttribute('data-spend')||0, ps=+el.getAttribute('data-ps')||0, sr=+el.getAttribute('data-sr')||0; var kw=el.getAttribute('data-kw')||'', name=el.getAttribute('data-name')||''; var totSales=sr*ps/100; var vals=[]; if(gui>0){ vals.push(gui+20); vals.push(gui+10); } if(gui>40){ for(var x=gui;x>40;x-=10) vals.push(x); vals.push(40); } else { vals.push(gui>0?gui:40); } var body=''; vals.forEach(function(x){ var sx=cl*x; var roasX=sx>0?(sales/sx*100):null; var np=ps-spend+sx; var srX=np>0?(totSales/np*100):null; var cur=(x===gui); var fw=cur?700:400; body+='<tr style="'+(cur?'background:#eef2ff':'')+'"><td style="padding:7px 14px;text-align:center;border-bottom:1px solid var(--border);font-weight:'+fw+'">'+x.toLocaleString()+(cur?' (現在)':'')+'</td><td style="padding:7px 14px;text-align:center;border-bottom:1px solid var(--border);font-weight:'+fw+'">'+(roasX!=null?Math.round(roasX).toLocaleString()+'%':'-')+'</td><td style="padding:7px 14px;text-align:center;border-bottom:1px solid var(--border);font-weight:'+fw+'">'+(srX!=null?Math.round(srX).toLocaleString()+'%':'-')+'</td></tr>'; }); var avg=cl>0?(spend/cl):null; var html='<div style="font-size:13px;font-weight:700;margin:0 0 12px;padding:9px 13px;background:var(--surface2);border-radius:8px">当月のクリック平均：'+Math.round(spend).toLocaleString()+' / '+cl.toLocaleString()+' = '+(avg!=null?Math.round(avg).toLocaleString():'-')+'円</div>'+'<table style="border-collapse:collapse;width:100%;font-family:\'DM Mono\',monospace;font-size:13px"><thead><tr><th style="padding:9px 14px;text-align:center;border-bottom:2px solid var(--border);font-size:11px;background:#ede4fb;color:#7c3aed">目安(CPC)</th><th style="padding:9px 14px;text-align:center;border-bottom:2px solid var(--border);font-size:11px;background:#fbe4ec;color:#be185d">予測ROAS</th><th style="padding:9px 14px;text-align:center;border-bottom:2px solid var(--border);font-size:11px;background:#e0f2f1;color:#0f766e">予測売上ROAS</th></tr></thead><tbody>'+body+'</tbody></table>'; document.getElementById('kwPredTitle').textContent=name+' / '+kw; document.getElementById('kwPredBody').innerHTML=html; document.getElementById('kwPredModal').style.display='flex'; }
@@ -16703,17 +16709,18 @@ function renderYoyTopDay(){
   /* ★v1.1548★ 枠付きの表：順位｜画像｜商品番号｜商品名｜当日｜平均｜差｜棒。列の幅は固定で、どの表も縦にそろう（商品名・長い商品番号は末尾を…） */
   const row = (mt, x, i, isDn, mx) => {
     const pc = productCache[x.code] || {}; const name = pc.manualName || pc.name || x.code; const img = pc.manualImg || pc.img || '';
-    return '<tr class="yt-tile" data-code="'+esc(x.code)+'" title="'+esc((pc.itemNumber || x.code) + '　' + name)+'\n（クリックで選択枠に入れる・もう一度で外す／ダブルクリックで詳細）" onclick="_yoyTopPin(\''+esc(x.code)+'\')" ondblclick="openRenewalGraph(\''+esc(x.code)+'\')" onmouseenter="_yoyTopHi(\''+esc(x.code)+'\',true)" onmouseleave="_yoyTopHi(\''+esc(x.code)+'\',false)">'
+    return '<tr class="yt-tile" data-code="'+esc(x.code)+'" title="'+esc((pc.itemNumber || x.code) + '　' + name)+'\n（クリックで選択枠に入れる・もう一度で外す）" onclick="_yoyTopPin(\''+esc(x.code)+'\')" onmouseenter="_yoyTopHi(\''+esc(x.code)+'\',true)" onmouseleave="_yoyTopHi(\''+esc(x.code)+'\',false)">'
       + '<td class="yd-rk">'+(i+1)+'</td>'
       + '<td class="yd-im">'+(img ? '<img src="'+esc(img)+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '')+'<button class="yd-fbtn" onclick="event.stopPropagation();setYoyDayFocus(\''+esc(x.code)+'\',{k:\''+mt.k+'\',side:\''+(isDn ? 'dn' : 'up')+'\'})" ondblclick="event.stopPropagation()" title="この商品だけを表示（この日の全部の指標を一覧で見る）">絞込</button></td>'
       + '<td class="yd-cd">'+esc(pc.itemNumber || x.code)+'</td>'
       + '<td class="yd-nm">'+esc(name)+'</td>'
       + '<td class="yd-v">'+fmtV(mt, x.a)+'</td><td class="yd-v yd-b">'+fmtV(mt, x.b)+'</td>'
       + '<td class="yd-d" style="color:'+colOf(mt, isDn)+'">'+fmtD(mt, x.d)+'</td>'
-      + '<td class="yd-br"><span class="yd-bar"><i style="width:'+Math.max(2, Math.round(Math.abs(x.d) / mx * 100))+'%;background:'+barOf(mt, isDn)+'"></i></span></td></tr>';
+      + '<td class="yd-br"><span class="yd-bar"><i style="width:'+Math.max(2, Math.round(Math.abs(x.d) / mx * 100))+'%;background:'+barOf(mt, isDn)+'"></i></span></td>'
+      + '<td class="yd-ck"><button class="yd-dt" onclick="event.stopPropagation();_kwGoTodayProd(\''+esc(x.code)+'\',\'d1\')" onauxclick="if(event.button===1){event.preventDefault();event.stopPropagation();_kwOpenTodayTab(\''+esc(x.code)+'\',\'d1\');}" title="商品-当日データ（期間：当日）でこの商品を見る。マウスの戻るボタンでここに戻る。Ctrlを押しながらで別のタブ">詳細</button></td></tr>';   /* ★v1.1589★ 確認の列。行のダブルクリックで開くのはやめた */
   };
-  const colHead = mt => '<colgroup><col style="width:26px"><col style="width:40px"><col style="width:150px"><col><col style="width:86px"><col style="width:86px"><col style="width:92px"><col style="width:70px"></colgroup>'
-    + '<thead><tr><th>#</th><th>画像</th><th>商品番号</th><th>商品名</th><th>当日</th><th>'+(BS.avg ? '平均' : '比べる日')+'</th><th>'+(mt.type === 'amt' ? (BS.avg ? '平均との差' : '比べる日との差') : '店全体への影響')+'</th><th></th></tr></thead>';
+  const colHead = mt => '<colgroup><col style="width:26px"><col style="width:40px"><col style="width:150px"><col><col style="width:86px"><col style="width:86px"><col style="width:92px"><col style="width:70px"><col style="width:48px"></colgroup>'
+    + '<thead><tr><th>#</th><th>画像</th><th>商品番号</th><th>商品名</th><th>当日</th><th>'+(BS.avg ? '平均' : '比べる日')+'</th><th>'+(mt.type === 'amt' ? (BS.avg ? '平均との差' : '比べる日との差') : '店全体への影響')+'</th><th></th><th>確認</th></tr></thead>';
   const cmpLbl = BS.avg ? '平均' : _yoyDayLbl(BS.dates[0] || day, false);
   let html = '<div class="yd-info">'
     /* ★v1.1554★ 平均に使った日・除いた日は表示せず、「直近7日の平均」にマウスを乗せたときに出す */
@@ -16739,8 +16746,8 @@ function renderYoyTopDay(){
       + '<span class="yd-note">'+share+'</span></div>'
       + '<div class="yd-cols">'
       + (function(){   /* ★v1.1569★ 実績額（3種類）と獲得単価は、上げた商品を左に（増えたほうを先に見たいので） */
-          const cDn = '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, true)+'">▼ 下げた商品</div><table class="yd-tbl">'+colHead(mt)+'<tbody>'+(dn.length ? dn.map((x, i) => row(mt, x, i, true, mx)).join('') : '<tr><td colspan="8" class="yd-none">なし</td></tr>')+'</tbody></table></div>';
-          const cUp = '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, false)+'">▲ 上げた商品</div><table class="yd-tbl">'+colHead(mt)+'<tbody>'+(up.length ? up.map((x, i) => row(mt, x, i, false, mx)).join('') : '<tr><td colspan="8" class="yd-none">なし</td></tr>')+'</tbody></table></div>';
+          const cDn = '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, true)+'">▼ 下げた商品</div><table class="yd-tbl">'+colHead(mt)+'<tbody>'+(dn.length ? dn.map((x, i) => row(mt, x, i, true, mx)).join('') : '<tr><td colspan="9" class="yd-none">なし</td></tr>')+'</tbody></table></div>';
+          const cUp = '<div class="yd-col"><div class="yd-ct" style="color:'+colOf(mt, false)+'">▲ 上げた商品</div><table class="yd-tbl">'+colHead(mt)+'<tbody>'+(up.length ? up.map((x, i) => row(mt, x, i, false, mx)).join('') : '<tr><td colspan="9" class="yd-none">なし</td></tr>')+'</tbody></table></div>';
           return (mt.g === 'sp' || mt.type === 'cpa') ? cUp + cDn : cDn + cUp; })()
       + '</div></div>';
   });
@@ -16995,7 +17002,8 @@ window.addEventListener('popstate', function(e){
       return;
     }
     if (st.kind === 'month'){ _yoyOpenMonth(st.v, null, true); return; }
-    if (st.kind === 'kwtoday'){ _kwTodayShow(st.code); return; }   /* ★v1.1579★ 進むボタン */
+    if (st.kind === 'kwtoday'){ _kwTodayShow(st.code, st.per); return; }   /* ★v1.1579★ 進むボタン */
+    if (st.kwp){ _kwTblPeriodMode = st.kwp.m || 'day'; _kwTblPeriodTouched = !!st.kwp.t; try{ _setKwTblPeriodUI(); }catch(e){} }   /* ★v1.1589★ */
     if (st.kwq !== undefined){ _kwIndivTableSearch = st.kwq || ''; const _qe = document.getElementById('kwIndivTableSearch'); if (_qe) _qe.value = _kwIndivTableSearch; }   /* ★v1.1579★ 商品-当日データの検索を、詳細を押す前に戻す */
     if (st.tab){
       switchTab(st.tab);
@@ -21439,7 +21447,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     const _sp = new URLSearchParams(location.search);
     const _initTab = _sp.get('tab');
     const _wp = _sp.get('wp');
-    try{ const _tq = _sp.get('tq'); if (_tq){ window._kwTodayChartCode = _tq; _kwIndivTableSearch = _tq; const _qe = document.getElementById('kwIndivTableSearch'); if (_qe) _qe.value = _tq; } }catch(e){}   /* ★v1.1583★ ?tq=商品管理番号：商品-当日データをその商品で開く */
+    try{ const _tq = _sp.get('tq'); if (_tq){ const _tp = _sp.get('tp'); if (_tp === 'd1'){ _kwTblPeriodMode = 'd1'; _kwTblPeriodTouched = true; try{ _setKwTblPeriodUI(); }catch(e){} }   /* ★v1.1589★ &tp=d1 で期間を当日に */
+      window._kwTodayChartCode = _tq; _kwIndivTableSearch = _tq; const _qe = document.getElementById('kwIndivTableSearch'); if (_qe) _qe.value = _tq; } }catch(e){}   /* ★v1.1583★ ?tq=商品管理番号：商品-当日データをその商品で開く */
     if (_wp) { _kwIndivCode = _wp; switchTab('kw-watch-prod'); }
     else switchTab(_initTab || 'monthly');
     _adcMark('render');
