@@ -1094,7 +1094,7 @@ _adcMark('script');
         </button>
       </div>
     </div>
-    <span class="build-date">v1.1590</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
+    <span class="build-date">v1.1591</span>   <!-- ★v1.1502★ バージョンはショップ選択の右に -->
   </div>
   <div class="header-right">
     <!-- ★v1.1514★ 右側のボタンを3つに分けた：ときどき使う（運用チェック・分析用データ）｜毎日の作業（警告・在庫チェック・レポート追加）｜表示・設定。色で塗るのはレポート追加だけ -->
@@ -2622,7 +2622,22 @@ function loadProductCache() {
 // ── 広告無し・引退済みにした商品の「注視」チェックを自動で外す（v1.1376）──
 //   対象は _isAdNone()（引退済／健常-広告無し／中立-広告無し／中立-広告無し-Y）。保存の直前に毎回掃除する。
 //   外したKWは watchKwsAutoRemoved に控えを残す（画面には出さない。誤って変えたときの復元用）。
+/* ★v1.1591★ 停止予定（kwOff[kw].pl）のKWは注視から外す。v1.1590 より前に停止予定にしたKW・ほかのパソコンで停止予定にしたKWもここで外れる */
+function _purgePlannedWatch(){
+  var n=0;
+  try{
+    Object.keys(productCache).forEach(function(c){
+      if(c==='__global__') return;
+      var pc=productCache[c]; if(!pc || !Array.isArray(pc.watchKws) || !pc.watchKws.length || !pc.kwOff) return;
+      var keep=pc.watchKws.filter(function(k){ var o=pc.kwOff[k]; return !(o && o.pl); });
+      if(keep.length!==pc.watchKws.length){ n+=pc.watchKws.length-keep.length; pc.watchKws=keep; }
+    });
+  }catch(e){ console.warn('[ADcheck] _purgePlannedWatch', e); }
+  if(n) console.log('[ADcheck] 停止予定のKWの注視を外しました: '+n+'件');
+  return n;
+}
 function _purgeAdNoneWatch(){
+  try{ _purgePlannedWatch(); }catch(e){}
   var n=0;
   try{
     Object.keys(productCache).forEach(function(c){
@@ -18939,6 +18954,7 @@ function _updateStatusCounts() {
 }
 
 function renderAll() {
+  try{ if(_purgePlannedWatch()) _syncPC(); }catch(e){}   /* ★v1.1591★ 読み込んだときにも、停止予定のKWの注視を外す（外したら保存） */
   // デバッグ: productCacheの状態を出力
   const withImg = Object.values(productCache).filter(v => v && (v.img || v.manualImg)).length;
   const totalCache = Object.keys(productCache).length;
